@@ -7,11 +7,11 @@ import "../libraries/storage/ProtocolStorage.sol";
 
 abstract contract AbstractProtocol is IProtocol {
 
-    address public immutable owner;
+    address public immutable _owner;
 
     constructor(address _factory, uint24 _protocol, address _longStrategy, address _shortStrategy) {
-        owner = _factory;
-        ProtocolStorage.init(_protocol, _longStrategy, _shortStrategy, msg.sender);
+        _owner = _factory;
+        ProtocolStorage.init(_protocol, _longStrategy, _shortStrategy, _factory);
     }
 
     function protocol() external virtual override view returns(uint24) {
@@ -26,14 +26,23 @@ abstract contract AbstractProtocol is IProtocol {
         return ProtocolStorage.store().shortStrategy;
     }
 
+    function owner() external virtual override view returns(address) {
+        return ProtocolStorage.store().owner;
+    }
+
+    function isSet() external virtual override view returns(bool) {
+        return ProtocolStorage.store().isSet;
+    }
+
     function parameters() external virtual override view returns(bytes memory sParams, bytes memory rParams) {
         sParams = strategyParams();
         rParams = rateParams();
     }
 
+
     //delegated call only
     function initialize(bytes calldata sData, bytes calldata rData) external virtual override returns(bool) {
-        require(msg.sender == owner);//This checks the factory can only call this. It's a delegate call from the smart contract. So it's called from the context of the GammaPool, which means message sender is factory
+        require(msg.sender == _owner);//This checks the factory can only call this. It's a delegate call from the smart contract. So it's called from the context of the GammaPool, which means message sender is factory
 
         initializeStrategyParams(sData);
         initializeRateParams(rData);

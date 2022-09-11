@@ -5,8 +5,7 @@ library TestStrategyStorage {
     bytes32 constant STRUCT_POSITION = keccak256("com.gammaswap.strategies.test");
 
     struct Store {
-        uint256 val;
-        bool isSet;//flag to check that variables have been initialized through external function
+        uint8 val;
     }
 
     function store() internal pure returns (Store storage _store) {
@@ -16,10 +15,8 @@ library TestStrategyStorage {
         }
     }
 
-    function init(uint256 _val) internal {
+    function init(uint8 _val) internal {
         Store storage _store = store();
-        require(_store.isSet == false, "SET");
-        _store.isSet = true;
         _store.val = _val;
     }
 }

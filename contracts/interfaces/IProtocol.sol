@@ -7,5 +7,7 @@ interface IProtocol {
     function protocol() external view returns(uint24);
     function longStrategy() external view returns(address);
     function shortStrategy() external view returns(address);
+    function owner() external view returns(address);
+    function isSet() external view returns(bool);
     function validateCFMM(address[] calldata _tokens, address _cfmm) external view returns(address[] memory tokens);
 }

@@ -6,19 +6,19 @@ import "../storage/TestRateStorage.sol";
 
 contract TestAbstractProtocol is AbstractProtocol {
 
-    constructor(address gsFactory, uint24 _protocol, address _longStrategy, address _shortStrategy, uint256 val1, uint256 val2) AbstractProtocol(gsFactory, _protocol, _longStrategy, _shortStrategy) {
+    constructor(address gsFactory, uint24 _protocol, address _longStrategy, address _shortStrategy, uint8 val1, uint8 val2) AbstractProtocol(gsFactory, _protocol, _longStrategy, _shortStrategy) {
         TestStrategyStorage.init(val1);
         TestRateStorage.init(val2);
     }
 
     function strategyParams() internal virtual override view returns(bytes memory sParams) {
         TestStrategyStorage.Store storage sStore = TestStrategyStorage.store();
-        sParams = abi.encode(TestStrategyStorage.Store({val: sStore.val, isSet: false}));
+        sParams = abi.encode(TestStrategyStorage.Store({val: sStore.val}));
     }
 
     function rateParams() internal virtual override view returns(bytes memory rParams) {
         TestRateStorage.Store storage rStore = TestRateStorage.store();
-        rParams = abi.encode(TestStrategyStorage.Store({val: rStore.val, isSet: false}));
+        rParams = abi.encode(TestStrategyStorage.Store({val: rStore.val}));
     }
 
     function initializeStrategyParams(bytes calldata sData) internal virtual override {
@@ -32,6 +32,7 @@ contract TestAbstractProtocol is AbstractProtocol {
     }
 
     function validateCFMM(address[] calldata _tokens, address _cfmm) external override view returns(address[] memory tokens) {
+        require(isContract(_cfmm), "NOT_CONTRACT");
         tokens = new address[](2);
         tokens[0] = _tokens[1];
         tokens[1] = _tokens[0];
