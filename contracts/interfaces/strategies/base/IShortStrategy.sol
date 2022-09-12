@@ -20,6 +20,6 @@ interface IShortStrategy {
     function _withdraw(uint256 assets, address to, address from) external returns (uint256 shares);
     function _redeem(uint256 shares, address to, address from) external returns (uint256 assets);
 
-    event Deposit(address indexed caller, address indexed from, uint256 assets, uint256 shares);
+    event Deposit(address indexed caller, address indexed to, uint256 assets, uint256 shares);
     event Withdraw(address indexed caller, address indexed to, address indexed from, uint256 assets, uint256 shares);
 }

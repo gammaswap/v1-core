@@ -8,7 +8,7 @@ import "./libraries/AddressCalculator.sol";
 import "./PoolDeployer.sol";
 import "hardhat/console.sol";
 
-contract GammaPoolFactory is IGammaPoolFactory{
+contract GammaPoolFactory is IGammaPoolFactory {
 
     event PoolCreated(address indexed pool, address indexed cfmm, uint24 indexed protocolId, address protocol, uint256 count);
 

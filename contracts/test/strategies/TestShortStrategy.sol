@@ -44,24 +44,28 @@ contract TestShortStrategy is IShortStrategy{
     }
 
     function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 lpBorrowed, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum) external override pure returns(uint256) {
-        return 1000*(10**16);
+        return 1000*(10**18);
     }
 
     /***** ERC4626 Functions *****/
 
     function _deposit(uint256 assets, address to) external override returns (uint256 shares) {
-        shares = assets;
+        shares = 3*10**18;
+        emit Deposit(msg.sender, to, assets, shares);
     }
 
     function _mint(uint256 shares, address to) external override returns (uint256 assets) {
-        assets = shares;
+        assets = 4*10**18;
+        emit Deposit(msg.sender, to, assets, shares);
     }
 
     function _withdraw(uint256 assets, address to, address from) external override returns (uint256 shares) {
-        shares = assets;
+        shares = 5*10**18;
+        emit Withdraw(msg.sender, to, from, assets, shares);
     }
 
     function _redeem(uint256 shares, address to, address from) external override returns (uint256 assets) {
-        assets = shares;
+        assets = 6*10**18;
+        emit Withdraw(msg.sender, to, from, assets, shares);
     }
 }
