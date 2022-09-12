@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 
 describe("AbstractProtocol", function () {
-  let TestERC20;
+  let TestERC20: any;
   let TestAbstractProtocol: any;
   let tokenA: any;
   let owner: any;
