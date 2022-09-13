@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
+pragma abicoder v2;
 
 import "../../interfaces/strategies/base/IShortStrategy.sol";
 
 contract TestShortStrategy is IShortStrategy{
 
     function _depositNoPull(address to) external override returns(uint256 shares) {
-        shares = 1;
+        shares = 2;
+        uint256 assets = 3;
+        emit Deposit(msg.sender, to, assets, shares);
     }
 
     function _withdrawNoPull(address to) external override returns(uint256 assets) {
-        assets = 2;
+        assets = 7;
+        uint256 shares = 14;
+        emit Withdraw(msg.sender, to, msg.sender, assets, shares);
     }
 
     function _withdrawReserves(address to) external override returns(uint256[] memory reserves, uint256 assets) {
@@ -18,13 +23,18 @@ contract TestShortStrategy is IShortStrategy{
         reserves[0] = 3;
         reserves[1] = 4;
         assets = 5;
+        uint256 shares = reserves[0] + reserves[1] + 2;
+        emit Withdraw(msg.sender, to, msg.sender, assets, shares);
     }
 
     function _depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external override returns(uint256[] memory reserves, uint256 shares) {
         reserves = new uint256[](2);
         reserves[0] = amountsDesired[0];
         reserves[1] = amountsMin[0];
-        shares = 8;
+        shares = amountsDesired[0] + amountsDesired[1];
+        uint256 assets = amountsMin[0] + amountsMin[1];
+        address from = abi.decode(data, (address));
+        emit Deposit(from, to, assets, shares);
     }
 
     function getBorrowRate(uint256 lpBalance, uint256 lpBorrowed) external override pure returns(uint256) {

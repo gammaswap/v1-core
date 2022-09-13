@@ -196,37 +196,46 @@ describe("GammaPool", function () {
     it("Non ERC4626 Functions", async function () {
       await deployGammaPool();
 
-      /*
-      function depositNoPull(address to) external virtual override returns(uint256 shares) {
-        (bool success, bytes memory result) = GammaPoolStorage.store().shortStrategy.delegatecall(abi.encodeWithSelector(
-                IShortStrategy(GammaPoolStorage.store().shortStrategy)._depositNoPull.selector, to));
-        require(success);
-        return abi.decode(result, (uint256));
-    }
+      const res0 = await (await gammaPool.depositNoPull(addr1.address)).wait();
+      expect(res0.events[0].args.caller).to.eq(owner.address);
+      expect(res0.events[0].args.to).to.eq(addr1.address);
+      expect(res0.events[0].args.assets).to.eq(3);
+      expect(res0.events[0].args.shares).to.eq(2);
 
-    function withdrawNoPull(address to) external virtual override returns(uint256 assets) {
-        (bool success, bytes memory result) = GammaPoolStorage.store().shortStrategy.delegatecall(abi.encodeWithSelector(
-                IShortStrategy(GammaPoolStorage.store().shortStrategy)._withdrawNoPull.selector, to));
-        require(success);
-        return abi.decode(result, (uint256));
-    }
+      const abi = ethers.utils.defaultAbiCoder;
+      const data = abi.encode(
+        ["address"], // encode as address array
+        [addr3.address]
+      );
+      const res1 = await (
+        await gammaPool.depositReserves(addr2.address, [2, 20], [1, 10], data)
+      ).wait();
+      expect(res1.events[0].args.caller).to.eq(addr3.address);
+      expect(res1.events[0].args.to).to.eq(addr2.address);
+      expect(res1.events[0].args.assets).to.eq(11);
+      expect(res1.events[0].args.shares).to.eq(22);
 
-    function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external virtual override returns(uint256[] memory reserves, uint256 shares){
-        (bool success, bytes memory result) = GammaPoolStorage.store().shortStrategy.delegatecall(abi.encodeWithSelector(
-                IShortStrategy(GammaPoolStorage.store().shortStrategy)._depositReserves.selector, to, amountsDesired, amountsMin, data));
-        require(success);
-        return abi.decode(result, (uint256[],uint256));
-    }
+      const res2 = await (await gammaPool.withdrawNoPull(addr3.address)).wait();
+      expect(res2.events[0].args.caller).to.eq(owner.address);
+      expect(res2.events[0].args.to).to.eq(addr3.address);
+      expect(res2.events[0].args.from).to.eq(owner.address);
+      expect(res2.events[0].args.assets).to.eq(7);
+      expect(res2.events[0].args.shares).to.eq(14);
 
-    function withdrawReserves(address to) external virtual override returns (uint256[] memory reserves, uint256 assets) {
-        (bool success, bytes memory result) = GammaPoolStorage.store().shortStrategy.delegatecall(abi.encodeWithSelector(
-                IShortStrategy(GammaPoolStorage.store().shortStrategy)._withdrawReserves.selector, to));
-        require(success);
-        return abi.decode(result, (uint256[],uint256));
-    }
-      *
-      * */
+      const res3 = await (
+        await gammaPool.withdrawReserves(addr1.address)
+      ).wait();
+      expect(res3.events[0].args.caller).to.eq(owner.address);
+      expect(res3.events[0].args.to).to.eq(addr1.address);
+      expect(res3.events[0].args.from).to.eq(owner.address);
+      expect(res3.events[0].args.assets).to.eq(5);
+      expect(res3.events[0].args.shares).to.eq(9);
     });
+  });
+
+  // You can nest describe calls to create subsections.
+  describe("Long Gamma", function () {
+    it("Create & View Loan", async function () {});
   });
 });
 
