@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../../interfaces/strategies/base/IShortStrategy.sol";
+import "../../libraries/storage/GammaPoolStorage.sol";
 
 contract TestShortStrategy is IShortStrategy{
 
@@ -51,6 +52,7 @@ contract TestShortStrategy is IShortStrategy{
 
     function _deposit(uint256 assets, address to) external override returns (uint256 shares) {
         shares = 3*10**18;
+        _mintERC20(assets, to);
         emit Deposit(msg.sender, to, assets, shares);
     }
 
@@ -67,5 +69,15 @@ contract TestShortStrategy is IShortStrategy{
     function _redeem(uint256 shares, address to, address from) external override returns (uint256 assets) {
         assets = 6*10**18;
         emit Withdraw(msg.sender, to, from, assets, shares);
+    }
+    
+
+    // test
+    function _mintERC20(uint256 amount, address account) internal {
+        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+
+        require(amount > 0, "0 amount");
+        store.totalSupply += amount;
+        store.balanceOf[account] += amount;
     }
 }
