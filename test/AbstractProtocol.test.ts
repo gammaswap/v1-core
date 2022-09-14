@@ -99,7 +99,7 @@ describe("AbstractProtocol", function () {
       expect(tokens[0]).to.equal(addr2.address);
       expect(tokens[1]).to.equal(addr1.address);
 
-      expect(
+      await expect(
         protocol.validateCFMM([addr1.address, addr2.address], owner.address)
       ).to.be.revertedWith("NOT_CONTRACT");
     });

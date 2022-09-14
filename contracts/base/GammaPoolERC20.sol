@@ -9,7 +9,7 @@ abstract contract GammaPoolERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
     function name() external virtual view returns (string memory) {
-        return GammaPoolStorage.store().symbol;
+        return GammaPoolStorage.store().name;
     }
 
     function symbol() external virtual view returns (string memory) {
@@ -33,6 +33,7 @@ abstract contract GammaPoolERC20 {
     }
 
     function _transfer(GammaPoolStorage.Store storage store, address from, address to, uint value) internal virtual {
+        require(store.balanceOf[from] > value, "ERC20: bal < val");
         store.balanceOf[from] = store.balanceOf[from] - value;
         store.balanceOf[to] = store.balanceOf[to] + value;
         emit Transfer(from, to, value);

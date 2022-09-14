@@ -58,14 +58,8 @@ describe("GammaPool", function () {
     shortStrategy = await TestShortStrategy.deploy();
     addressCalculator = await TestAddressCalculator.deploy();
 
-    // We can interact with the contract by calling `hardhatToken.method()`
-    await tokenA.deployed();
-    await tokenB.deployed();
-    await cfmm.deployed();
-
     tokens = [tokenA.address, tokenB.address];
 
-    // address _cfmm, uint24 _protocolId, address[] memory _tokens, address _protocol
     factory = await TestGammaPoolFactory.deploy(
       cfmm.address,
       1,
