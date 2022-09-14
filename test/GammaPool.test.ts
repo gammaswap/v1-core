@@ -22,6 +22,7 @@ describe("GammaPool", function () {
   let shortStrategy: any;
   let gammaPool: any;
   let protocol: any;
+  let tokens: any;
 
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
@@ -62,11 +63,13 @@ describe("GammaPool", function () {
     await tokenB.deployed();
     await cfmm.deployed();
 
+    tokens = [tokenA.address, tokenB.address];
+
     // address _cfmm, uint24 _protocolId, address[] memory _tokens, address _protocol
     factory = await TestGammaPoolFactory.deploy(
       cfmm.address,
       1,
-      [tokenA.address, tokenB.address],
+      tokens,
       ethers.constants.AddressZero
     );
     protocol = await TestAbstractProtocol.deploy(
@@ -235,22 +238,101 @@ describe("GammaPool", function () {
 
   // You can nest describe calls to create subsections.
   describe("Long Gamma", function () {
-    it("Create & View Loan", async function () {});
+    it("Create & View Loan", async function () {
+      const res = await (await gammaPool.createLoan()).wait();
+      expect(res.events[0].args.caller).to.eq(owner.address);
+      const abi = ethers.utils.defaultAbiCoder;
+      const data = abi.encode(
+        ["address", "address", "uint256"], // encode as address array
+        [owner.address, gammaPool.address, 1]
+      );
+      const tokenId = ethers.BigNumber.from(ethers.utils.keccak256(data));
+      expect(res.events[0].args.tokenId).to.eq(tokenId);
+
+      const loan = await gammaPool.loan(tokenId);
+      expect(loan.id).to.eq(1);
+      expect(loan.poolId).to.eq(gammaPool.address);
+      expect(loan.tokensHeld.length).to.eq(tokens.length);
+      expect(loan.tokensHeld[0]).to.eq(0);
+      expect(loan.tokensHeld[1]).to.eq(0);
+      expect(loan.liquidity).to.eq(0);
+      expect(loan.rateIndex).to.eq(ethers.BigNumber.from(10).pow(18));
+      expect(loan.blockNum).to.gt(0);
+    });
+
+    it("Update Loan", async function () {
+      const abi = ethers.utils.defaultAbiCoder;
+      const data = abi.encode(
+        ["address", "address", "uint256"], // encode as address array
+        [owner.address, gammaPool.address, 1]
+      );
+      const tokenId = ethers.BigNumber.from(ethers.utils.keccak256(data));
+
+      const res0 = await (await gammaPool.increaseCollateral(tokenId)).wait();
+      expect(res0.events[0].args.tokenId).to.eq(tokenId);
+      expect(res0.events[0].args.tokensHeld.length).to.eq(2);
+      expect(res0.events[0].args.tokensHeld[0]).to.eq(1);
+      expect(res0.events[0].args.tokensHeld[1]).to.eq(tokenId);
+      expect(res0.events[0].args.heldLiquidity).to.eq(10);
+      expect(res0.events[0].args.liquidity).to.eq(11);
+      expect(res0.events[0].args.lpTokens).to.eq(12);
+      expect(res0.events[0].args.rateIndex).to.eq(13);
+
+      const res1 = await (
+        await gammaPool.decreaseCollateral(tokenId, [100, 200], addr1.address)
+      ).wait();
+      expect(res1.events[0].args.tokenId).to.eq(tokenId);
+      expect(res1.events[0].args.tokensHeld.length).to.eq(2);
+      expect(res1.events[0].args.tokensHeld[0]).to.eq(100);
+      expect(res1.events[0].args.tokensHeld[1]).to.eq(200);
+      expect(res1.events[0].args.heldLiquidity).to.eq(20);
+      expect(res1.events[0].args.liquidity).to.eq(21);
+      expect(res1.events[0].args.lpTokens).to.eq(22);
+      expect(res1.events[0].args.rateIndex).to.eq(23);
+
+      const res2 = await (await gammaPool.borrowLiquidity(tokenId, 300)).wait();
+      expect(res2.events[0].args.tokenId).to.eq(tokenId);
+      expect(res2.events[0].args.tokensHeld.length).to.eq(2);
+      expect(res2.events[0].args.tokensHeld[0]).to.eq(tokenId);
+      expect(res2.events[0].args.tokensHeld[1]).to.eq(300);
+      expect(res2.events[0].args.heldLiquidity).to.eq(30);
+      expect(res2.events[0].args.liquidity).to.eq(31);
+      expect(res2.events[0].args.lpTokens).to.eq(32);
+      expect(res2.events[0].args.rateIndex).to.eq(33);
+
+      const res3 = await (await gammaPool.repayLiquidity(tokenId, 400)).wait();
+      expect(res3.events[0].args.tokenId).to.eq(tokenId);
+      expect(res3.events[0].args.tokensHeld.length).to.eq(2);
+      expect(res3.events[0].args.tokensHeld[0]).to.eq(9);
+      expect(res3.events[0].args.tokensHeld[1]).to.eq(10);
+      expect(res3.events[0].args.heldLiquidity).to.eq(tokenId);
+      expect(res3.events[0].args.liquidity).to.eq(400);
+      expect(res3.events[0].args.lpTokens).to.eq(42);
+      expect(res3.events[0].args.rateIndex).to.eq(43);
+
+      const res4 = await (
+        await gammaPool.rebalanceCollateral(tokenId, [500, 600])
+      ).wait();
+      expect(res4.events[0].args.tokenId).to.eq(tokenId);
+      expect(res4.events[0].args.tokensHeld.length).to.eq(2);
+      expect(res4.events[0].args.tokensHeld[0]).to.eq(500);
+      expect(res4.events[0].args.tokensHeld[1]).to.eq(600);
+      expect(res4.events[0].args.heldLiquidity).to.eq(tokenId);
+      expect(res4.events[0].args.liquidity).to.eq(51);
+      expect(res4.events[0].args.lpTokens).to.eq(52);
+      expect(res4.events[0].args.rateIndex).to.eq(53);
+
+      const res5 = await (
+        await gammaPool.rebalanceCollateralWithLiquidity(tokenId, 700)
+      ).wait();
+      expect(res5.events[0].args.tokenId).to.eq(tokenId);
+      expect(res5.events[0].args.tokensHeld.length).to.eq(2);
+      expect(res5.events[0].args.tokensHeld[0]).to.eq(tokenId);
+      expect(res5.events[0].args.tokensHeld[1]).to.eq(700);
+      expect(res5.events[0].args.heldLiquidity).to.eq(701);
+      expect(res5.events[0].args.liquidity).to.eq(61);
+      expect(res5.events[0].args.lpTokens).to.eq(62);
+      expect(res5.events[0].args.rateIndex).to.eq(63);
+    });
   });
 });
-
-// If the callback function is async, Mocha will `await` it.
-/* it("Should set the right owner", async function () {
-  // Expect receives a value, and wraps it in an assertion objet. These
-  // objects have a lot of utility methods to assert values.
-
-  // This test expects the owner variable stored in the contract to be equal
-  // to our Signer's owner.
-  expect(await tokenA.owner()).to.equal(owner.address);
-  expect(await tokenB.owner()).to.equal(owner.address);
-});
-
-it("Should assign the total supply of tokens to the owner", async function () {
-  const ownerBalance = await tokenA.balanceOf(owner.address);
-  expect(await tokenA.totalSupply()).to.equal(ownerBalance);
-});/**/

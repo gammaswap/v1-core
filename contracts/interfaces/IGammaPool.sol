@@ -2,6 +2,10 @@
 pragma solidity ^0.8.0;
 
 interface IGammaPool {
+
+    event LoanCreated(address indexed caller, uint256 tokenId);
+    event LoanUpdated(uint256 indexed tokenId, uint256[] tokensHeld, uint256 heldLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
+
     function cfmm() external view returns(address);
     function protocolId() external view returns(uint24);
     function protocol() external view returns(address);

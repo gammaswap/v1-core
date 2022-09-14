@@ -184,8 +184,9 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
 
     /*****LONG*****/
-    function createLoan() external virtual override lock returns(uint256) {
-        return GammaPoolStorage.createLoan();
+    function createLoan() external virtual override lock returns(uint256 tokenId) {
+        tokenId = GammaPoolStorage.createLoan();
+        emit LoanCreated(msg.sender, tokenId);
     }
 
     function loan(uint256 tokenId) external virtual override view returns (uint256 id, address poolId,
