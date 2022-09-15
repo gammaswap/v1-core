@@ -6,6 +6,8 @@ contract TestERC20Strategy is IShortStrategy{
 
     event Transfer(address indexed from, address indexed to, uint256 value);
 
+    bytes4 private constant BALANCE_OF = bytes4(keccak256(bytes('balanceOf(address)')));
+
     function _depositNoPull(address to) external override returns(uint256) {
         return 0;
     }
@@ -35,8 +37,10 @@ contract TestERC20Strategy is IShortStrategy{
         return 0;
     }
 
-    function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 lpBorrowed, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum) external override pure returns(uint256) {
-        return 0;
+    function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 lpBorrowed, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum) external override view returns(uint256) {
+        (bool success, bytes memory data) = address(cfmm).staticcall(abi.encodeWithSelector(BALANCE_OF, msg.sender));
+        require(success && data.length >= 32);
+        return abi.decode(data, (uint256));
     }
 
     /***** ERC4626 Functions *****/
