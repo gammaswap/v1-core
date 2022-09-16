@@ -109,9 +109,9 @@ describe("GammaPoolERC20", function () {
       const _balance = await gammaPool.balanceOf(addr1.address);
       const amt = 1000;
       const res0 = await (await gammaPool.mint(amt, addr1.address)).wait();
-      expect(res0.events[0].args.from).to.eq(ethers.constants.AddressZero);
-      expect(res0.events[0].args.to).to.eq(addr1.address);
-      expect(res0.events[0].args.value).to.eq(amt);
+      expect(res0.events[1].args.from).to.eq(ethers.constants.AddressZero);
+      expect(res0.events[1].args.to).to.eq(addr1.address);
+      expect(res0.events[1].args.value).to.eq(amt);
       expect(await gammaPool.balanceOf(addr1.address)).to.equal(
         _balance.add(amt)
       );

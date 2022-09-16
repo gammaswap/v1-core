@@ -11,7 +11,7 @@ interface IShortStrategy {
     function calcFeeIndex(address cfmm, uint256 borrowRate, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum)
         external view returns(uint256 lastFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply);
     function calcBorrowedLPTokensPlusInterest(uint256 borrowedInvariant, uint256 lastFeeIndex, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) external pure returns(uint256);
-    function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 lpBorrowed, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum) external view returns(uint256);
+    function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 lpBorrowed, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum) external view returns(uint256);
 
     /***** ERC4626 Functions *****/
 

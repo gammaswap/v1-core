@@ -76,6 +76,12 @@ describe("GammaPool", function () {
     );
     await factory.setProtocol(protocol.address);
 
+    const COMPUTED_INIT_CODE_HASH = ethers.utils.keccak256(
+        GammaPool.bytecode
+    );
+    expect(COMPUTED_INIT_CODE_HASH).to.equal(
+      await addressCalculator.getInitCodeHash()
+    );
     await deployGammaPool();
   });
 
@@ -149,46 +155,7 @@ describe("GammaPool", function () {
 
   // You can nest describe calls to create subsections.
   describe("Short Gamma", function () {
-    it("ERC4626 Functions in GammaPool", async function () {
-      const ONE = ethers.BigNumber.from(10).pow(18);
-      expect(await gammaPool.totalAssets()).to.equal(ONE.mul(1000));
-
-      const res0 = await (
-        await gammaPool.deposit(ONE.mul(2), addr1.address)
-      ).wait();
-      expect(res0.events[0].args.caller).to.eq(owner.address);
-      expect(res0.events[0].args.to).to.eq(addr1.address);
-      expect(res0.events[0].args.assets).to.eq(ONE.mul(2));
-      expect(res0.events[0].args.shares).to.eq(ONE.mul(3));
-
-      const res1 = await (
-        await gammaPool.mint(ONE.mul(3), addr2.address)
-      ).wait();
-      expect(res1.events[0].args.caller).to.eq(owner.address);
-      expect(res1.events[0].args.to).to.eq(addr2.address);
-      expect(res1.events[0].args.assets).to.eq(ONE.mul(4));
-      expect(res1.events[0].args.shares).to.eq(ONE.mul(3));
-
-      const res2 = await (
-        await gammaPool.withdraw(ONE.mul(4), addr2.address, addr3.address)
-      ).wait();
-      expect(res2.events[0].args.caller).to.eq(owner.address);
-      expect(res2.events[0].args.to).to.eq(addr2.address);
-      expect(res2.events[0].args.from).to.eq(addr3.address);
-      expect(res2.events[0].args.assets).to.eq(ONE.mul(4));
-      expect(res2.events[0].args.shares).to.eq(ONE.mul(5));
-
-      const res3 = await (
-        await gammaPool.redeem(ONE.mul(5), addr2.address, addr1.address)
-      ).wait();
-      expect(res3.events[0].args.caller).to.eq(owner.address);
-      expect(res3.events[0].args.to).to.eq(addr2.address);
-      expect(res3.events[0].args.from).to.eq(addr1.address);
-      expect(res3.events[0].args.assets).to.eq(ONE.mul(6));
-      expect(res3.events[0].args.shares).to.eq(ONE.mul(5));
-    });
-
-    it("Non ERC4626 Functions", async function () {
+    it("Deposit & Withdraw Liquidity", async function () {
       const res0 = await (await gammaPool.depositNoPull(addr1.address)).wait();
       expect(res0.events[0].args.caller).to.eq(owner.address);
       expect(res0.events[0].args.to).to.eq(addr1.address);

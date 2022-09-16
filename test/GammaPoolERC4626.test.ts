@@ -18,6 +18,8 @@ describe("GammaPoolERC4626", function () {
   let cfmm: any;
   let owner: any;
   let addr1: any;
+  let addr2: any;
+  let addr3: any;
   let longStrategy: any;
   let shortStrategy: any;
   let gammaPool: any;
@@ -36,7 +38,7 @@ describe("GammaPoolERC4626", function () {
       "TestAbstractProtocol"
     );
     GammaPool = await ethers.getContractFactory("GammaPool");
-    [owner, addr1] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3] = await ethers.getSigners();
 
     TestShortStrategy = await ethers.getContractFactory("TestERC20Strategy");
 
@@ -167,6 +169,49 @@ describe("GammaPoolERC4626", function () {
     it("Check Init Params", async function () {
       expect(await gammaPool.asset()).to.equal(cfmm.address);
       expect(await gammaPool.asset()).to.equal(await gammaPool.cfmm());
+    });
+  });
+
+  // You can nest describe calls to create subsections.
+  describe("Short Gamma Functions", function () {
+    it("ERC4626 Functions in GammaPool", async function () {
+      const ONE = ethers.BigNumber.from(10).pow(18);
+      await cfmm.transfer(gammaPool.address, ONE.mul(1000));
+      expect(await gammaPool.totalAssets()).to.equal(ONE.mul(1000));
+
+      const res0 = await (
+        await gammaPool.deposit(ONE.mul(2), addr1.address)
+      ).wait();
+      expect(res0.events[0].args.caller).to.eq(owner.address);
+      expect(res0.events[0].args.to).to.eq(addr1.address);
+      expect(res0.events[0].args.assets).to.eq(ONE.mul(2));
+      expect(res0.events[0].args.shares).to.eq(ONE.mul(3));
+
+      const res1 = await (
+        await gammaPool.mint(ONE.mul(3), addr2.address)
+      ).wait();
+      expect(res1.events[0].args.caller).to.eq(owner.address);
+      expect(res1.events[0].args.to).to.eq(addr2.address);
+      expect(res1.events[0].args.assets).to.eq(ONE.mul(4));
+      expect(res1.events[0].args.shares).to.eq(ONE.mul(3));
+
+      const res2 = await (
+        await gammaPool.withdraw(ONE.mul(4), addr2.address, addr3.address)
+      ).wait();
+      expect(res2.events[0].args.caller).to.eq(owner.address);
+      expect(res2.events[0].args.to).to.eq(addr2.address);
+      expect(res2.events[0].args.from).to.eq(addr3.address);
+      expect(res2.events[0].args.assets).to.eq(ONE.mul(4));
+      expect(res2.events[0].args.shares).to.eq(ONE.mul(5));
+
+      const res3 = await (
+        await gammaPool.redeem(ONE.mul(5), addr2.address, addr1.address)
+      ).wait();
+      expect(res3.events[0].args.caller).to.eq(owner.address);
+      expect(res3.events[0].args.to).to.eq(addr2.address);
+      expect(res3.events[0].args.from).to.eq(addr1.address);
+      expect(res3.events[0].args.assets).to.eq(ONE.mul(6));
+      expect(res3.events[0].args.shares).to.eq(ONE.mul(5));
     });
   });
 
