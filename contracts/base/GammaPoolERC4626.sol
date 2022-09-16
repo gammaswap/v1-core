@@ -8,7 +8,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     event Deposit(address indexed caller, address indexed to, uint256 assets, uint256 shares);
     event Withdraw(address indexed caller, address indexed to, address indexed from, uint256 assets, uint256 shares);
 
-    function asset() public virtual view returns(address) {
+    function asset() external virtual view returns(address) {
         return GammaPoolStorage.store().cfmm;
     }
 
@@ -24,8 +24,9 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
 
     function convertToShares(uint256 assets) public view virtual returns (uint256) {
         uint256 supply = totalSupply();
+        uint256 _assets = totalAssets();
 
-        return supply == 0 || assets == 0 ? assets : (assets * supply) / totalAssets();
+        return supply == 0 || _assets == 0 ? assets : (assets * supply) / _assets;
     }
 
     function convertToAssets(uint256 shares) public view virtual returns (uint256) {

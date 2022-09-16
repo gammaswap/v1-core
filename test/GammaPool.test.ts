@@ -75,6 +75,8 @@ describe("GammaPool", function () {
       3
     );
     await factory.setProtocol(protocol.address);
+
+    await deployGammaPool();
   });
 
   async function deployGammaPool() {
@@ -102,8 +104,6 @@ describe("GammaPool", function () {
     });
 
     it("Check Init Params", async function () {
-      await deployGammaPool();
-
       expect(await gammaPool.cfmm()).to.equal(cfmm.address);
       expect(await gammaPool.protocolId()).to.equal(1);
       expect(await gammaPool.protocol()).to.equal(protocol.address);
@@ -150,8 +150,6 @@ describe("GammaPool", function () {
   // You can nest describe calls to create subsections.
   describe("Short Gamma", function () {
     it("ERC4626 Functions in GammaPool", async function () {
-      await deployGammaPool();
-
       const ONE = ethers.BigNumber.from(10).pow(18);
       expect(await gammaPool.totalAssets()).to.equal(ONE.mul(1000));
 
@@ -191,8 +189,6 @@ describe("GammaPool", function () {
     });
 
     it("Non ERC4626 Functions", async function () {
-      await deployGammaPool();
-
       const res0 = await (await gammaPool.depositNoPull(addr1.address)).wait();
       expect(res0.events[0].args.caller).to.eq(owner.address);
       expect(res0.events[0].args.to).to.eq(addr1.address);

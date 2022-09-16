@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 library AddressCalculator {
     // update this value if GammaPool gets updated
-    bytes32 internal constant GAMMA_POOL_INIT_CODE_HASH = 0x7005f0c1742bcf08545f149dde9c2c65fa1d111c713e0efeb9d1153266739818;
+    bytes32 internal constant GAMMA_POOL_INIT_CODE_HASH = 0xfa73d561d7090e1b387df22f2f36b9dbb42877fd0e6ad156df24254156027cab;
 
     function getGammaPoolKey(address cfmm, uint24 protocol) internal pure returns(bytes32) {
         return keccak256(abi.encode(cfmm, protocol));

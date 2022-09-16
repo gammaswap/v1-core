@@ -68,6 +68,7 @@ describe("GammaPoolERC20", function () {
     );
 
     await factory.setProtocol(protocol.address);
+    await deployGammaPool();
   });
 
   async function deployGammaPool() {
@@ -86,7 +87,6 @@ describe("GammaPoolERC20", function () {
 
   describe("Deployment", function () {
     it("Check Init Params", async function () {
-      await deployGammaPool();
       expect(gammaPool.address).to.not.equal(ethers.constants.AddressZero);
       expect(await gammaPool.name()).to.equal("GammaSwap V1");
       expect(await gammaPool.symbol()).to.equal("GAMA-V1");
@@ -101,7 +101,6 @@ describe("GammaPoolERC20", function () {
 
   describe("Check Write Functions", function () {
     it("Check Deployed Pool", async function () {
-      await deployGammaPool();
       expect(gammaPool.address).to.not.equal(ethers.constants.AddressZero);
     });
 

@@ -18,11 +18,6 @@ describe("GammaPoolERC4626", function () {
   let cfmm: any;
   let owner: any;
   let addr1: any;
-  let addr2: any;
-  let addr3: any;
-  let addr4: any;
-  let addr5: any;
-  let addr6: any;
   let longStrategy: any;
   let shortStrategy: any;
   let gammaPool: any;
@@ -41,8 +36,7 @@ describe("GammaPoolERC4626", function () {
       "TestAbstractProtocol"
     );
     GammaPool = await ethers.getContractFactory("GammaPool");
-    [owner, addr1, addr2, addr3, addr4, addr5, addr6] =
-      await ethers.getSigners();
+    [owner, addr1] = await ethers.getSigners();
 
     TestShortStrategy = await ethers.getContractFactory("TestERC20Strategy");
 
@@ -59,7 +53,7 @@ describe("GammaPoolERC4626", function () {
       ethers.constants.AddressZero
     );
 
-    longStrategy = addr6;
+    longStrategy = addr1;
     protocol = await TestAbstractProtocol.deploy(
       factory.address,
       PROTOCOL_ID,
@@ -70,6 +64,7 @@ describe("GammaPoolERC4626", function () {
     );
 
     await factory.setProtocol(protocol.address);
+    await deployGammaPool();
   });
 
   async function deployGammaPool() {
@@ -170,7 +165,6 @@ describe("GammaPoolERC4626", function () {
 
   describe("Deployment", function () {
     it("Check Init Params", async function () {
-      await deployGammaPool();
       expect(await gammaPool.asset()).to.equal(cfmm.address);
       expect(await gammaPool.asset()).to.equal(await gammaPool.cfmm());
     });
@@ -178,7 +172,6 @@ describe("GammaPoolERC4626", function () {
 
   describe("Check Max Functions", function () {
     it("Check maxDeposit & maxMint, supply == 0", async function () {
-      await deployGammaPool();
       const ONE = BigNumber.from(10).pow(18);
 
       // supply == 0, (assets == 0, shares == 0)
@@ -205,7 +198,6 @@ describe("GammaPoolERC4626", function () {
     });
 
     it("Check maxDeposit & maxMint, supply > 0", async function () {
-      await deployGammaPool();
       const ONE = BigNumber.from(10).pow(18);
 
       // supply > 0, (assets == 0, shares > 0)
@@ -237,7 +229,6 @@ describe("GammaPoolERC4626", function () {
     });
 
     it("Check maxWithdraw & maxRedeem, supply == 0", async function () {
-      await deployGammaPool();
       const ONE = BigNumber.from(10).pow(18);
 
       // supply == 0, (assets == 0, shares == 0)
@@ -272,7 +263,6 @@ describe("GammaPoolERC4626", function () {
     });
 
     it("Check maxWithdraw & maxRedeem, supply > 0", async function () {
-      await deployGammaPool();
       const ONE = BigNumber.from(10).pow(18);
 
       // supply > 0, (assets == 0, shares > 0)
@@ -313,7 +303,6 @@ describe("GammaPoolERC4626", function () {
 
   describe("Conversion Functions", function () {
     it("Check convertToShares & convertToAssets, supply == 0", async function () {
-      await deployGammaPool();
       const ONE = BigNumber.from(10).pow(18);
 
       // supply == 0, (assets == 0, shares == 0)
@@ -358,7 +347,6 @@ describe("GammaPoolERC4626", function () {
     });
 
     it("Check convertToShares & convertToAssets, supply > 0", async function () {
-      await deployGammaPool();
       const ONE = BigNumber.from(10).pow(18);
 
       // supply > 0, (assets == 0, shares > 0)
@@ -428,7 +416,6 @@ describe("GammaPoolERC4626", function () {
 
   describe("Preview Functions", function () {
     it("Check previewDeposit & previewMint, supply == 0", async function () {
-      await deployGammaPool();
       const ONE = BigNumber.from(10).pow(18);
 
       // supply == 0, (assets == 0, shares == 0)
@@ -473,7 +460,6 @@ describe("GammaPoolERC4626", function () {
     });
 
     it("Check previewDeposit & previewMint, supply > 0", async function () {
-      await deployGammaPool();
       const ONE = BigNumber.from(10).pow(18);
 
       // supply > 0, (assets == 0, shares > 0)
@@ -541,7 +527,6 @@ describe("GammaPoolERC4626", function () {
     });
 
     it("Check previewWithdraw and previewRedeem, supply == 0", async function () {
-      await deployGammaPool();
       const ONE = BigNumber.from(10).pow(18);
 
       // supply == 0, (assets == 0, shares == 0)
@@ -586,7 +571,6 @@ describe("GammaPoolERC4626", function () {
     });
 
     it("Check previewWithdraw and previewRedeem, supply > 0", async function () {
-      await deployGammaPool();
       const ONE = BigNumber.from(10).pow(18);
 
       // supply > 0, (assets == 0, shares > 0)
