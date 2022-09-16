@@ -20,7 +20,7 @@ abstract contract GammaPoolERC20 {
         return GammaPoolStorage.store().decimals;
     }
 
-    function totalSupply() external virtual view returns (uint256) {
+    function totalSupply() public virtual view returns (uint256) {
         return GammaPoolStorage.store().totalSupply;
     }
 

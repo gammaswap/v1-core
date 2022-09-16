@@ -23,13 +23,13 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     function totalAssets() public view virtual returns (uint256);
 
     function convertToShares(uint256 assets) public view virtual returns (uint256) {
-        uint256 supply = GammaPoolStorage.store().totalSupply;
+        uint256 supply = totalSupply();
 
-        return supply == 0 ? assets : (assets * supply) / totalAssets();
+        return supply == 0 || assets == 0 ? assets : (assets * supply) / totalAssets();
     }
 
     function convertToAssets(uint256 shares) public view virtual returns (uint256) {
-        uint256 supply = GammaPoolStorage.store().totalSupply;
+        uint256 supply = totalSupply();
 
         return supply == 0 ? shares : (shares * totalAssets()) / supply;
     }
@@ -39,15 +39,11 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     }
 
     function previewMint(uint256 shares) public view virtual returns (uint256) {
-        uint256 supply = GammaPoolStorage.store().totalSupply;
-
-        return supply == 0 ? shares : (shares * totalAssets()) / supply;
+        return convertToAssets(shares);
     }
 
     function previewWithdraw(uint256 assets) public view virtual returns (uint256) {
-        uint256 supply = GammaPoolStorage.store().totalSupply;
-
-        return supply == 0 ? assets : (assets * supply) / totalAssets();
+        return convertToShares(assets);
     }
 
     function previewRedeem(uint256 shares) public view virtual returns (uint256) {
@@ -55,7 +51,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     }
 
     function maxDeposit(address) public view virtual returns (uint256) {
-        return type(uint256).max;
+        return totalAssets() > 0 || totalSupply() == 0 ? type(uint256).max : 0;
     }
 
     function maxMint(address) public view virtual returns (uint256) {

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "./interfaces/IGammaPoolFactory.sol";
 import "./interfaces/IGammaPool.sol";
 import "./interfaces/strategies/base/IShortStrategy.sol";
 import "./interfaces/strategies/base/ILongStrategy.sol";
@@ -153,7 +152,6 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     /*********ERC4626 Functions End********/
-
     function depositNoPull(address to) external virtual override returns(uint256 shares) {
         (bool success, bytes memory result) = GammaPoolStorage.store().shortStrategy.delegatecall(abi.encodeWithSelector(
                 IShortStrategy(GammaPoolStorage.store().shortStrategy)._depositNoPull.selector, to));
@@ -181,7 +179,6 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
         require(success);
         return abi.decode(result, (uint256[],uint256));
     }
-
 
     /*****LONG*****/
     function createLoan() external virtual override lock returns(uint256 tokenId) {

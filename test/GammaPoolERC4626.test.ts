@@ -86,25 +86,14 @@ describe("GammaPoolERC4626", function () {
     );
   }
 
-  describe("Deployment", function () {
-    it("Check Init Params", async function () {
-      await deployGammaPool();
-      expect(await gammaPool.asset()).to.equal(cfmm.address);
-      expect(await gammaPool.maxDeposit(owner.address)).to.equal(
-        ethers.constants.MaxUint256
-      );
-      expect(await gammaPool.maxMint(owner.address)).to.equal(
-        ethers.constants.MaxUint256
-      );
-    });
-  });
-
   async function convertToShares(
     assets: BigNumber,
     supply: BigNumber,
     totalAssets: BigNumber
   ): Promise<BigNumber> {
-    return supply.eq(0) ? assets : assets.mul(supply).div(totalAssets);
+    return supply.eq(0) || totalAssets.eq(0)
+      ? assets
+      : assets.mul(supply).div(totalAssets);
   }
 
   async function convertToAssets(
@@ -115,363 +104,553 @@ describe("GammaPoolERC4626", function () {
     return supply.eq(0) ? shares : shares.mul(totalAssets).div(supply);
   }
 
-  /**
-   function convertToAssets(uint256 shares) public view virtual returns (uint256) {
-      uint256 supply = GammaPoolStorage.store().totalSupply;
-
-      return supply == 0 ? shares : (shares * totalAssets()) / supply;
-    }/**/
+  // increase totalAssets by assets, increase totalSupply by shares
   async function updateBalances(assets: BigNumber, shares: BigNumber) {
-    await cfmm.transfer(gammaPool.address, assets);
-    expect(await gammaPool.totalAssets()).to.be.equal(
-      await cfmm.balanceOf(gammaPool.address)
+    const _totalAssets = await gammaPool.totalAssets();
+    if (assets.gt(0)) await cfmm.transfer(gammaPool.address, assets); // increase totalAssets of gammaPool
+
+    expect(await gammaPool.totalAssets()).to.be.equal(_totalAssets.add(assets));
+    expect(await cfmm.balanceOf(gammaPool.address)).to.be.equal(
+      _totalAssets.add(assets)
     );
+
     const _totalSupply = await gammaPool.totalSupply();
-    await (await gammaPool.mint(shares, owner.address)).wait(); // minted 1000 to owner
-    await (await gammaPool.mint(shares.mul(2), addr1.address)).wait(); // minted 1000 to owner
-    expect(await gammaPool.totalSupply()).to.be.equal(
-      _totalSupply.add(shares).add(shares.mul(2))
-    );
+
+    if (shares.gt(0))
+      await (await gammaPool.mint(shares, owner.address)).wait(); // increase totalSupply of gammaPool
+
+    expect(await gammaPool.totalSupply()).to.be.equal(_totalSupply.add(shares));
   }
 
-  async function testConvertToShares(assets: BigNumber): Promise<BigNumber> {
+  async function testConvertToShares(
+    assets: BigNumber,
+    convert2Shares: Function,
+    convert2Assets: Function
+  ): Promise<BigNumber> {
     const totalSupply = await gammaPool.totalSupply();
     const totalAssets = await gammaPool.totalAssets();
-    const convertedShares = await convertToShares(
+    const convertedToShares = await convertToShares(
       assets,
       totalSupply,
       totalAssets
     );
-    console.log("convertedShares >>");
-    console.log(convertedShares);
 
-    const _convertedShares = await gammaPool.convertToShares(assets);
-    console.log("_convertedShares >>");
-    console.log(_convertedShares);
+    const _convertedToShares = await convert2Shares(assets);
 
-    expect(await gammaPool.convertToShares(assets)).to.be.equal(
-      convertedShares
+    expect(_convertedToShares).to.be.equal(convertedToShares);
+    expect(await convert2Assets(convertedToShares)).to.be.equal(
+      await convertToAssets(convertedToShares, totalSupply, totalAssets)
     );
-    return convertedShares;
+
+    return convertedToShares;
   }
 
-  async function testConvertToAssets(shares: BigNumber): Promise<BigNumber> {
+  async function testConvertToAssets(
+    shares: BigNumber,
+    convert2Assets: Function,
+    convert2Shares: Function
+  ): Promise<BigNumber> {
     const totalSupply = await gammaPool.totalSupply();
     const totalAssets = await gammaPool.totalAssets();
-    const convertedAssets = await convertToAssets(
+    const convertedToAssets = await convertToAssets(
       shares,
       totalSupply,
       totalAssets
     );
-    console.log("convertedAssets >>");
-    console.log(convertedAssets);
 
-    const _convertedToAssets = await gammaPool.convertToAssets(shares);
-    console.log("_convertedToAssets >>");
-    console.log(_convertedToAssets);
+    const _convertedToAssets = await convert2Assets(shares);
 
-    expect(await gammaPool.convertToAssets(shares)).to.be.equal(
-      convertedAssets
+    expect(_convertedToAssets).to.be.equal(convertedToAssets);
+    expect(await convert2Shares(convertedToAssets)).to.be.equal(
+      await convertToShares(convertedToAssets, totalSupply, totalAssets)
     );
-    return convertedAssets;
+
+    return convertedToAssets;
   }
 
-  describe("View Functions", function () {
-    it("Check Max Redeem", async function () {
+  describe("Deployment", function () {
+    it("Check Init Params", async function () {
       await deployGammaPool();
-      const balanceOwner = await gammaPool.balanceOf(owner.address);
-      const balanceAddr1 = await gammaPool.balanceOf(addr1.address);
-      await (await gammaPool.mint(1000, owner.address)).wait(); // minted 1000 to owner
-      await (await gammaPool.mint(2000, addr1.address)).wait(); // minted 1000 to owner
-      expect(await gammaPool.maxRedeem(owner.address)).to.equal(
-        balanceOwner.add(1000)
-      );
-      expect(await gammaPool.maxRedeem(addr1.address)).to.equal(
-        balanceAddr1.add(2000)
-      );
-      expect(await gammaPool.maxRedeem(addr1.address)).to.not.equal(
-        balanceAddr1.add(3000)
-      );
+      expect(await gammaPool.asset()).to.equal(cfmm.address);
+      expect(await gammaPool.asset()).to.equal(await gammaPool.cfmm());
     });
+  });
 
-    it("Check Total Assets & Total Supply", async function () {
+  describe("Check Max Functions", function () {
+    it("Check maxDeposit & maxMint, supply == 0", async function () {
       await deployGammaPool();
       const ONE = BigNumber.from(10).pow(18);
 
-      console.log("totalSupply >>");
-      console.log(await gammaPool.totalSupply());
+      // supply == 0, (assets == 0, shares == 0)
+      expect(await gammaPool.totalSupply()).to.be.equal(0);
+      expect(await gammaPool.maxDeposit(ethers.constants.AddressZero)).to.equal(
+        ethers.constants.MaxUint256
+      );
+      expect(await gammaPool.maxMint(owner.address)).to.equal(
+        ethers.constants.MaxUint256
+      );
 
-      const assets = ONE.mul(1000);
-      const shares = ONE.mul(100);
+      // supply == 0, (assets > 0, shares == 0)
+      const assets0 = ONE.mul(1000);
+      const shares0 = ONE.mul(0);
 
-      expect(await testConvertToShares(assets)).to.be.equal(assets);
-      expect(await testConvertToAssets(shares)).to.be.equal(shares);
+      await updateBalances(assets0, shares0);
 
-      await updateBalances(assets, shares);
-
-      console.log("totalSupply2 >>");
-      console.log(await gammaPool.totalSupply());
-
-      expect(await testConvertToShares(assets)).to.not.equal(assets);
-      expect(await testConvertToAssets(shares)).to.not.equal(shares);
-
-      const _shares = shares.mul(2);
-      await updateBalances(assets, _shares);
-      expect(await testConvertToShares(assets)).to.not.equal(assets);
-      expect(await testConvertToAssets(shares)).to.not.equal(shares);
+      expect(await gammaPool.maxDeposit(ethers.constants.AddressZero)).to.equal(
+        ethers.constants.MaxUint256
+      );
+      expect(await gammaPool.maxMint(owner.address)).to.equal(
+        ethers.constants.MaxUint256
+      );
     });
 
+    it("Check maxDeposit & maxMint, supply > 0", async function () {
+      await deployGammaPool();
+      const ONE = BigNumber.from(10).pow(18);
+
+      // supply > 0, (assets == 0, shares > 0)
+      const assets0 = ONE.mul(0);
+      const shares0 = ONE.mul(1000);
+
+      await updateBalances(assets0, shares0);
+
+      expect(await gammaPool.totalSupply()).to.be.gt(0);
+      expect(await gammaPool.maxDeposit(ethers.constants.AddressZero)).to.equal(
+        0
+      );
+      expect(await gammaPool.maxMint(owner.address)).to.equal(
+        ethers.constants.MaxUint256
+      );
+
+      // supply > 0, (assets > 0, shares > 0)
+      const assets1 = ONE.mul(1000);
+      const shares1 = ONE.mul(200);
+
+      await updateBalances(assets1, shares1);
+
+      expect(await gammaPool.maxDeposit(ethers.constants.AddressZero)).to.equal(
+        ethers.constants.MaxUint256
+      );
+      expect(await gammaPool.maxMint(owner.address)).to.equal(
+        ethers.constants.MaxUint256
+      );
+    });
+
+    it("Check maxWithdraw & maxRedeem, supply == 0", async function () {
+      await deployGammaPool();
+      const ONE = BigNumber.from(10).pow(18);
+
+      // supply == 0, (assets == 0, shares == 0)
+      const balanceOwner = await gammaPool.balanceOf(owner.address);
+
+      expect(balanceOwner).to.be.equal(0);
+      expect(await gammaPool.totalAssets()).to.be.equal(0);
+      expect(await gammaPool.totalSupply()).to.be.equal(0);
+      expect(await gammaPool.maxWithdraw(owner.address)).to.be.equal(
+        await gammaPool.convertToAssets(balanceOwner)
+      );
+      expect(await gammaPool.maxRedeem(owner.address)).to.be.equal(
+        balanceOwner
+      );
+
+      // supply == 0, (assets > 0, shares == 0)
+      const assets0 = ONE.mul(1000);
+      const shares0 = ONE.mul(0);
+      await updateBalances(assets0, shares0);
+
+      const balanceOwner0 = await gammaPool.balanceOf(owner.address);
+
+      expect(balanceOwner0).to.be.eq(0);
+      expect(await gammaPool.totalAssets()).to.be.gt(0);
+      expect(await gammaPool.totalSupply()).to.be.equal(0);
+      expect(await gammaPool.maxWithdraw(owner.address)).to.be.equal(
+        await gammaPool.convertToAssets(balanceOwner0)
+      );
+      expect(await gammaPool.maxRedeem(owner.address)).to.be.equal(
+        balanceOwner0
+      );
+    });
+
+    it("Check maxWithdraw & maxRedeem, supply > 0", async function () {
+      await deployGammaPool();
+      const ONE = BigNumber.from(10).pow(18);
+
+      // supply > 0, (assets == 0, shares > 0)
+      const assets0 = ONE.mul(0);
+      const shares0 = ONE.mul(1000);
+      await updateBalances(assets0, shares0);
+
+      const balanceOwner = await gammaPool.balanceOf(owner.address);
+
+      expect(balanceOwner).to.be.gt(0);
+      expect(await gammaPool.totalAssets()).to.be.equal(0);
+      expect(await gammaPool.totalSupply()).to.be.gt(0);
+      expect(await gammaPool.maxWithdraw(owner.address)).to.be.equal(
+        await gammaPool.convertToAssets(balanceOwner)
+      );
+      expect(await gammaPool.maxRedeem(owner.address)).to.be.equal(
+        balanceOwner
+      );
+
+      // supply > 0, (assets > 0, shares > 0)
+      const assets1 = ONE.mul(1000);
+      const shares1 = ONE.mul(100);
+      await updateBalances(assets1, shares1);
+
+      const balanceOwner0 = await gammaPool.balanceOf(owner.address);
+
+      expect(balanceOwner0).to.be.gt(0);
+      expect(await gammaPool.totalAssets()).to.be.gt(0);
+      expect(await gammaPool.totalSupply()).to.be.gt(0);
+      expect(await gammaPool.maxWithdraw(owner.address)).to.be.equal(
+        await gammaPool.convertToAssets(balanceOwner0)
+      );
+      expect(await gammaPool.maxRedeem(owner.address)).to.be.equal(
+        balanceOwner0
+      );
+    });
   });
-  /*
 
-    function previewDeposit(uint256 assets) public view virtual returns (uint256) {
-        return convertToShares(assets);
-    }
+  describe("Conversion Functions", function () {
+    it("Check convertToShares & convertToAssets, supply == 0", async function () {
+      await deployGammaPool();
+      const ONE = BigNumber.from(10).pow(18);
 
-    function previewMint(uint256 shares) public view virtual returns (uint256) {
-        uint256 supply = GammaPoolStorage.store().totalSupply;
+      // supply == 0, (assets == 0, shares == 0)
+      const assets0 = ONE.mul(0);
+      const shares0 = ONE.mul(0);
 
-        return supply == 0 ? shares : (shares * totalAssets()) / supply;
-    }
+      expect(
+        await testConvertToShares(
+          assets0,
+          gammaPool.convertToShares,
+          gammaPool.convertToAssets
+        )
+      ).to.be.equal(assets0);
+      expect(
+        await testConvertToAssets(
+          shares0,
+          gammaPool.convertToAssets,
+          gammaPool.convertToShares
+        )
+      ).to.be.equal(shares0);
 
-    function previewWithdraw(uint256 assets) public view virtual returns (uint256) {
-        uint256 supply = GammaPoolStorage.store().totalSupply;
+      // supply == 0, (assets > 0, shares == 0)
+      const assets1 = ONE.mul(1000);
+      const shares1 = ONE.mul(0);
 
-        return supply == 0 ? assets : (assets * supply) / totalAssets();
-    }
+      await updateBalances(assets1, shares1);
 
-    function previewRedeem(uint256 shares) public view virtual returns (uint256) {
-        return convertToAssets(shares);
-    }
+      expect(
+        await testConvertToShares(
+          assets1,
+          gammaPool.convertToShares,
+          gammaPool.convertToAssets
+        )
+      ).to.be.equal(assets1);
+      expect(
+        await testConvertToAssets(
+          shares1,
+          gammaPool.convertToAssets,
+          gammaPool.convertToShares
+        )
+      ).to.be.equal(shares1);
+    });
 
-    function maxWithdraw(address owner) public view virtual returns (uint256) {
-        return convertToAssets(GammaPoolStorage.store().balanceOf[owner]);
-    }
+    it("Check convertToShares & convertToAssets, supply > 0", async function () {
+      await deployGammaPool();
+      const ONE = BigNumber.from(10).pow(18);
 
+      // supply > 0, (assets == 0, shares > 0)
+      const assets0 = ONE.mul(0);
+      const shares0 = ONE.mul(100);
 
+      await updateBalances(assets0, shares0);
 
+      expect(
+        await testConvertToShares(
+          assets0,
+          gammaPool.convertToShares,
+          gammaPool.convertToAssets
+        )
+      ).to.be.equal(assets0);
+      expect(
+        await testConvertToAssets(
+          shares0,
+          gammaPool.convertToAssets,
+          gammaPool.convertToShares
+        )
+      ).to.be.equal(0);
 
+      // supply > 0, (assets > 0, shares > 0)
+      const assets1 = ONE.mul(1000);
+      const shares1 = ONE.mul(100);
 
+      await updateBalances(assets1, shares1); // increase totalAssets by 1000, increase totalSupply by 100
 
-    describe("Check Write Functions", function () {
+      expect(
+        await testConvertToShares(
+          assets1,
+          gammaPool.convertToShares,
+          gammaPool.convertToAssets
+        )
+      ).to.not.equal(assets1);
+      expect(
+        await testConvertToAssets(
+          shares1,
+          gammaPool.convertToAssets,
+          gammaPool.convertToShares
+        )
+      ).to.not.equal(shares1);
 
-        it("Check Deployed Pool", async function () {
-            await deployGammaPool();
-            expect(gammaPool.address).to.not.equal(ethers.constants.AddressZero);
-        });
+      // supply > 0, (assets > 0, shares > 0)
+      const assets2 = ONE.mul(3000);
+      const shares2 = ONE.mul(200);
 
-        it("Check Balance Minted", async function () {
-            const _totalSupply = await gammaPool.totalSupply();
-            const _balance = await gammaPool.balanceOf(addr1.address);
-            const amt = 1000;
-            const res0 = await (await gammaPool.mint(amt, addr1.address)).wait();
-            expect(res0.events[0].args.from).to.eq(ethers.constants.AddressZero);
-            expect(res0.events[0].args.to).to.eq(addr1.address);
-            expect(res0.events[0].args.value).to.eq(amt);
-            expect(await gammaPool.balanceOf(addr1.address)).to.equal(
-                _balance.add(amt)
-            );
-            expect(await gammaPool.totalSupply()).to.equal(_totalSupply.add(amt));
-        });
+      await updateBalances(assets2, shares2); // increase totalAssets by 3000, increase totalSupply by 200
 
-        it("Check Balance Transfer", async function () {
-            await (await gammaPool.mint(1000, owner.address)).wait(); // minted 1000 to owner
-            const _totalSupply = await gammaPool.totalSupply();
-            const _balanceOwner = await gammaPool.balanceOf(owner.address); // get current owner balance
-            const _balanceAddr2 = await gammaPool.balanceOf(addr2.address); // get current addr2 balance
-            const amt = 100;
-            const res0 = await (await gammaPool.transfer(addr2.address, amt)).wait();
-            expect(res0.events[0].args.from).to.eq(owner.address);
-            expect(res0.events[0].args.to).to.eq(addr2.address);
-            expect(res0.events[0].args.value).to.eq(amt);
-            expect(await gammaPool.balanceOf(owner.address)).to.equal(
-                _balanceOwner.sub(amt)
-            );
-            expect(await gammaPool.balanceOf(addr2.address)).to.equal(
-                _balanceAddr2.add(amt)
-            );
-            expect(await gammaPool.totalSupply()).to.equal(_totalSupply);
-        });
+      expect(
+        await testConvertToShares(
+          assets2,
+          gammaPool.convertToShares,
+          gammaPool.convertToAssets
+        )
+      ).to.not.equal(assets2);
+      expect(
+        await testConvertToAssets(
+          shares2,
+          gammaPool.convertToAssets,
+          gammaPool.convertToShares
+        )
+      ).to.not.equal(shares2);
+    });
+  });
 
-        it("Check Balance Transfer Fail", async function () {
-            await (await gammaPool.mint(1000, owner.address)).wait(); // minted 1000 to owner
-            const _balanceOwner = await gammaPool.balanceOf(owner.address); // get current owner balance
-            const amt = _balanceOwner.add(1);
-            await expect(gammaPool.transfer(addr3.address, amt)).to.be.revertedWith(
-                "ERC20: bal < val"
-            ); // Failure to Transfer
-        });
+  describe("Preview Functions", function () {
+    it("Check previewDeposit & previewMint, supply == 0", async function () {
+      await deployGammaPool();
+      const ONE = BigNumber.from(10).pow(18);
 
-        it("Check Balance Approval", async function () {
-            const _totalSupply = await gammaPool.totalSupply();
-            const allowanceOwnerToAddr3 = await gammaPool.allowance(
-                owner.address,
-                addr3.address
-            );
-            const allowanceAddr3ToOwner = await gammaPool.allowance(
-                addr3.address,
-                owner.address
-            );
-            const amt = allowanceOwnerToAddr3.add(100);
-            const res0 = await (await gammaPool.approve(addr3.address, amt)).wait();
-            expect(res0.events[0].args.owner).to.eq(owner.address);
-            expect(res0.events[0].args.spender).to.eq(addr3.address);
-            expect(res0.events[0].args.value).to.eq(amt);
-            expect(await gammaPool.allowance(owner.address, addr3.address)).to.equal(
-                amt
-            );
-            expect(await gammaPool.allowance(addr3.address, owner.address)).to.equal(
-                allowanceAddr3ToOwner
-            );
-            expect(await gammaPool.totalSupply()).to.eq(_totalSupply);
-        });
+      // supply == 0, (assets == 0, shares == 0)
+      const assets0 = ONE.mul(0);
+      const shares0 = ONE.mul(0);
 
-        it("Check Balance TransferFrom Fail Approval", async function () {
-            await (await gammaPool.mint(1000, owner.address)).wait(); // minted 1000 to owner
-            await (await gammaPool.mint(1000, addr2.address)).wait(); // minted 1000 to owner
-            await (await gammaPool.mint(1000, addr3.address)).wait(); // minted 1000 to owner
+      expect(
+        await testConvertToShares(
+          assets0,
+          gammaPool.previewDeposit,
+          gammaPool.previewMint
+        )
+      ).to.be.equal(assets0);
+      expect(
+        await testConvertToAssets(
+          shares0,
+          gammaPool.previewMint,
+          gammaPool.previewDeposit
+        )
+      ).to.be.equal(shares0);
 
-            const _balanceAddr3 = await gammaPool.balanceOf(addr3.address); // get current addr2 balance
-            await gammaPool
-                .connect(addr3)
-                .approve(owner.address, _balanceAddr3.sub(100)); // owner = addr3, spender = owner
+      // supply == 0, (assets > 0, shares == 0)
+      const assets1 = ONE.mul(1000);
+      const shares1 = ONE.mul(0);
 
-            const allowanceAddr3ToOwner0 = await gammaPool.allowance(
-                addr3.address,
-                owner.address
-            ); // owner = addr3, spender = owner
+      await updateBalances(assets1, shares1);
 
-            const amt = ethers.BigNumber.from(allowanceAddr3ToOwner0).add(1);
+      expect(
+        await testConvertToShares(
+          assets1,
+          gammaPool.previewMint,
+          gammaPool.convertToAssets
+        )
+      ).to.be.equal(assets1);
+      expect(
+        await testConvertToAssets(
+          shares1,
+          gammaPool.convertToAssets,
+          gammaPool.previewMint
+        )
+      ).to.be.equal(shares1);
+    });
 
-            await expect(
-                gammaPool.transferFrom(addr3.address, addr2.address, amt) // tried to transfer more than was approved
-            ).to.be.revertedWith(""); // Failure to Transfer
-        });
+    it("Check previewDeposit & previewMint, supply > 0", async function () {
+      await deployGammaPool();
+      const ONE = BigNumber.from(10).pow(18);
 
-        it("Check Balance TransferFrom", async function () {
-            await (await gammaPool.mint(1000, owner.address)).wait(); // minted 1000 to owner
-            await (await gammaPool.mint(1000, addr4.address)).wait(); // minted 1000 to owner
-            await (await gammaPool.mint(1000, addr5.address)).wait(); // minted 1000 to owner
-            const _totalSupply = await gammaPool.totalSupply();
-            const _balanceOwner = await gammaPool.balanceOf(owner.address); // get current owner balance
-            const _balanceAddr4 = await gammaPool.balanceOf(addr4.address); // get current addr2 balance
-            const _balanceAddr5 = await gammaPool.balanceOf(addr5.address); // get current addr3 balance
-            const allowanceOwnerToAddr4 = await gammaPool.allowance(
-                owner.address,
-                addr4.address
-            ); // owner = addr3, spender = owner
-            const allowanceAddr4ToOwner0 = await gammaPool.allowance(
-                addr4.address,
-                owner.address
-            ); // owner = addr3, spender = owner
-            const amt = ethers.BigNumber.from(allowanceAddr4ToOwner0).add(100);
+      // supply > 0, (assets == 0, shares > 0)
+      const assets0 = ONE.mul(0);
+      const shares0 = ONE.mul(100);
 
-            await gammaPool.connect(addr4).approve(owner.address, amt); // owner = addr3, spender = owner
+      await updateBalances(assets0, shares0);
 
-            const res0 = await (
-                await gammaPool.transferFrom(addr4.address, addr5.address, amt.sub(50))
-            ).wait();
-            // event Transfer(address indexed from, address indexed to, uint256 value);
-            expect(res0.events[0].args.from).to.eq(addr4.address);
-            expect(res0.events[0].args.to).to.eq(addr5.address);
-            expect(res0.events[0].args.value).to.eq(amt.sub(50));
+      expect(
+        await testConvertToShares(
+          assets0,
+          gammaPool.previewDeposit,
+          gammaPool.previewMint
+        )
+      ).to.be.equal(assets0);
+      expect(
+        await testConvertToAssets(
+          shares0,
+          gammaPool.previewMint,
+          gammaPool.previewDeposit
+        )
+      ).to.be.equal(0);
 
-            expect(await gammaPool.totalSupply()).to.eq(_totalSupply);
-            expect(await gammaPool.balanceOf(owner.address)).to.eq(_balanceOwner);
-            expect(await gammaPool.allowance(owner.address, addr4.address)).to.eq(
-                allowanceOwnerToAddr4
-            );
-            expect(await gammaPool.balanceOf(addr4.address)).to.eq(
-                _balanceAddr4.sub(amt.sub(50))
-            );
-            expect(await gammaPool.balanceOf(addr5.address)).to.eq(
-                _balanceAddr5.add(amt.sub(50))
-            );
+      // supply > 0, (assets > 0, shares > 0)
+      const assets1 = ONE.mul(1000);
+      const shares1 = ONE.mul(100);
 
-            expect(await gammaPool.allowance(addr4.address, owner.address)).to.eq(
-                amt.sub(50)
-            );
-        });
+      await updateBalances(assets1, shares1); // increase totalAssets by 1000, increase totalSupply by 100
 
-        it("Check Balance TransferFrom Fail Amount", async function () {
-            await (await gammaPool.mint(1000, addr3.address)).wait(); // minted 1000 to owner
-            const _balanceAddr3 = await gammaPool.balanceOf(addr3.address); // get current addr3 balance
+      expect(
+        await testConvertToShares(
+          assets1,
+          gammaPool.previewDeposit,
+          gammaPool.previewMint
+        )
+      ).to.not.equal(assets1);
+      expect(
+        await testConvertToAssets(
+          shares1,
+          gammaPool.previewMint,
+          gammaPool.previewDeposit
+        )
+      ).to.not.equal(shares1);
 
-            await gammaPool
-                .connect(addr3)
-                .approve(owner.address, _balanceAddr3.add(100)); // owner = addr3, spender = owner
+      // supply > 0, (assets > 0, shares > 0)
+      const assets2 = ONE.mul(4000);
+      const shares2 = ONE.mul(500);
 
-            await expect(
-                gammaPool.transferFrom(
-                    addr3.address,
-                    addr2.address,
-                    _balanceAddr3.add(1)
-                )
-            ).to.be.revertedWith("ERC20: bal < val"); // Failure to Transfer
-        });
+      await updateBalances(assets2, shares2); // increase totalAssets by 4000, increase totalSupply by 500
 
-        it("Check Balance TransferFrom Max Fail Amount", async function () {
-            await (await gammaPool.mint(1000, addr3.address)).wait(); // minted 1000 to owner
-            const _balanceAddr3 = await gammaPool.balanceOf(addr3.address); // get current addr3 balance
+      expect(
+        await testConvertToShares(
+          assets2,
+          gammaPool.previewDeposit,
+          gammaPool.previewMint
+        )
+      ).to.not.equal(assets2);
+      expect(
+        await testConvertToAssets(
+          shares2,
+          gammaPool.previewMint,
+          gammaPool.previewDeposit
+        )
+      ).to.not.equal(shares2);
+    });
 
-            await gammaPool
-                .connect(addr3)
-                .approve(owner.address, ethers.constants.MaxUint256); // owner = addr3, spender = owner
+    it("Check previewWithdraw and previewRedeem, supply == 0", async function () {
+      await deployGammaPool();
+      const ONE = BigNumber.from(10).pow(18);
 
-            await expect(
-                gammaPool.transferFrom(
-                    addr3.address,
-                    addr2.address,
-                    _balanceAddr3.add(1)
-                )
-            ).to.be.revertedWith("ERC20: bal < val"); // Failure to Transfer
-        });
+      // supply == 0, (assets == 0, shares == 0)
+      const assets0 = ONE.mul(0);
+      const shares0 = ONE.mul(0);
 
-        it("Check Balance TransferFrom Max", async function () {
-            await (await gammaPool.mint(1000, owner.address)).wait(); // minted 1000 to owner
-            await (await gammaPool.mint(1000, addr4.address)).wait(); // minted 1000 to owner
-            await (await gammaPool.mint(1000, addr5.address)).wait(); // minted 1000 to owner
-            const _totalSupply = await gammaPool.totalSupply();
-            const _balanceOwner = await gammaPool.balanceOf(owner.address); // get current owner balance
-            const _balanceAddr4 = await gammaPool.balanceOf(addr4.address); // get current addr2 balance
-            const _balanceAddr5 = await gammaPool.balanceOf(addr5.address); // get current addr3 balance
-            const allowanceOwnerToAddr4 = await gammaPool.allowance(
-                owner.address,
-                addr4.address
-            ); // owner = addr3, spender = owner
-            const allowanceAddr4ToOwner0 = await gammaPool.allowance(
-                addr4.address,
-                owner.address
-            ); // owner = addr3, spender = owner
-            const amt = ethers.BigNumber.from(allowanceAddr4ToOwner0).add(100);
+      expect(
+        await testConvertToShares(
+          assets0,
+          gammaPool.previewWithdraw,
+          gammaPool.previewRedeem
+        )
+      ).to.be.equal(assets0);
+      expect(
+        await testConvertToAssets(
+          shares0,
+          gammaPool.previewRedeem,
+          gammaPool.previewWithdraw
+        )
+      ).to.be.equal(shares0);
 
-            await gammaPool
-                .connect(addr4)
-                .approve(owner.address, ethers.constants.MaxUint256); // owner = addr3, spender = owner
+      // supply == 0, (assets > 0, shares == 0)
+      const assets1 = ONE.mul(1000);
+      const shares1 = ONE.mul(0);
 
-            const res0 = await (
-                await gammaPool.transferFrom(addr4.address, addr5.address, amt.sub(50))
-            ).wait();
-            // event Transfer(address indexed from, address indexed to, uint256 value);
-            expect(res0.events[0].args.from).to.eq(addr4.address);
-            expect(res0.events[0].args.to).to.eq(addr5.address);
-            expect(res0.events[0].args.value).to.eq(amt.sub(50));
+      await updateBalances(assets1, shares1);
 
-            expect(await gammaPool.totalSupply()).to.eq(_totalSupply);
-            expect(await gammaPool.balanceOf(owner.address)).to.eq(_balanceOwner);
-            expect(await gammaPool.allowance(owner.address, addr4.address)).to.eq(
-                allowanceOwnerToAddr4
-            );
-            expect(await gammaPool.balanceOf(addr4.address)).to.eq(
-                _balanceAddr4.sub(amt.sub(50))
-            );
-            expect(await gammaPool.balanceOf(addr5.address)).to.eq(
-                _balanceAddr5.add(amt.sub(50))
-            );
+      expect(
+        await testConvertToShares(
+          assets1,
+          gammaPool.previewWithdraw,
+          gammaPool.previewRedeem
+        )
+      ).to.be.equal(assets1);
+      expect(
+        await testConvertToAssets(
+          shares1,
+          gammaPool.previewRedeem,
+          gammaPool.previewWithdraw
+        )
+      ).to.be.equal(shares1);
+    });
 
-            expect(await gammaPool.allowance(addr4.address, owner.address)).to.eq(
-                ethers.constants.MaxUint256
-            );
-        });
-    });/**/
+    it("Check previewWithdraw and previewRedeem, supply > 0", async function () {
+      await deployGammaPool();
+      const ONE = BigNumber.from(10).pow(18);
+
+      // supply > 0, (assets == 0, shares > 0)
+      const assets0 = ONE.mul(0);
+      const shares0 = ONE.mul(100);
+
+      await updateBalances(assets0, shares0);
+
+      expect(
+        await testConvertToShares(
+          assets0,
+          gammaPool.previewWithdraw,
+          gammaPool.previewRedeem
+        )
+      ).to.be.equal(assets0);
+      expect(
+        await testConvertToAssets(
+          shares0,
+          gammaPool.previewRedeem,
+          gammaPool.previewWithdraw
+        )
+      ).to.be.equal(0);
+
+      // supply > 0, (assets > 0, shares > 0)
+      const assets1 = ONE.mul(1000);
+      const shares1 = ONE.mul(10000);
+
+      await updateBalances(assets1, shares1); // increase totalAssets by 1000, increase totalSupply by 10000
+
+      expect(
+        await testConvertToShares(
+          assets1,
+          gammaPool.previewWithdraw,
+          gammaPool.previewRedeem
+        )
+      ).to.not.equal(assets1);
+      expect(
+        await testConvertToAssets(
+          shares1,
+          gammaPool.previewRedeem,
+          gammaPool.previewWithdraw
+        )
+      ).to.not.equal(shares1);
+
+      // supply > 0, (assets > 0, shares > 0)
+      const assets2 = ONE.mul(300);
+      const shares2 = ONE.mul(2000);
+
+      await updateBalances(assets2, shares2); // increase totalAssets by 1000, increase totalSupply by 2000
+
+      expect(
+        await testConvertToShares(
+          assets2,
+          gammaPool.previewWithdraw,
+          gammaPool.previewRedeem
+        )
+      ).to.not.equal(assets2);
+      expect(
+        await testConvertToAssets(
+          shares2,
+          gammaPool.previewRedeem,
+          gammaPool.previewWithdraw
+        )
+      ).to.not.equal(shares2);
+    });
+  });
 });
