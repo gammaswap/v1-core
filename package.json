@@ -10,6 +10,9 @@
   "engines": {
     "node": ">=16"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/@gammaswap"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/gammaswap/v1-core"
