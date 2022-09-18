@@ -10,8 +10,6 @@ import "hardhat/console.sol";
 
 contract GammaPoolFactory is IGammaPoolFactory {
 
-    event PoolCreated(address indexed pool, address indexed cfmm, uint24 indexed protocolId, address protocol, uint256 count);
-
     address public override feeToSetter;
     address public override owner;
     address public override feeTo;

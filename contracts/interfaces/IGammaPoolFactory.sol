@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 interface IGammaPoolFactory {
+    event PoolCreated(address indexed pool, address indexed cfmm, uint24 indexed protocolId, address protocol, uint256 count);
+
     struct CreatePoolParams {
         address cfmm;
         uint24 protocol;
