@@ -3,7 +3,7 @@ scripts
 test
 .github
 tasks
-.env.exmpale
+.env.example
 .eslintignore
 .eslintrc.js
 .prettierignore
