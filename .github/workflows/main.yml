@@ -3,7 +3,7 @@ name: Node.js Package
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   publish-gpr:
@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 16
           registry-url: https://npm.pkg.github.com/
           scope: '@gammaswap'
       - run: npm install
