@@ -37,20 +37,12 @@ contract TestShortStrategy is IShortStrategy{
         emit Deposit(from, to, assets, shares);
     }
 
-    function getBorrowRate(uint256 lpBalance, uint256 lpBorrowed) external override pure returns(uint256) {
-        return lpBalance + lpBorrowed;
-    }
-
     function calcFeeIndex(address cfmm, uint256 borrowRate, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum)
         external override pure returns(uint256 lastFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) {
         lastFeeIndex = prevCFMMInvariant;
         lastCFMMFeeIndex = prevCFMMTotalSupply;
         lastCFMMInvariant = lastBlackNum;
         lastCFMMTotalSupply = borrowRate;
-    }
-
-    function calcBorrowedLPTokensPlusInterest(uint256 borrowedInvariant, uint256 lastFeeIndex, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) external override pure returns(uint256) {
-        return 0;
     }
 
     function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 lpBorrowed, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum) external override pure returns(uint256) {

@@ -44,6 +44,8 @@ library GammaPoolStorage {
         uint256 lastCFMMFeeIndex;
         uint256 lastCFMMInvariant;
         uint256 lastCFMMTotalSupply;
+        uint256 lastBlockTimestamp;
+        uint256 yieldTWAP;
         uint256 LAST_BLOCK_NUMBER;
 
         uint256 ONE;

@@ -41,11 +41,4 @@ contract TestLongStrategy is ILongStrategy {
         tokensHeld[1] = uint256(deltas[1]);
         emit LoanUpdated(tokenId, tokensHeld, tokenId, 51, 52, 53);
     }
-
-    function _rebalanceCollateralWithLiquidity(uint256 tokenId, uint256 liquidity) external override returns(uint256[] memory tokensHeld){
-        tokensHeld = new uint256[](2);
-        tokensHeld[0] = tokenId;
-        tokensHeld[1] = liquidity;
-        emit LoanUpdated(tokenId, tokensHeld, liquidity + 1, 61, 62, 63);
-    }
 }

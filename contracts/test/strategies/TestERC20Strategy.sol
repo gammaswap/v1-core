@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 import "../../interfaces/strategies/base/IShortStrategy.sol";
 import "../../libraries/storage/GammaPoolStorage.sol";
 
-contract TestERC20Strategy is IShortStrategy{
+contract TestERC20Strategy is IShortStrategy {
 
     event Transfer(address indexed from, address indexed to, uint256 value);
 
@@ -24,17 +24,9 @@ contract TestERC20Strategy is IShortStrategy{
         return (new uint256[](0), 0);
     }
 
-    function getBorrowRate(uint256 lpBalance, uint256 lpBorrowed) external override pure returns(uint256) {
-        return 0;
-    }
-
     function calcFeeIndex(address cfmm, uint256 borrowRate, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum)
         external override pure returns(uint256, uint256, uint256, uint256) {
         return (0, 0, 0, 0);
-    }
-
-    function calcBorrowedLPTokensPlusInterest(uint256 borrowedInvariant, uint256 lastFeeIndex, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) external override pure returns(uint256) {
-        return 0;
     }
 
     function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 lpBorrowed, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum) external override view returns(uint256) {

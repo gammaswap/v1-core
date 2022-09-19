@@ -278,18 +278,6 @@ describe("GammaPool", function () {
       expect(res4.events[0].args.liquidity).to.eq(51);
       expect(res4.events[0].args.lpTokens).to.eq(52);
       expect(res4.events[0].args.rateIndex).to.eq(53);
-
-      const res5 = await (
-        await gammaPool.rebalanceCollateralWithLiquidity(tokenId, 700)
-      ).wait();
-      expect(res5.events[0].args.tokenId).to.eq(tokenId);
-      expect(res5.events[0].args.tokensHeld.length).to.eq(2);
-      expect(res5.events[0].args.tokensHeld[0]).to.eq(tokenId);
-      expect(res5.events[0].args.tokensHeld[1]).to.eq(700);
-      expect(res5.events[0].args.heldLiquidity).to.eq(701);
-      expect(res5.events[0].args.liquidity).to.eq(61);
-      expect(res5.events[0].args.lpTokens).to.eq(62);
-      expect(res5.events[0].args.rateIndex).to.eq(63);
     });
   });
 });

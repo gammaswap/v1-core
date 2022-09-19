@@ -189,11 +189,4 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
         require(success);
         return abi.decode(result, (uint256[]));
     }
-
-    function rebalanceCollateralWithLiquidity(uint256 tokenId, uint256 liquidity) external virtual override returns(uint256[] memory tokensHeld) {
-        (bool success, bytes memory result) = GammaPoolStorage.store().longStrategy.delegatecall(abi.encodeWithSelector(
-                ILongStrategy(GammaPoolStorage.store().longStrategy)._rebalanceCollateralWithLiquidity.selector, tokenId, liquidity));
-        require(success);
-        return abi.decode(result, (uint256[]));
-    }
 }
