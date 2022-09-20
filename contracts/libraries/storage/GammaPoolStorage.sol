@@ -48,7 +48,7 @@ library GammaPoolStorage {
 
         uint32 cumulativeTime;
         uint256 cumulativeYield;
-        uint256 lastBlockTimestamp;
+        uint32 lastBlockTimestamp;
         uint256 yieldTWAP;
 
         uint256 ONE;
