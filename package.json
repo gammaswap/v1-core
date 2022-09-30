@@ -1,6 +1,6 @@
 {
   "name": "@gammaswap/v1-core",
-  "version": "0.1.9",
+  "version": "0.1.9-test-abis",
   "description": "Core smart contracts for the GammaSwapV1 protocol",
   "homepage": "https://gammaswap.com",
   "main": "index.js",
@@ -17,6 +17,10 @@
     "type": "git",
     "url": "https://github.com/gammaswap/v1-core"
   },
+  "files": [
+    "artifacts",
+    "contracts"
+  ],
   "keywords": [
     "gammaswap",
     "ethereum",
