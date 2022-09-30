@@ -1,7 +1,8 @@
 # Steps to Run GammaSwap Tests Locally
 
 1. Run ```npm install``` to install dependencies including hardhat.
-2. Run ```npx hardhat test```
+2. Optional: copy [.env.example](.env.example) to .env. Fill details as needed.
+3. Run ```npx hardhat test```
 
 # Steps to Deploy To Contracts To Local Live Network
 
