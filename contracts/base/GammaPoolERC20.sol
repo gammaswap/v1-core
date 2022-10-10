@@ -33,7 +33,7 @@ abstract contract GammaPoolERC20 {
     }
 
     function _transfer(GammaPoolStorage.Store storage store, address from, address to, uint value) internal virtual {
-        require(store.balanceOf[from] > value, "ERC20: bal < val");
+        require(store.balanceOf[from] >= value, "ERC20: bal < val");
         store.balanceOf[from] = store.balanceOf[from] - value;
         store.balanceOf[to] = store.balanceOf[to] + value;
         emit Transfer(from, to, value);
