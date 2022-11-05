@@ -1,12 +1,12 @@
-name: Compile/Test/Publish
+name: Compile/Test
 
 on:
   push:
-    branches:
+    branches-ignore:
       - main
 
 jobs:
-  publish-gpr:
+  compile-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -16,7 +16,6 @@ jobs:
           registry-url: https://npm.pkg.github.com/
           scope: '@gammaswap'
       - run: npm install
-      - run: npx hardhat test
-      - run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          NODE_AUTH_TOKEN: ${{secrets.GS_TOKEN}}
+      - run: npx hardhat test
