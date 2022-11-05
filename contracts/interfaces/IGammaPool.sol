@@ -41,11 +41,10 @@ interface IGammaPool {
 
     //Long Gamma
     function createLoan() external returns(uint tokenId);
-    function loan(uint256 tokenId) external view returns (uint256 id, address poolId,
-        uint256[] memory tokensHeld, uint256 liquidity, uint256 rateIndex, uint256 blockNum);
+    function loan(uint256 tokenId) external view returns (uint256 id, address poolId, uint256[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
     function increaseCollateral(uint256 tokenId) external returns(uint256[] memory tokensHeld);
     function decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address to) external returns(uint256[] memory tokensHeld);
     function borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint256[] memory amounts);
-    function repayLiquidity(uint256 tokenId, uint256 liquidity) external returns(uint256 liquidityPaid, uint256 lpTokensPaid, uint256[] memory amounts);
+    function repayLiquidity(uint256 tokenId, uint256 liquidity) external returns(uint256 liquidityPaid, uint256[] memory amounts);
     function rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external returns(uint256[] memory tokensHeld);
 }

@@ -14,10 +14,10 @@ library GammaPoolStorage {
         address poolId;
         uint256[] tokensHeld;
         uint256 heldLiquidity;
+        uint256 initLiquidity;
         uint256 liquidity;
         uint256 lpTokens;
         uint256 rateIndex;
-        uint256 blockNum;
     }
 
     struct Store {
@@ -125,10 +125,10 @@ library GammaPoolStorage {
             poolId: address(this),
             tokensHeld: new uint[](_store.tokens.length),
             heldLiquidity: 0,
+            initLiquidity: 0,
             liquidity: 0,
             lpTokens: 0,
-            rateIndex: _store.accFeeIndex,
-            blockNum: block.number
+            rateIndex: _store.accFeeIndex
         });
     }
 }

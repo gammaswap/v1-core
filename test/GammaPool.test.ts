@@ -212,9 +212,9 @@ describe("GammaPool", function () {
       expect(loan.tokensHeld.length).to.eq(tokens.length);
       expect(loan.tokensHeld[0]).to.eq(0);
       expect(loan.tokensHeld[1]).to.eq(0);
+      expect(loan.initLiquidity).to.eq(0);
       expect(loan.liquidity).to.eq(0);
       expect(loan.rateIndex).to.eq(ethers.BigNumber.from(10).pow(18));
-      expect(loan.blockNum).to.gt(0);
     });
 
     it("Update Loan", async function () {
