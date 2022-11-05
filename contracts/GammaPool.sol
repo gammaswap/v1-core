@@ -150,9 +150,9 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     function loan(uint256 tokenId) external virtual override view returns (uint256 id, address poolId,
-        uint256[] memory tokensHeld, uint256 liquidity, uint256 rateIndex, uint256 blockNum) {
+        uint256[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex) {
         GammaPoolStorage.Loan storage _loan = GammaPoolStorage.store().loans[tokenId];
-        return (_loan.id, _loan.poolId, _loan.tokensHeld, _loan.liquidity, _loan.rateIndex, _loan.blockNum);
+        return (_loan.id, _loan.poolId, _loan.tokensHeld, _loan.initLiquidity, _loan.liquidity, _loan.lpTokens, _loan.rateIndex);
     }
 
     function increaseCollateral(uint256 tokenId) external virtual override returns(uint256[] memory tokensHeld) {
@@ -176,11 +176,11 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
         return abi.decode(result, (uint256[]));
     }
 
-    function repayLiquidity(uint256 tokenId, uint256 liquidity) external virtual override returns(uint256 liquidityPaid, uint256 lpTokensPaid, uint256[] memory amounts) {
+    function repayLiquidity(uint256 tokenId, uint256 liquidity) external virtual override returns(uint256 liquidityPaid, uint256[] memory amounts) {
         (bool success, bytes memory result) = GammaPoolStorage.store().longStrategy.delegatecall(abi.encodeWithSelector(
                 ILongStrategy(GammaPoolStorage.store().longStrategy)._repayLiquidity.selector, tokenId, liquidity));
         require(success);
-        return abi.decode(result, (uint256,uint256,uint256[]));
+        return abi.decode(result, (uint256,uint256[]));
     }
 
     function rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external virtual override returns(uint256[] memory tokensHeld) {
