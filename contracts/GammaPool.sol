@@ -144,6 +144,11 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     /*****LONG*****/
+    function getCFMMPrice() external virtual override view returns(uint256 price) {
+        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        return ILongStrategy(store.longStrategy)._getCFMMPrice(store.cfmm);
+    }
+
     function createLoan() external virtual override lock returns(uint256 tokenId) {
         tokenId = GammaPoolStorage.createLoan();
         emit LoanCreated(msg.sender, tokenId);

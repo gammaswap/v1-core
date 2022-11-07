@@ -5,6 +5,10 @@ import "../../interfaces/strategies/base/ILongStrategy.sol";
 
 contract TestLongStrategy is ILongStrategy {
 
+    function _getCFMMPrice(address cfmm) external override view returns(uint256 price) {
+        return 1;
+    }
+
     function _increaseCollateral(uint256 tokenId) external override returns(uint256[] memory tokensHeld) {
         tokensHeld = new uint256[](2);
         tokensHeld[0] = 1;
