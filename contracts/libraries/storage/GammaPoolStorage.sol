@@ -16,7 +16,7 @@ library GammaPoolStorage {
         uint256 heldLiquidity;
         uint256 initLiquidity;
         uint256 liquidity;
-        uint256 lpTokens;
+        uint256 openPx;
         uint256 rateIndex;
     }
 
@@ -127,7 +127,7 @@ library GammaPoolStorage {
             heldLiquidity: 0,
             initLiquidity: 0,
             liquidity: 0,
-            lpTokens: 0,
+            openPx: 0,
             rateIndex: _store.accFeeIndex
         });
     }
