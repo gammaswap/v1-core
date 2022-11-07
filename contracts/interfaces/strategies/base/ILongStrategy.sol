@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 interface ILongStrategy {
 
-    event LoanUpdated(uint256 indexed tokenId, uint256[] tokensHeld, uint256 heldLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
+    event LoanUpdated(uint256 indexed tokenId, uint256[] tokensHeld, uint256 heldLiquidity, uint256 liquidity, uint256 openPx, uint256 rateIndex);
 
     function _increaseCollateral(uint256 tokenId) external returns(uint256[] memory);
     function _decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address to) external returns(uint256[] memory tokensHeld);
