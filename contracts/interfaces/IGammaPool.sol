@@ -6,7 +6,7 @@ interface IGammaPool {
     event PoolUpdated(uint256 lpTokenBalance, uint256 lpTokenBorrowed, uint256 lastBlockNumber, uint256 accFeeIndex,
         uint256 lastFeeIndex, uint256 lpTokenBorrowedPlusInterest, uint256 lpInvariant, uint256 lpBorrowedInvariant);
     event LoanCreated(address indexed caller, uint256 tokenId);
-    event LoanUpdated(uint256 indexed tokenId, uint256[] tokensHeld, uint256 heldLiquidity, uint256 liquidity, uint256 openPx, uint256 rateIndex);
+    event LoanUpdated(uint256 indexed tokenId, uint256[] tokensHeld, uint256 heldLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
 
     function cfmm() external view returns(address);
     function protocolId() external view returns(uint24);
@@ -41,7 +41,7 @@ interface IGammaPool {
 
     //Long Gamma
     function createLoan() external returns(uint tokenId);
-    function loan(uint256 tokenId) external view returns (uint256 id, address poolId, uint256[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 openPx, uint256 rateIndex);
+    function loan(uint256 tokenId) external view returns (uint256 id, address poolId, uint256[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
     function increaseCollateral(uint256 tokenId) external returns(uint256[] memory tokensHeld);
     function decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address to) external returns(uint256[] memory tokensHeld);
     function borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint256[] memory amounts);
