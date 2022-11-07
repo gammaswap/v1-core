@@ -150,9 +150,9 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     function loan(uint256 tokenId) external virtual override view returns (uint256 id, address poolId,
-        uint256[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 openPx, uint256 rateIndex) {
+        uint256[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 openPx, uint256 rateIndex) {
         GammaPoolStorage.Loan storage _loan = GammaPoolStorage.store().loans[tokenId];
-        return (_loan.id, _loan.poolId, _loan.tokensHeld, _loan.initLiquidity, _loan.liquidity, _loan.openPx, _loan.rateIndex);
+        return (_loan.id, _loan.poolId, _loan.tokensHeld, _loan.initLiquidity, _loan.liquidity, _loan.lpTokens, _loan.openPx, _loan.rateIndex);
     }
 
     function increaseCollateral(uint256 tokenId) external virtual override returns(uint256[] memory tokensHeld) {
