@@ -50,68 +50,20 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     //GamamPool Data
-    function tokenBalances() external virtual override view returns(uint256[] memory) {
-        return GammaPoolStorage.store().TOKEN_BALANCE;
+    function getPoolBalances() external virtual override view returns(uint256[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
+        uint256 lpTokenBorrowedPlusInterest, uint256 lpTokenTotal, uint256 borrowedInvariant, uint256 lpInvariant, uint256 totalInvariant){
+        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        return(store.TOKEN_BALANCE, store.LP_TOKEN_BALANCE, store.LP_TOKEN_BORROWED, store.LP_TOKEN_BORROWED_PLUS_INTEREST, store.LP_TOKEN_TOTAL, store.BORROWED_INVARIANT, store.LP_INVARIANT, store.TOTAL_INVARIANT);
     }
 
-    function lpTokenBalance() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().LP_TOKEN_BALANCE;
+    function getCFMMBalances() external virtual override view returns(uint256[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply) {
+        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        return(store.CFMM_RESERVES, store.lastCFMMInvariant, store.lastCFMMTotalSupply);
     }
 
-    function lpTokenBorrowed() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().LP_TOKEN_BORROWED;
-    }
-
-    function lpTokenBorrowedPlusInterest() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().LP_TOKEN_BORROWED_PLUS_INTEREST;//(BORROWED_INVARIANT as LP Tokens)
-    }
-
-    function lpTokenTotal() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().LP_TOKEN_TOTAL;//LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST
-    }
-
-    function borrowedInvariant() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().BORROWED_INVARIANT;
-    }
-
-    function lpInvariant() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().LP_INVARIANT;//Invariant from LP Tokens
-    }
-
-    function totalInvariant() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().TOTAL_INVARIANT;//BORROWED_INVARIANT + LP_INVARIANT
-    }
-
-    function cfmmReserves() external virtual override view returns(uint256[] memory) {
-        return GammaPoolStorage.store().CFMM_RESERVES;
-    }
-
-    function borrowRate() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().borrowRate;
-    }
-
-    function accFeeIndex() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().accFeeIndex;
-    }
-
-    function lastFeeIndex() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().lastFeeIndex;
-    }
-
-    function lastCFMMFeeIndex() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().lastCFMMFeeIndex;
-    }
-
-    function lastCFMMInvariant() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().lastCFMMInvariant;
-    }
-
-    function lastCFMMTotalSupply() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().lastCFMMTotalSupply;
-    }
-
-    function lastBlockNumber() external virtual override view returns(uint256) {
-        return GammaPoolStorage.store().LAST_BLOCK_NUMBER;
+    function getRates() external virtual override view returns(uint256 borrowRate, uint256 accFeeIndex, uint256 lastFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastBlockNumber) {
+        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        return(store.borrowRate, store.accFeeIndex, store.lastFeeIndex, store.lastCFMMFeeIndex, store.LAST_BLOCK_NUMBER);
     }
 
     /*****SHORT*****/
@@ -144,6 +96,21 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     /*****LONG*****/
+
+    function liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external override virtual returns(uint256[] memory refund) {
+        (bool success, bytes memory result) = GammaPoolStorage.store().longStrategy.delegatecall(abi.encodeWithSelector(
+                ILongStrategy(GammaPoolStorage.store().longStrategy)._liquidate.selector, tokenId, isRebalance, deltas));
+        require(success);
+        return abi.decode(result, (uint256[]));
+    }
+
+    function liquidateWithLP(uint256 tokenId) external override virtual returns(uint256[] memory refund) {
+        (bool success, bytes memory result) = GammaPoolStorage.store().longStrategy.delegatecall(abi.encodeWithSelector(
+                ILongStrategy(GammaPoolStorage.store().longStrategy)._liquidateWithLP.selector, tokenId));
+        require(success);
+        return abi.decode(result, (uint256[]));
+    }
+
     function getCFMMPrice() external virtual override view returns(uint256 price) {
         GammaPoolStorage.Store storage store = GammaPoolStorage.store();
         return ILongStrategy(store.longStrategy)._getCFMMPrice(store.cfmm, store.ONE);

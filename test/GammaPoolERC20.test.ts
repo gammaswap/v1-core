@@ -142,7 +142,7 @@ describe("GammaPoolERC20", function () {
       const _balanceOwner = await gammaPool.balanceOf(owner.address); // get current owner balance
       const amt = _balanceOwner.add(1);
       await expect(gammaPool.transfer(addr3.address, amt)).to.be.revertedWith(
-        "ERC20: bal < val"
+        "ERC20Transfer"
       ); // Failure to Transfer
     });
 
@@ -251,7 +251,7 @@ describe("GammaPoolERC20", function () {
           addr2.address,
           _balanceAddr3.add(1)
         )
-      ).to.be.revertedWith("ERC20: bal < val"); // Failure to Transfer
+      ).to.be.revertedWith("ERC20Transfer"); // Failure to Transfer
     });
 
     it("Check Balance TransferFrom Max Fail Amount", async function () {
@@ -268,7 +268,7 @@ describe("GammaPoolERC20", function () {
           addr2.address,
           _balanceAddr3.add(1)
         )
-      ).to.be.revertedWith("ERC20: bal < val"); // Failure to Transfer
+      ).to.be.revertedWith("ERC20Transfer"); // Failure to Transfer
     });
 
     it("Check Balance TransferFrom Max", async function () {

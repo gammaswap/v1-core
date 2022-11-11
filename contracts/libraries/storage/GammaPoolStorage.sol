@@ -7,6 +7,9 @@ import "../../interfaces/strategies/base/IShortStrategy.sol";
 import "../../interfaces/strategies/base/ILongStrategy.sol";
 
 library GammaPoolStorage {
+    error Locked();
+    error StoreIsSet();
+
     bytes32 constant STRUCT_POSITION = keccak256("com.gammaswap.gammapool");
 
     struct Loan {
@@ -83,7 +86,10 @@ library GammaPoolStorage {
 
     function init() internal {
         Store storage _store = store();
-        require(_store.isSet == false, "GP_SET");
+        //require(_store.isSet == false, "GP_SET");
+        if(_store.isSet) {
+            revert StoreIsSet();
+        }
         _store.isSet = true;
         _store.name = "GammaSwap V1";
         _store.symbol = "GAMA-V1";
@@ -107,7 +113,10 @@ library GammaPoolStorage {
 
     function lockit() internal {
         Store storage _store = store();
-        require(_store.unlocked == 1, "LOCK");
+        //require(_store.unlocked == 1, "LOCK");
+        if(_store.unlocked != 1) {
+            revert Locked();
+        }
         _store.unlocked = 0;
     }
 
