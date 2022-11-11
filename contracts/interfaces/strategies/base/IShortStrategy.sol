@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.0;
+pragma solidity 0.8.4;
 
 interface IShortStrategy {
     function _depositNoPull(address to) external returns(uint256 shares);
