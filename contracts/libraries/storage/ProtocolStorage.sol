@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.0;
+pragma solidity 0.8.4;
 
 library ProtocolStorage {
-    error StoreIsSet();
+    error ProtocolStoreIsSet();
     bytes32 constant STRUCT_POSITION = keccak256("com.gammaswap.protocol");
 
     struct Store {
@@ -22,9 +22,8 @@ library ProtocolStorage {
 
     function init(uint24 protocol, address longStrategy, address shortStrategy, address owner) internal {
         Store storage _store = store();
-        //require(_store.isSet == false, "SET");
         if(_store.isSet) {
-            revert StoreIsSet();
+            revert ProtocolStoreIsSet();
         }
         _store.isSet = true;
         _store.protocol = protocol;

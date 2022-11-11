@@ -94,18 +94,18 @@ describe("GammaPoolFactory", function () {
 
       await factory.addProtocol(protocol.address);
       await expect(factory.addProtocol(protocol.address)).to.be.revertedWith(
-        "PROT_EXISTS"
+        "ProtocolExists"
       );
 
       await expect(
         factory.addProtocol(protocolZero.address)
-      ).to.be.revertedWith("0_PROT");
+      ).to.be.revertedWith("ZeroProtocol");
 
       await expect(
         factory.connect(addr1).addProtocol(addr2.address)
-      ).to.be.revertedWith("FORBIDDEN");
+      ).to.be.revertedWith("Forbidden");
       await expect(factory.connect(addr1).removeProtocol(1)).to.be.revertedWith(
-        "FORBIDDEN"
+        "Forbidden"
       );
     });
 
@@ -119,7 +119,7 @@ describe("GammaPoolFactory", function () {
       expect(await factory.isProtocolRestricted(1)).to.equal(true);
       await expect(
         factory.connect(addr1).setIsProtocolRestricted(1, false)
-      ).to.be.revertedWith("FORBIDDEN");
+      ).to.be.revertedWith("Forbidden");
     });
 
     it("Create Pool", async function () {
@@ -152,14 +152,14 @@ describe("GammaPoolFactory", function () {
         tokens: [tokenA.address, tokenB.address],
       };
       await expect(factory.createPool(createPoolParams)).to.be.revertedWith(
-        "PROT_NOT_SET"
+        "ProtocolNotSet"
       );
       await factory.addProtocol(protocol.address);
 
       await factory.createPool(createPoolParams);
 
       await expect(factory.createPool(createPoolParams)).to.be.revertedWith(
-        "POOL_EXISTS"
+        "PoolExists"
       );
 
       await factory.setIsProtocolRestricted(1, true);
@@ -171,14 +171,14 @@ describe("GammaPoolFactory", function () {
       };
       await expect(
         factory.connect(addr1).createPool(createPoolParams2)
-      ).to.be.revertedWith("RESTRICTED");
+      ).to.be.revertedWith("ProtocolRestricted");
 
       await factory.setIsProtocolRestricted(1, false);
 
       await factory.connect(addr1).createPool(createPoolParams2);
 
       await expect(factory.createPool(createPoolParams2)).to.be.revertedWith(
-        "POOL_EXISTS"
+        "PoolExists"
       );
     });
   });
@@ -191,7 +191,7 @@ describe("GammaPoolFactory", function () {
       const _feeToSetter = await factory.feeToSetter();
       expect(_feeToSetter).to.equal(owner.address);
       await expect(factory.connect(addr1).setFee(1)).to.be.revertedWith(
-        "FORBIDDEN"
+        "Forbidden"
       );
       await factory.connect(owner).setFee(1);
       expect(await factory.fee()).to.equal(1);
@@ -203,7 +203,7 @@ describe("GammaPoolFactory", function () {
       expect(_feeToSetter).to.equal(owner.address);
       await expect(
         factory.connect(addr1).setFeeTo(addr2.address)
-      ).to.be.revertedWith("FORBIDDEN");
+      ).to.be.revertedWith("Forbidden");
       await factory.connect(owner).setFeeTo(addr2.address);
       expect(await factory.feeTo()).to.equal(addr2.address);
     });
@@ -214,7 +214,7 @@ describe("GammaPoolFactory", function () {
       expect(_feeToSetter).to.equal(owner.address);
       await expect(
         factory.connect(addr1).setFeeToSetter(addr2.address)
-      ).to.be.revertedWith("FORBIDDEN");
+      ).to.be.revertedWith("Forbidden");
       await factory.connect(owner).setFeeToSetter(addr1.address);
       expect(await factory.feeToSetter()).to.equal(addr1.address);
 

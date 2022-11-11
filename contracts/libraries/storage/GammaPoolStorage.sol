@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.0;
+pragma solidity 0.8.4;
 
 import "../../interfaces/IGammaPoolFactory.sol";
 import "../../interfaces/IProtocol.sol";
@@ -8,7 +8,7 @@ import "../../interfaces/strategies/base/ILongStrategy.sol";
 
 library GammaPoolStorage {
     error Locked();
-    error StoreIsSet();
+    error PoolStoreIsSet();
 
     bytes32 constant STRUCT_POSITION = keccak256("com.gammaswap.gammapool");
 
@@ -86,9 +86,8 @@ library GammaPoolStorage {
 
     function init() internal {
         Store storage _store = store();
-        //require(_store.isSet == false, "GP_SET");
         if(_store.isSet) {
-            revert StoreIsSet();
+            revert PoolStoreIsSet();
         }
         _store.isSet = true;
         _store.name = "GammaSwap V1";
@@ -113,7 +112,6 @@ library GammaPoolStorage {
 
     function lockit() internal {
         Store storage _store = store();
-        //require(_store.unlocked == 1, "LOCK");
         if(_store.unlocked != 1) {
             revert Locked();
         }

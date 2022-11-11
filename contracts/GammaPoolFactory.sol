@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.0;
+pragma solidity 0.8.4;
 
 import "./GammaPool.sol";
 import "./interfaces/IGammaPoolFactory.sol";
@@ -9,6 +9,14 @@ import "./PoolDeployer.sol";
 import "hardhat/console.sol";
 
 contract GammaPoolFactory is IGammaPoolFactory {
+
+    error Forbidden();
+    error ZeroProtocol();
+    error ProtocolNotSet();
+    error ProtocolExists();
+    error ProtocolRestricted();
+    error PoolExists();
+    error DeployFailed();
 
     address public override feeToSetter;
     address public override owner;
@@ -43,28 +51,58 @@ contract GammaPoolFactory is IGammaPoolFactory {
         return allPools.length;
     }
 
+    function isForbidden(address _owner) internal virtual view {
+        if(msg.sender != _owner) {
+            revert Forbidden();
+        }
+    }
+
+    function isRestricted(uint24 protocolId, address _owner) internal virtual view {
+        if(isProtocolRestricted[protocolId] == true && msg.sender != _owner) {
+            revert ProtocolRestricted();
+        }
+    }
+
+    function isProtocolNotSet(uint24 protocolId) internal virtual view {
+        if(getProtocol[protocolId] == address(0)) {
+            revert ProtocolNotSet();
+        }
+    }
+
+    function hasPool(bytes32 key) internal virtual view {
+        if(getPool[key] != address(0)) {
+            revert PoolExists();
+        }
+    }
+
     function addProtocol(address protocol) external virtual override {
-        require(msg.sender == owner, "FORBIDDEN");
-        require(IProtocol(protocol).protocol() > 0, "0_PROT");
-        require(getProtocol[IProtocol(protocol).protocol()] == address(0), "PROT_EXISTS");
+        isForbidden(owner);
+        if(IProtocol(protocol).protocol() == 0) {
+            revert ZeroProtocol();
+        }
+        if(getProtocol[IProtocol(protocol).protocol()] != address(0)) {
+            revert ProtocolExists();
+        }
         getProtocol[IProtocol(protocol).protocol()] = protocol;
     }
 
     function removeProtocol(uint24 protocol) external virtual override {
-        require(msg.sender == owner, "FORBIDDEN");
+        isForbidden(owner);
         getProtocol[protocol] = address(0);
     }
 
     function setIsProtocolRestricted(uint24 protocol, bool isRestricted) external virtual override {
-        require(msg.sender == owner, "FORBIDDEN");
+        isForbidden(owner);
         isProtocolRestricted[protocol] = isRestricted;
     }
 
     function createPool(CreatePoolParams calldata params) external virtual override returns (address pool) {
         uint24 protocolId = params.protocol;
 
-        require(getProtocol[protocolId] != address(0), "PROT_NOT_SET");
-        require(isProtocolRestricted[protocolId] == false || msg.sender == owner, "RESTRICTED");
+        //require(getProtocol[protocolId] != address(0), "PROT_NOT_SET");
+        isProtocolNotSet(protocolId);
+        //require(isProtocolRestricted[protocolId] == false || msg.sender == owner, "RESTRICTED");
+        isRestricted(protocolId, owner);
 
         address protocol = getProtocol[protocolId];
 
@@ -75,10 +113,14 @@ contract GammaPoolFactory is IGammaPoolFactory {
         _params.tokens = IProtocol(protocol).validateCFMM(params.tokens, cfmm);
         bytes32 key = AddressCalculator.getGammaPoolKey(cfmm, protocolId);
 
-        require(getPool[key] == address(0), "POOL_EXISTS");
+        //require(getPool[key] == address(0), "POOL_EXISTS");
+        hasPool(key);
 
         (bool success, bytes memory data) = deployer.delegatecall(abi.encodeWithSignature("createPool(bytes32)", key));
-        require(success && (data.length > 0 && (pool = abi.decode(data, (address))) == AddressCalculator.calcAddress(address(this),key)), "DEPLOY");
+        if(!(success && (data.length > 0 && (pool = abi.decode(data, (address))) == AddressCalculator.calcAddress(address(this),key)))) {
+            revert DeployFailed();
+        }
+        //require(success && (data.length > 0 && (pool = abi.decode(data, (address))) == AddressCalculator.calcAddress(address(this),key)), "DEPLOY");
 
         console.log("Pool created with key: ");
         console.logBytes32(key);
@@ -96,17 +138,17 @@ contract GammaPoolFactory is IGammaPoolFactory {
     }
 
     function setFee(uint _fee) external {
-        require(msg.sender == feeToSetter, "FORBIDDEN");
+        isForbidden(feeToSetter);
         fee = _fee;
     }
 
     function setFeeTo(address _feeTo) external {
-        require(msg.sender == feeToSetter, "FORBIDDEN");
+        isForbidden(feeToSetter);
         feeTo = _feeTo;
     }
 
     function setFeeToSetter(address _feeToSetter) external {
-        require(msg.sender == feeToSetter, "FORBIDDEN");
+        isForbidden(feeToSetter);
         feeToSetter = _feeToSetter;
     }
 
