@@ -123,33 +123,36 @@ describe("GammaPool", function () {
       expect(await gammaPool.longStrategy()).to.equal(longStrategy.address);
       expect(await gammaPool.shortStrategy()).to.equal(shortStrategy.address);
 
-      const tokenBalances = await gammaPool.tokenBalances();
+      const res = await gammaPool.getPoolBalances();
+      const tokenBalances = res.tokenBalances;
       expect(tokenBalances.length).to.equal(2);
       expect(tokenBalances[0]).to.equal(0);
       expect(tokenBalances[1]).to.equal(0);
 
-      expect(await gammaPool.lpTokenBalance()).to.equal(0);
-      expect(await gammaPool.lpTokenBorrowed()).to.equal(0);
-      expect(await gammaPool.lpTokenBorrowedPlusInterest()).to.equal(0);
-      expect(await gammaPool.lpTokenTotal()).to.equal(0);
-      expect(await gammaPool.borrowedInvariant()).to.equal(0);
-      expect(await gammaPool.lpInvariant()).to.equal(0);
-      expect(await gammaPool.totalInvariant()).to.equal(0);
+      expect(res.lpTokenBalance).to.equal(0);
+      expect(res.lpTokenBorrowed).to.equal(0);
+      expect(res.lpTokenBorrowedPlusInterest).to.equal(0);
+      expect(res.lpTokenTotal).to.equal(0);
+      expect(res.borrowedInvariant).to.equal(0);
+      expect(res.lpInvariant).to.equal(0);
+      expect(res.totalInvariant).to.equal(0);
 
-      const cfmmReserves = await gammaPool.cfmmReserves();
+      const res1 = await gammaPool.getCFMMBalances();
+      const cfmmReserves = res1.cfmmReserves;
       expect(cfmmReserves.length).to.equal(2);
       expect(cfmmReserves[0]).to.equal(0);
       expect(cfmmReserves[1]).to.equal(0);
+      expect(res1.cfmmInvariant).to.equal(0);
+      expect(res1.cfmmTotalSupply).to.equal(0);
 
-      expect(await gammaPool.borrowRate()).to.equal(0);
+      const res2 = await gammaPool.getRates();
+      expect(res2.borrowRate).to.equal(0);
 
       const ONE = ethers.BigNumber.from(10).pow(18);
-      expect(await gammaPool.accFeeIndex()).to.equal(ONE);
-      expect(await gammaPool.lastFeeIndex()).to.equal(ONE);
-      expect(await gammaPool.lastCFMMFeeIndex()).to.equal(ONE);
-      expect(await gammaPool.lastCFMMInvariant()).to.equal(0);
-      expect(await gammaPool.lastCFMMTotalSupply()).to.equal(0);
-      expect(await gammaPool.lastBlockNumber()).to.gt(0);
+      expect(res2.accFeeIndex).to.equal(ONE);
+      expect(res2.lastFeeIndex).to.equal(ONE);
+      expect(res2.lastCFMMFeeIndex).to.equal(ONE);
+      expect(res2.lastBlockNumber).to.gt(0);
     });
   });
 

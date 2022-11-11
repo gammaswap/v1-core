@@ -16,22 +16,32 @@ interface IGammaPool {
     function factory() external view returns(address);
     function longStrategy() external view returns(address);
     function shortStrategy() external view returns(address);
-    function tokenBalances() external view returns(uint256[] memory);
+
+    function getPoolBalances() external virtual view returns(uint256[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
+        uint256 lpTokenBorrowedPlusInterest, uint256 lpTokenTotal, uint256 borrowedInvariant,
+        uint256 lpInvariant, uint256 totalInvariant);
+
+    /*function tokenBalances() external view returns(uint256[] memory);
     function lpTokenBalance() external view returns(uint256);
     function lpTokenBorrowed() external view returns(uint256);
     function lpTokenBorrowedPlusInterest() external view returns(uint256);
     function lpTokenTotal() external view returns(uint256);
     function borrowedInvariant() external view returns(uint256);
     function lpInvariant() external view returns(uint256);
-    function totalInvariant() external view returns(uint256);
-    function cfmmReserves() external view returns(uint256[] memory);
-    function borrowRate() external view returns(uint256);
-    function accFeeIndex() external view returns(uint256);
-    function lastFeeIndex() external view returns(uint256);
-    function lastCFMMFeeIndex() external view returns(uint256);
-    function lastCFMMInvariant() external view returns(uint256);
-    function lastCFMMTotalSupply() external view returns(uint256);
-    function lastBlockNumber() external view returns(uint256);
+    function totalInvariant() external view returns(uint256);/**/
+
+    function getCFMMBalances() external virtual view returns(uint256[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply);
+    //function cfmmReserves() external view returns(uint256[] memory);
+    //function lastCFMMInvariant() external view returns(uint256);
+    //function lastCFMMTotalSupply() external view returns(uint256);
+
+
+    function getRates() external virtual view returns(uint256 borrowRate, uint256 accFeeIndex, uint256 lastFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastBlockNumber);
+    //function borrowRate() external view returns(uint256);
+    //function accFeeIndex() external view returns(uint256);
+    //function lastFeeIndex() external view returns(uint256);
+    //function lastCFMMFeeIndex() external view returns(uint256);
+    //function lastBlockNumber() external view returns(uint256);
 
     //Short Gamma
     function depositNoPull(address to) external returns(uint256 shares);
@@ -40,6 +50,8 @@ interface IGammaPool {
     function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external returns(uint256[] memory reserves, uint256 shares);
 
     //Long Gamma
+    function liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external virtual returns(uint256[] memory refund);
+    function liquidateWithLP(uint256 tokenId) external virtual returns(uint256[] memory refund);
     function getCFMMPrice() external view returns(uint256 price);
     function createLoan() external returns(uint tokenId);
     function loan(uint256 tokenId) external view returns (uint256 id, address poolId, uint256[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
