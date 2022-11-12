@@ -5,20 +5,18 @@ pragma abicoder v2;
 import "../../interfaces/IProtocol.sol";
 
 contract TestProtocol is IProtocol {
-    uint24 public override protocol;
+    uint24 public override protocolId;
     address public override longStrategy;
     address public override shortStrategy;
-    address public override owner;
-    bool public override isSet;
 
     struct Params{
         uint256 val;
     }
 
-    constructor(address _longStrategy, address _shortStrategy, uint24 _protocol) {
+    constructor(address _longStrategy, address _shortStrategy, uint24 _protocolId) {
         longStrategy = _longStrategy;
         shortStrategy = _shortStrategy;
-        protocol = _protocol;
+        protocolId = _protocolId;
     }
 
     function initialize(bytes calldata stratData, bytes calldata rateData) external virtual override returns(bool) {

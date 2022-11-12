@@ -4,15 +4,12 @@ pragma solidity 0.8.4;
 import "../libraries/AddressCalculator.sol";
 
 contract TestAddressCalculator {
-    function getInitCodeHash() external pure returns(bytes32 hash) {
-        hash = AddressCalculator.GAMMA_POOL_INIT_CODE_HASH;
-    }
 
     function getGammaPoolKey(address cfmm, uint24 protocol) external pure returns(bytes32) {
         return AddressCalculator.getGammaPoolKey(cfmm, protocol);
     }
 
-    function calcAddress(address factory, bytes32 key) external pure returns(address pool){
+    function calcAddress(address factory, bytes32 key) external view returns(address pool){
         pool = AddressCalculator.calcAddress(factory, key);
     }
 

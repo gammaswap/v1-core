@@ -5,7 +5,9 @@ describe("GammaPoolFactory", function () {
   let TestERC20: any;
   let TestProtocol: any;
   let TestAddressCalculator: any;
+  let GammaPool: any;
   let GammaPoolFactory: any;
+  let gammaPool: any;
   let factory: any;
   let addressCalculator: any;
   let protocol: any;
@@ -23,6 +25,7 @@ describe("GammaPoolFactory", function () {
   beforeEach(async function () {
     // Get the ContractFactory and Signers here.
     TestERC20 = await ethers.getContractFactory("TestERC20");
+    GammaPool = await ethers.getContractFactory("GammaPool");
     GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
     TestProtocol = await ethers.getContractFactory("TestProtocol");
     TestAddressCalculator = await ethers.getContractFactory(
@@ -30,13 +33,15 @@ describe("GammaPoolFactory", function () {
     );
     [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
 
+    gammaPool = await GammaPool.deploy();
+
     // To deploy our contract, we just have to call Token.deploy() and await
     // for it to be deployed(), which happens onces its transaction has been
     // mined.
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
     tokenB = await TestERC20.deploy("Test Token B", "TOKB");
     tokenC = await TestERC20.deploy("Test Token C", "TOKC");
-    factory = await GammaPoolFactory.deploy(owner.address);
+    factory = await GammaPoolFactory.deploy(owner.address, gammaPool.address);
     addressCalculator = await TestAddressCalculator.deploy();
     protocol = await TestProtocol.deploy(addr1.address, addr2.address, 1);
     protocolZero = await TestProtocol.deploy(addr1.address, addr2.address, 0);

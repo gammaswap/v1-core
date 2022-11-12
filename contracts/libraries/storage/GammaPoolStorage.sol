@@ -1,14 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
-import "../../interfaces/IGammaPoolFactory.sol";
-import "../../interfaces/IProtocol.sol";
-import "../../interfaces/strategies/base/IShortStrategy.sol";
-import "../../interfaces/strategies/base/ILongStrategy.sol";
-
 library GammaPoolStorage {
     error Locked();
-    error PoolStoreIsSet();
+    error StoreInitialized();
 
     bytes32 constant STRUCT_POSITION = keccak256("com.gammaswap.gammapool");
 
@@ -36,10 +31,10 @@ library GammaPoolStorage {
         uint256 LP_TOKEN_BALANCE;//LP Tokens in GS
         uint256 LP_TOKEN_BORROWED;//LP Tokens that have been borrowed (Principal)
         uint256 LP_TOKEN_BORROWED_PLUS_INTEREST;//(LP Tokens that have been borrowed (principal) plus interest in LP Tokens)
-        uint256 LP_TOKEN_TOTAL;//LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST
+        uint256 LP_TOKEN_TOTAL;//LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST (will remove this)
         uint256 BORROWED_INVARIANT;
         uint256 LP_INVARIANT;//Invariant from LP Tokens
-        uint256 TOTAL_INVARIANT;//BORROWED_INVARIANT + LP_INVARIANT
+        uint256 TOTAL_INVARIANT;//BORROWED_INVARIANT + LP_INVARIANT (will remove this)
         uint256[] CFMM_RESERVES;
         uint256 borrowRate;
         uint256 accFeeIndex;
@@ -55,7 +50,6 @@ library GammaPoolStorage {
         uint256 yieldTWAP;
 
         uint256 ONE;
-        bool isSet;
 
         /// @dev The token ID position data
         mapping(uint256 => Loan) loans;
@@ -84,22 +78,25 @@ library GammaPoolStorage {
         }
     }
 
-    function init() internal {
+    function init(address cfmm, uint24 protocolId, address protocol, address[] calldata tokens, address longStrategy, address shortStrategy) internal {
         Store storage _store = store();
-        if(_store.isSet) {
-            revert PoolStoreIsSet();
+        if(_store.cfmm != address(0)) {
+            revert StoreInitialized();
         }
-        _store.isSet = true;
         _store.name = "GammaSwap V1";
         _store.symbol = "GAMA-V1";
         _store.decimals = 18;
         _store.factory = msg.sender;
-        (_store.cfmm, _store.protocolId, _store.tokens, _store.protocol) = IGammaPoolFactory(msg.sender).parameters();
-        address protocol = _store.protocol;
-        _store.longStrategy = IProtocol(protocol).longStrategy();
-        _store.shortStrategy = IProtocol(protocol).shortStrategy();
-        _store.TOKEN_BALANCE = new uint256[](_store.tokens.length);
-        _store.CFMM_RESERVES = new uint256[](_store.tokens.length);
+
+        _store.cfmm = cfmm;
+        _store.protocolId = protocolId;
+        _store.tokens = tokens;
+        _store.protocol = protocol;
+        _store.longStrategy = longStrategy;
+        _store.shortStrategy = shortStrategy;
+        _store.TOKEN_BALANCE = new uint256[](tokens.length);
+        _store.CFMM_RESERVES = new uint256[](tokens.length);
+
         _store.accFeeIndex = 10**18;
         _store.lastFeeIndex = 10**18;
         _store.lastCFMMFeeIndex = 10**18;

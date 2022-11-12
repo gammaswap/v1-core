@@ -21,6 +21,7 @@ describe("GammaPool", function () {
   let longStrategy: any;
   let shortStrategy: any;
   let gammaPool: any;
+  let implementation: any;
   let protocol: any;
   let tokens: any;
 
@@ -48,6 +49,8 @@ describe("GammaPool", function () {
     GammaPool = await ethers.getContractFactory("GammaPool");
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
 
+    implementation = await GammaPool.deploy();
+
     // To deploy our contract, we just have to call Token.deploy() and await
     // for it to be deployed(), which happens onces its transaction has been
     // mined.
@@ -64,10 +67,10 @@ describe("GammaPool", function () {
       cfmm.address,
       1,
       tokens,
-      ethers.constants.AddressZero
+      ethers.constants.AddressZero,
+      implementation.address
     );
     protocol = await TestAbstractProtocol.deploy(
-      factory.address,
       1,
       longStrategy.address,
       shortStrategy.address,
@@ -75,19 +78,11 @@ describe("GammaPool", function () {
       3
     );
     await factory.setProtocol(protocol.address);
-
-    const COMPUTED_INIT_CODE_HASH = ethers.utils.keccak256(
-        GammaPool.bytecode
-    );
-    expect(COMPUTED_INIT_CODE_HASH).to.equal(
-      await addressCalculator.getInitCodeHash()
-    );
     await deployGammaPool();
   });
 
   async function deployGammaPool() {
-    await (await factory.createPool()).wait();
-
+    await (await factory.createPool2()).wait();
     const key = await addressCalculator.getGammaPoolKey(cfmm.address, 1);
     const pool = await factory.getPool(key);
 
@@ -99,15 +94,6 @@ describe("GammaPool", function () {
   describe("Deployment", function () {
     // `it` is another Mocha function. This is the one you use to define your
     // tests. It receives the test name, and a callback function.
-
-    it("Should be right INIT_CODE_HASH", async function () {
-      const COMPUTED_INIT_CODE_HASH = ethers.utils.keccak256(
-        GammaPool.bytecode
-      );
-      expect(COMPUTED_INIT_CODE_HASH).to.equal(
-        await addressCalculator.getInitCodeHash()
-      );
-    });
 
     it("Check Init Params", async function () {
       expect(await gammaPool.cfmm()).to.equal(cfmm.address);

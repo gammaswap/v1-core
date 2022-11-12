@@ -10,13 +10,6 @@ interface IGammaPoolFactory {
         address[] tokens;
     }
 
-    struct Parameters {
-        address cfmm;
-        uint24 protocolId;
-        address[] tokens;
-        address protocol;
-    }
-
     function isProtocolRestricted(uint24 protocol) external view returns(bool);
     function setIsProtocolRestricted(uint24 protocol, bool isRestricted) external;
     function addProtocol(address protocol) external;
@@ -26,9 +19,9 @@ interface IGammaPoolFactory {
     function getPool(bytes32 salt) external view returns(address);
     function allPoolsLength() external view returns (uint256);
     function feeToSetter() external view returns(address);
+    function implementation() external view returns(address);
     function owner() external view returns(address);
     function fee() external view returns(uint256);
     function feeTo() external view returns(address);
     function feeInfo() external view returns(address,uint);
-    function parameters() external view returns (address cfmm, uint24 protocolId, address[] memory tokens, address protocol);//, address longStrategy, address shortStrategy);
 }

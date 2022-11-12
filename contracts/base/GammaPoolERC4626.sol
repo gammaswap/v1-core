@@ -2,6 +2,7 @@
 pragma solidity 0.8.4;
 
 import "./GammaPoolERC20.sol";
+import "../interfaces/strategies/base/IShortStrategy.sol";
 
 abstract contract GammaPoolERC4626 is GammaPoolERC20 {
 

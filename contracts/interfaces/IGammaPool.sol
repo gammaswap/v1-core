@@ -8,11 +8,23 @@ interface IGammaPool {
     event LoanCreated(address indexed caller, uint256 tokenId);
     event LoanUpdated(uint256 indexed tokenId, uint256[] tokensHeld, uint256 heldLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
 
+    struct InitializeParameters {
+        address cfmm;
+        uint24 protocolId;
+        address[] tokens;
+        address protocol;
+        address longStrategy;
+        address shortStrategy;
+        bytes stratParams;
+        bytes rateParams;
+    }
+
+    function initialize(InitializeParameters calldata params) external;
+
     function cfmm() external view returns(address);
     function protocolId() external view returns(uint24);
     function protocol() external view returns(address);
     function tokens() external view returns(address[] memory);
-
     function factory() external view returns(address);
     function longStrategy() external view returns(address);
     function shortStrategy() external view returns(address);
