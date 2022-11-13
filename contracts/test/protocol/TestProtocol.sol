@@ -5,9 +5,10 @@ pragma abicoder v2;
 import "../../interfaces/IProtocol.sol";
 
 contract TestProtocol is IProtocol {
-    uint24 public override protocolId;
-    address public override longStrategy;
-    address public override shortStrategy;
+
+    uint24 immutable public override protocolId;
+    address immutable public override longStrategy;
+    address immutable public override shortStrategy;
 
     struct Params{
         uint256 val;
