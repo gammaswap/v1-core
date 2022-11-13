@@ -2,15 +2,14 @@
 pragma solidity 0.8.4;
 
 library ProtocolStorage {
-    error ProtocolStoreIsSet();
+    error StoreInitialized();
+
     bytes32 constant STRUCT_POSITION = keccak256("com.gammaswap.protocol");
 
     struct Store {
-        uint24 protocol;
-        address owner;
+        uint24 protocolId;
         address longStrategy;
         address shortStrategy;
-        bool isSet;
     }
 
     function store() internal pure returns (Store storage _store) {
@@ -20,15 +19,13 @@ library ProtocolStorage {
         }
     }
 
-    function init(uint24 protocol, address longStrategy, address shortStrategy, address owner) internal {
+    function init(uint24 protocolId, address longStrategy, address shortStrategy) internal {
         Store storage _store = store();
-        if(_store.isSet) {
-            revert ProtocolStoreIsSet();
+        if(_store.protocolId > 0) {
+            revert StoreInitialized();
         }
-        _store.isSet = true;
-        _store.protocol = protocol;
+        _store.protocolId = protocolId;
         _store.longStrategy = longStrategy;
         _store.shortStrategy = shortStrategy;
-        _store.owner = owner;
     }
 }

@@ -25,6 +25,7 @@ describe("GammaPoolERC20", function () {
   let longStrategy: any;
   let shortStrategy: any;
   let gammaPool: any;
+  let implementation: any;
   let protocol: any;
 
   beforeEach(async function () {
@@ -44,6 +45,7 @@ describe("GammaPoolERC20", function () {
 
     TestShortStrategy = await ethers.getContractFactory("TestERC20Strategy");
 
+    implementation = await GammaPool.deploy();
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
     tokenB = await TestERC20.deploy("Test Token B", "TOKB");
     cfmm = await TestERC20.deploy("Test CFMM", "CFMM");
@@ -54,12 +56,12 @@ describe("GammaPoolERC20", function () {
       cfmm.address,
       PROTOCOL_ID,
       [tokenA.address, tokenB.address],
-      ethers.constants.AddressZero
+      ethers.constants.AddressZero,
+      implementation.address
     );
 
     longStrategy = addr6;
     protocol = await TestAbstractProtocol.deploy(
-      factory.address,
       PROTOCOL_ID,
       longStrategy.address,
       shortStrategy.address,
@@ -72,7 +74,7 @@ describe("GammaPoolERC20", function () {
   });
 
   async function deployGammaPool() {
-    await (await factory.createPool()).wait();
+    await (await factory.createPool2()).wait();
 
     const key = await addressCalculator.getGammaPoolKey(
       cfmm.address,

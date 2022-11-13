@@ -1,9 +1,11 @@
 pragma solidity 0.8.4;
 
 import "../libraries/AddressCalculator.sol";
-import "../PoolDeployer.sol";
+import "../base/AbstractGammaPoolFactory.sol";
+import "../interfaces/IGammaPool.sol";
+import "../interfaces/IProtocol.sol";
 
-contract TestGammaPoolFactory {
+contract TestGammaPoolFactory is AbstractGammaPoolFactory {
 
     address public deployer;
     address public cfmm;
@@ -11,35 +13,65 @@ contract TestGammaPoolFactory {
     address[] public tokens;
     address public protocol;
 
-    mapping(bytes32 => address) public getPool;//all GS Pools addresses can be predetermined
-    address public owner;
-
-    constructor(address _cfmm, uint24 _protocolId, address[] memory _tokens, address _protocol) {
+    constructor(address _cfmm, uint24 _protocolId, address[] memory _tokens, address _protocol, address _implementation) {
         cfmm = _cfmm;
         protocolId = _protocolId;
         tokens = _tokens;
         protocol = _protocol;
         owner = msg.sender;
-        deployer = address(new PoolDeployer());
+        feeTo = owner;
+        feeToSetter = owner;
+        implementation = _implementation;
     }
 
     function setProtocol(address _protocol) external {
         protocol = _protocol;
     }
 
-    function parameters() external virtual view returns(address _cfmm, uint24 _protocolId, address[] memory _tokens, address _protocol) {
-        _cfmm = cfmm;
-        _protocolId = protocolId;
-        _tokens = tokens;
-        _protocol = protocol;
-    }
-
-    function createPool() external virtual returns (address pool) {
+    function createPool2() external virtual returns(address pool) {
         bytes32 key = AddressCalculator.getGammaPoolKey(cfmm, protocolId);
 
-        (bool success, bytes memory data) = deployer.delegatecall(abi.encodeWithSignature("createPool(bytes32)", key));
-        require(success && (data.length > 0 && (pool = abi.decode(data, (address))) == AddressCalculator.calcAddress(address(this),key)), "DEPLOY");
+        IProtocol mProtocol = IProtocol(protocol);
+
+        IGammaPool.InitializeParameters memory mParams = IGammaPool.InitializeParameters({
+        cfmm: cfmm, protocolId: protocolId, tokens: tokens, protocol: protocol,
+        longStrategy: mProtocol.longStrategy(), shortStrategy: mProtocol.shortStrategy(),
+        stratParams: new bytes(0), rateParams: new bytes(0)});
+        (mParams.stratParams, mParams.rateParams) = mProtocol.parameters();
+
+        pool = cloneDeterministic(implementation, key);
+        IGammaPool(pool).initialize(mParams);
 
         getPool[key] = pool;
+    }
+
+    function createPool(CreatePoolParams calldata params) external override virtual returns(address pool) {
+    }
+
+    function isProtocolRestricted(uint24 protocol) external view override returns(bool) {
+        return false;
+    }
+
+    function setIsProtocolRestricted(uint24 protocol, bool isRestricted) external override {
+    }
+
+    function addProtocol(address _protocol) external override {
+        protocol = _protocol;
+    }
+
+    function removeProtocol(uint24 protocolId) external override {
+      protocol = address(0);
+    }
+
+    function getProtocol(uint24 protocolId) external override view returns (address) {
+        return protocol;
+    }
+
+    function allPoolsLength() external override view returns (uint256) {
+        return 0;
+    }
+
+    function feeInfo() external override view returns(address,uint) {
+        return(feeTo, 0);
     }
 }

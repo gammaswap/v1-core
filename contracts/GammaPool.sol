@@ -2,7 +2,7 @@
 pragma solidity 0.8.4;
 
 import "./interfaces/IGammaPool.sol";
-import "./interfaces/strategies/base/IShortStrategy.sol";
+import "./interfaces/IProtocol.sol";
 import "./interfaces/strategies/base/ILongStrategy.sol";
 import "./base/GammaPoolERC4626.sol";
 
@@ -15,9 +15,11 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     constructor() {
-        GammaPoolStorage.init();
-        (bytes memory stratParams, bytes memory rateParams) = IProtocol(GammaPoolStorage.store().protocol).parameters();
-        (bool success,bytes memory data) = GammaPoolStorage.store().protocol.delegatecall(abi.encodeWithSelector(IProtocol(GammaPoolStorage.store().protocol).initialize.selector, stratParams, rateParams));
+    }
+
+    function initialize(InitializeParameters calldata params) external virtual override {
+        GammaPoolStorage.init(params.cfmm, params.protocolId, params.protocol, params.tokens, params.longStrategy, params.shortStrategy);
+        (bool success,bytes memory data) = params.protocol.delegatecall(abi.encodeWithSelector(IProtocol(params.protocol).initialize.selector, params.stratParams, params.rateParams));
         require(success && (data.length == 0 || abi.decode(data, (bool))));
     }
 

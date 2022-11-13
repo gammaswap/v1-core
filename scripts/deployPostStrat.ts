@@ -19,13 +19,6 @@ async function main() {
   );
   await gammaPoolFactory.addProtocol(protocolAddress);
 
-  // show GammaPool hash
-  const GammaPool = await ethers.getContractFactory("GammaPool");
-  const COMPUTED_INIT_CODE_HASH = ethers.utils.keccak256(
-    GammaPool.bytecode
-  );
-  console.log("GAMMAPOOL_INIT_CODE_HASH >> " + COMPUTED_INIT_CODE_HASH)
-
   const createPoolParams = {
     cfmm: cfmmPair,
     protocol: 1,

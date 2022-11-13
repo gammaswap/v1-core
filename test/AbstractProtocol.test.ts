@@ -23,7 +23,6 @@ describe("AbstractProtocol", function () {
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
 
     protocol = await TestAbstractProtocol.deploy(
-      owner.address,
       1,
       addr1.address,
       addr2.address,
@@ -38,12 +37,9 @@ describe("AbstractProtocol", function () {
   // You can nest describe calls to create subsections.
   describe("Deployment", function () {
     it("Should set right init params", async function () {
-      expect(await protocol._owner()).to.equal(owner.address);
-      expect(await protocol.protocol()).to.equal(1);
+      expect(await protocol.protocolId()).to.equal(1);
       expect(await protocol.longStrategy()).to.equal(addr1.address);
       expect(await protocol.shortStrategy()).to.equal(addr2.address);
-      expect(await protocol.owner()).to.equal(owner.address);
-      expect(await protocol.isSet()).to.equal(true);
     });
 
     it("Get Parameters", async function () {

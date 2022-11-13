@@ -6,7 +6,7 @@ import "../storage/TestRateStorage.sol";
 
 contract TestAbstractProtocol is AbstractProtocol {
 
-    constructor(address gsFactory, uint24 _protocol, address _longStrategy, address _shortStrategy, uint8 val1, uint8 val2) AbstractProtocol(gsFactory, _protocol, _longStrategy, _shortStrategy) {
+    constructor(uint24 _protocolId, address _longStrategy, address _shortStrategy, uint8 val1, uint8 val2) AbstractProtocol(_protocolId, _longStrategy, _shortStrategy) {
         TestStrategyStorage.init(val1);
         TestRateStorage.init(val2);
     }

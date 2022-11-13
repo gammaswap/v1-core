@@ -7,19 +7,14 @@ import { ethers } from "hardhat";
 
 async function main() {
   const [owner] = await ethers.getSigners();
-  
+
+  const GammaPool = await ethers.getContractFactory("GammaPool");
+  const implementation = await GammaPool.deploy();
   // deploy GammaPoolFactory
   const GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
-  const factory = await GammaPoolFactory.deploy(owner.address);
+  const factory = await GammaPoolFactory.deploy(owner.address, implementation.address);
   await factory.deployed();
   console.log("GammaPoolFactory Address >> " + factory.address);
-
-  // show GammaPool hash
-  const GammaPool = await ethers.getContractFactory("GammaPool");
-  const COMPUTED_INIT_CODE_HASH = ethers.utils.keccak256(
-    GammaPool.bytecode
-  );
-  console.log("GAMMAPOOL_INIT_CODE_HASH >> " + COMPUTED_INIT_CODE_HASH)
 }
 
 
