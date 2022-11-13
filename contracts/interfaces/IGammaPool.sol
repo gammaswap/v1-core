@@ -15,8 +15,6 @@ interface IGammaPool {
         address protocol;
         address longStrategy;
         address shortStrategy;
-        bytes stratParams;
-        bytes rateParams;
     }
 
     function initialize(InitializeParameters calldata params) external;

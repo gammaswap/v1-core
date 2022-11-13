@@ -43,50 +43,14 @@ describe("AbstractProtocol", function () {
     });
 
     it("Get Parameters", async function () {
-      const params = await protocol.parameters();
-      const sParams = ethers.utils.hexlify(params.sParams);
-      const _sParams = ethers.utils.defaultAbiCoder.decode(
-        ["uint8"], // specify your return type/s here
-        ethers.utils.hexDataSlice(sParams, 0)
-      );
-      expect(_sParams[0]).to.equal(2);
-      const rParams = ethers.utils.hexlify(params.rParams);
-      const _rParams = ethers.utils.defaultAbiCoder.decode(
-        ["uint8"], // specify your return type/s here
-        ethers.utils.hexDataSlice(rParams, 0)
-      );
-      expect(_rParams[0]).to.equal(3);
+      const _val1 = await protocol.val1();
+      expect(_val1).to.equal(2);
+      const _val2 = await protocol.val2();
+      expect(_val2).to.equal(3);
     });
   });
 
-  describe("Init & Validation", function () {
-    it("Initialize Parameters", async function () {
-      const abi = ethers.utils.defaultAbiCoder;
-      const sData = abi.encode(
-        ["uint8"], // encode as address array
-        [4]
-      ); // array to encode
-      const rData = abi.encode(
-        ["uint8"], // encode as address array
-        [5]
-      ); // array to encode
-      await protocol.initialize(sData, rData);
-
-      const params = await protocol.parameters();
-      const sParams = ethers.utils.hexlify(params.sParams);
-      const _sParams = ethers.utils.defaultAbiCoder.decode(
-        ["uint8"], // specify your return type/s here
-        ethers.utils.hexDataSlice(sParams, 0)
-      );
-      expect(_sParams[0]).to.equal(2);
-      const rParams = ethers.utils.hexlify(params.rParams);
-      const _rParams = ethers.utils.defaultAbiCoder.decode(
-        ["uint8"], // specify your return type/s here
-        ethers.utils.hexDataSlice(rParams, 0)
-      );
-      expect(_rParams[0]).to.equal(3);
-    });
-
+  describe("Validation", function () {
     it("Is Contract", async function () {
       const tokens = await protocol.validateCFMM(
         [addr1.address, addr2.address],
