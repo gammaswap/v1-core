@@ -3,24 +3,17 @@ pragma solidity 0.8.4;
 pragma abicoder v2;
 
 import "../interfaces/IProtocol.sol";
-import "../libraries/storage/ProtocolStorage.sol";
 
 abstract contract AbstractProtocol is IProtocol {
 
-    constructor(uint24 _protocol, address _longStrategy, address _shortStrategy) {
-        ProtocolStorage.init(_protocol, _longStrategy, _shortStrategy);
-    }
+    uint24 immutable public override protocolId;
+    address immutable public override longStrategy;
+    address immutable public override shortStrategy;
 
-    function protocolId() external virtual override view returns(uint24) {
-        return ProtocolStorage.store().protocolId;
-    }
-
-    function longStrategy() external virtual override view returns(address) {
-        return ProtocolStorage.store().longStrategy;
-    }
-
-    function shortStrategy() external virtual override view returns(address) {
-        return ProtocolStorage.store().shortStrategy;
+    constructor(uint24 _protocolId, address _longStrategy, address _shortStrategy) {
+        protocolId = _protocolId;
+        longStrategy = _longStrategy;
+        shortStrategy = _shortStrategy;
     }
 
     function parameters() external virtual override view returns(bytes memory sParams, bytes memory rParams) {

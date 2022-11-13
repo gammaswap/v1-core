@@ -78,13 +78,13 @@ describe("AbstractProtocol", function () {
         ["uint8"], // specify your return type/s here
         ethers.utils.hexDataSlice(sParams, 0)
       );
-      expect(_sParams[0]).to.equal(4);
+      expect(_sParams[0]).to.equal(2);
       const rParams = ethers.utils.hexlify(params.rParams);
       const _rParams = ethers.utils.defaultAbiCoder.decode(
         ["uint8"], // specify your return type/s here
         ethers.utils.hexDataSlice(rParams, 0)
       );
-      expect(_rParams[0]).to.equal(5);
+      expect(_rParams[0]).to.equal(3);
     });
 
     it("Is Contract", async function () {
