@@ -35,9 +35,7 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
 
         IGammaPool.InitializeParameters memory mParams = IGammaPool.InitializeParameters({
         cfmm: cfmm, protocolId: protocolId, tokens: tokens, protocol: protocol,
-        longStrategy: mProtocol.longStrategy(), shortStrategy: mProtocol.shortStrategy(),
-        stratParams: new bytes(0), rateParams: new bytes(0)});
-        (mParams.stratParams, mParams.rateParams) = mProtocol.parameters();
+        longStrategy: mProtocol.longStrategy(), shortStrategy: mProtocol.shortStrategy()});
 
         pool = cloneDeterministic(implementation, key);
         IGammaPool(pool).initialize(mParams);

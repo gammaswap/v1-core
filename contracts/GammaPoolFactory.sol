@@ -71,8 +71,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
 
         IGammaPool.InitializeParameters memory mParams = IGammaPool.InitializeParameters({
             cfmm: cfmm, protocolId: protocolId, tokens: new address[](0), protocol: protocol,
-            longStrategy: mProtocol.longStrategy(), shortStrategy: mProtocol.shortStrategy(),
-            stratParams: new bytes(0), rateParams: new bytes(0)});
+            longStrategy: mProtocol.longStrategy(), shortStrategy: mProtocol.shortStrategy()});
 
         mParams.tokens = mProtocol.validateCFMM(params.tokens, cfmm);
 
@@ -81,8 +80,6 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         hasPool(key);
 
         pool = cloneDeterministic(implementation, key);
-
-        (mParams.stratParams, mParams.rateParams) = mProtocol.parameters();
 
         IGammaPool(pool).initialize(mParams);
 

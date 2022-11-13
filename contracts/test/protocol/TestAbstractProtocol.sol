@@ -14,24 +14,6 @@ contract TestAbstractProtocol is AbstractProtocol {
         val2 = _val2;
     }
 
-    function strategyParams() internal virtual override view returns(bytes memory sParams) {
-        sParams = abi.encode(TestStrategyStorage.Store({val: val1}));
-    }
-
-    function rateParams() internal virtual override view returns(bytes memory rParams) {
-        rParams = abi.encode(TestStrategyStorage.Store({val: val2}));
-    }
-
-    function initializeStrategyParams(bytes calldata sData) internal virtual override {
-        TestStrategyStorage.Store memory sParams = abi.decode(sData, (TestStrategyStorage.Store));
-        TestStrategyStorage.init(sParams.val);
-    }
-
-    function initializeRateParams(bytes calldata rData) internal virtual override {
-        TestRateStorage.Store memory rParams = abi.decode(rData, (TestRateStorage.Store));
-        TestRateStorage.init(rParams.val);
-    }
-
     function validateCFMM(address[] calldata _tokens, address _cfmm) external override view returns(address[] memory tokens) {
         require(isContract(_cfmm), "NOT_CONTRACT");
         tokens = new address[](2);
