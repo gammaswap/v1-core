@@ -44,7 +44,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     function totalAssets() public view virtual returns(uint256) {
         GammaPoolStorage.Store storage store = GammaPoolStorage.store();
         return IShortStrategy(store.shortStrategy).totalAssets(store.cfmm, store.BORROWED_INVARIANT, store.LP_TOKEN_BALANCE,
-            store.LP_TOKEN_BORROWED, store.lastCFMMInvariant, store.lastCFMMTotalSupply, store.LAST_BLOCK_NUMBER);
+            store.lastCFMMInvariant, store.lastCFMMTotalSupply, store.LAST_BLOCK_NUMBER);
     }
 
     function convertToShares(uint256 assets) public view virtual returns (uint256) {
@@ -84,12 +84,22 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
         return type(uint256).max;
     }
 
+    function maxAssets(uint256 assets) internal view virtual returns(uint256) {
+        uint256 lpTokenBalance = GammaPoolStorage.store().LP_TOKEN_BALANCE;
+        if(assets < lpTokenBalance){
+            return assets;
+        }
+        return lpTokenBalance;
+    }
+
     function maxWithdraw(address owner) public view virtual returns (uint256) {
         return convertToAssets(GammaPoolStorage.store().balanceOf[owner]);
+        //return maxAssets(convertToAssets(GammaPoolStorage.store().balanceOf[owner]));
     }
 
     function maxRedeem(address owner) public view virtual returns (uint256) {
         return GammaPoolStorage.store().balanceOf[owner];
+        //return convertToShares(maxWithdraw(owner));
     }
 
 }
