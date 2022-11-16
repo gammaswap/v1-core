@@ -24,7 +24,7 @@ contract TestERC20Strategy is IShortStrategy {
         return (new uint256[](0), 0);
     }
 
-    function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 lpBorrowed, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum) external override view returns(uint256) {
+    function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum) external override view returns(uint256) {
         (bool success, bytes memory data) = address(cfmm).staticcall(abi.encodeWithSelector(BALANCE_OF, msg.sender));
         require(success && data.length >= 32);
         return abi.decode(data, (uint256));
