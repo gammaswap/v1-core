@@ -28,7 +28,7 @@ interface IGammaPool {
     function shortStrategy() external view returns(address);
 
     function getPoolBalances() external virtual view returns(uint256[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
-        uint256 lpTokenBorrowedPlusInterest, uint256 lpTokenTotal, uint256 borrowedInvariant, uint256 lpInvariant, uint256 totalInvariant);
+        uint256 lpTokenBorrowedPlusInterest, uint256 borrowedInvariant, uint256 lpInvariant);
     function getCFMMBalances() external virtual view returns(uint256[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply);
     function getRates() external virtual view returns(uint256 borrowRate, uint256 accFeeIndex, uint256 lastFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastBlockNumber);
 

@@ -9,6 +9,9 @@ contract TestERC20Strategy is IShortStrategy {
     bytes4 private constant BALANCE_OF = bytes4(keccak256(bytes('balanceOf(address)')));
 
     function _depositNoPull(address to) external override returns(uint256) {
+        (bool success, bytes memory data) = GammaPoolStorage.store().cfmm.staticcall(abi.encodeWithSelector(BALANCE_OF, msg.sender));
+        require(success && data.length >= 32);
+        GammaPoolStorage.store().LP_TOKEN_BALANCE = abi.decode(data, (uint256));
         return 0;
     }
 
