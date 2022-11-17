@@ -118,10 +118,8 @@ describe("GammaPool", function () {
       expect(res.lpTokenBalance).to.equal(0);
       expect(res.lpTokenBorrowed).to.equal(0);
       expect(res.lpTokenBorrowedPlusInterest).to.equal(0);
-      expect(res.lpTokenTotal).to.equal(0);
       expect(res.borrowedInvariant).to.equal(0);
       expect(res.lpInvariant).to.equal(0);
-      expect(res.totalInvariant).to.equal(0);
 
       const res1 = await gammaPool.getCFMMBalances();
       const cfmmReserves = res1.cfmmReserves;

@@ -51,9 +51,9 @@ contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
     //GamamPool Data
     function getPoolBalances() external virtual override view returns(uint256[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
-        uint256 lpTokenBorrowedPlusInterest, uint256 lpTokenTotal, uint256 borrowedInvariant, uint256 lpInvariant, uint256 totalInvariant){
+        uint256 lpTokenBorrowedPlusInterest, uint256 borrowedInvariant, uint256 lpInvariant){
         GammaPoolStorage.Store storage store = GammaPoolStorage.store();
-        return(store.TOKEN_BALANCE, store.LP_TOKEN_BALANCE, store.LP_TOKEN_BORROWED, store.LP_TOKEN_BORROWED_PLUS_INTEREST, store.LP_TOKEN_TOTAL, store.BORROWED_INVARIANT, store.LP_INVARIANT, store.TOTAL_INVARIANT);
+        return(store.TOKEN_BALANCE, store.LP_TOKEN_BALANCE, store.LP_TOKEN_BORROWED, store.LP_TOKEN_BORROWED_PLUS_INTEREST, store.BORROWED_INVARIANT, store.LP_INVARIANT);
     }
 
     function getCFMMBalances() external virtual override view returns(uint256[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply) {

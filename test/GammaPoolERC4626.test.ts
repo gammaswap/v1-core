@@ -108,6 +108,7 @@ describe("GammaPoolERC4626", function () {
     const _totalAssets = await gammaPool.totalAssets();
     if (assets.gt(0)) await cfmm.transfer(gammaPool.address, assets); // increase totalAssets of gammaPool
 
+    await (await gammaPool.depositNoPull(ethers.constants.AddressZero)).wait();
     expect(await gammaPool.totalAssets()).to.be.equal(_totalAssets.add(assets));
     expect(await cfmm.balanceOf(gammaPool.address)).to.be.equal(
       _totalAssets.add(assets)
@@ -318,16 +319,13 @@ describe("GammaPoolERC4626", function () {
       await updateBalances(assets0, shares0);
 
       const balanceOwner = await gammaPool.balanceOf(owner.address);
-
       expect(balanceOwner).to.be.gt(0);
       expect(await gammaPool.totalAssets()).to.be.equal(0);
       expect(await gammaPool.totalSupply()).to.be.gt(0);
       expect(await gammaPool.maxWithdraw(owner.address)).to.be.equal(
         await gammaPool.convertToAssets(balanceOwner)
       );
-      expect(await gammaPool.maxRedeem(owner.address)).to.be.equal(
-        balanceOwner
-      );
+      expect(await gammaPool.maxRedeem(owner.address)).to.be.equal(0);
 
       // supply > 0, (assets > 0, shares > 0)
       const assets1 = ONE.mul(1000);
@@ -335,7 +333,6 @@ describe("GammaPoolERC4626", function () {
       await updateBalances(assets1, shares1);
 
       const balanceOwner0 = await gammaPool.balanceOf(owner.address);
-
       expect(balanceOwner0).to.be.gt(0);
       expect(await gammaPool.totalAssets()).to.be.gt(0);
       expect(await gammaPool.totalSupply()).to.be.gt(0);

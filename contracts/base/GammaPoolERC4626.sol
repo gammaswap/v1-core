@@ -3,6 +3,7 @@ pragma solidity 0.8.4;
 
 import "./GammaPoolERC20.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
+import "hardhat/console.sol";
 
 abstract contract GammaPoolERC4626 is GammaPoolERC20 {
 
@@ -93,13 +94,11 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     }
 
     function maxWithdraw(address owner) public view virtual returns (uint256) {
-        return convertToAssets(GammaPoolStorage.store().balanceOf[owner]);
-        //return maxAssets(convertToAssets(GammaPoolStorage.store().balanceOf[owner]));
+        return maxAssets(convertToAssets(GammaPoolStorage.store().balanceOf[owner]));
     }
 
     function maxRedeem(address owner) public view virtual returns (uint256) {
-        return GammaPoolStorage.store().balanceOf[owner];
-        //return convertToShares(maxWithdraw(owner));
+        return convertToShares(maxWithdraw(owner));
     }
 
 }
