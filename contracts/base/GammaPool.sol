@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
-import "./interfaces/IGammaPool.sol";
-import "./interfaces/strategies/base/ILongStrategy.sol";
-import "./base/GammaPoolERC4626.sol";
+import "../interfaces/IGammaPool.sol";
+import "../interfaces/strategies/base/ILongStrategy.sol";
+import "./GammaPoolERC4626.sol";
 
 abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 

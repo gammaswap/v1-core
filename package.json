@@ -1,6 +1,6 @@
 {
   "name": "@gammaswap/v1-core",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "description": "Core smart contracts for the GammaSwapV1 protocol",
   "homepage": "https://gammaswap.com",
   "main": "index.js",
@@ -41,6 +41,7 @@
     "@types/node": "^12.20.55",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
+    "@uniswap/v2-core": "^1.0.1",
     "chai": "^4.3.6",
     "dotenv": "^16.0.1",
     "eslint": "^7.32.0",
