@@ -94,18 +94,18 @@ describe("GammaPoolFactory", function () {
       expect(await factory.getProtocol(1)).to.equal(
         ethers.constants.AddressZero
       );
-      await factory.addProtocol(protocol.address);
+      await (await factory.addProtocol(protocol.address)).wait();
       expect(await factory.getProtocol(0)).to.equal(
         ethers.constants.AddressZero
       );
       expect(await factory.getProtocol(1)).to.equal(protocol.address);
 
-      await factory.removeProtocol(1);
+      await (await factory.removeProtocol(1)).wait();
       expect(await factory.getProtocol(1)).to.equal(
         ethers.constants.AddressZero
       );
 
-      await factory.addProtocol(protocol.address);
+      await (await factory.addProtocol(protocol.address)).wait();
       await expect(factory.addProtocol(protocol.address)).to.be.revertedWith(
         "ProtocolExists"
       );

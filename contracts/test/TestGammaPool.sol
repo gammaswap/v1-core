@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import "../GammaPool.sol";
+import "../base/GammaPool.sol";
 
 contract TestGammaPool is GammaPool {
 
