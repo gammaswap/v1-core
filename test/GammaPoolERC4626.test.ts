@@ -7,7 +7,6 @@ const PROTOCOL_ID = 1;
 describe("GammaPoolERC4626", function () {
   let TestERC20: any;
   let TestAddressCalculator: any;
-  let TestAbstractProtocol: any;
   let TestShortStrategy: any;
   let GammaPool: any;
   let TestGammaPoolFactory: any;
@@ -23,7 +22,6 @@ describe("GammaPoolERC4626", function () {
   let longStrategy: any;
   let shortStrategy: any;
   let gammaPool: any;
-  let protocol: any;
   let implementation: any;
 
   beforeEach(async function () {
@@ -35,39 +33,33 @@ describe("GammaPoolERC4626", function () {
     TestGammaPoolFactory = await ethers.getContractFactory(
       "TestGammaPoolFactory"
     );
-    TestAbstractProtocol = await ethers.getContractFactory(
-      "TestAbstractProtocol"
-    );
-    GammaPool = await ethers.getContractFactory("GammaPool");
+
+    GammaPool = await ethers.getContractFactory("TestGammaPool");
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
 
     TestShortStrategy = await ethers.getContractFactory("TestERC20Strategy");
 
-    implementation = await GammaPool.deploy();
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
     tokenB = await TestERC20.deploy("Test Token B", "TOKB");
     cfmm = await TestERC20.deploy("Test CFMM", "CFMM");
     shortStrategy = await TestShortStrategy.deploy();
     addressCalculator = await TestAddressCalculator.deploy();
 
-    factory = await TestGammaPoolFactory.deploy(
-      cfmm.address,
-      PROTOCOL_ID,
-      [tokenA.address, tokenB.address],
-      ethers.constants.AddressZero,
-      implementation.address
-    );
+    factory = await TestGammaPoolFactory.deploy(cfmm.address, PROTOCOL_ID, [
+      tokenA.address,
+      tokenB.address,
+    ]);
 
     longStrategy = addr1;
-    protocol = await TestAbstractProtocol.deploy(
+
+    implementation = await GammaPool.deploy(
+      factory.address,
       PROTOCOL_ID,
       longStrategy.address,
-      shortStrategy.address,
-      2,
-      3
+      shortStrategy.address
     );
 
-    await factory.setProtocol(protocol.address);
+    await factory.addProtocol(implementation.address);
     await deployGammaPool();
   });
 

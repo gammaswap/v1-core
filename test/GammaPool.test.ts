@@ -1,10 +1,11 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
+const PROTOCOL_ID = 1;
+
 describe("GammaPool", function () {
   let TestERC20: any;
   let TestAddressCalculator: any;
-  let TestAbstractProtocol: any;
   let TestLongStrategy: any;
   let TestShortStrategy: any;
   let GammaPool: any;
@@ -22,7 +23,6 @@ describe("GammaPool", function () {
   let shortStrategy: any;
   let gammaPool: any;
   let implementation: any;
-  let protocol: any;
   let tokens: any;
 
   // `beforeEach` will run before each test, re-deploying the contract every
@@ -38,18 +38,11 @@ describe("GammaPool", function () {
       "TestGammaPoolFactory"
     );
 
-    TestAbstractProtocol = await ethers.getContractFactory(
-      "TestAbstractProtocol"
-    );
-
     TestLongStrategy = await ethers.getContractFactory("TestLongStrategy");
-
     TestShortStrategy = await ethers.getContractFactory("TestShortStrategy");
 
-    GammaPool = await ethers.getContractFactory("GammaPool");
+    GammaPool = await ethers.getContractFactory("TestGammaPool");
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
-
-    implementation = await GammaPool.deploy();
 
     // To deploy our contract, we just have to call Token.deploy() and await
     // for it to be deployed(), which happens onces its transaction has been
@@ -65,25 +58,28 @@ describe("GammaPool", function () {
 
     factory = await TestGammaPoolFactory.deploy(
       cfmm.address,
-      1,
-      tokens,
-      ethers.constants.AddressZero,
-      implementation.address
+      PROTOCOL_ID,
+      tokens
     );
-    protocol = await TestAbstractProtocol.deploy(
-      1,
+
+    implementation = await GammaPool.deploy(
+      factory.address,
+      PROTOCOL_ID,
       longStrategy.address,
-      shortStrategy.address,
-      2,
-      3
+      shortStrategy.address
     );
-    await factory.setProtocol(protocol.address);
+
+    await (await factory.addProtocol(implementation.address)).wait();
+
     await deployGammaPool();
   });
 
   async function deployGammaPool() {
     await (await factory.createPool2()).wait();
-    const key = await addressCalculator.getGammaPoolKey(cfmm.address, 1);
+    const key = await addressCalculator.getGammaPoolKey(
+      cfmm.address,
+      PROTOCOL_ID
+    );
     const pool = await factory.getPool(key);
 
     gammaPool = await GammaPool.attach(
@@ -97,8 +93,7 @@ describe("GammaPool", function () {
 
     it("Check Init Params", async function () {
       expect(await gammaPool.cfmm()).to.equal(cfmm.address);
-      expect(await gammaPool.protocolId()).to.equal(1);
-      expect(await gammaPool.protocol()).to.equal(protocol.address);
+      expect(await gammaPool.protocolId()).to.equal(PROTOCOL_ID);
 
       const tokens = await gammaPool.tokens();
       expect(tokens.length).to.equal(2);

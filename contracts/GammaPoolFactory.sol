@@ -2,90 +2,79 @@
 pragma solidity 0.8.4;
 
 import "./interfaces/IGammaPool.sol";
-import "./interfaces/IProtocol.sol";
 import "./base/AbstractGammaPoolFactory.sol";
 import "./libraries/AddressCalculator.sol";
 
 contract GammaPoolFactory is AbstractGammaPoolFactory {
 
-    mapping(uint24 => address) public override getProtocol;//there's a protocol
-    mapping(uint24 => bool) public override isProtocolRestricted;//a protocol creation can be restricted
+    mapping(uint16 => address) public override getProtocol;//there's a protocol
+    mapping(uint16 => bool) public override isProtocolRestricted;//a protocol creation can be restricted
 
     address[] public allPools;
 
-    constructor(address _feeToSetter, address _implementation) {
+    constructor(address _feeToSetter) {
         feeToSetter = _feeToSetter;
         feeTo = _feeToSetter;
         owner = msg.sender;
-        implementation = _implementation;
     }
 
     function allPoolsLength() external virtual override view returns (uint) {
         return allPools.length;
     }
 
-    function isRestricted(uint24 protocolId, address _owner) internal virtual view {
+    function isRestricted(uint16 protocolId, address _owner) internal virtual view {
         if(isProtocolRestricted[protocolId] == true && msg.sender != _owner) {
             revert ProtocolRestricted();
         }
     }
 
-    function isProtocolNotSet(uint24 protocolId) internal virtual view {
+    function isProtocolNotSet(uint16 protocolId) internal virtual view {
         if(getProtocol[protocolId] == address(0)) {
             revert ProtocolNotSet();
         }
     }
 
-    function addProtocol(address protocol) external virtual override {
+    function addProtocol(address implementation) external virtual override {
         isForbidden(owner);
-        if(IProtocol(protocol).protocolId() == 0) {
+        if(IGammaPool(implementation).protocolId() == 0) {
             revert ZeroProtocol();
         }
-        if(getProtocol[IProtocol(protocol).protocolId()] != address(0)) {
+        if(getProtocol[IGammaPool(implementation).protocolId()] != address(0)) {
             revert ProtocolExists();
         }
-        getProtocol[IProtocol(protocol).protocolId()] = protocol;
+        getProtocol[IGammaPool(implementation).protocolId()] = implementation;
     }
 
-    function removeProtocol(uint24 protocol) external virtual override {
+    function removeProtocol(uint16 protocolId) external virtual override {
         isForbidden(owner);
-        getProtocol[protocol] = address(0);
+        getProtocol[protocolId] = address(0);
     }
 
-    function setIsProtocolRestricted(uint24 protocol, bool isRestricted) external virtual override {
+    function setIsProtocolRestricted(uint16 protocolId, bool isRestricted) external virtual override {
         isForbidden(owner);
-        isProtocolRestricted[protocol] = isRestricted;
+        isProtocolRestricted[protocolId] = isRestricted;
     }
 
     function createPool(CreatePoolParams calldata params) external virtual override returns (address pool) {
-        uint24 protocolId = params.protocol;
+        uint16 protocolId = params.protocolId;
 
         isProtocolNotSet(protocolId);
         isRestricted(protocolId, owner);
 
-        address protocol = getProtocol[protocolId];
+        address implementation = getProtocol[protocolId];
+        address[] memory tokens = IGammaPool(implementation).validateCFMM(params.tokens, params.cfmm);
 
-        address cfmm = params.cfmm;
-
-        IProtocol mProtocol = IProtocol(protocol);
-
-        IGammaPool.InitializeParameters memory mParams = IGammaPool.InitializeParameters({
-            cfmm: cfmm, protocolId: protocolId, tokens: new address[](0), protocol: protocol,
-            longStrategy: mProtocol.longStrategy(), shortStrategy: mProtocol.shortStrategy()});
-
-        mParams.tokens = mProtocol.validateCFMM(params.tokens, cfmm);
-
-        bytes32 key = AddressCalculator.getGammaPoolKey(cfmm, protocolId);
+        bytes32 key = AddressCalculator.getGammaPoolKey(params.cfmm, protocolId);
 
         hasPool(key);
 
         pool = cloneDeterministic(implementation, key);
 
-        IGammaPool(pool).initialize(mParams);
+        IGammaPool(pool).initialize(params.cfmm, tokens);
 
         getPool[key] = pool;
         allPools.push(pool);
-        emit PoolCreated(pool, cfmm, protocolId, protocol, allPools.length);
+        emit PoolCreated(pool, params.cfmm, protocolId, implementation, allPools.length);
     }
 
     function feeInfo() external virtual override view returns(address _feeTo, uint _fee) {

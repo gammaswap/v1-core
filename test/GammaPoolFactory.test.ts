@@ -1,13 +1,13 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
+const PROTOCOL_ID = 1;
+
 describe("GammaPoolFactory", function () {
   let TestERC20: any;
-  let TestProtocol: any;
   let TestAddressCalculator: any;
   let GammaPool: any;
   let GammaPoolFactory: any;
-  let gammaPool: any;
   let factory: any;
   let addressCalculator: any;
   let protocol: any;
@@ -25,15 +25,12 @@ describe("GammaPoolFactory", function () {
   beforeEach(async function () {
     // Get the ContractFactory and Signers here.
     TestERC20 = await ethers.getContractFactory("TestERC20");
-    GammaPool = await ethers.getContractFactory("GammaPool");
+    GammaPool = await ethers.getContractFactory("TestGammaPool");
     GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
-    TestProtocol = await ethers.getContractFactory("TestProtocol");
     TestAddressCalculator = await ethers.getContractFactory(
       "TestAddressCalculator"
     );
     [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
-
-    gammaPool = await GammaPool.deploy();
 
     // To deploy our contract, we just have to call Token.deploy() and await
     // for it to be deployed(), which happens onces its transaction has been
@@ -41,10 +38,23 @@ describe("GammaPoolFactory", function () {
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
     tokenB = await TestERC20.deploy("Test Token B", "TOKB");
     tokenC = await TestERC20.deploy("Test Token C", "TOKC");
-    factory = await GammaPoolFactory.deploy(owner.address, gammaPool.address);
+    factory = await GammaPoolFactory.deploy(owner.address);
+
+    protocol = await GammaPool.deploy(
+      factory.address,
+      PROTOCOL_ID,
+      addr1.address,
+      addr2.address
+    );
+
     addressCalculator = await TestAddressCalculator.deploy();
-    protocol = await TestProtocol.deploy(addr1.address, addr2.address, 1);
-    protocolZero = await TestProtocol.deploy(addr1.address, addr2.address, 0);
+
+    protocolZero = await GammaPool.deploy(
+      factory.address,
+      0,
+      addr1.address,
+      addr2.address
+    );
 
     // address _longStrategy, address _shortStrategy, uint24 _protocol
 
@@ -53,8 +63,6 @@ describe("GammaPoolFactory", function () {
     await tokenB.deployed();
     await factory.deployed();
     await protocol.deployed();
-    await protocolZero.deployed();
-    await addressCalculator.deployed();
   });
 
   // You can nest describe calls to create subsections.
@@ -131,8 +139,8 @@ describe("GammaPoolFactory", function () {
       await factory.addProtocol(protocol.address);
       expect(await factory.allPoolsLength()).to.equal(0);
       const createPoolParams = {
+        protocolId: 1,
         cfmm: addr3.address,
-        protocol: 1,
         tokens: [tokenA.address, tokenB.address],
       };
       await factory.createPool(createPoolParams);
@@ -143,6 +151,7 @@ describe("GammaPoolFactory", function () {
       // Precalculated address
       const expectedPoolAddress = await addressCalculator.calcAddress(
         factory.address,
+        1,
         key
       );
       expect(pool).to.equal(expectedPoolAddress);
@@ -153,7 +162,7 @@ describe("GammaPoolFactory", function () {
       await factory.removeProtocol(1);
       const createPoolParams = {
         cfmm: addr3.address,
-        protocol: 1,
+        protocolId: 1,
         tokens: [tokenA.address, tokenB.address],
       };
       await expect(factory.createPool(createPoolParams)).to.be.revertedWith(
@@ -171,7 +180,7 @@ describe("GammaPoolFactory", function () {
 
       const createPoolParams2 = {
         cfmm: addr4.address,
-        protocol: 1,
+        protocolId: 1,
         tokens: [tokenA.address, tokenC.address],
       };
       await expect(

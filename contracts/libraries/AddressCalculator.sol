@@ -5,12 +5,12 @@ import "../interfaces/IGammaPoolFactory.sol";
 
 library AddressCalculator {
 
-    function getGammaPoolKey(address cfmm, uint24 protocol) internal pure returns(bytes32) {
-        return keccak256(abi.encode(cfmm, protocol));
+    function getGammaPoolKey(address cfmm, uint16 protocolId) internal pure returns(bytes32) {
+        return keccak256(abi.encode(cfmm, protocolId));
     }
 
-    function calcAddress(address factory, bytes32 key) internal view returns (address) {
-        return predictDeterministicAddress(IGammaPoolFactory(factory).implementation(), key, factory);
+    function calcAddress(address factory, uint16 protocolId, bytes32 key) internal view returns (address) {
+        return predictDeterministicAddress(IGammaPoolFactory(factory).getProtocol(protocolId), key, factory);
     }
 
     function calcAddress(address factory, bytes32 key, bytes32 initCodeHash) internal pure returns (address) {
