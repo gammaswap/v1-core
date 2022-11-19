@@ -10,31 +10,23 @@ abstract contract GammaPoolERC20 {
     error ERC20Transfer();
     error ERC20Allowance();
 
-    function name() external virtual view returns (string memory) {
-        return GammaPoolStorage.store().name;
-    }
-
-    function symbol() external virtual view returns (string memory) {
-        return GammaPoolStorage.store().symbol;
-    }
-
-    function decimals() external virtual view returns (uint8) {
-        return GammaPoolStorage.store().decimals;
-    }
+    string public constant name = 'GammaSwap V1';
+    string public constant symbol = 'GAMA-V1';
+    uint8 public constant decimals = 18;
 
     function totalSupply() public virtual view returns (uint256) {
-        return GammaPoolStorage.store().totalSupply;
+        return GammaPoolStorage.erc20().totalSupply;
     }
 
     function balanceOf(address account) external virtual view returns (uint256) {
-        return GammaPoolStorage.store().balanceOf[account];
+        return GammaPoolStorage.erc20().balanceOf[account];
     }
 
     function allowance(address owner, address spender) external virtual view returns (uint256) {
-        return GammaPoolStorage.store().allowance[owner][spender];
+        return GammaPoolStorage.erc20().allowance[owner][spender];
     }
 
-    function _transfer(GammaPoolStorage.Store storage store, address from, address to, uint value) internal virtual {
+    function _transfer(GammaPoolStorage.ERC20 storage store, address from, address to, uint value) internal virtual {
         uint256 currentBalance = store.balanceOf[from];
         if(currentBalance < value) {
             revert ERC20Transfer();
@@ -47,19 +39,19 @@ abstract contract GammaPoolERC20 {
     }
 
     function approve(address spender, uint value) external virtual returns (bool) {
-        GammaPoolStorage.store().allowance[msg.sender][spender] = value;
+        GammaPoolStorage.erc20().allowance[msg.sender][spender] = value;
         emit Approval(msg.sender, spender, value);
         return true;
     }
 
     function transfer(address to, uint value) external virtual returns (bool) {
-        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        GammaPoolStorage.ERC20 storage store = GammaPoolStorage.erc20();
         _transfer(store, msg.sender, to, value);
         return true;
     }
 
     function transferFrom(address from, address to, uint value) external virtual returns (bool) {
-        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        GammaPoolStorage.ERC20 storage store = GammaPoolStorage.erc20();
         uint256 currentAllowance = store.allowance[from][msg.sender];
         if (currentAllowance != type(uint256).max) {
             if(currentAllowance < value) {

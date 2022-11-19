@@ -6,11 +6,11 @@ import "../interfaces/IProtocol.sol";
 
 abstract contract AbstractProtocol is IProtocol {
 
-    uint24 immutable public override protocolId;
+    uint16 immutable public override protocolId;
     address immutable public override longStrategy;
     address immutable public override shortStrategy;
 
-    constructor(uint24 _protocolId, address _longStrategy, address _shortStrategy) {
+    constructor(uint16 _protocolId, address _longStrategy, address _shortStrategy) {
         protocolId = _protocolId;
         longStrategy = _longStrategy;
         shortStrategy = _shortStrategy;

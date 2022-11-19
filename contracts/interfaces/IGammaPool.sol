@@ -8,20 +8,10 @@ interface IGammaPool {
     event LoanCreated(address indexed caller, uint256 tokenId);
     event LoanUpdated(uint256 indexed tokenId, uint256[] tokensHeld, uint256 heldLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
 
-    struct InitializeParameters {
-        address cfmm;
-        uint24 protocolId;
-        address[] tokens;
-        address protocol;
-        address longStrategy;
-        address shortStrategy;
-    }
-
-    function initialize(InitializeParameters calldata params) external;
+    function initialize(address cfmm, address[] calldata tokens) external;
 
     function cfmm() external view returns(address);
-    function protocolId() external view returns(uint24);
-    function protocol() external view returns(address);
+    function protocolId() external view returns(uint16);
     function tokens() external view returns(address[] memory);
     function factory() external view returns(address);
     function longStrategy() external view returns(address);
@@ -31,6 +21,8 @@ interface IGammaPool {
         uint256 lpTokenBorrowedPlusInterest, uint256 borrowedInvariant, uint256 lpInvariant);
     function getCFMMBalances() external virtual view returns(uint256[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply);
     function getRates() external virtual view returns(uint256 borrowRate, uint256 accFeeIndex, uint256 lastFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastBlockNumber);
+
+    function validateCFMM(address[] calldata _tokens, address _cfmm) external view returns(address[] memory tokens);
 
     //Short Gamma
     function depositNoPull(address to) external returns(uint256 shares);

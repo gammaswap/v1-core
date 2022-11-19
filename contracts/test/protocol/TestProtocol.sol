@@ -6,11 +6,11 @@ import "../../interfaces/IProtocol.sol";
 
 contract TestProtocol is IProtocol {
 
-    uint24 immutable public override protocolId;
+    uint16 immutable public override protocolId;
     address immutable public override longStrategy;
     address immutable public override shortStrategy;
 
-    constructor(address _longStrategy, address _shortStrategy, uint24 _protocolId) {
+    constructor(address _longStrategy, address _shortStrategy, uint16 _protocolId) {
         longStrategy = _longStrategy;
         shortStrategy = _shortStrategy;
         protocolId = _protocolId;

@@ -19,8 +19,6 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
     address public override feeTo;
     uint256 public override fee = 5 * (10**16); //5% of borrowed interest gains by default
 
-    address public override implementation;
-
     function isForbidden(address _owner) internal virtual view {
         if(msg.sender != _owner) {
             revert Forbidden();

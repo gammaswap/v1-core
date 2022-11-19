@@ -3,48 +3,37 @@ pragma solidity 0.8.4;
 
 import "./GammaPoolERC20.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
-import "hardhat/console.sol";
 
 abstract contract GammaPoolERC4626 is GammaPoolERC20 {
 
     event Deposit(address indexed caller, address indexed to, uint256 assets, uint256 shares);
     event Withdraw(address indexed caller, address indexed to, address indexed from, uint256 assets, uint256 shares);
 
+    function vaultImplementation() internal virtual view returns(address);
+
     function asset() external virtual view returns(address) {
         return GammaPoolStorage.store().cfmm;
     }
 
     function deposit(uint256 assets, address receiver) external virtual returns (uint256 shares) {
-        (bool success, bytes memory result) = GammaPoolStorage.store().shortStrategy.delegatecall(abi.encodeWithSelector(
-                IShortStrategy(GammaPoolStorage.store().shortStrategy)._deposit.selector, assets, receiver));
-        require(success);
-        return abi.decode(result, (uint256));
+        return abi.decode(callStrategy(vaultImplementation(), abi.encodeWithSelector(IShortStrategy._deposit.selector, assets, receiver)), (uint256));
     }
 
     function mint(uint256 shares, address receiver) external virtual returns (uint256 assets) {
-        (bool success, bytes memory result) = GammaPoolStorage.store().shortStrategy.delegatecall(abi.encodeWithSelector(
-                IShortStrategy(GammaPoolStorage.store().shortStrategy)._mint.selector, shares, receiver));
-        require(success);
-        return abi.decode(result, (uint256));
+        return abi.decode(callStrategy(vaultImplementation(), abi.encodeWithSelector(IShortStrategy._mint.selector, shares, receiver)), (uint256));
     }
 
     function withdraw(uint256 assets, address receiver, address owner) external virtual returns (uint256 shares){
-        (bool success, bytes memory result) = GammaPoolStorage.store().shortStrategy.delegatecall(abi.encodeWithSelector(
-                IShortStrategy(GammaPoolStorage.store().shortStrategy)._withdraw.selector, assets, receiver, owner));
-        require(success);
-        return abi.decode(result, (uint256));
+        return abi.decode(callStrategy(vaultImplementation(), abi.encodeWithSelector(IShortStrategy._withdraw.selector, assets, receiver, owner)), (uint256));
     }
 
     function redeem(uint256 shares, address receiver, address owner) external virtual returns (uint256 assets){
-        (bool success, bytes memory result) = GammaPoolStorage.store().shortStrategy.delegatecall(abi.encodeWithSelector(
-                IShortStrategy(GammaPoolStorage.store().shortStrategy)._redeem.selector, shares, receiver, owner));
-        require(success);
-        return abi.decode(result, (uint256));
+        return abi.decode(callStrategy(vaultImplementation(), abi.encodeWithSelector(IShortStrategy._redeem.selector, shares, receiver, owner)), (uint256));
     }
 
     function totalAssets() public view virtual returns(uint256) {
         GammaPoolStorage.Store storage store = GammaPoolStorage.store();
-        return IShortStrategy(store.shortStrategy).totalAssets(store.cfmm, store.BORROWED_INVARIANT, store.LP_TOKEN_BALANCE,
+        return IShortStrategy(vaultImplementation()).totalAssets(store.cfmm, store.BORROWED_INVARIANT, store.LP_TOKEN_BALANCE,
             store.lastCFMMInvariant, store.lastCFMMTotalSupply, store.LAST_BLOCK_NUMBER);
     }
 
@@ -94,11 +83,16 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     }
 
     function maxWithdraw(address owner) public view virtual returns (uint256) {
-        return maxAssets(convertToAssets(GammaPoolStorage.store().balanceOf[owner]));
+        return maxAssets(convertToAssets(GammaPoolStorage.erc20().balanceOf[owner]));
     }
 
     function maxRedeem(address owner) public view virtual returns (uint256) {
         return convertToShares(maxWithdraw(owner));
     }
 
+    function callStrategy(address strategy, bytes memory data) internal virtual returns(bytes memory result) {
+        (bool success, bytes memory result) = strategy.delegatecall(data);
+        require(success);
+        return result;
+    }
 }

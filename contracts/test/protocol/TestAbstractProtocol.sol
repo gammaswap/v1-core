@@ -1,15 +1,13 @@
 pragma solidity 0.8.4;
 
 import "../../protocols/AbstractProtocol.sol";
-import "../storage/TestStrategyStorage.sol";
-import "../storage/TestRateStorage.sol";
 
 contract TestAbstractProtocol is AbstractProtocol {
 
     uint8 immutable public val1;
     uint8 immutable public val2;
 
-    constructor(uint24 _protocolId, address _longStrategy, address _shortStrategy, uint8 _val1, uint8 _val2) AbstractProtocol(_protocolId, _longStrategy, _shortStrategy) {
+    constructor(uint16 _protocolId, address _longStrategy, address _shortStrategy, uint8 _val1, uint8 _val2) AbstractProtocol(_protocolId, _longStrategy, _shortStrategy) {
         val1 = _val1;
         val2 = _val2;
     }

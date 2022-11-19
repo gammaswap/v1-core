@@ -38,7 +38,8 @@ contract TestERC20Strategy is IShortStrategy {
     function _deposit(uint256 assets, address to) external override returns (uint256 shares) {
         shares = 3*10**18;
         emit Deposit(msg.sender, to, assets, shares);
-        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        //GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        GammaPoolStorage.ERC20 storage store = GammaPoolStorage.erc20();
         _mint(store, to, assets);
         return 0;
     }
@@ -46,7 +47,8 @@ contract TestERC20Strategy is IShortStrategy {
     function _mint(uint256 shares, address to) external override returns (uint256 assets) {
         assets = 4*10**18;
         emit Deposit(msg.sender, to, assets, shares);
-        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        //GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        GammaPoolStorage.ERC20 storage store = GammaPoolStorage.erc20();
         _mint(store, to, shares);
         return 0;
     }
@@ -54,7 +56,8 @@ contract TestERC20Strategy is IShortStrategy {
     function _withdraw(uint256 assets, address to, address from) external override returns (uint256 shares) {
         shares = 5*10**18;
         emit Withdraw(msg.sender, to, from, assets, shares);
-        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        //GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        GammaPoolStorage.ERC20 storage store = GammaPoolStorage.erc20();
         _mint(store, to, assets);
         return 0;
     }
@@ -62,19 +65,22 @@ contract TestERC20Strategy is IShortStrategy {
     function _redeem(uint256 shares, address to, address from) external override returns (uint256 assets) {
         assets = 6*10**18;
         emit Withdraw(msg.sender, to, from, assets, shares);
-        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        //GammaPoolStorage.Store storage store = GammaPoolStorage.store();
+        GammaPoolStorage.ERC20 storage store = GammaPoolStorage.erc20();
         _mint(store, to, shares);
         return 0;
     }
 
-    function _mint(GammaPoolStorage.Store storage store, address account, uint256 amount) internal virtual {
+    //function _mint(GammaPoolStorage.Store storage store, address account, uint256 amount) internal virtual {
+    function _mint(GammaPoolStorage.ERC20 storage store, address account, uint256 amount) internal virtual {
         require(amount > 0, '0 amt');
         store.totalSupply += amount;
         store.balanceOf[account] += amount;
         emit Transfer(address(0), account, amount);
     }
 
-    function _burn(GammaPoolStorage.Store storage store, address account, uint256 amount) internal virtual {
+    //function _burn(GammaPoolStorage.Store storage store, address account, uint256 amount) internal virtual {
+    function _burn(GammaPoolStorage.ERC20 storage store, address account, uint256 amount) internal virtual {
         require(account != address(0), "0 address");
         store.balanceOf[account] -= amount;
         store.totalSupply -= amount;
