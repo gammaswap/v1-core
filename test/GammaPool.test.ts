@@ -211,7 +211,7 @@ describe("GammaPool", function () {
       expect(res0.events[0].args.tokenId).to.eq(tokenId);
       expect(res0.events[0].args.tokensHeld.length).to.eq(2);
       expect(res0.events[0].args.tokensHeld[0]).to.eq(1);
-      expect(res0.events[0].args.tokensHeld[1]).to.eq(tokenId);
+      expect(res0.events[0].args.tokensHeld[1]).to.eq(2);
       expect(res0.events[0].args.liquidity).to.eq(11);
       expect(res0.events[0].args.lpTokens).to.eq(12);
       expect(res0.events[0].args.rateIndex).to.eq(13);
@@ -230,7 +230,7 @@ describe("GammaPool", function () {
       const res2 = await (await gammaPool.borrowLiquidity(tokenId, 300)).wait();
       expect(res2.events[0].args.tokenId).to.eq(tokenId);
       expect(res2.events[0].args.tokensHeld.length).to.eq(2);
-      expect(res2.events[0].args.tokensHeld[0]).to.eq(tokenId);
+      expect(res2.events[0].args.tokensHeld[0]).to.eq(600);
       expect(res2.events[0].args.tokensHeld[1]).to.eq(300);
       expect(res2.events[0].args.liquidity).to.eq(31);
       expect(res2.events[0].args.lpTokens).to.eq(32);

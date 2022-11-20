@@ -6,7 +6,7 @@ interface IGammaPool {
     event PoolUpdated(uint256 lpTokenBalance, uint256 lpTokenBorrowed, uint256 lastBlockNumber, uint256 accFeeIndex,
         uint256 lastFeeIndex, uint256 lpTokenBorrowedPlusInterest, uint256 lpInvariant, uint256 lpBorrowedInvariant);
     event LoanCreated(address indexed caller, uint256 tokenId);
-    event LoanUpdated(uint256 indexed tokenId, uint256[] tokensHeld, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
+    event LoanUpdated(uint256 indexed tokenId, uint128[] tokensHeld, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
 
     function initialize(address cfmm, address[] calldata tokens) external;
 
@@ -27,18 +27,18 @@ interface IGammaPool {
     //Short Gamma
     function depositNoPull(address to) external returns(uint256 shares);
     function withdrawNoPull(address to) external returns(uint256 assets);
-    function withdrawReserves(address to) external returns (uint256[] memory reserves, uint256 assets);
-    function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external returns(uint256[] memory reserves, uint256 shares);
+    function withdrawReserves(address to) external returns (uint128[] memory reserves, uint256 assets);
+    function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external returns(uint128[] memory reserves, uint256 shares);
 
     //Long Gamma
-    function liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external virtual returns(uint256[] memory refund);
-    function liquidateWithLP(uint256 tokenId) external virtual returns(uint256[] memory refund);
+    function liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external virtual returns(uint128[] memory refund);
+    function liquidateWithLP(uint256 tokenId) external virtual returns(uint128[] memory refund);
     function getCFMMPrice() external view returns(uint256 price);
     function createLoan() external returns(uint tokenId);
     function loan(uint256 tokenId) external view returns (uint256 id, address poolId, uint128[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
-    function increaseCollateral(uint256 tokenId) external returns(uint256[] memory tokensHeld);
-    function decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address to) external returns(uint256[] memory tokensHeld);
-    function borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint256[] memory amounts);
-    function repayLiquidity(uint256 tokenId, uint256 liquidity) external returns(uint256 liquidityPaid, uint256[] memory amounts);
-    function rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external returns(uint256[] memory tokensHeld);
+    function increaseCollateral(uint256 tokenId) external returns(uint128[] memory tokensHeld);
+    function decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address to) external returns(uint128[] memory tokensHeld);
+    function borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint128[] memory amounts);
+    function repayLiquidity(uint256 tokenId, uint256 liquidity) external returns(uint256 liquidityPaid, uint128[] memory amounts);
+    function rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external returns(uint128[] memory tokensHeld);
 }
