@@ -16,6 +16,7 @@ interface IGammaPool {
     function factory() external view returns(address);
     function longStrategy() external view returns(address);
     function shortStrategy() external view returns(address);
+    function liquidationStrategy() external view returns(address);
 
     function getPoolBalances() external virtual view returns(uint128[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
         uint256 lpTokenBorrowedPlusInterest, uint256 borrowedInvariant, uint256 lpInvariant);
@@ -31,8 +32,6 @@ interface IGammaPool {
     function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external returns(uint128[] memory reserves, uint256 shares);
 
     //Long Gamma
-    function liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external virtual returns(uint128[] memory refund);
-    function liquidateWithLP(uint256 tokenId) external virtual returns(uint128[] memory refund);
     function getCFMMPrice() external view returns(uint256 price);
     function createLoan() external returns(uint tokenId);
     function loan(uint256 tokenId) external view returns (uint256 id, address poolId, uint128[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
@@ -41,4 +40,6 @@ interface IGammaPool {
     function borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint256[] memory amounts);
     function repayLiquidity(uint256 tokenId, uint256 liquidity) external returns(uint256 liquidityPaid, uint256[] memory amounts);
     function rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external returns(uint128[] memory tokensHeld);
+    function liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external virtual returns(uint256[] memory refund);
+    function liquidateWithLP(uint256 tokenId) external virtual returns(uint256[] memory refund);
 }

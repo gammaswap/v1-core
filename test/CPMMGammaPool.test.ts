@@ -18,11 +18,13 @@ describe("CPMMGammaPool", function () {
   let owner: any;
   let addr1: any;
   let addr2: any;
+  let addr3: any;
   let pool: any;
   let gsFactoryAddress: any;
   let cfmmHash: any;
   let longStrategyAddr: any;
   let shortStrategyAddr: any;
+  let liquidationStrategyAddr: any;
   let cfmm: any;
   let uniFactory: any;
   let badPool: any;
@@ -34,7 +36,7 @@ describe("CPMMGammaPool", function () {
     // Get the ContractFactory and Signers here.
     TestERC20 = await ethers.getContractFactory("TestERC20");
     CPMMGammaPool = await ethers.getContractFactory("CPMMGammaPool");
-    [owner, addr1, addr2] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3] = await ethers.getSigners();
     UniswapV2Factory = new ethers.ContractFactory(
       UniswapV2FactoryJSON.abi,
       UniswapV2FactoryJSON.bytecode,
@@ -61,12 +63,14 @@ describe("CPMMGammaPool", function () {
       "0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f";
     longStrategyAddr = addr1.address;
     shortStrategyAddr = addr2.address;
+    liquidationStrategyAddr = addr3.address;
 
     pool = await CPMMGammaPool.deploy(
       owner.address,
       PROTOCOL_ID,
       longStrategyAddr,
       shortStrategyAddr,
+      liquidationStrategyAddr,
       uniFactory.address,
       cfmmHash
     );
@@ -79,6 +83,7 @@ describe("CPMMGammaPool", function () {
       PROTOCOL_ID,
       longStrategyAddr,
       shortStrategyAddr,
+      liquidationStrategyAddr,
       uniFactory.address,
       badCfmmHash
     );
@@ -88,6 +93,7 @@ describe("CPMMGammaPool", function () {
       PROTOCOL_ID,
       longStrategyAddr,
       shortStrategyAddr,
+      liquidationStrategyAddr,
       gsFactoryAddress,
       cfmmHash
     );
@@ -123,6 +129,7 @@ describe("CPMMGammaPool", function () {
       expect(await pool.protocolId()).to.equal(1);
       expect(await pool.longStrategy()).to.equal(addr1.address);
       expect(await pool.shortStrategy()).to.equal(addr2.address);
+      expect(await pool.liquidationStrategy()).to.equal(addr3.address);
       expect(await pool.factory()).to.equal(owner.address);
       expect(await pool.cfmmFactory()).to.equal(uniFactory.address);
       expect(await pool.cfmmInitCodeHash()).to.equal(cfmmHash);

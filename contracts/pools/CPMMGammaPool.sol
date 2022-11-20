@@ -9,18 +9,21 @@ contract CPMMGammaPool is GammaPool{
     error NotContract();
     error BadProtocol();
 
+    using LibStorage for LibStorage.Storage;
+
     uint8 constant public tokenCount = 2;
     address immutable public cfmmFactory;
     bytes32 immutable public cfmmInitCodeHash;
 
-    constructor(address _factory, uint16 _protocolId, address _longStrategy, address _shortStrategy, address _cfmmFactory, bytes32 _cfmmInitCodeHash)
-        GammaPool(_factory, _protocolId, _longStrategy, _shortStrategy) {
+    constructor(address _factory, uint16 _protocolId, address _longStrategy, address _shortStrategy, address _liquidationStrategy,
+        address _cfmmFactory, bytes32 _cfmmInitCodeHash)
+        GammaPool(_factory, _protocolId, _longStrategy, _shortStrategy, _liquidationStrategy) {
         cfmmFactory = _cfmmFactory;
         cfmmInitCodeHash = _cfmmInitCodeHash;
     }
 
     function createLoan() external virtual override lock returns(uint256 tokenId) {
-        tokenId = _createLoan(tokenCount);
+        tokenId = s.createLoan(tokenCount);
         emit LoanCreated(msg.sender, tokenId);
     }
 
