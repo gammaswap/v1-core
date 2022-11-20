@@ -42,8 +42,8 @@ describe("GammaPoolFactory", function () {
     factory = await GammaPoolFactory.deploy(owner.address);
 
     protocol = await GammaPool.deploy(
-      factory.address,
       PROTOCOL_ID,
+      factory.address,
       addr1.address,
       addr2.address,
       addr5.address
@@ -52,8 +52,8 @@ describe("GammaPoolFactory", function () {
     addressCalculator = await TestAddressCalculator.deploy();
 
     protocolZero = await GammaPool.deploy(
-      factory.address,
       0,
+      factory.address,
       addr1.address,
       addr2.address,
       addr5.address

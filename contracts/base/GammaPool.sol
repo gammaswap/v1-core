@@ -13,14 +13,14 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     error Forbidden();
 
     uint16 immutable public override protocolId;
+    address immutable public override factory;
     address immutable public override longStrategy;
     address immutable public override shortStrategy;
     address immutable public override liquidationStrategy;
-    address immutable public override factory;
 
-    constructor(address _factory, uint16 _protocolId, address _longStrategy, address _shortStrategy, address _liquidationStrategy) {
-        factory = _factory;
+    constructor(uint16 _protocolId, address _factory,  address _longStrategy, address _shortStrategy, address _liquidationStrategy) {
         protocolId = _protocolId;
+        factory = _factory;
         longStrategy = _longStrategy;
         shortStrategy = _shortStrategy;
         liquidationStrategy = _liquidationStrategy;

@@ -15,9 +15,9 @@ contract CPMMGammaPool is GammaPool{
     address immutable public cfmmFactory;
     bytes32 immutable public cfmmInitCodeHash;
 
-    constructor(address _factory, uint16 _protocolId, address _longStrategy, address _shortStrategy, address _liquidationStrategy,
+    constructor(uint16 _protocolId, address _factory, address _longStrategy, address _shortStrategy, address _liquidationStrategy,
         address _cfmmFactory, bytes32 _cfmmInitCodeHash)
-        GammaPool(_factory, _protocolId, _longStrategy, _shortStrategy, _liquidationStrategy) {
+        GammaPool(_protocolId, _factory, _longStrategy, _shortStrategy, _liquidationStrategy) {
         cfmmFactory = _cfmmFactory;
         cfmmInitCodeHash = _cfmmInitCodeHash;
     }

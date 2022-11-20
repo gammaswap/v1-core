@@ -66,8 +66,8 @@ describe("CPMMGammaPool", function () {
     liquidationStrategyAddr = addr3.address;
 
     pool = await CPMMGammaPool.deploy(
-      owner.address,
       PROTOCOL_ID,
+      owner.address,
       longStrategyAddr,
       shortStrategyAddr,
       liquidationStrategyAddr,
@@ -79,8 +79,8 @@ describe("CPMMGammaPool", function () {
       "0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845e";
 
     badPool = await CPMMGammaPool.deploy(
-      owner.address,
       PROTOCOL_ID,
+      owner.address,
       longStrategyAddr,
       shortStrategyAddr,
       liquidationStrategyAddr,
@@ -89,8 +89,8 @@ describe("CPMMGammaPool", function () {
     );
 
     badPool2 = await CPMMGammaPool.deploy(
-      owner.address,
       PROTOCOL_ID,
+      owner.address,
       longStrategyAddr,
       shortStrategyAddr,
       liquidationStrategyAddr,

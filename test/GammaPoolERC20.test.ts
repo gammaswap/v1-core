@@ -58,8 +58,8 @@ describe("GammaPoolERC20", function () {
     liquidationStrategy = addr7;
 
     implementation = await GammaPool.deploy(
-      factory.address,
       PROTOCOL_ID,
+      factory.address,
       longStrategy.address,
       shortStrategy.address,
       liquidationStrategy.address
