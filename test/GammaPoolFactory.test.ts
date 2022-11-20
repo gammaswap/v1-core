@@ -72,9 +72,7 @@ describe("GammaPoolFactory", function () {
       expect(await factory.feeToSetter()).to.equal(owner.address);
       const feeInfo = await factory.feeInfo();
       expect(feeInfo._feeTo).to.equal(owner.address);
-      const fee = ethers.BigNumber.from(5).mul(
-        ethers.BigNumber.from(10).pow(16)
-      );
+      const fee = 10000;
       expect(feeInfo._fee).to.equal(fee);
       expect(await tokenA.owner()).to.equal(owner.address);
       expect(await tokenB.owner()).to.equal(owner.address);
@@ -230,9 +228,7 @@ describe("GammaPoolFactory", function () {
 
   describe("Setting Fees", function () {
     it("Set Fee", async function () {
-      expect(await factory.fee()).to.equal(
-        ethers.BigNumber.from(5).mul(ethers.BigNumber.from(10).pow(16))
-      );
+      expect(await factory.fee()).to.equal(10000);
       const _feeToSetter = await factory.feeToSetter();
       expect(_feeToSetter).to.equal(owner.address);
       await expect(factory.connect(addr1).setFee(1)).to.be.revertedWith(

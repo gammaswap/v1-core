@@ -7,7 +7,7 @@ import "./GammaPoolERC4626.sol";
 
 abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
-    error Initialized();
+    error Forbidden();
 
     uint16 immutable public override protocolId;
     address immutable public override longStrategy;
@@ -22,22 +22,10 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     function initialize(address cfmm, address[] calldata tokens) external virtual override {
-        if(s.cfmm != address(0))
-            revert Initialized();
+        if(msg.sender != factory)
+            revert Forbidden();
 
-        s.cfmm = cfmm;
-        s.tokens = tokens;
-        s.factory = factory;
-        s.TOKEN_BALANCE = new uint256[](tokens.length);
-        s.CFMM_RESERVES = new uint256[](tokens.length);
-
-        s.accFeeIndex = 10**18;
-        s.lastFeeIndex = 10**18;
-        s.lastCFMMFeeIndex = 10**18;
-        s.LAST_BLOCK_NUMBER = block.number;
-        s.nextId = 1;
-        s.unlocked = 1;
-        s.ONE = 10**18;
+        _initialize(factory, cfmm, tokens);
     }
 
     function cfmm() external virtual override view returns(address) {
@@ -53,12 +41,12 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     //GamamPool Data
-    function getPoolBalances() external virtual override view returns(uint256[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
+    function getPoolBalances() external virtual override view returns(uint128[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
         uint256 lpTokenBorrowedPlusInterest, uint256 borrowedInvariant, uint256 lpInvariant) {
         return(s.TOKEN_BALANCE, s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.BORROWED_INVARIANT, s.LP_INVARIANT);
     }
 
-    function getCFMMBalances() external virtual override view returns(uint256[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply) {
+    function getCFMMBalances() external virtual override view returns(uint128[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply) {
         return(s.CFMM_RESERVES, s.lastCFMMInvariant, s.lastCFMMTotalSupply);
     }
 
@@ -94,28 +82,16 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     function getCFMMPrice() external virtual override view returns(uint256 price) {
-        return ILongStrategy(longStrategy)._getCFMMPrice(s.cfmm, s.ONE);
+        return ILongStrategy(longStrategy)._getCFMMPrice(s.cfmm, 10**18);
     }
 
     function createLoan() external virtual override lock returns(uint256 tokenId) {
-        uint256 id = s.nextId++;
-        tokenId = uint256(keccak256(abi.encode(msg.sender, address(this), id)));
-
-        s.loans[tokenId] = Loan({
-            id: id,
-            poolId: address(this),
-            tokensHeld: new uint[](s.tokens.length),
-            heldLiquidity: 0,
-            initLiquidity: 0,
-            liquidity: 0,
-            lpTokens: 0,
-            rateIndex: s.accFeeIndex
-        });
+        tokenId = _createLoan(s.tokens.length);
         emit LoanCreated(msg.sender, tokenId);
     }
 
     function loan(uint256 tokenId) external virtual override view returns (uint256 id, address poolId,
-        uint256[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex) {
+        uint128[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex) {
         Loan storage _loan = s.loans[tokenId];
         return (_loan.id, _loan.poolId, _loan.tokensHeld, _loan.initLiquidity, _loan.liquidity, _loan.lpTokens, _loan.rateIndex);
     }

@@ -212,7 +212,6 @@ describe("GammaPool", function () {
       expect(res0.events[0].args.tokensHeld.length).to.eq(2);
       expect(res0.events[0].args.tokensHeld[0]).to.eq(1);
       expect(res0.events[0].args.tokensHeld[1]).to.eq(tokenId);
-      expect(res0.events[0].args.heldLiquidity).to.eq(10);
       expect(res0.events[0].args.liquidity).to.eq(11);
       expect(res0.events[0].args.lpTokens).to.eq(12);
       expect(res0.events[0].args.rateIndex).to.eq(13);
@@ -224,7 +223,6 @@ describe("GammaPool", function () {
       expect(res1.events[0].args.tokensHeld.length).to.eq(2);
       expect(res1.events[0].args.tokensHeld[0]).to.eq(100);
       expect(res1.events[0].args.tokensHeld[1]).to.eq(200);
-      expect(res1.events[0].args.heldLiquidity).to.eq(20);
       expect(res1.events[0].args.liquidity).to.eq(21);
       expect(res1.events[0].args.lpTokens).to.eq(22);
       expect(res1.events[0].args.rateIndex).to.eq(23);
@@ -234,7 +232,6 @@ describe("GammaPool", function () {
       expect(res2.events[0].args.tokensHeld.length).to.eq(2);
       expect(res2.events[0].args.tokensHeld[0]).to.eq(tokenId);
       expect(res2.events[0].args.tokensHeld[1]).to.eq(300);
-      expect(res2.events[0].args.heldLiquidity).to.eq(30);
       expect(res2.events[0].args.liquidity).to.eq(31);
       expect(res2.events[0].args.lpTokens).to.eq(32);
       expect(res2.events[0].args.rateIndex).to.eq(33);
@@ -244,7 +241,6 @@ describe("GammaPool", function () {
       expect(res3.events[0].args.tokensHeld.length).to.eq(2);
       expect(res3.events[0].args.tokensHeld[0]).to.eq(9);
       expect(res3.events[0].args.tokensHeld[1]).to.eq(10);
-      expect(res3.events[0].args.heldLiquidity).to.eq(tokenId);
       expect(res3.events[0].args.liquidity).to.eq(400);
       expect(res3.events[0].args.lpTokens).to.eq(42);
       expect(res3.events[0].args.rateIndex).to.eq(43);
@@ -256,7 +252,6 @@ describe("GammaPool", function () {
       expect(res4.events[0].args.tokensHeld.length).to.eq(2);
       expect(res4.events[0].args.tokensHeld[0]).to.eq(500);
       expect(res4.events[0].args.tokensHeld[1]).to.eq(600);
-      expect(res4.events[0].args.heldLiquidity).to.eq(tokenId);
       expect(res4.events[0].args.liquidity).to.eq(51);
       expect(res4.events[0].args.lpTokens).to.eq(52);
       expect(res4.events[0].args.rateIndex).to.eq(53);

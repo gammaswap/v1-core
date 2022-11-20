@@ -19,39 +19,8 @@ contract CPMMGammaPool is GammaPool{
         cfmmInitCodeHash = _cfmmInitCodeHash;
     }
 
-    function initialize(address cfmm, address[] calldata tokens) external virtual override {
-        if(s.cfmm != address(0))
-            revert Initialized();
-
-        s.cfmm = cfmm;
-        s.tokens = tokens;
-        s.factory = factory;
-        s.TOKEN_BALANCE = new uint256[](tokenCount);
-        s.CFMM_RESERVES = new uint256[](tokenCount);
-
-        s.accFeeIndex = 10**18;
-        s.lastFeeIndex = 10**18;
-        s.lastCFMMFeeIndex = 10**18;
-        s.LAST_BLOCK_NUMBER = block.number;
-        s.nextId = 1;
-        s.unlocked = 1;
-        s.ONE = 10**18;
-    }
-
     function createLoan() external virtual override lock returns(uint256 tokenId) {
-        uint256 id = s.nextId++;
-        tokenId = uint256(keccak256(abi.encode(msg.sender, address(this), id)));
-
-        s.loans[tokenId] = Loan({
-        id: id,
-        poolId: address(this),
-        tokensHeld: new uint256[](tokenCount),
-        heldLiquidity: 0,
-        initLiquidity: 0,
-        liquidity: 0,
-        lpTokens: 0,
-        rateIndex: s.accFeeIndex
-        });
+        tokenId = _createLoan(tokenCount);
         emit LoanCreated(msg.sender, tokenId);
     }
 

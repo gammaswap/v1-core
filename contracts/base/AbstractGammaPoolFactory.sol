@@ -15,10 +15,10 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
 
     mapping(bytes32 => address) public override getPool;//all GS Pools addresses can be predetermined
 
+    uint16 public override fee = 10000; //10% of borrowed interest gains by default
+    address public override feeTo;
     address public override feeToSetter;
     address public override owner;
-    address public override feeTo;
-    uint256 public override fee = 5 * (10**16); //5% of borrowed interest gains by default
 
     function isForbidden(address _owner) internal virtual view {
         if(msg.sender != _owner) {
