@@ -8,6 +8,7 @@ describe("GammaPool", function () {
   let TestAddressCalculator: any;
   let TestLongStrategy: any;
   let TestShortStrategy: any;
+  let TestLiquidationStrategy: any;
   let GammaPool: any;
   let TestGammaPoolFactory: any;
   let factory: any;
@@ -21,6 +22,7 @@ describe("GammaPool", function () {
   let addr3: any;
   let longStrategy: any;
   let shortStrategy: any;
+  let liquidationStrategy: any;
   let gammaPool: any;
   let implementation: any;
   let tokens: any;
@@ -40,6 +42,9 @@ describe("GammaPool", function () {
 
     TestLongStrategy = await ethers.getContractFactory("TestLongStrategy");
     TestShortStrategy = await ethers.getContractFactory("TestShortStrategy");
+    TestLiquidationStrategy = await ethers.getContractFactory(
+      "TestLiquidationStrategy"
+    );
 
     GammaPool = await ethers.getContractFactory("TestGammaPool");
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
@@ -52,6 +57,7 @@ describe("GammaPool", function () {
     cfmm = await TestERC20.deploy("Test CFMM", "CFMM");
     longStrategy = await TestLongStrategy.deploy();
     shortStrategy = await TestShortStrategy.deploy();
+    liquidationStrategy = await TestLiquidationStrategy.deploy();
     addressCalculator = await TestAddressCalculator.deploy();
 
     tokens = [tokenA.address, tokenB.address];
@@ -63,10 +69,11 @@ describe("GammaPool", function () {
     );
 
     implementation = await GammaPool.deploy(
-      factory.address,
       PROTOCOL_ID,
+      factory.address,
       longStrategy.address,
-      shortStrategy.address
+      shortStrategy.address,
+      liquidationStrategy.address
     );
 
     await (await factory.addProtocol(implementation.address)).wait();
@@ -103,6 +110,9 @@ describe("GammaPool", function () {
       expect(await gammaPool.factory()).to.equal(factory.address);
       expect(await gammaPool.longStrategy()).to.equal(longStrategy.address);
       expect(await gammaPool.shortStrategy()).to.equal(shortStrategy.address);
+      expect(await gammaPool.liquidationStrategy()).to.equal(
+        liquidationStrategy.address
+      );
 
       const res = await gammaPool.getPoolBalances();
       const tokenBalances = res.tokenBalances;
@@ -199,6 +209,11 @@ describe("GammaPool", function () {
       expect(loan.rateIndex).to.eq(ethers.BigNumber.from(10).pow(18));
     });
 
+    it("Get CFMM Price", async function () {
+      const px = await gammaPool.getCFMMPrice();
+      expect(px).to.eq(1);
+    });
+
     it("Update Loan", async function () {
       const abi = ethers.utils.defaultAbiCoder;
       const data = abi.encode(
@@ -255,6 +270,56 @@ describe("GammaPool", function () {
       expect(res4.events[0].args.liquidity).to.eq(51);
       expect(res4.events[0].args.lpTokens).to.eq(52);
       expect(res4.events[0].args.rateIndex).to.eq(53);
+    });
+  });
+
+  // You can nest describe calls to create subsections.
+  describe("Liquidations", function () {
+    it("Liquidate with LP", async function () {
+      const abi = ethers.utils.defaultAbiCoder;
+      const data = abi.encode(
+        ["address", "address", "uint256"], // encode as address array
+        [owner.address, gammaPool.address, 1]
+      );
+      const tokenId = ethers.BigNumber.from(ethers.utils.keccak256(data));
+      const res0 = await (await gammaPool.liquidateWithLP(tokenId)).wait();
+      expect(res0.events[0].args.tokenId).to.eq(tokenId);
+      expect(res0.events[0].args.tokensHeld.length).to.eq(2);
+      expect(res0.events[0].args.tokensHeld[0]).to.eq(6);
+      expect(res0.events[0].args.tokensHeld[1]).to.eq(7);
+      expect(res0.events[0].args.liquidity).to.eq(8);
+      expect(res0.events[0].args.lpTokens).to.eq(9);
+      expect(res0.events[0].args.rateIndex).to.eq(10);
+    });
+
+    it("Liquidate", async function () {
+      const abi = ethers.utils.defaultAbiCoder;
+      const data = abi.encode(
+        ["address", "address", "uint256"], // encode as address array
+        [owner.address, gammaPool.address, 1]
+      );
+      const tokenId = ethers.BigNumber.from(ethers.utils.keccak256(data));
+      const res0 = await (
+        await gammaPool.liquidate(tokenId, false, [777, 888])
+      ).wait();
+      expect(res0.events[0].args.tokenId).to.eq(tokenId);
+      expect(res0.events[0].args.tokensHeld.length).to.eq(2);
+      expect(res0.events[0].args.tokensHeld[0]).to.eq(1);
+      expect(res0.events[0].args.tokensHeld[1]).to.eq(3);
+      expect(res0.events[0].args.liquidity).to.eq(777);
+      expect(res0.events[0].args.lpTokens).to.eq(888);
+      expect(res0.events[0].args.rateIndex).to.eq(5);
+
+      const res1 = await (
+        await gammaPool.liquidate(tokenId, true, [999, 1111])
+      ).wait();
+      expect(res1.events[0].args.tokenId).to.eq(tokenId);
+      expect(res1.events[0].args.tokensHeld.length).to.eq(2);
+      expect(res1.events[0].args.tokensHeld[0]).to.eq(1);
+      expect(res1.events[0].args.tokensHeld[1]).to.eq(2);
+      expect(res1.events[0].args.liquidity).to.eq(999);
+      expect(res1.events[0].args.lpTokens).to.eq(1111);
+      expect(res1.events[0].args.rateIndex).to.eq(5);
     });
   });
 });

@@ -20,6 +20,7 @@ describe("GammaPoolFactory", function () {
   let addr2: any;
   let addr3: any;
   let addr4: any;
+  let addr5: any;
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
@@ -30,7 +31,7 @@ describe("GammaPoolFactory", function () {
     TestAddressCalculator = await ethers.getContractFactory(
       "TestAddressCalculator"
     );
-    [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, addr4, addr5] = await ethers.getSigners();
 
     // To deploy our contract, we just have to call Token.deploy() and await
     // for it to be deployed(), which happens onces its transaction has been
@@ -41,19 +42,21 @@ describe("GammaPoolFactory", function () {
     factory = await GammaPoolFactory.deploy(owner.address);
 
     protocol = await GammaPool.deploy(
-      factory.address,
       PROTOCOL_ID,
+      factory.address,
       addr1.address,
-      addr2.address
+      addr2.address,
+      addr5.address
     );
 
     addressCalculator = await TestAddressCalculator.deploy();
 
     protocolZero = await GammaPool.deploy(
-      factory.address,
       0,
+      factory.address,
       addr1.address,
-      addr2.address
+      addr2.address,
+      addr5.address
     );
 
     // address _longStrategy, address _shortStrategy, uint24 _protocol

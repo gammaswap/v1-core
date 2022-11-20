@@ -3,29 +3,34 @@ pragma solidity 0.8.4;
 
 import "../interfaces/IGammaPool.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
+import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "./GammaPoolERC4626.sol";
 
 abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
+    using LibStorage for LibStorage.Storage;
+
     error Forbidden();
 
     uint16 immutable public override protocolId;
+    address immutable public override factory;
     address immutable public override longStrategy;
     address immutable public override shortStrategy;
-    address immutable public override factory;
+    address immutable public override liquidationStrategy;
 
-    constructor(address _factory, uint16 _protocolId, address _longStrategy, address _shortStrategy) {
-        factory = _factory;
+    constructor(uint16 _protocolId, address _factory,  address _longStrategy, address _shortStrategy, address _liquidationStrategy) {
         protocolId = _protocolId;
+        factory = _factory;
         longStrategy = _longStrategy;
         shortStrategy = _shortStrategy;
+        liquidationStrategy = _liquidationStrategy;
     }
 
     function initialize(address cfmm, address[] calldata tokens) external virtual override {
         if(msg.sender != factory)
             revert Forbidden();
 
-        _initialize(factory, cfmm, tokens);
+        s.initialize(factory, cfmm, tokens);
     }
 
     function cfmm() external virtual override view returns(address) {
@@ -73,26 +78,18 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
     /*****LONG*****/
 
-    function liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external override virtual returns(uint128[] memory refund) {
-        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._liquidate.selector, tokenId, isRebalance, deltas)), (uint128[]));
-    }
-
-    function liquidateWithLP(uint256 tokenId) external override virtual returns(uint128[] memory refund) {
-        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._liquidateWithLP.selector, tokenId)), (uint128[]));
-    }
-
     function getCFMMPrice() external virtual override view returns(uint256 price) {
         return ILongStrategy(longStrategy)._getCFMMPrice(s.cfmm, 10**18);
     }
 
     function createLoan() external virtual override lock returns(uint256 tokenId) {
-        tokenId = _createLoan(s.tokens.length);
+        tokenId = s.createLoan(s.tokens.length);
         emit LoanCreated(msg.sender, tokenId);
     }
 
     function loan(uint256 tokenId) external virtual override view returns (uint256 id, address poolId,
         uint128[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex) {
-        Loan storage _loan = s.loans[tokenId];
+        LibStorage.Loan storage _loan = s.loans[tokenId];
         return (_loan.id, _loan.poolId, _loan.tokensHeld, _loan.initLiquidity, _loan.liquidity, _loan.lpTokens, _loan.rateIndex);
     }
 
@@ -116,4 +113,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._rebalanceCollateral.selector, tokenId, deltas)), (uint128[]));
     }
 
+    function liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external override virtual returns(uint256[] memory refund) {
+        return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._liquidate.selector, tokenId, isRebalance, deltas)), (uint256[]));
+    }
+
+    function liquidateWithLP(uint256 tokenId) external override virtual returns(uint256[] memory refund) {
+        return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._liquidateWithLP.selector, tokenId)), (uint256[]));
+    }
 }

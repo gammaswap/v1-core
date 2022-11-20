@@ -5,14 +5,6 @@ import "../../interfaces/strategies/base/ILongStrategy.sol";
 
 contract TestLongStrategy is ILongStrategy {
 
-    function _liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external override virtual returns(uint128[] memory refund) {
-        return new uint128[](2);
-    }
-
-    function _liquidateWithLP(uint256 tokenId) external override virtual returns(uint128[] memory refund) {
-        return new uint128[](2);
-    }
-
     function _getCFMMPrice(address cfmm, uint256 factor) external override view returns(uint256 price) {
         return 1;
     }

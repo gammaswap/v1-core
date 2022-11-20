@@ -19,8 +19,10 @@ describe("GammaPoolERC4626", function () {
   let addr1: any;
   let addr2: any;
   let addr3: any;
+  let addr4: any;
   let longStrategy: any;
   let shortStrategy: any;
+  let liquidationStrategy: any;
   let gammaPool: any;
   let implementation: any;
 
@@ -35,7 +37,7 @@ describe("GammaPoolERC4626", function () {
     );
 
     GammaPool = await ethers.getContractFactory("TestGammaPool");
-    [owner, addr1, addr2, addr3] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
 
     TestShortStrategy = await ethers.getContractFactory("TestERC20Strategy");
 
@@ -51,12 +53,14 @@ describe("GammaPoolERC4626", function () {
     ]);
 
     longStrategy = addr1;
+    liquidationStrategy = addr4;
 
     implementation = await GammaPool.deploy(
-      factory.address,
       PROTOCOL_ID,
+      factory.address,
       longStrategy.address,
-      shortStrategy.address
+      shortStrategy.address,
+      liquidationStrategy.address
     );
 
     await factory.addProtocol(implementation.address);
