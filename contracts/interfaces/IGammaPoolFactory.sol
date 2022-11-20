@@ -14,7 +14,7 @@ interface IGammaPoolFactory {
     function allPoolsLength() external view returns (uint256);
     function feeToSetter() external view returns(address);
     function owner() external view returns(address);
-    function fee() external view returns(uint256);
+    function fee() external view returns(uint16);
     function feeTo() external view returns(address);
-    function feeInfo() external view returns(address,uint);
+    function feeInfo() external view returns(address,uint256);
 }

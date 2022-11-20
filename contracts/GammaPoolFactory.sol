@@ -75,12 +75,12 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         emit PoolCreated(pool, cfmm, protocolId, implementation, allPools.length);
     }
 
-    function feeInfo() external virtual override view returns(address _feeTo, uint _fee) {
+    function feeInfo() external virtual override view returns(address _feeTo, uint256 _fee) {
         _feeTo = feeTo;
         _fee = fee;
     }
 
-    function setFee(uint _fee) external {
+    function setFee(uint16 _fee) external {
         isForbidden(feeToSetter);
         fee = _fee;
     }
