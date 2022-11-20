@@ -9,6 +9,7 @@ contract CPMMGammaPool is GammaPool{
     error NotContract();
     error BadProtocol();
 
+    uint8 constant public tokenCount = 2;
     address immutable public cfmmFactory;
     bytes32 immutable public cfmmInitCodeHash;
 
@@ -16,6 +17,42 @@ contract CPMMGammaPool is GammaPool{
         GammaPool(_factory, _protocolId, _longStrategy, _shortStrategy) {
         cfmmFactory = _cfmmFactory;
         cfmmInitCodeHash = _cfmmInitCodeHash;
+    }
+
+    function initialize(address cfmm, address[] calldata tokens) external virtual override {
+        if(s.cfmm != address(0))
+            revert Initialized();
+
+        s.cfmm = cfmm;
+        s.tokens = tokens;
+        s.factory = factory;
+        s.TOKEN_BALANCE = new uint256[](tokenCount);
+        s.CFMM_RESERVES = new uint256[](tokenCount);
+
+        s.accFeeIndex = 10**18;
+        s.lastFeeIndex = 10**18;
+        s.lastCFMMFeeIndex = 10**18;
+        s.LAST_BLOCK_NUMBER = block.number;
+        s.nextId = 1;
+        s.unlocked = 1;
+        s.ONE = 10**18;
+    }
+
+    function createLoan() external virtual override lock returns(uint256 tokenId) {
+        uint256 id = s.nextId++;
+        tokenId = uint256(keccak256(abi.encode(msg.sender, address(this), id)));
+
+        s.loans[tokenId] = Loan({
+        id: id,
+        poolId: address(this),
+        tokensHeld: new uint256[](tokenCount),
+        heldLiquidity: 0,
+        initLiquidity: 0,
+        liquidity: 0,
+        lpTokens: 0,
+        rateIndex: s.accFeeIndex
+        });
+        emit LoanCreated(msg.sender, tokenId);
     }
 
     function validateCFMM(address[] calldata _tokens, address _cfmm) external virtual override view returns(address[] memory tokens) {

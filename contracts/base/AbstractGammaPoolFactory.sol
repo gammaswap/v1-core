@@ -1,4 +1,5 @@
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity 0.8.4;
 
 import "../interfaces/IGammaPoolFactory.sol";
 
@@ -32,7 +33,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
     }
 
     /**
-        * @dev Deploys and returns the address of a clone that mimics the behaviour of `implementation`.
+     * @dev Deploys and returns the address of a clone that mimics the behaviour of `implementation`.
      *
      * This function uses the create2 opcode and a `salt` to deterministically deploy
      * the clone. Using the same `implementation` and `salt` multiple time will revert, since

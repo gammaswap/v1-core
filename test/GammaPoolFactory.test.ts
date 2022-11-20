@@ -143,7 +143,11 @@ describe("GammaPoolFactory", function () {
         cfmm: addr3.address,
         tokens: [tokenA.address, tokenB.address],
       };
-      await factory.createPool(createPoolParams);
+      await factory.createPool(
+        createPoolParams.protocolId,
+        createPoolParams.cfmm,
+        createPoolParams.tokens
+      );
       const key = await addressCalculator.getGammaPoolKey(addr3.address, 1);
       const pool = await factory.getPool(key);
       expect(pool).to.not.equal(ethers.constants.AddressZero);
@@ -165,16 +169,27 @@ describe("GammaPoolFactory", function () {
         protocolId: 1,
         tokens: [tokenA.address, tokenB.address],
       };
-      await expect(factory.createPool(createPoolParams)).to.be.revertedWith(
-        "ProtocolNotSet"
-      );
+      await expect(
+        factory.createPool(
+          createPoolParams.protocolId,
+          createPoolParams.cfmm,
+          createPoolParams.tokens
+        )
+      ).to.be.revertedWith("ProtocolNotSet");
       await factory.addProtocol(protocol.address);
 
-      await factory.createPool(createPoolParams);
-
-      await expect(factory.createPool(createPoolParams)).to.be.revertedWith(
-        "PoolExists"
+      await factory.createPool(
+        createPoolParams.protocolId,
+        createPoolParams.cfmm,
+        createPoolParams.tokens
       );
+      await expect(
+        factory.createPool(
+          createPoolParams.protocolId,
+          createPoolParams.cfmm,
+          createPoolParams.tokens
+        )
+      ).to.be.revertedWith("PoolExists");
 
       await factory.setIsProtocolRestricted(1, true);
 
@@ -184,16 +199,32 @@ describe("GammaPoolFactory", function () {
         tokens: [tokenA.address, tokenC.address],
       };
       await expect(
-        factory.connect(addr1).createPool(createPoolParams2)
+        factory
+          .connect(addr1)
+          .createPool(
+            createPoolParams2.protocolId,
+            createPoolParams2.cfmm,
+            createPoolParams2.tokens
+          )
       ).to.be.revertedWith("ProtocolRestricted");
 
       await factory.setIsProtocolRestricted(1, false);
 
-      await factory.connect(addr1).createPool(createPoolParams2);
+      await factory
+        .connect(addr1)
+        .createPool(
+          createPoolParams2.protocolId,
+          createPoolParams2.cfmm,
+          createPoolParams2.tokens
+        );
 
-      await expect(factory.createPool(createPoolParams2)).to.be.revertedWith(
-        "PoolExists"
-      );
+      await expect(
+        factory.createPool(
+          createPoolParams2.protocolId,
+          createPoolParams2.cfmm,
+          createPoolParams2.tokens
+        )
+      ).to.be.revertedWith("PoolExists");
     });
   });
 

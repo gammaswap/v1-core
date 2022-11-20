@@ -7,11 +7,7 @@ import "./GammaPoolERC4626.sol";
 
 abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
-    modifier lock() {
-        GammaPoolStorage.lockit();
-        _;
-        GammaPoolStorage.unlockit();
-    }
+    error Initialized();
 
     uint16 immutable public override protocolId;
     address immutable public override longStrategy;
@@ -26,15 +22,30 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     function initialize(address cfmm, address[] calldata tokens) external virtual override {
-        GammaPoolStorage.init(cfmm, tokens);
+        if(s.cfmm != address(0))
+            revert Initialized();
+
+        s.cfmm = cfmm;
+        s.tokens = tokens;
+        s.factory = factory;
+        s.TOKEN_BALANCE = new uint256[](tokens.length);
+        s.CFMM_RESERVES = new uint256[](tokens.length);
+
+        s.accFeeIndex = 10**18;
+        s.lastFeeIndex = 10**18;
+        s.lastCFMMFeeIndex = 10**18;
+        s.LAST_BLOCK_NUMBER = block.number;
+        s.nextId = 1;
+        s.unlocked = 1;
+        s.ONE = 10**18;
     }
 
     function cfmm() external virtual override view returns(address) {
-        return GammaPoolStorage.store().cfmm;
+        return s.cfmm;
     }
 
     function tokens() external virtual override view returns(address[] memory) {
-        return GammaPoolStorage.store().tokens;
+        return s.tokens;
     }
 
     function vaultImplementation() internal virtual override view returns(address) {
@@ -43,19 +54,16 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
     //GamamPool Data
     function getPoolBalances() external virtual override view returns(uint256[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
-        uint256 lpTokenBorrowedPlusInterest, uint256 borrowedInvariant, uint256 lpInvariant){
-        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
-        return(store.TOKEN_BALANCE, store.LP_TOKEN_BALANCE, store.LP_TOKEN_BORROWED, store.LP_TOKEN_BORROWED_PLUS_INTEREST, store.BORROWED_INVARIANT, store.LP_INVARIANT);
+        uint256 lpTokenBorrowedPlusInterest, uint256 borrowedInvariant, uint256 lpInvariant) {
+        return(s.TOKEN_BALANCE, s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.BORROWED_INVARIANT, s.LP_INVARIANT);
     }
 
     function getCFMMBalances() external virtual override view returns(uint256[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply) {
-        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
-        return(store.CFMM_RESERVES, store.lastCFMMInvariant, store.lastCFMMTotalSupply);
+        return(s.CFMM_RESERVES, s.lastCFMMInvariant, s.lastCFMMTotalSupply);
     }
 
     function getRates() external virtual override view returns(uint256 borrowRate, uint256 accFeeIndex, uint256 lastFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastBlockNumber) {
-        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
-        return(store.borrowRate, store.accFeeIndex, store.lastFeeIndex, store.lastCFMMFeeIndex, store.LAST_BLOCK_NUMBER);
+        return(s.borrowRate, s.accFeeIndex, s.lastFeeIndex, s.lastCFMMFeeIndex, s.LAST_BLOCK_NUMBER);
     }
 
     /*****SHORT*****/
@@ -86,17 +94,29 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     function getCFMMPrice() external virtual override view returns(uint256 price) {
-        return ILongStrategy(longStrategy)._getCFMMPrice(GammaPoolStorage.store().cfmm, GammaPoolStorage.store().ONE);
+        return ILongStrategy(longStrategy)._getCFMMPrice(s.cfmm, s.ONE);
     }
 
     function createLoan() external virtual override lock returns(uint256 tokenId) {
-        tokenId = GammaPoolStorage.createLoan();
+        uint256 id = s.nextId++;
+        tokenId = uint256(keccak256(abi.encode(msg.sender, address(this), id)));
+
+        s.loans[tokenId] = Loan({
+            id: id,
+            poolId: address(this),
+            tokensHeld: new uint[](s.tokens.length),
+            heldLiquidity: 0,
+            initLiquidity: 0,
+            liquidity: 0,
+            lpTokens: 0,
+            rateIndex: s.accFeeIndex
+        });
         emit LoanCreated(msg.sender, tokenId);
     }
 
     function loan(uint256 tokenId) external virtual override view returns (uint256 id, address poolId,
         uint256[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex) {
-        GammaPoolStorage.Loan storage _loan = GammaPoolStorage.store().loans[tokenId];
+        Loan storage _loan = s.loans[tokenId];
         return (_loan.id, _loan.poolId, _loan.tokensHeld, _loan.initLiquidity, _loan.liquidity, _loan.lpTokens, _loan.rateIndex);
     }
 
