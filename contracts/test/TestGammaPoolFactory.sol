@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
 import "../libraries/AddressCalculator.sol";
@@ -30,7 +31,7 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
         getPool[key] = pool;
     }
 
-    function createPool(CreatePoolParams calldata params) external override virtual returns(address pool) {
+    function createPool(uint16 protocolId, address cfmm, address[] calldata tokens) external override virtual returns(address pool) {
     }
 
     function isProtocolRestricted(uint16 protocolId) external view override returns(bool) {

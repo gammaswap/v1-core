@@ -12,7 +12,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     function vaultImplementation() internal virtual view returns(address);
 
     function asset() external virtual view returns(address) {
-        return GammaPoolStorage.store().cfmm;
+        return s.cfmm;
     }
 
     function deposit(uint256 assets, address receiver) external virtual returns (uint256 shares) {
@@ -32,9 +32,8 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     }
 
     function totalAssets() public view virtual returns(uint256) {
-        GammaPoolStorage.Store storage store = GammaPoolStorage.store();
-        return IShortStrategy(vaultImplementation()).totalAssets(store.cfmm, store.BORROWED_INVARIANT, store.LP_TOKEN_BALANCE,
-            store.lastCFMMInvariant, store.lastCFMMTotalSupply, store.LAST_BLOCK_NUMBER);
+        return IShortStrategy(vaultImplementation()).totalAssets(s.cfmm, s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE,
+            s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER);
     }
 
     function convertToShares(uint256 assets) public view virtual returns (uint256) {
@@ -75,7 +74,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     }
 
     function maxAssets(uint256 assets) internal view virtual returns(uint256) {
-        uint256 lpTokenBalance = GammaPoolStorage.store().LP_TOKEN_BALANCE;
+        uint256 lpTokenBalance = s.LP_TOKEN_BALANCE;
         if(assets < lpTokenBalance){
             return assets;
         }
@@ -83,7 +82,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     }
 
     function maxWithdraw(address owner) public view virtual returns (uint256) {
-        return maxAssets(convertToAssets(GammaPoolStorage.erc20().balanceOf[owner]));
+        return maxAssets(convertToAssets(s.balanceOf[owner]));
     }
 
     function maxRedeem(address owner) public view virtual returns (uint256) {

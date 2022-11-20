@@ -55,26 +55,24 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         isProtocolRestricted[protocolId] = isRestricted;
     }
 
-    function createPool(CreatePoolParams calldata params) external virtual override returns (address pool) {
-        uint16 protocolId = params.protocolId;
-
+    function createPool(uint16 protocolId, address cfmm, address[] calldata tokens) external virtual override returns (address pool) {
         isProtocolNotSet(protocolId);
         isRestricted(protocolId, owner);
 
         address implementation = getProtocol[protocolId];
-        address[] memory tokens = IGammaPool(implementation).validateCFMM(params.tokens, params.cfmm);
+        address[] memory _tokens = IGammaPool(implementation).validateCFMM(tokens, cfmm);
 
-        bytes32 key = AddressCalculator.getGammaPoolKey(params.cfmm, protocolId);
+        bytes32 key = AddressCalculator.getGammaPoolKey(cfmm, protocolId);
 
         hasPool(key);
 
         pool = cloneDeterministic(implementation, key);
 
-        IGammaPool(pool).initialize(params.cfmm, tokens);
+        IGammaPool(pool).initialize(cfmm, tokens);
 
         getPool[key] = pool;
         allPools.push(pool);
-        emit PoolCreated(pool, params.cfmm, protocolId, implementation, allPools.length);
+        emit PoolCreated(pool, cfmm, protocolId, implementation, allPools.length);
     }
 
     function feeInfo() external virtual override view returns(address _feeTo, uint _fee) {
