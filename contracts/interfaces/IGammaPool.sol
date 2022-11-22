@@ -28,8 +28,8 @@ interface IGammaPool {
     //Short Gamma
     function depositNoPull(address to) external returns(uint256 shares);
     function withdrawNoPull(address to) external returns(uint256 assets);
-    function withdrawReserves(address to) external returns (uint128[] memory reserves, uint256 assets);
-    function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external returns(uint128[] memory reserves, uint256 shares);
+    function withdrawReserves(address to) external returns (uint256[] memory reserves, uint256 assets);
+    function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external returns(uint256[] memory reserves, uint256 shares);
 
     //Long Gamma
     function getCFMMPrice() external view returns(uint256 price);
