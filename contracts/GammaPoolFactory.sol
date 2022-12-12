@@ -68,7 +68,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
 
         pool = cloneDeterministic(implementation, key);
 
-        IGammaPool(pool).initialize(cfmm, tokens);
+        IGammaPool(pool).initialize(cfmm, _tokens);
 
         getPool[key] = pool;
         allPools.push(pool);
