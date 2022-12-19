@@ -7,4 +7,5 @@ interface ILiquidationStrategy {
 
     function _liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external virtual returns(uint256[] memory refund);
     function _liquidateWithLP(uint256 tokenId) external virtual returns(uint256[] memory refund);
+    function _batchLiquidations(uint256[] calldata tokenIds) external virtual returns(uint256[] memory refund);
 }

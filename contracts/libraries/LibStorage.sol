@@ -19,39 +19,27 @@ library LibStorage {
 
     struct Storage {
         // 2x256 bits
-        uint96 yieldTWAP;
         address cfmm;
-        uint96 cumulativeYield;
+        uint96 LAST_BLOCK_NUMBER;//uint96
         address factory;
-
-        // 1x64 bits
-        uint32 cumulativeTime;
-        uint32 lastBlockTimestamp;
+        uint96 unlocked;//should be 1
 
         // LP Tokens
-        uint256 LP_TOKEN_BALANCE;//LP Tokens in GS, LP_TOKEN_TOTAL = LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST (will remove this)
+        uint256 LP_TOKEN_BALANCE;//LP Tokens in GS, LP_TOKEN_TOTAL = LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST
         uint256 LP_TOKEN_BORROWED;//LP Tokens that have been borrowed (Principal)
-        uint256 LP_TOKEN_BORROWED_PLUS_INTEREST;//(LP Tokens that have been borrowed (principal) plus interest in LP Tokens)
+        uint256 LP_TOKEN_BORROWED_PLUS_INTEREST;//LP Tokens that have been borrowed (principal) plus interest in LP Tokens
 
         // 1x256 bits, Invariants
         uint128 BORROWED_INVARIANT;
         uint128 LP_INVARIANT;//Invariant from LP Tokens, TOTAL_INVARIANT = BORROWED_INVARIANT + LP_INVARIANT
 
-        // 1x256 bits, rates
-        uint80 borrowRate;//uint72, max 120% million
-        uint80 lastFeeIndex;//uint72, max 120% million
+        // 2x256 bits, rates
         uint96 accFeeIndex;//uint96, max 7.9% trillion
-
-        // 2x256 bits, CFMM values
-        uint48 LAST_BLOCK_NUMBER;//uint48
-        uint80 lastCFMMFeeIndex;//uint72, max 120% million
         uint128 lastCFMMInvariant;//uint128
         uint256 lastCFMMTotalSupply;
 
         /// @dev The ID of the next loan that will be minted. Skips 0
         uint256 nextId;//should be 1
-
-        uint256 unlocked;//should be 1
 
         // ERC20 fields
         uint256 totalSupply;
@@ -64,7 +52,7 @@ library LibStorage {
         // tokens and balances
         address[] tokens;
         uint128[] TOKEN_BALANCE;
-        uint128[] CFMM_RESERVES;
+        uint128[] CFMM_RESERVES; //keeps track of price of CFMM at time of update
     }
 
     error Initialized();
@@ -77,10 +65,8 @@ library LibStorage {
         self.cfmm = cfmm;
         self.tokens = tokens;
 
-        self.lastFeeIndex = 10**18;
         self.accFeeIndex = 10**18;
         self.LAST_BLOCK_NUMBER = uint48(block.number);
-        self.lastCFMMFeeIndex = 10**18;
 
         self.nextId = 1;
         self.unlocked = 1;

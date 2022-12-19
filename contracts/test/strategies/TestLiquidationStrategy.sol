@@ -24,4 +24,14 @@ contract TestLiquidationStrategy is ILiquidationStrategy  {
         emit LoanUpdated(tokenId, tokensHeld, refund[0], refund[1], 10);
     }
 
+    function _batchLiquidations(uint256[] calldata tokenIds) external override virtual returns(uint256[] memory refund) {
+        uint128[] memory tokensHeld = new uint128[](2);
+        tokensHeld[0] = 11;
+        tokensHeld[1] = 12;
+        refund = new uint256[](2);
+        refund[0] = 13;
+        refund[1] = 14;
+        emit LoanUpdated(tokenIds[0], tokensHeld, refund[0], refund[1], 15);
+        emit LoanUpdated(tokenIds[1], tokensHeld, refund[0], refund[1], 15);
+    }
 }

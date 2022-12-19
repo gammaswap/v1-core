@@ -135,13 +135,42 @@ describe("GammaPool", function () {
       expect(res1.cfmmTotalSupply).to.equal(0);
 
       const res2 = await gammaPool.getRates();
-      expect(res2.borrowRate).to.equal(0);
-
       const ONE = ethers.BigNumber.from(10).pow(18);
       expect(res2.accFeeIndex).to.equal(ONE);
-      expect(res2.lastFeeIndex).to.equal(ONE);
-      expect(res2.lastCFMMFeeIndex).to.equal(ONE);
       expect(res2.lastBlockNumber).to.gt(0);
+
+      const res3 = await gammaPool.getPoolData();
+      expect(res3.cfmm).to.equal(cfmm.address);
+      expect(res3.protocolId).to.equal(PROTOCOL_ID);
+      const _tokens = res3.tokens;
+      expect(_tokens.length).to.equal(2);
+      expect(_tokens[0]).to.equal(tokenA.address);
+      expect(_tokens[1]).to.equal(tokenB.address);
+
+      expect(res3.factory).to.equal(factory.address);
+      expect(res3.longStrategy).to.equal(longStrategy.address);
+      expect(res3.shortStrategy).to.equal(shortStrategy.address);
+      expect(res3.liquidationStrategy).to.equal(liquidationStrategy.address);
+      const _tokenBalances = res3.TOKEN_BALANCE;
+      expect(_tokenBalances.length).to.equal(2);
+      expect(_tokenBalances[0]).to.equal(0);
+      expect(_tokenBalances[1]).to.equal(0);
+
+      expect(res3.accFeeIndex).to.equal(ONE);
+      expect(res3.LAST_BLOCK_NUMBER).to.gt(0);
+      expect(res3.LP_TOKEN_BALANCE).to.equal(0);
+      expect(res3.LP_TOKEN_BORROWED).to.equal(0);
+      expect(res3.LP_TOKEN_BORROWED_PLUS_INTEREST).to.equal(0);
+      expect(res3.BORROWED_INVARIANT).to.equal(0);
+      expect(res3.LP_INVARIANT).to.equal(0);
+
+      const _cfmmReserves = res3.CFMM_RESERVES;
+      expect(_cfmmReserves.length).to.equal(2);
+      expect(_cfmmReserves[0]).to.equal(0);
+      expect(_cfmmReserves[1]).to.equal(0);
+      expect(res3.lastCFMMInvariant).to.equal(res3.lastCFMMInvariant);
+      expect(res3.lastCFMMTotalSupply).to.equal(res3.lastCFMMTotalSupply);
+      expect(res3.totalSupply).to.equal(res3.totalSupply);
     });
   });
 
@@ -275,6 +304,37 @@ describe("GammaPool", function () {
 
   // You can nest describe calls to create subsections.
   describe("Liquidations", function () {
+    it("batch liquidations", async function () {
+      const abi = ethers.utils.defaultAbiCoder;
+      const data1 = abi.encode(
+        ["address", "address", "uint256"], // encode as address array
+        [owner.address, gammaPool.address, 1]
+      );
+      const data2 = abi.encode(
+        ["address", "address", "uint256"], // encode as address array
+        [addr1.address, gammaPool.address, 1]
+      );
+      const tokenId1 = ethers.BigNumber.from(ethers.utils.keccak256(data1));
+      const tokenId2 = ethers.BigNumber.from(ethers.utils.keccak256(data2));
+      const res0 = await (
+        await gammaPool.batchLiquidations([tokenId1, tokenId2])
+      ).wait();
+      expect(res0.events[0].args.tokenId).to.eq(tokenId1);
+      expect(res0.events[0].args.tokensHeld.length).to.eq(2);
+      expect(res0.events[0].args.tokensHeld[0]).to.eq(11);
+      expect(res0.events[0].args.tokensHeld[1]).to.eq(12);
+      expect(res0.events[0].args.liquidity).to.eq(13);
+      expect(res0.events[0].args.lpTokens).to.eq(14);
+      expect(res0.events[0].args.rateIndex).to.eq(15);
+      expect(res0.events[1].args.tokenId).to.eq(tokenId2);
+      expect(res0.events[1].args.tokensHeld.length).to.eq(2);
+      expect(res0.events[1].args.tokensHeld[0]).to.eq(11);
+      expect(res0.events[1].args.tokensHeld[1]).to.eq(12);
+      expect(res0.events[1].args.liquidity).to.eq(13);
+      expect(res0.events[1].args.lpTokens).to.eq(14);
+      expect(res0.events[1].args.rateIndex).to.eq(15);
+    });
+
     it("Liquidate with LP", async function () {
       const abi = ethers.utils.defaultAbiCoder;
       const data = abi.encode(
