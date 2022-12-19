@@ -55,8 +55,30 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         return(s.CFMM_RESERVES, s.lastCFMMInvariant, s.lastCFMMTotalSupply);
     }
 
-    function getRates() external virtual override view returns(uint256 borrowRate, uint256 accFeeIndex, uint256 lastFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastBlockNumber) {
-        return(s.borrowRate, s.accFeeIndex, s.lastFeeIndex, s.lastCFMMFeeIndex, s.LAST_BLOCK_NUMBER);
+    function getRates() external virtual override view returns(uint256 accFeeIndex, uint256 lastBlockNumber) {
+        return(s.accFeeIndex, s.LAST_BLOCK_NUMBER);
+    }
+
+    function getPoolData() external virtual override view returns(PoolData memory data) {
+        data.protocolId = protocolId;
+        data.longStrategy = longStrategy;
+        data.shortStrategy = shortStrategy;
+        data.liquidationStrategy = liquidationStrategy;
+        data.cfmm = s.cfmm;
+        data.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
+        data.factory = s.factory;
+        data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
+        data.LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED;
+        data.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST;
+        data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
+        data.LP_INVARIANT = s.LP_INVARIANT;
+        data.accFeeIndex = s.accFeeIndex;
+        data.lastCFMMInvariant = s.lastCFMMInvariant;
+        data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
+        data.totalSupply = s.totalSupply;
+        data.tokens = s.tokens;
+        data.TOKEN_BALANCE = s.TOKEN_BALANCE;
+        data.CFMM_RESERVES = s.CFMM_RESERVES;
     }
 
     /*****SHORT*****/
@@ -119,5 +141,9 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
     function liquidateWithLP(uint256 tokenId) external override virtual returns(uint256[] memory refund) {
         return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._liquidateWithLP.selector, tokenId)), (uint256[]));
+    }
+
+    function batchLiquidations(uint256[] calldata tokenIds) external override virtual returns(uint256[] memory refund) {
+        return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._batchLiquidations.selector, tokenIds)), (uint256[]));
     }
 }
