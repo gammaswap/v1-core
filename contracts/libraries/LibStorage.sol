@@ -43,11 +43,13 @@ library LibStorage {
 
         // ERC20 fields
         uint256 totalSupply;
+        uint8[] decimals;
         mapping(address => uint256) balanceOf;
         mapping(address => mapping(address => uint256)) allowance;
 
         /// @dev The token ID position data
         mapping(uint256 => Loan) loans;
+
 
         // tokens and balances
         address[] tokens;
@@ -57,16 +59,17 @@ library LibStorage {
 
     error Initialized();
 
-    function initialize(Storage storage self, address factory, address cfmm, address[] calldata tokens) internal {
+    function initialize(Storage storage self, address factory, address cfmm, address[] calldata tokens, uint8[] calldata decimals) internal {
         if(self.factory != address(0))
             revert Initialized();
 
         self.factory = factory;
         self.cfmm = cfmm;
         self.tokens = tokens;
+        self.decimals = decimals;
 
         self.accFeeIndex = 10**18;
-        self.LAST_BLOCK_NUMBER = uint48(block.number);
+        self.LAST_BLOCK_NUMBER = uint96(block.number);
 
         self.nextId = 1;
         self.unlocked = 1;

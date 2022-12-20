@@ -5,7 +5,7 @@ import "../../interfaces/strategies/base/ILongStrategy.sol";
 
 contract TestLongStrategy is ILongStrategy {
 
-    function _getCFMMPrice(address cfmm, uint256 factor) external override view returns(uint256 price) {
+    function _getCFMMPrice(address cfmm) external override view returns(uint256 price) {
         return 1;
     }
 
