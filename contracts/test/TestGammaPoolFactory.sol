@@ -12,6 +12,7 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
     uint16 public protocolId;
     address[] public tokens;
     address public protocol;
+    uint8[] public decimals;
 
     constructor(address _cfmm, uint16 _protocolId, address[] memory _tokens) {
         cfmm = _cfmm;
@@ -20,13 +21,16 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
         owner = msg.sender;
         feeTo = owner;
         feeToSetter = owner;
+        decimals = new uint8[](2);
     }
 
     function createPool2() external virtual returns(address pool) {
         bytes32 key = AddressCalculator.getGammaPoolKey(cfmm, protocolId);
 
         pool = cloneDeterministic(protocol, key);
-        IGammaPool(pool).initialize(cfmm, tokens);
+        decimals[0] = 18;
+        decimals[1] = 18;
+        IGammaPool(pool).initialize(cfmm, tokens, decimals);
 
         getPool[key] = pool;
     }

@@ -11,6 +11,8 @@ contract CPMMGammaPool is GammaPool{
 
     using LibStorage for LibStorage.Storage;
 
+    bytes4 private constant DECIMALS = bytes4(keccak256(bytes('decimals()')));
+
     uint8 constant public tokenCount = 2;
     address immutable public cfmmFactory;
     bytes32 immutable public cfmmInitCodeHash;
@@ -27,7 +29,7 @@ contract CPMMGammaPool is GammaPool{
         emit LoanCreated(msg.sender, tokenId);
     }
 
-    function validateCFMM(address[] calldata _tokens, address _cfmm) external virtual override view returns(address[] memory tokens) {
+    function validateCFMM(address[] calldata _tokens, address _cfmm) external virtual override view returns(address[] memory tokens, uint8[] memory decimals) {
         if(!isContract(_cfmm)) {
             revert NotContract();
         }
@@ -37,6 +39,16 @@ contract CPMMGammaPool is GammaPool{
         if(_cfmm != AddressCalculator.calcAddress(cfmmFactory,keccak256(abi.encodePacked(tokens[0], tokens[1])),cfmmInitCodeHash)) {
             revert BadProtocol();
         }
+        decimals = new uint8[](2);
+        decimals[0] = tokenDecimals(tokens[0]);
+        decimals[1] = tokenDecimals(tokens[1]);
+    }
+
+    function tokenDecimals(address token) internal view returns (uint8) {
+        (bool success, bytes memory data) =
+        token.staticcall(abi.encodeWithSelector(DECIMALS));
+        require(success && data.length >= 1);
+        return abi.decode(data, (uint8));
     }
 
     function isContract(address account) internal virtual view returns (bool) {

@@ -60,7 +60,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         isRestricted(protocolId, owner);
 
         address implementation = getProtocol[protocolId];
-        address[] memory _tokens = IGammaPool(implementation).validateCFMM(tokens, cfmm);
+        (address[] memory _tokens, uint8[] memory _decimals) = IGammaPool(implementation).validateCFMM(tokens, cfmm);
 
         bytes32 key = AddressCalculator.getGammaPoolKey(cfmm, protocolId);
 
@@ -68,7 +68,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
 
         pool = cloneDeterministic(implementation, key);
 
-        IGammaPool(pool).initialize(cfmm, _tokens);
+        IGammaPool(pool).initialize(cfmm, _tokens, _decimals);
 
         getPool[key] = pool;
         allPools.push(pool);

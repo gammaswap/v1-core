@@ -9,7 +9,10 @@ contract TestGammaPool is GammaPool {
         GammaPool(_protocolId, _factory, _longStrategy, _shortStrategy, _liquidationStrategy) {
     }
 
-    function validateCFMM(address[] calldata _tokens, address _cfmm) external virtual override view returns(address[] memory tokens) {
+    function validateCFMM(address[] calldata _tokens, address _cfmm) external virtual override view returns(address[] memory tokens, uint8[] memory decimals) {
         tokens = _tokens;
+        decimals = new uint8[](_tokens.length);
+        decimals[0] = 18;
+        decimals[1] = 18;
     }
 }
