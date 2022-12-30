@@ -105,7 +105,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         return ILongStrategy(longStrategy)._getCFMMPrice(s.cfmm);
     }
 
-    function createLoan() external virtual override lock returns(uint256 tokenId) {
+    function createLoan() external virtual override returns(uint256 tokenId) {
         tokenId = s.createLoan(s.tokens.length);
         emit LoanCreated(msg.sender, tokenId);
     }

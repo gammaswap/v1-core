@@ -24,7 +24,7 @@ contract CPMMGammaPool is GammaPool{
         cfmmInitCodeHash = _cfmmInitCodeHash;
     }
 
-    function createLoan() external virtual override lock returns(uint256 tokenId) {
+    function createLoan() external virtual override returns(uint256 tokenId) {
         tokenId = s.createLoan(tokenCount);
         emit LoanCreated(msg.sender, tokenId);
     }
