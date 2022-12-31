@@ -5,7 +5,7 @@ import "../../interfaces/strategies/base/ILongStrategy.sol";
 
 contract TestLongStrategy is ILongStrategy {
 
-    function _getLatestCFMMReserves() external override view returns(uint256[] memory cfmmReserves) {
+    function _getLatestCFMMReserves() external override pure returns(uint256[] memory cfmmReserves) {
         cfmmReserves = new uint256[](2);
         cfmmReserves[0] = 3;
         cfmmReserves[1] = 4;
@@ -18,7 +18,7 @@ contract TestLongStrategy is ILongStrategy {
         emit LoanUpdated(tokenId, tokensHeld, 11, 12, 13);
     }
 
-    function _decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address to) external override returns(uint128[] memory tokensHeld) {
+    function _decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address) external override returns(uint128[] memory tokensHeld) {
         tokensHeld = new uint128[](2);
         tokensHeld[0] = uint128(amounts[0]);
         tokensHeld[1] = uint128(amounts[1]);

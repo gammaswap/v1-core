@@ -17,10 +17,10 @@ contract TestGammaPool is GammaPool {
         s.LP_TOKEN_BALANCE = uint128(IERC20(s.cfmm).balanceOf(address(this)));
     }
 
-    function validateCFMM(address[] calldata _tokens, address _cfmm) external virtual override view returns(address[] memory tokens, uint8[] memory decimals) {
-        tokens = _tokens;
-        decimals = new uint8[](_tokens.length);
-        decimals[0] = 18;
-        decimals[1] = 18;
+    function validateCFMM(address[] calldata _tokens, address) external virtual override view returns(address[] memory _tokensOrdered, uint8[] memory _decimals) {
+        _tokensOrdered = _tokens;
+        _decimals = new uint8[](_tokens.length);
+        _decimals[0] = 18;
+        _decimals[1] = 18;
     }
 }

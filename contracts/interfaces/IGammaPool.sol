@@ -56,11 +56,11 @@ interface IGammaPool {
     function shortStrategy() external view returns(address);
     function liquidationStrategy() external view returns(address);
 
-    function getPoolBalances() external virtual view returns(uint128[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
+    function getPoolBalances() external view returns(uint128[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
         uint256 lpTokenBorrowedPlusInterest, uint256 borrowedInvariant, uint256 lpInvariant);
-    function getCFMMBalances() external virtual view returns(uint128[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply);
-    function getRates() external virtual view returns(uint256 accFeeIndex, uint256 lastBlockNumber);
-    function getPoolData() external virtual view returns(PoolData memory data);
+    function getCFMMBalances() external view returns(uint128[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply);
+    function getRates() external view returns(uint256 accFeeIndex, uint256 lastBlockNumber);
+    function getPoolData() external view returns(PoolData memory data);
 
     function validateCFMM(address[] calldata _tokens, address _cfmm) external view returns(address[] memory _tokensOrdered, uint8[] memory _decimals);
 
@@ -79,9 +79,9 @@ interface IGammaPool {
     function borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint256[] memory amounts);
     function repayLiquidity(uint256 tokenId, uint256 liquidity) external returns(uint256 liquidityPaid, uint256[] memory amounts);
     function rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external returns(uint128[] memory tokensHeld);
-    function liquidate(uint256 tokenId, int256[] calldata deltas) external virtual returns(uint256[] memory refund);
-    function liquidateWithLP(uint256 tokenId) external virtual returns(uint256[] memory refund);
-    function batchLiquidations(uint256[] calldata tokenIds) external virtual returns(uint256[] memory refund);
+    function liquidate(uint256 tokenId, int256[] calldata deltas) external returns(uint256[] memory refund);
+    function liquidateWithLP(uint256 tokenId) external returns(uint256[] memory refund);
+    function batchLiquidations(uint256[] calldata tokenIds) external returns(uint256[] memory refund);
 
     //sync functions
     function skim(address to) external;

@@ -90,7 +90,8 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     }
 
     function callStrategy(address strategy, bytes memory data) internal virtual returns(bytes memory result) {
-        (bool success, bytes memory result) = strategy.delegatecall(data);
+        bool success;
+        (success, result) = strategy.delegatecall(data);
         require(success);
         return result;
     }
