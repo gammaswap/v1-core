@@ -7,6 +7,7 @@ interface IGammaPool {
         uint256 lastFeeIndex, uint256 lpTokenBorrowedPlusInterest, uint256 lpInvariant, uint256 lpBorrowedInvariant);
     event LoanCreated(address indexed caller, uint256 tokenId);
     event LoanUpdated(uint256 indexed tokenId, uint128[] tokensHeld, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
+    event Sync(uint256 oldLpTokenBalance, uint256 newLpTokenBalance);
 
     struct PoolData {
         uint16 protocolId;
@@ -78,4 +79,8 @@ interface IGammaPool {
     function liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external virtual returns(uint256[] memory refund);
     function liquidateWithLP(uint256 tokenId) external virtual returns(uint256[] memory refund);
     function batchLiquidations(uint256[] calldata tokenIds) external virtual returns(uint256[] memory refund);
+
+    //sync functions
+    function skim(address to) external;
+    function sync() external;
 }

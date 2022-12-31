@@ -15,6 +15,7 @@ describe("GammaPool", function () {
   let addressCalculator: any;
   let tokenA: any;
   let tokenB: any;
+  let tokenC: any;
   let cfmm: any;
   let owner: any;
   let addr1: any;
@@ -54,6 +55,7 @@ describe("GammaPool", function () {
     // mined.
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
     tokenB = await TestERC20.deploy("Test Token B", "TOKB");
+    tokenC = await TestERC20.deploy("Test Token C", "TOKC");
     cfmm = await TestERC20.deploy("Test CFMM", "CFMM");
     longStrategy = await TestLongStrategy.deploy();
     shortStrategy = await TestShortStrategy.deploy();
@@ -93,6 +95,28 @@ describe("GammaPool", function () {
       pool // The deployed contract address
     );
   }
+
+  async function checkBalances(
+    actBalA: number,
+    actBalB: number,
+    actBalC: number,
+    actCfmmBal: number,
+    balA: number,
+    balB: number,
+    cfmmBal: number
+  ) {
+    expect(await tokenA.balanceOf(gammaPool.address)).to.eq(actBalA);
+    expect(await tokenB.balanceOf(gammaPool.address)).to.eq(actBalB);
+    expect(await tokenC.balanceOf(gammaPool.address)).to.eq(actBalC);
+    expect(await cfmm.balanceOf(gammaPool.address)).to.eq(actCfmmBal);
+
+    const res0 = await gammaPool.getPoolBalances();
+    expect(res0.tokenBalances.length).to.eq(2);
+    expect(res0.tokenBalances[0]).to.eq(balA);
+    expect(res0.tokenBalances[1]).to.eq(balB);
+    expect(res0.lpTokenBalance).to.eq(cfmmBal);
+  }
+
   // You can nest describe calls to create subsections.
   describe("Deployment", function () {
     // `it` is another Mocha function. This is the one you use to define your
@@ -380,6 +404,183 @@ describe("GammaPool", function () {
       expect(res1.events[0].args.liquidity).to.eq(999);
       expect(res1.events[0].args.lpTokens).to.eq(1111);
       expect(res1.events[0].args.rateIndex).to.eq(5);
+    });
+  });
+
+  describe("Sync & Refunds", function () {
+    it("Does not receive ETH", async function () {
+      const tx = {
+        from: owner.address,
+        to: gammaPool.address,
+        value: ethers.utils.parseEther("1"),
+        nonce: await ethers.provider.getTransactionCount(
+          owner.address,
+          "latest"
+        ),
+        gasLimit: ethers.utils.hexlify("0x100000"),
+        gasPrice: await ethers.provider.getGasPrice(),
+      };
+      await expect(owner.sendTransaction(tx)).to.be.revertedWith(
+        "Transaction reverted"
+      );
+    });
+
+    it("Clear Restricted Tokens, Fail", async function () {
+      for (let i = 0; i < tokens.length; i++) {
+        await expect(
+          gammaPool.clearToken(tokens[i], owner.address)
+        ).to.be.revertedWith("RestrictedToken");
+      }
+      await expect(
+        gammaPool.clearToken(cfmm.address, owner.address)
+      ).to.be.revertedWith("RestrictedToken");
+    });
+
+    it("Clear Restricted Tokens, Success", async function () {
+      const balance0 = await tokenC.balanceOf(gammaPool.address);
+      expect(balance0).to.eq(0);
+      await (await tokenC.transfer(gammaPool.address, 100)).wait();
+      const balance1 = await tokenC.balanceOf(gammaPool.address);
+      expect(balance1).to.eq(100);
+      const addr1Balance0 = await tokenC.balanceOf(addr1.address);
+      expect(addr1Balance0).to.eq(0);
+      await (await gammaPool.clearToken(tokenC.address, addr1.address)).wait();
+      const addr1Balance1 = await tokenC.balanceOf(addr1.address);
+      expect(addr1Balance1).to.eq(100);
+      const balance2 = await tokenC.balanceOf(gammaPool.address);
+      expect(balance2).to.eq(0);
+
+      await (await gammaPool.clearToken(tokenC.address, addr1.address)).wait();
+      const addr1Balance2 = await tokenC.balanceOf(addr1.address);
+      expect(addr1Balance2).to.eq(100);
+      const balance3 = await tokenC.balanceOf(gammaPool.address);
+      expect(balance3).to.eq(0);
+    });
+
+    it("Skimming nothing off the top", async function () {
+      await checkBalances(0, 0, 0, 0, 0, 0, 0);
+
+      await (await tokenA.transfer(gammaPool.address, 1000)).wait();
+      await (await tokenB.transfer(gammaPool.address, 2000)).wait();
+      await (await tokenC.transfer(gammaPool.address, 3000)).wait();
+      await (await cfmm.transfer(gammaPool.address, 4000)).wait();
+
+      await checkBalances(1000, 2000, 3000, 4000, 0, 0, 0);
+
+      await (await gammaPool.syncTokens()).wait();
+
+      await checkBalances(1000, 2000, 3000, 4000, 1000, 2000, 4000);
+
+      const balanceA0 = await tokenA.balanceOf(owner.address);
+      const balanceB0 = await tokenB.balanceOf(owner.address);
+      const balanceC0 = await tokenC.balanceOf(owner.address);
+      const balanceCfmm0 = await cfmm.balanceOf(owner.address);
+
+      await (await gammaPool.skim(owner.address)).wait();
+
+      await checkBalances(1000, 2000, 3000, 4000, 1000, 2000, 4000);
+
+      expect(await tokenA.balanceOf(owner.address)).to.eq(balanceA0);
+      expect(await tokenB.balanceOf(owner.address)).to.eq(balanceB0);
+      expect(await tokenC.balanceOf(owner.address)).to.eq(balanceC0);
+      expect(await cfmm.balanceOf(owner.address)).to.eq(balanceCfmm0);
+    });
+
+    it("Skimming off the top", async function () {
+      await checkBalances(0, 0, 0, 0, 0, 0, 0);
+
+      await (await tokenA.transfer(gammaPool.address, 1000)).wait();
+      await (await tokenB.transfer(gammaPool.address, 2000)).wait();
+      await (await tokenC.transfer(gammaPool.address, 3000)).wait();
+      await (await cfmm.transfer(gammaPool.address, 4000)).wait();
+
+      await checkBalances(1000, 2000, 3000, 4000, 0, 0, 0);
+
+      await (await gammaPool.syncTokens()).wait();
+
+      await checkBalances(1000, 2000, 3000, 4000, 1000, 2000, 4000);
+
+      await (await tokenA.transfer(gammaPool.address, 1000)).wait();
+      await (await tokenB.transfer(gammaPool.address, 2000)).wait();
+      await (await tokenC.transfer(gammaPool.address, 3000)).wait();
+      await (await cfmm.transfer(gammaPool.address, 4000)).wait();
+
+      await checkBalances(2000, 4000, 6000, 8000, 1000, 2000, 4000);
+
+      const balanceA0 = await tokenA.balanceOf(owner.address);
+      const balanceB0 = await tokenB.balanceOf(owner.address);
+      const balanceC0 = await tokenC.balanceOf(owner.address);
+      const balanceCfmm0 = await cfmm.balanceOf(owner.address);
+
+      await (await gammaPool.skim(owner.address)).wait();
+
+      await checkBalances(1000, 2000, 6000, 4000, 1000, 2000, 4000);
+
+      expect(await tokenA.balanceOf(owner.address)).to.eq(balanceA0.add(1000));
+      expect(await tokenB.balanceOf(owner.address)).to.eq(balanceB0.add(2000));
+      expect(await tokenC.balanceOf(owner.address)).to.eq(balanceC0);
+      expect(await cfmm.balanceOf(owner.address)).to.eq(balanceCfmm0.add(4000));
+    });
+
+    it("Syncing already synced", async function () {
+      await (await tokenA.transfer(gammaPool.address, 1000)).wait();
+      await (await tokenB.transfer(gammaPool.address, 2000)).wait();
+      await (await tokenC.transfer(gammaPool.address, 3000)).wait();
+      await (await cfmm.transfer(gammaPool.address, 4000)).wait();
+
+      await (await gammaPool.syncTokens()).wait();
+
+      await checkBalances(1000, 2000, 3000, 4000, 1000, 2000, 4000);
+
+      const balanceA0 = await tokenA.balanceOf(owner.address);
+      const balanceB0 = await tokenB.balanceOf(owner.address);
+      const balanceC0 = await tokenC.balanceOf(owner.address);
+      const balanceCfmm0 = await cfmm.balanceOf(owner.address);
+
+      const res = await (await gammaPool.sync()).wait();
+      expect(res.events[0].event).to.eq("Sync");
+      expect(res.events[0].args.oldLpTokenBalance).to.eq(4000);
+      expect(res.events[0].args.newLpTokenBalance).to.eq(4000);
+
+      await checkBalances(1000, 2000, 3000, 4000, 1000, 2000, 4000);
+
+      expect(await tokenA.balanceOf(owner.address)).to.eq(balanceA0);
+      expect(await tokenB.balanceOf(owner.address)).to.eq(balanceB0);
+      expect(await tokenC.balanceOf(owner.address)).to.eq(balanceC0);
+      expect(await cfmm.balanceOf(owner.address)).to.eq(balanceCfmm0);
+    });
+
+    it("Syncing unsynced", async function () {
+      await (await tokenA.transfer(gammaPool.address, 1000)).wait();
+      await (await tokenB.transfer(gammaPool.address, 2000)).wait();
+      await (await tokenC.transfer(gammaPool.address, 3000)).wait();
+      await (await cfmm.transfer(gammaPool.address, 4000)).wait();
+
+      await (await gammaPool.syncTokens()).wait();
+
+      await (await tokenA.transfer(gammaPool.address, 1000)).wait();
+      await (await tokenB.transfer(gammaPool.address, 2000)).wait();
+      await (await tokenC.transfer(gammaPool.address, 3000)).wait();
+      await (await cfmm.transfer(gammaPool.address, 4000)).wait();
+
+      await checkBalances(2000, 4000, 6000, 8000, 1000, 2000, 4000);
+
+      const balanceA0 = await tokenA.balanceOf(owner.address);
+      const balanceB0 = await tokenB.balanceOf(owner.address);
+      const balanceC0 = await tokenC.balanceOf(owner.address);
+      const balanceCfmm0 = await cfmm.balanceOf(owner.address);
+
+      const res = await (await gammaPool.sync()).wait();
+      expect(res.events[0].event).to.eq("Sync");
+      expect(res.events[0].args.oldLpTokenBalance).to.eq(4000);
+      expect(res.events[0].args.newLpTokenBalance).to.eq(8000);
+
+      await checkBalances(2000, 4000, 6000, 8000, 1000, 2000, 8000);
+
+      expect(await tokenA.balanceOf(owner.address)).to.eq(balanceA0);
+      expect(await tokenB.balanceOf(owner.address)).to.eq(balanceB0);
+      expect(await tokenC.balanceOf(owner.address)).to.eq(balanceC0);
+      expect(await cfmm.balanceOf(owner.address)).to.eq(balanceCfmm0);
     });
   });
 });
