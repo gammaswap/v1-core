@@ -27,11 +27,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Transfers {
         liquidationStrategy = _liquidationStrategy;
     }
 
-    function initialize(address cfmm, address[] calldata tokens, uint8[] calldata decimals) external virtual override {
+    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) external virtual override {
         if(msg.sender != factory)
             revert Forbidden();
 
-        s.initialize(factory, cfmm, tokens, decimals);
+        s.initialize(factory, _cfmm, _tokens, _decimals);
     }
 
     function cfmm() external virtual override view returns(address) {

@@ -46,7 +46,7 @@ interface IGammaPool {
         uint128[] CFMM_RESERVES; //keeps track of price of CFMM at time of update
     }
 
-    function initialize(address cfmm, address[] calldata tokens, uint8[] calldata decimals) external;
+    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) external;
 
     function cfmm() external view returns(address);
     function protocolId() external view returns(uint16);
@@ -62,7 +62,7 @@ interface IGammaPool {
     function getRates() external virtual view returns(uint256 accFeeIndex, uint256 lastBlockNumber);
     function getPoolData() external virtual view returns(PoolData memory data);
 
-    function validateCFMM(address[] calldata _tokens, address _cfmm) external view returns(address[] memory tokens, uint8[] memory decimals);
+    function validateCFMM(address[] calldata _tokens, address _cfmm) external view returns(address[] memory _tokensOrdered, uint8[] memory _decimals);
 
     //Short Gamma
     function depositNoPull(address to) external returns(uint256 shares);
