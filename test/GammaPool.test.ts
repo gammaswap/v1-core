@@ -262,9 +262,11 @@ describe("GammaPool", function () {
       expect(loan.rateIndex).to.eq(ethers.BigNumber.from(10).pow(18));
     });
 
-    it("Get CFMM Price", async function () {
-      const px = await gammaPool.getCFMMPrice();
-      expect(px).to.eq(1);
+    it("Get Latest CFMM Reserves", async function () {
+      const cfmmReserves = await gammaPool.getLatestCFMMReserves();
+      expect(cfmmReserves.length).to.eq(2);
+      expect(cfmmReserves[0]).to.eq(3);
+      expect(cfmmReserves[1]).to.eq(4);
     });
 
     it("Update Loan", async function () {

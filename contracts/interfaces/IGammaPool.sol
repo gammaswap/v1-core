@@ -71,8 +71,8 @@ interface IGammaPool {
     function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external returns(uint256[] memory reserves, uint256 shares);
 
     //Long Gamma
-    function getCFMMPrice() external view returns(uint256 price);
-    function createLoan() external returns(uint tokenId);
+    function getLatestCFMMReserves() external view returns(uint256[] memory cfmmReserves);
+    function createLoan() external returns(uint256 tokenId);
     function loan(uint256 tokenId) external view returns (uint256 id, address poolId, uint128[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
     function increaseCollateral(uint256 tokenId) external returns(uint128[] memory tokensHeld);
     function decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address to) external returns(uint128[] memory tokensHeld);
