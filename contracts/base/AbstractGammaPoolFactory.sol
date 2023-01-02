@@ -12,6 +12,9 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
     error ProtocolRestricted();
     error PoolExists();
     error DeployFailed();
+    error ZeroAddress();
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     mapping(bytes32 => address) public override getPool;//all GS Pools addresses can be predetermined
 
@@ -31,6 +34,21 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
             revert PoolExists();
         }
     }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) external virtual {
+        isForbidden(owner);
+        if(newOwner == address(0)) {
+            revert ZeroAddress();
+        }
+        address oldOwner = owner;
+        owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
+    }
+
 
     /**
      * @dev Deploys and returns the address of a clone that mimics the behaviour of `implementation`.

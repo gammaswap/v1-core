@@ -24,24 +24,24 @@ contract CPMMGammaPool is GammaPool{
         cfmmInitCodeHash = _cfmmInitCodeHash;
     }
 
-    function createLoan() external virtual override lock returns(uint256 tokenId) {
+    function createLoan() external virtual override returns(uint256 tokenId) {
         tokenId = s.createLoan(tokenCount);
         emit LoanCreated(msg.sender, tokenId);
     }
 
-    function validateCFMM(address[] calldata _tokens, address _cfmm) external virtual override view returns(address[] memory tokens, uint8[] memory decimals) {
+    function validateCFMM(address[] calldata _tokens, address _cfmm) external virtual override view returns(address[] memory _tokensOrdered, uint8[] memory _decimals) {
         if(!isContract(_cfmm)) {
             revert NotContract();
         }
 
-        tokens = new address[](2);//In the case of Balancer we would request the tokens here. With Balancer we can probably check the bytecode of the contract to verify it is from balancer
-        (tokens[0], tokens[1]) = _tokens[0] < _tokens[1] ? (_tokens[0], _tokens[1]) : (_tokens[1], _tokens[0]);//For Uniswap and its clones the user passes the parameters
-        if(_cfmm != AddressCalculator.calcAddress(cfmmFactory,keccak256(abi.encodePacked(tokens[0], tokens[1])),cfmmInitCodeHash)) {
+        _tokensOrdered = new address[](2);//In the case of Balancer we would request the tokens here. With Balancer we can probably check the bytecode of the contract to verify it is from balancer
+        (_tokensOrdered[0], _tokensOrdered[1]) = _tokens[0] < _tokens[1] ? (_tokens[0], _tokens[1]) : (_tokens[1], _tokens[0]);//For Uniswap and its clones the user passes the parameters
+        if(_cfmm != AddressCalculator.calcAddress(cfmmFactory,keccak256(abi.encodePacked(_tokensOrdered[0], _tokensOrdered[1])),cfmmInitCodeHash)) {
             revert BadProtocol();
         }
-        decimals = new uint8[](2);
-        decimals[0] = tokenDecimals(tokens[0]);
-        decimals[1] = tokenDecimals(tokens[1]);
+        _decimals = new uint8[](2);
+        _decimals[0] = tokenDecimals(_tokensOrdered[0]);
+        _decimals[1] = tokenDecimals(_tokensOrdered[1]);
     }
 
     function tokenDecimals(address token) internal view returns (uint8) {

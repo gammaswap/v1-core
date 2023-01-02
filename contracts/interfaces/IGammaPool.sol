@@ -7,6 +7,10 @@ interface IGammaPool {
         uint256 lastFeeIndex, uint256 lpTokenBorrowedPlusInterest, uint256 lpInvariant, uint256 lpBorrowedInvariant);
     event LoanCreated(address indexed caller, uint256 tokenId);
     event LoanUpdated(uint256 indexed tokenId, uint128[] tokensHeld, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
+    event Liquidation(uint256 indexed tokenId, uint256 collateral, uint256 liquidity, uint8 typ);
+    event BatchLiquidations(uint256 liquidityTotal, uint256 collateralTotal, uint256 lpTokensPrincipalTotal, uint128[] tokensHeldTotal, uint256[] tokenIds);
+    event WriteDown(uint256 indexed tokenId, uint256 writeDownAmt);
+    event Sync(uint256 oldLpTokenBalance, uint256 newLpTokenBalance);
 
     struct PoolData {
         uint16 protocolId;
@@ -42,7 +46,7 @@ interface IGammaPool {
         uint128[] CFMM_RESERVES; //keeps track of price of CFMM at time of update
     }
 
-    function initialize(address cfmm, address[] calldata tokens, uint8[] calldata decimals) external;
+    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) external;
 
     function cfmm() external view returns(address);
     function protocolId() external view returns(uint16);
@@ -52,13 +56,13 @@ interface IGammaPool {
     function shortStrategy() external view returns(address);
     function liquidationStrategy() external view returns(address);
 
-    function getPoolBalances() external virtual view returns(uint128[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
+    function getPoolBalances() external view returns(uint128[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
         uint256 lpTokenBorrowedPlusInterest, uint256 borrowedInvariant, uint256 lpInvariant);
-    function getCFMMBalances() external virtual view returns(uint128[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply);
-    function getRates() external virtual view returns(uint256 accFeeIndex, uint256 lastBlockNumber);
-    function getPoolData() external virtual view returns(PoolData memory data);
+    function getCFMMBalances() external view returns(uint128[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply);
+    function getRates() external view returns(uint256 accFeeIndex, uint256 lastBlockNumber);
+    function getPoolData() external view returns(PoolData memory data);
 
-    function validateCFMM(address[] calldata _tokens, address _cfmm) external view returns(address[] memory tokens, uint8[] memory decimals);
+    function validateCFMM(address[] calldata _tokens, address _cfmm) external view returns(address[] memory _tokensOrdered, uint8[] memory _decimals);
 
     //Short Gamma
     function depositNoPull(address to) external returns(uint256 shares);
@@ -67,15 +71,19 @@ interface IGammaPool {
     function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external returns(uint256[] memory reserves, uint256 shares);
 
     //Long Gamma
-    function getCFMMPrice() external view returns(uint256 price);
-    function createLoan() external returns(uint tokenId);
+    function getLatestCFMMReserves() external view returns(uint256[] memory cfmmReserves);
+    function createLoan() external returns(uint256 tokenId);
     function loan(uint256 tokenId) external view returns (uint256 id, address poolId, uint128[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
     function increaseCollateral(uint256 tokenId) external returns(uint128[] memory tokensHeld);
     function decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address to) external returns(uint128[] memory tokensHeld);
     function borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint256[] memory amounts);
     function repayLiquidity(uint256 tokenId, uint256 liquidity) external returns(uint256 liquidityPaid, uint256[] memory amounts);
     function rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external returns(uint128[] memory tokensHeld);
-    function liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external virtual returns(uint256[] memory refund);
-    function liquidateWithLP(uint256 tokenId) external virtual returns(uint256[] memory refund);
-    function batchLiquidations(uint256[] calldata tokenIds) external virtual returns(uint256[] memory refund);
+    function liquidate(uint256 tokenId, int256[] calldata deltas) external returns(uint256[] memory refund);
+    function liquidateWithLP(uint256 tokenId) external returns(uint256[] memory refund);
+    function batchLiquidations(uint256[] calldata tokenIds) external returns(uint256[] memory refund);
+
+    //sync functions
+    function skim(address to) external;
+    function sync() external;
 }

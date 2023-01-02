@@ -5,8 +5,9 @@ import "../interfaces/IGammaPool.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "./GammaPoolERC4626.sol";
+import "./Transfers.sol";
 
-abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
+abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Transfers {
 
     using LibStorage for LibStorage.Storage;
 
@@ -26,11 +27,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         liquidationStrategy = _liquidationStrategy;
     }
 
-    function initialize(address cfmm, address[] calldata tokens, uint8[] calldata decimals) external virtual override {
+    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) external virtual override {
         if(msg.sender != factory)
             revert Forbidden();
 
-        s.initialize(factory, cfmm, tokens, decimals);
+        s.initialize(factory, _cfmm, _tokens, _decimals);
     }
 
     function cfmm() external virtual override view returns(address) {
@@ -101,11 +102,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
     /*****LONG*****/
 
-    function getCFMMPrice() external virtual override view returns(uint256 price) {
-        return ILongStrategy(longStrategy)._getCFMMPrice(s.cfmm);
+    function getLatestCFMMReserves() external virtual override view returns(uint256[] memory cfmmReserves) {
+        return ILongStrategy(longStrategy)._getLatestCFMMReserves();
     }
 
-    function createLoan() external virtual override lock returns(uint256 tokenId) {
+    function createLoan() external virtual override returns(uint256 tokenId) {
         tokenId = s.createLoan(s.tokens.length);
         emit LoanCreated(msg.sender, tokenId);
     }
@@ -136,8 +137,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._rebalanceCollateral.selector, tokenId, deltas)), (uint128[]));
     }
 
-    function liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external override virtual returns(uint256[] memory refund) {
-        return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._liquidate.selector, tokenId, isRebalance, deltas)), (uint256[]));
+    function liquidate(uint256 tokenId, int256[] calldata deltas) external override virtual returns(uint256[] memory refund) {
+        return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._liquidate.selector, tokenId, deltas)), (uint256[]));
     }
 
     function liquidateWithLP(uint256 tokenId) external override virtual returns(uint256[] memory refund) {
@@ -146,5 +147,37 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
     function batchLiquidations(uint256[] calldata tokenIds) external override virtual returns(uint256[] memory refund) {
         return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._batchLiquidations.selector, tokenIds)), (uint256[]));
+    }
+
+    // force lpTokenBalance and reserves to match balances
+    function skim(address to) external override lock {
+        address[] memory _tokens = s.tokens; // gas savings
+        uint128[] memory _tokenBalances = s.TOKEN_BALANCE;
+        for(uint256 i = 0; i < _tokens.length; i++) {
+            skim(_tokens[i], _tokenBalances[i], to);
+        }
+        skim(s.cfmm, s.LP_TOKEN_BALANCE, to);
+    }
+
+    // force lpTokenBalance to match balances
+    function sync() external override lock {
+        uint256 oldLpTokenBalance = s.LP_TOKEN_BALANCE;
+        uint256 newLpTokenBalance = IERC20(s.cfmm).balanceOf(address(this));
+        s.LP_TOKEN_BALANCE = newLpTokenBalance;
+        emit Sync(oldLpTokenBalance, newLpTokenBalance);
+    }
+
+    function isCFMMToken(address token) internal virtual override view returns(bool) {
+        return token == s.cfmm;
+    }
+
+    function isCollateralToken(address token) internal virtual override view returns(bool) {
+        address[] memory _tokens = s.tokens; // gas savings
+        for(uint256 i = 0; i < _tokens.length; i++) {
+            if(token == _tokens[i]) {
+                return true;
+            }
+        }
+        return false;
     }
 }

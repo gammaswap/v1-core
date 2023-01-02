@@ -120,10 +120,10 @@ describe("CPMMGammaPool", function () {
     const bigNum1 = BigNumber.from(token1.address);
     const token0Addr = bigNum0.lt(bigNum1) ? token0.address : token1.address;
     const token1Addr = bigNum0.lt(bigNum1) ? token1.address : token0.address;
-    expect(resp.tokens[0]).to.equal(token0Addr);
-    expect(resp.tokens[1]).to.equal(token1Addr);
-    expect(resp.decimals[0]).to.equal(18);
-    expect(resp.decimals[1]).to.equal(18);
+    expect(resp._tokensOrdered[0]).to.equal(token0Addr);
+    expect(resp._tokensOrdered[1]).to.equal(token1Addr);
+    expect(resp._decimals[0]).to.equal(18);
+    expect(resp._decimals[1]).to.equal(18);
   }
 
   describe("Deployment", function () {

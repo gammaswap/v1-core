@@ -266,4 +266,28 @@ describe("GammaPoolFactory", function () {
       expect(await factory.feeToSetter()).to.equal(addr2.address);
     });
   });
+
+  describe("Transfer Ownership", function () {
+    it("Forbidden transfer", async function () {
+      expect(await factory.owner()).to.equal(owner.address);
+      await expect(
+        factory.connect(addr1).transferOwnership(addr2.address)
+      ).to.be.revertedWith("Forbidden");
+    });
+
+    it("Transfer to ZeroAddress", async function () {
+      expect(await factory.owner()).to.equal(owner.address);
+      await expect(
+        factory.transferOwnership(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ZeroAddress");
+    });
+
+    it("Successful Transfer", async function () {
+      expect(await factory.owner()).to.equal(owner.address);
+      const res = await (await factory.transferOwnership(addr1.address)).wait();
+      expect(res.events[0].event).to.equal("OwnershipTransferred");
+      expect(res.events[0].args.previousOwner).to.equal(owner.address);
+      expect(res.events[0].args.newOwner).to.equal(addr1.address);
+    });
+  });
 });

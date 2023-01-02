@@ -37,7 +37,7 @@ contract TestShortStrategy is IShortStrategy{
         emit Deposit(from, to, assets, shares);
     }
 
-    function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlackNum) external override pure returns(uint256) {
+    function totalAssets(address, uint256, uint256, uint256, uint256, uint256) external override pure returns(uint256) {
         return 1000*(10**18);
     }
 

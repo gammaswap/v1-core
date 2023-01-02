@@ -59,14 +59,14 @@ library LibStorage {
 
     error Initialized();
 
-    function initialize(Storage storage self, address factory, address cfmm, address[] calldata tokens, uint8[] calldata decimals) internal {
+    function initialize(Storage storage self, address factory, address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) internal {
         if(self.factory != address(0))
             revert Initialized();
 
         self.factory = factory;
-        self.cfmm = cfmm;
-        self.tokens = tokens;
-        self.decimals = decimals;
+        self.cfmm = _cfmm;
+        self.tokens = _tokens;
+        self.decimals = _decimals;
 
         self.accFeeIndex = 10**18;
         self.LAST_BLOCK_NUMBER = uint96(block.number);
@@ -74,8 +74,8 @@ library LibStorage {
         self.nextId = 1;
         self.unlocked = 1;
 
-        self.TOKEN_BALANCE = new uint128[](tokens.length);
-        self.CFMM_RESERVES = new uint128[](tokens.length);
+        self.TOKEN_BALANCE = new uint128[](_tokens.length);
+        self.CFMM_RESERVES = new uint128[](_tokens.length);
     }
 
     function createLoan(Storage storage self, uint256 tokenCount) internal returns(uint256 tokenId) {
