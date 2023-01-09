@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
-interface IShortStrategy {
+import "./IBaseStrategy.sol";
+
+interface IShortStrategy is IBaseStrategy {
     function _depositNoPull(address to) external returns(uint256 shares);
     function _withdrawNoPull(address to) external returns(uint256 assets);
     function _withdrawReserves(address to) external returns(uint256[] memory reserves, uint256 assets);
