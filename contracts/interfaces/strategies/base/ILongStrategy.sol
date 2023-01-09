@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
-interface ILongStrategy {
+import "./IBaseLongStrategy.sol";
 
-    event LoanUpdated(uint256 indexed tokenId, uint128[] tokensHeld, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
+interface ILongStrategy is IBaseLongStrategy {
 
     function _getLatestCFMMReserves() external view returns(uint256[] memory cfmmReserves);
     function _increaseCollateral(uint256 tokenId) external returns(uint128[] memory tokensHeld);
