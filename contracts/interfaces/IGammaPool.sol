@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 interface IGammaPool {
 
     event PoolUpdated(uint256 lpTokenBalance, uint256 lpTokenBorrowed, uint256 lastBlockNumber, uint256 accFeeIndex,
-        uint256 lastFeeIndex, uint256 lpTokenBorrowedPlusInterest, uint256 lpInvariant, uint256 lpBorrowedInvariant);
+        uint256 lpTokenBorrowedPlusInterest, uint256 lpInvariant, uint256 borrowedInvariant);
     event LoanCreated(address indexed caller, uint256 tokenId);
     event LoanUpdated(uint256 indexed tokenId, uint128[] tokensHeld, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
     event Liquidation(uint256 indexed tokenId, uint256 collateral, uint256 liquidity, uint8 typ);
