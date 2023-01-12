@@ -5,7 +5,7 @@ import "../../interfaces/strategies/base/ILongStrategy.sol";
 
 contract TestLongStrategy is ILongStrategy {
 
-    function _getLatestCFMMReserves() external override pure returns(uint256[] memory cfmmReserves) {
+    function _getLatestCFMMReserves(address) external override pure returns(uint256[] memory cfmmReserves) {
         cfmmReserves = new uint256[](2);
         cfmmReserves[0] = 3;
         cfmmReserves[1] = 4;
