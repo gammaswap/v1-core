@@ -92,6 +92,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
 
     function setFeeToSetter(address _feeToSetter) external {
         isForbidden(feeToSetter);
+        isZeroAddress(_feeToSetter);
         feeToSetter = _feeToSetter;
     }
 
