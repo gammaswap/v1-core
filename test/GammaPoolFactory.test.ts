@@ -259,11 +259,21 @@ describe("GammaPoolFactory", function () {
       await expect(
         factory.connect(addr1).setFeeToSetter(addr2.address)
       ).to.be.revertedWith("Forbidden");
+      await expect(
+        factory.connect(owner).setFeeToSetter(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ZeroAddress");
       await factory.connect(owner).setFeeToSetter(addr1.address);
       expect(await factory.feeToSetter()).to.equal(addr1.address);
 
       await factory.connect(addr1).setFeeToSetter(addr2.address);
       expect(await factory.feeToSetter()).to.equal(addr2.address);
+
+      await expect(
+        factory.connect(addr1).setFeeTo(ethers.constants.AddressZero)
+      ).to.be.revertedWith("Forbidden");
+
+      await factory.connect(addr2).setFeeTo(ethers.constants.AddressZero);
+      expect(await factory.feeTo()).to.equal(ethers.constants.AddressZero);
     });
   });
 
