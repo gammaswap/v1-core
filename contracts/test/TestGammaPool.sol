@@ -11,8 +11,11 @@ contract TestGammaPool is GammaPool {
 
     function syncTokens() external virtual {
         address[] memory _tokens = s.tokens;
-        for(uint256 i = 0; i < _tokens.length; i++) {
+        for(uint256 i; i < _tokens.length;) {
             s.TOKEN_BALANCE[i] = uint128(IERC20(_tokens[i]).balanceOf(address(this)));
+            unchecked {
+                ++i;
+            }
         }
         s.LP_TOKEN_BALANCE = uint128(IERC20(s.cfmm).balanceOf(address(this)));
     }
