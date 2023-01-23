@@ -3,6 +3,9 @@ pragma solidity 0.8.4;
 
 import "../interfaces/IGammaPoolFactory.sol";
 
+/// @title Abstract factory contract to create more GammaPool contracts.
+/// @author Daniel D. Alcarraz
+/// @dev If another GammaPoolFactory contract is created it is recommended to inherit from this contract
 abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
 
     error Forbidden();
@@ -14,40 +17,55 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
     error DeployFailed();
     error ZeroAddress();
 
+    /// @dev event emitted when ownership of GammaPoolFactory contract is transferred to a new address
+    /// @param previousOwner - previous address that owned factory contract
+    /// @param newOwner - new address that owns factory contract
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    mapping(bytes32 => address) public override getPool;//all GS Pools addresses can be predetermined
+    /// @dev See {IGammaPoolFactory-getPool}
+    mapping(bytes32 => address) public override getPool; // all GS Pools addresses can be predetermined
 
-    uint16 public override fee = 10000; //10% of borrowed interest gains by default
+    /// @dev See {IGammaPoolFactory-fee}
+    uint16 public override fee = 10000; // Default value is 10,000 basis points or 10%
+
+    /// @dev See {IGammaPoolFactory-feeTo}
     address public override feeTo;
+
+    /// @dev See {IGammaPoolFactory-feeToSetter}
     address public override feeToSetter;
+
+    /// @dev See {IGammaPoolFactory-owner}
     address public override owner;
 
-    function isForbidden(address _owner) internal virtual view {
-        if(msg.sender != _owner) {
+    /// @dev Revert if sender is not the required address in parameter (e.g. sender not owner or feeToSetter)
+    /// @param _address - address transaction sender must be in order to not revert
+    function isForbidden(address _address) internal virtual view {
+        if(msg.sender != _address) {
             revert Forbidden();
         }
     }
 
+    /// @dev Revert if address parameter is zero address. This is used transaction that are changing an address state variable
+    /// @param _address - address that must not be zero
     function isZeroAddress(address _address) internal virtual view {
         if(_address == address(0)) {
             revert ZeroAddress();
         }
     }
 
+    /// @dev Revert if key already maps to a GammaPool. This is used to avoid duplicating GammaPool instances
+    /// @param key - unique key used to identify GammaPool instance (e.g. salt)
     function hasPool(bytes32 key) internal virtual view {
         if(getPool[key] != address(0)) {
             revert PoolExists();
         }
     }
 
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
+    /// @dev Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.
+    /// @param newOwner - new address that will have the owner privileges over the factory contract
     function transferOwnership(address newOwner) external virtual {
-        isForbidden(owner);
-        isZeroAddress(newOwner);
+        isForbidden(owner); // only owner of the factory contract can call this function
+        isZeroAddress(newOwner); // not allow to transfer ownership to zero address (renounce ownership forever)
         address oldOwner = owner;
         owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
@@ -59,6 +77,10 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
      * This function uses the create2 opcode and a `salt` to deterministically deploy
      * the clone. Using the same `implementation` and `salt` multiple time will revert, since
      * the clones cannot be deployed twice at the same address.
+     *
+     * @param implementation - implementation address of GammaPool. Because all GammaPools are created as proxy contracts
+     * @param salt - the bytes32 key that is unique to the GammaPool and therefore also used as a unique identifier of the GammaPool
+     * @return instance - address of GammaPool that was created
      */
     function cloneDeterministic(address implementation, bytes32 salt) internal returns (address instance) {
         /// @solidity memory-safe-assembly
@@ -71,7 +93,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
             instance := create2(0, 0x09, 0x37, salt)
         }
         if(instance == address(0)) {
-            revert DeployFailed();
+            revert DeployFailed(); // revert if failed to instantiate GammaPool
         }
     }
 }

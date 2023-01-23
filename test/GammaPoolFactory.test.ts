@@ -265,7 +265,11 @@ describe("GammaPoolFactory", function () {
       await factory.connect(owner).setFeeToSetter(addr1.address);
       expect(await factory.feeToSetter()).to.equal(addr1.address);
 
-      await factory.connect(addr1).setFeeToSetter(addr2.address);
+      await expect(
+        factory.connect(addr1).setFeeToSetter(addr2.address)
+      ).to.be.revertedWith("Forbidden");
+
+      await factory.connect(owner).setFeeToSetter(addr2.address);
       expect(await factory.feeToSetter()).to.equal(addr2.address);
 
       await expect(
