@@ -46,40 +46,41 @@ interface IShortStrategy is IBaseStrategy {
 
     /// @dev Deposit cfmm LP token and get GS LP token, does a transferFrom according to ERC4626 implementation
     /// @param assets - cfmm LP tokens deposited in exchange for GS LP tokens
-    /// @param to - address of receiver of GS LP tokens
-    /// @return shares - quantity of GS LP tokens received for cfmm LP tokens
+    /// @param to - address receiving GS LP tokens
+    /// @return shares - quantity of GS LP tokens sent to receiver address (`to`) for cfmm LP tokens
     function _deposit(uint256 assets, address to) external returns (uint256 shares);
 
-    /// @dev Mint GS LP token from cfmm LP token deposits, does a transferFrom according to ERC4626 implementation
+    /// @dev Mint GS LP token in exchange for cfmm LP token deposits, does a transferFrom according to ERC4626 implementation
     /// @param shares - GS LP tokens minted from cfmm LP token deposits
-    /// @param to - address of receiver of GS LP tokens
-    /// @return assets - quantity of cfmm LP tokens received for GS LP tokens
+    /// @param to - address receiving GS LP tokens
+    /// @return assets - quantity of cfmm LP tokens sent to receiver address (`to`)
     function _mint(uint256 shares, address to) external returns (uint256 assets);
 
     /// @dev Withdraw cfmm LP token by burning GS LP tokens
     /// @param assets - amount of cfmm LP tokens requested to withdraw in exchange for GS LP tokens
-    /// @param to - address of receiver of cfmm LP tokens
-    /// @param from - address of owner of GS LP tokens which will be burned for cfmm LP tokens
-    /// @return shares - quantity of GS LP tokens burned for cfmm LP tokens
+    /// @param to - address receiving cfmm LP tokens
+    /// @param from - address burning its GS LP tokens
+    /// @return shares - quantity of GS LP tokens burned
     function _withdraw(uint256 assets, address to, address from) external returns (uint256 shares);
 
     /// @dev Redeem GS LP tokens and get cfmm LP token
     /// @param shares - GS LP tokens requested to redeem in exchange for GS LP tokens
-    /// @param to - address of receiver of cfmm LP tokens
-    /// @param from - address of redeemer of GS LP tokens
-    /// @return assets - quantity of cfmm LP tokens received for GS LP tokens redemption
+    /// @param to - address receiving cfmm LP tokens
+    /// @param from - address redeeming GS LP tokens
+    /// @return assets - quantity of cfmm LP tokens sent to receiver address (`to`) for GS LP tokens redeemed
     function _redeem(uint256 shares, address to, address from) external returns (uint256 assets);
 
     /// @dev Event emitted when a deposit of cfmm LP tokens in exchange of GS LP tokens happens (e.g. _deposit, _mint, _depositReserves, _depositNoPull)
     /// @param caller - address calling the function to deposit cfmm LP tokens
-    /// @param to - address of receiver of GS LP tokens
+    /// @param to - address receiving GS LP tokens
     /// @param assets - cfmm LP tokens deposited
     /// @param shares - GS LP tokens minted
     event Deposit(address indexed caller, address indexed to, uint256 assets, uint256 shares);
 
     /// @dev Event emitted when a withdrawal of cfmm LP tokens happens (e.g. _withdraw, _redeem, _withdrawReserves, _withdrawNoPull)
     /// @param caller - address calling the function to withdraw cfmm LP tokens
-    /// @param to - address of receiver of cfmm LP tokens
+    /// @param to - address receiving cfmm LP tokens
+    /// @param from - address redeeming/burning GS LP tokens
     /// @param assets - cfmm LP tokens withdrawn
     /// @param shares - GS LP tokens redeemed
     event Withdraw(address indexed caller, address indexed to, address indexed from, uint256 assets, uint256 shares);
