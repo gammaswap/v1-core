@@ -33,7 +33,7 @@ library LibStorage {
     /// @notice `LP_TOKEN_TOTAL = LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST` and `TOTAL_INVARIANT = BORROWED_INVARIANT + LP_INVARIANT`
     struct Storage {
         // 2x256 bits
-        /// @dev cfmm - address of cfmm GammaPool is for
+        /// @dev cfmm - address of cfmm this GammaPool is for
         address cfmm; // 160 bits
         /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
         uint96 LAST_BLOCK_NUMBER; // 96 bits
@@ -56,7 +56,7 @@ library LibStorage {
         /// @dev Quantity of cfmm's liquidity invariant held in GammaPool as LP tokens, maps to LP_TOKEN_BALANCE
         uint128 LP_INVARIANT; // 128 bits
 
-        // 2x256 bits, rates
+        // 2x256 bits, Rates
         /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through cfmm and liquidity loans, max 7.9% trillion
         uint96 accFeeIndex; // 96 bits
         /// @dev Total liquidity invariant amount in cfmm (from GammaPool and others), read in last update to GammaPool's storage variables
