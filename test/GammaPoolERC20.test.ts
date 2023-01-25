@@ -87,7 +87,7 @@ describe("GammaPoolERC20", function () {
     it("Check Init Params", async function () {
       expect(gammaPool.address).to.not.equal(ethers.constants.AddressZero);
       expect(await gammaPool.name()).to.equal("GammaSwap V1");
-      expect(await gammaPool.symbol()).to.equal("GAMA-V1");
+      expect(await gammaPool.symbol()).to.equal("GS-V1");
       expect(await gammaPool.decimals()).to.equal(18);
       expect(await gammaPool.totalSupply()).to.equal(0);
       expect(await gammaPool.balanceOf(owner.address)).to.equal(0);
@@ -109,7 +109,7 @@ describe("GammaPoolERC20", function () {
       const res0 = await (await gammaPool.mint(amt, addr1.address)).wait();
       expect(res0.events[1].args.from).to.eq(ethers.constants.AddressZero);
       expect(res0.events[1].args.to).to.eq(addr1.address);
-      expect(res0.events[1].args.value).to.eq(amt);
+      expect(res0.events[1].args.amount).to.eq(amt);
       expect(await gammaPool.balanceOf(addr1.address)).to.equal(
         _balance.add(amt)
       );
@@ -125,7 +125,7 @@ describe("GammaPoolERC20", function () {
       const res0 = await (await gammaPool.transfer(addr2.address, amt)).wait();
       expect(res0.events[0].args.from).to.eq(owner.address);
       expect(res0.events[0].args.to).to.eq(addr2.address);
-      expect(res0.events[0].args.value).to.eq(amt);
+      expect(res0.events[0].args.amount).to.eq(amt);
       expect(await gammaPool.balanceOf(owner.address)).to.equal(
         _balanceOwner.sub(amt)
       );
@@ -158,7 +158,7 @@ describe("GammaPoolERC20", function () {
       const res0 = await (await gammaPool.approve(addr3.address, amt)).wait();
       expect(res0.events[0].args.owner).to.eq(owner.address);
       expect(res0.events[0].args.spender).to.eq(addr3.address);
-      expect(res0.events[0].args.value).to.eq(amt);
+      expect(res0.events[0].args.amount).to.eq(amt);
       expect(await gammaPool.allowance(owner.address, addr3.address)).to.equal(
         amt
       );
@@ -216,7 +216,7 @@ describe("GammaPoolERC20", function () {
       // event Transfer(address indexed from, address indexed to, uint256 value);
       expect(res0.events[0].args.from).to.eq(addr4.address);
       expect(res0.events[0].args.to).to.eq(addr5.address);
-      expect(res0.events[0].args.value).to.eq(amt.sub(50));
+      expect(res0.events[0].args.amount).to.eq(amt.sub(50));
 
       expect(await gammaPool.totalSupply()).to.eq(_totalSupply);
       expect(await gammaPool.balanceOf(owner.address)).to.eq(_balanceOwner);
@@ -297,7 +297,7 @@ describe("GammaPoolERC20", function () {
       // event Transfer(address indexed from, address indexed to, uint256 value);
       expect(res0.events[0].args.from).to.eq(addr4.address);
       expect(res0.events[0].args.to).to.eq(addr5.address);
-      expect(res0.events[0].args.value).to.eq(amt.sub(50));
+      expect(res0.events[0].args.amount).to.eq(amt.sub(50));
 
       expect(await gammaPool.totalSupply()).to.eq(_totalSupply);
       expect(await gammaPool.balanceOf(owner.address)).to.eq(_balanceOwner);
