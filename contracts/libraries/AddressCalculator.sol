@@ -9,11 +9,11 @@ import "../interfaces/IGammaPoolFactory.sol";
 library AddressCalculator {
 
     /// @dev calculate salt used to create deterministic address, the salt is also used as unique key identifier for the GammaPool
-    /// @param cfmm - address of cfmm the GammaPool is for
-    /// @param protocolId - protocol id of instance address the GammaPool will use (version of GammaPool for this cfmm)
+    /// @param cfmm - address of CFMM the GammaPool is for
+    /// @param protocolId - protocol id of instance address the GammaPool will use (version of GammaPool for this CFMM)
     /// @return key - key/salt used as unique identifier of GammaPool
     function getGammaPoolKey(address cfmm, uint16 protocolId) internal pure returns(bytes32) {
-        return keccak256(abi.encode(cfmm, protocolId)); // key is hash of cfmm address and protocolId
+        return keccak256(abi.encode(cfmm, protocolId)); // key is hash of CFMM address and protocolId
     }
 
     /// @dev calculate deterministic address to instantiate GammaPool proxy contract

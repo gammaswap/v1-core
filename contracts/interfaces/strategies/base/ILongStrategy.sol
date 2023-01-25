@@ -7,9 +7,9 @@ import "./IBaseLongStrategy.sol";
 /// @author Daniel D. Alcarraz
 /// @dev Used in strategies that borrow and repay liquidity loans
 interface ILongStrategy is IBaseLongStrategy {
-    /// @dev Get latest reserves in the cfmm, which can be used for pricing
-    /// @param cfmm - address of cfmm
-    /// @return cfmmReserves - reserves in the cfmm
+    /// @dev Get latest reserves in the CFMM, which can be used for pricing
+    /// @param cfmm - address of CFMM
+    /// @return cfmmReserves - reserves in the CFMM
     function _getLatestCFMMReserves(address cfmm) external view returns(uint256[] memory cfmmReserves);
 
     /// @dev Deposit more collateral in loan identified by tokenId
@@ -24,10 +24,10 @@ interface ILongStrategy is IBaseLongStrategy {
     /// @return tokensHeld - updated collateral token amounts backing loan
     function _decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address to) external returns(uint128[] memory tokensHeld);
 
-    /// @dev Borrow liquidity from the cfmm and add it to the debt and collateral of loan identified by tokenId
+    /// @dev Borrow liquidity from the CFMM and add it to the debt and collateral of loan identified by tokenId
     /// @param tokenId - unique id identifying loan
-    /// @param lpTokens - cfmm LP token amount requested to short
-    /// @return amounts - reserves quantities withdrawn from cfmm that correspond to the LP tokens shorted, now used as collateral
+    /// @param lpTokens - amount of CFMM LP tokens requested to short
+    /// @return amounts - reserves quantities withdrawn from CFMM that correspond to the LP tokens shorted, now used as collateral
     function _borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint256[] memory amounts);
 
     /// @dev Repay liquidity debt of loan identified by tokenId, debt is repaid using available collateral in loan

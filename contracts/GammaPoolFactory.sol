@@ -51,11 +51,11 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
     /// @dev See {IGammaPoolFactory-addProtocol}
     function addProtocol(address implementation) external virtual override {
         isForbidden(owner); // only owner can add an implementation contract (e.g. Governance contract)
-        if(IGammaPool(implementation).protocolId() == 0) { // implementation contract cannot have zero as protocolId
-            revert ZeroProtocol();
+        if(IGammaPool(implementation).protocolId() == 0) {
+            revert ZeroProtocol();// implementation contract cannot have zero as protocolId
         }
-        if(getProtocol[IGammaPool(implementation).protocolId()] != address(0)) { // there cannot already exist an implementation for this protocolId
-            revert ProtocolExists();
+        if(getProtocol[IGammaPool(implementation).protocolId()] != address(0)) {
+            revert ProtocolExists();// there cannot already exist an implementation for this protocolId
         }
         getProtocol[IGammaPool(implementation).protocolId()] = implementation; // store implementation
     }
@@ -77,14 +77,19 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         isProtocolNotSet(_protocolId); // check there is an implementation contract mapped to _protocolId parameter
         isRestricted(_protocolId, owner); // if implementation is restricted only owner is allowed to create GammaPools for this _protocolId
 
-        address implementation = getProtocol[_protocolId]; // get implementation contract for _protocolId parameter
-        (address[] memory _tokensOrdered, uint8[] memory _decimals) = IGammaPool(implementation).validateCFMM(_tokens, _cfmm); // check GammaPool can be created with this implementation
+        // get implementation contract for _protocolId parameter
+        address implementation = getProtocol[_protocolId];
 
-        bytes32 key = AddressCalculator.getGammaPoolKey(_cfmm, _protocolId); // calculate unique identifier of GammaPool that will also be used as salt for instantiating the proxy contract address
+        // check GammaPool can be created with this implementation
+        (address[] memory _tokensOrdered, uint8[] memory _decimals) = IGammaPool(implementation).validateCFMM(_tokens, _cfmm);
+
+        // calculate unique identifier of GammaPool that will also be used as salt for instantiating the proxy contract address
+        bytes32 key = AddressCalculator.getGammaPoolKey(_cfmm, _protocolId);
 
         hasPool(key); // check this instance hasn't already been created
 
-        pool = cloneDeterministic(implementation, key); // instantiate GammaPool proxy contract address for protocol's implementation contract using unique key as salt for the pool's address
+        // instantiate GammaPool proxy contract address for protocol's implementation contract using unique key as salt for the pool's address
+        pool = cloneDeterministic(implementation, key);
 
         IGammaPool(pool).initialize(_cfmm, _tokensOrdered, _decimals); // initialize GammaPool's state variables
 

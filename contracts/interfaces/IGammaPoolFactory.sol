@@ -7,7 +7,7 @@ pragma solidity 0.8.4;
 interface IGammaPoolFactory {
     /// @dev Event emitted when a new GammaPool is instantiated
     /// @param pool - address of new pool that is created
-    /// @param cfmm - address of cfmm GammaPool is created for
+    /// @param cfmm - address of CFMM the GammaPool is created for
     /// @param protocolId - id identifier of GammaPool protocol (can be thought of as version)
     /// @param implementation - implementation address of GammaPool proxy contract. Because all GammaPools are created as proxy contracts
     /// @param count - number of GammaPools instantiated including this contract
@@ -40,8 +40,8 @@ interface IGammaPoolFactory {
 
     /// @dev Instantiate a new GammaPool for a CFMM based on an existing implementation (protocolId)
     /// @param _protocolId - id identifier of GammaPool protocol (can be thought of as version)
-    /// @param _cfmm - address of cfmm GammaPool is created for
-    /// @param _tokens - addresses of ERC20 tokens in cfmm, used for validation during runtime of function
+    /// @param _cfmm - address of CFMM the GammaPool is created for
+    /// @param _tokens - addresses of ERC20 tokens in CFMM, used for validation during runtime of function
     /// @return _address - address of new GammaPool proxy contract that was instantiated
     function createPool(uint16 _protocolId, address _cfmm, address[] calldata _tokens) external returns(address);
 

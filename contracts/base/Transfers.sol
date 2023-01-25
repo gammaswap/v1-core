@@ -40,17 +40,17 @@ abstract contract Transfers is ITransfers {
 
     /// @dev See {ITransfers-clearToken}
     function clearToken(address token, address to) external override {
-        if(isCFMMToken(token) || isCollateralToken(token)) { // can't clear cfmm LP tokens or collateral tokens
+        if(isCFMMToken(token) || isCollateralToken(token)) { // can't clear CFMM LP tokens or collateral tokens
             revert RestrictedToken();
         }
 
         uint256 tokenBal = IERC20(token).balanceOf(address(this));
-        if (tokenBal > 0) safeTransfer(IERC20(token), to, tokenBal); // if not cfmm LP token or collateral token send entire amount
+        if (tokenBal > 0) safeTransfer(IERC20(token), to, tokenBal); // if not CFMM LP token or collateral token send entire amount
     }
 
-    /// @dev Check if ERC20 token is LP token of the cfmm the GammaPool is made for
+    /// @dev Check if ERC20 token is LP token of the CFMM the GammaPool is made for
     /// @param token - address of ERC20 token that will be checked
-    /// @return bool - true if it is LP token of the cfmm the GammaPool is made for, false otherwise
+    /// @return bool - true if it is LP token of the CFMM the GammaPool is made for, false otherwise
     function isCFMMToken(address token) internal virtual view returns(bool);
 
     /// @dev Check if ERC20 token is a collateral token of the GammaPool

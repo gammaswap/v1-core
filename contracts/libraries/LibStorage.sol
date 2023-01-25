@@ -33,7 +33,7 @@ library LibStorage {
     /// @notice `LP_TOKEN_TOTAL = LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST` and `TOTAL_INVARIANT = BORROWED_INVARIANT + LP_INVARIANT`
     struct Storage {
         // 2x256 bits
-        /// @dev cfmm - address of cfmm this GammaPool is for
+        /// @dev cfmm - address of CFMM this GammaPool is for
         address cfmm; // 160 bits
         /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
         uint96 LAST_BLOCK_NUMBER; // 96 bits
@@ -43,32 +43,32 @@ library LibStorage {
         uint96 unlocked; // 96 bits
 
         //3x256 bits, LP Tokens
-        /// @dev Quantity of cfmm's LP tokens deposited in GammaPool by liquidity providers
+        /// @dev Quantity of CFMM's LP tokens deposited in GammaPool by liquidity providers
         uint256 LP_TOKEN_BALANCE;
-        /// @dev Quantity of cfmm's LP tokens that have been borrowed by liquidity borrowers excluding accrued interest (principal)
+        /// @dev Quantity of CFMM's LP tokens that have been borrowed by liquidity borrowers excluding accrued interest (principal)
         uint256 LP_TOKEN_BORROWED;
-        /// @dev Quantity of cfmm's LP tokens that have been borrowed by liquidity borrowers including accrued interest
+        /// @dev Quantity of CFMM's LP tokens that have been borrowed by liquidity borrowers including accrued interest
         uint256 LP_TOKEN_BORROWED_PLUS_INTEREST;
 
         // 1x256 bits, Invariants
-        /// @dev Quantity of cfmm's liquidity invariant that has been borrowed including accrued interest, maps to LP_TOKEN_BORROWED_PLUS_INTEREST
+        /// @dev Quantity of CFMM's liquidity invariant that has been borrowed including accrued interest, maps to LP_TOKEN_BORROWED_PLUS_INTEREST
         uint128 BORROWED_INVARIANT; // 128 bits
-        /// @dev Quantity of cfmm's liquidity invariant held in GammaPool as LP tokens, maps to LP_TOKEN_BALANCE
+        /// @dev Quantity of CFMM's liquidity invariant held in GammaPool as LP tokens, maps to LP_TOKEN_BALANCE
         uint128 LP_INVARIANT; // 128 bits
 
         // 2x256 bits, Rates
-        /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through cfmm and liquidity loans, max 7.9% trillion
+        /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 7.9% trillion
         uint96 accFeeIndex; // 96 bits
-        /// @dev Total liquidity invariant amount in cfmm (from GammaPool and others), read in last update to GammaPool's storage variables
+        /// @dev Total liquidity invariant amount in CFMM (from GammaPool and others), read in last update to GammaPool's storage variables
         uint128 lastCFMMInvariant; // 128 bits
-        /// @dev Total LP token supply from cfmm (belonging to GammaPool and others), read in last update to GammaPool's storage variables
+        /// @dev Total LP token supply from CFMM (belonging to GammaPool and others), read in last update to GammaPool's storage variables
         uint256 lastCFMMTotalSupply;
 
         /// @dev The ID of the next loan that will be minted. Initialized at 1
         uint256 nextId;
 
         // ERC20 fields
-        /// @dev Total supply of GammaPool's own ERC20 token representing the liquidity of depositors to the cfmm through the GammaPool
+        /// @dev Total supply of GammaPool's own ERC20 token representing the liquidity of depositors to the CFMM through the GammaPool
         uint256 totalSupply;
         /// @dev Balance of GammaPool's ERC20 token, this is used to keep track of the balances of different addresses as defined in the ERC20 standard
         mapping(address => uint256) balanceOf;
@@ -79,13 +79,13 @@ library LibStorage {
         mapping(uint256 => Loan) loans;
 
         // tokens and balances
-        /// @dev ERC20 tokens of cfmm
+        /// @dev ERC20 tokens of CFMM
         address[] tokens;
-        /// @dev Decimals of cfmm tokens, indices match tokens[] array
+        /// @dev Decimals of tokens in CFMM, indices match tokens[] array
         uint8[] decimals;
-        /// @dev Amounts of ERC20 tokens from the cfmm held as collateral in the GammaPool. Equals to the sum of all tokensHeld[] quantities in all loans
+        /// @dev Amounts of ERC20 tokens from the CFMM held as collateral in the GammaPool. Equals to the sum of all tokensHeld[] quantities in all loans
         uint128[] TOKEN_BALANCE;
-        /// @dev Amounts of ERC20 tokens from the cfmm held in the cfmm as reserve quantities. Used to log prices in the cfmm during updates to the GammaPool
+        /// @dev Amounts of ERC20 tokens from the CFMM held in the CFMM as reserve quantities. Used to log prices quoted by the CFMM during updates to the GammaPool
         uint128[] CFMM_RESERVES;
     }
 
@@ -94,9 +94,9 @@ library LibStorage {
     /// @dev Initializes global storage variables of GammaPool, must be called right after instantiating GammaPool
     /// @param self - pointer to storage variables (doesn't need to be passed)
     /// @param _factory - address of factory that created this GammaPool
-    /// @param _cfmm - address of cfmm this GammaPool is for
-    /// @param _tokens - tokens of cfmm this GammaPool is for
-    /// @param _decimals -decimals of the tokens of the cfmm the GammaPool is for, indices must match tokens array
+    /// @param _cfmm - address of CFMM this GammaPool is for
+    /// @param _tokens - tokens of CFMM this GammaPool is for
+    /// @param _decimals -decimals of the tokens of the CFMM the GammaPool is for, indices must match tokens array
     function initialize(Storage storage self, address _factory, address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) internal {
         if(self.factory != address(0)) // cannot initialize twice
             revert Initialized();
@@ -118,7 +118,7 @@ library LibStorage {
 
     /// @dev Creates an empty loan struct in the GammaPool and initializes it to start tracking borrowed liquidity
     /// @param self - pointer to storage variables (doesn't need to be passed)
-    /// @param _tokenCount - number of tokens in the cfmm the loan is for
+    /// @param _tokenCount - number of tokens in the CFMM the loan is for
     /// @return _tokenId - unique tokenId used to get and update loan
     function createLoan(Storage storage self, uint256 _tokenCount) internal returns(uint256 _tokenId) {
         // get loan counter for GammaPool and increase it by 1 for the next loan
