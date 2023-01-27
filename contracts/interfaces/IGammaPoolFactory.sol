@@ -10,8 +10,9 @@ interface IGammaPoolFactory {
     /// @param cfmm - address of CFMM the GammaPool is created for
     /// @param protocolId - id identifier of GammaPool protocol (can be thought of as version)
     /// @param implementation - implementation address of GammaPool proxy contract. Because all GammaPools are created as proxy contracts
+    /// @param tokens - ERC20 tokens of CFMM
     /// @param count - number of GammaPools instantiated including this contract
-    event PoolCreated(address indexed pool, address indexed cfmm, uint16 indexed protocolId, address implementation, uint256 count);
+    event PoolCreated(address indexed pool, address indexed cfmm, uint16 indexed protocolId, address implementation, address[] tokens, uint256 count);
 
     /// @dev Check if protocol is restricted. Which means only owner of GammaPoolFactory is allowed to instantiate GammaPools using this protocol
     /// @param _protocolId - id identifier of GammaPool protocol (can be thought of as version) that is being checked

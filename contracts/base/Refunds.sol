@@ -2,26 +2,16 @@
 pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../interfaces/ITransfers.sol";
+import "../interfaces/IRefunds.sol";
+import "../libraries/GammaSwapLibrary.sol";
 
 /// @title Contract used to handle token transfers by the GammaPool
 /// @author Daniel D. Alcarraz
 /// @dev Abstract contract meant to be inherited by the GammaPool abstract contract to handle token transfers and clearing
-abstract contract Transfers is ITransfers {
+abstract contract Refunds is IRefunds {
 
-    error ST_Fail();
     error RestrictedToken();
-
-    /// @dev Safe transfer any ERC20 token, only used internally
-    /// @param token - address of ERC20 token that will be transferred
-    /// @param to - destination address where ERC20 token will be sent to
-    /// @param value - quantity of ERC20 token to be transferred
-    function safeTransfer(IERC20 token, address to, uint256 value) internal {
-        (bool success, bytes memory data) = address(token).call(abi.encodeWithSelector(token.transfer.selector, to, value));
-        if(!(success && (data.length == 0 || abi.decode(data, (bool))))) {
-            revert ST_Fail();
-        }
-    }
+    error NotEnoughTokens();
 
     /// @dev Remove excess quantities of ERC20 token
     /// @param token - address of ERC20 token that will be transferred
@@ -34,18 +24,24 @@ abstract contract Transfers is ITransfers {
             unchecked {
                 excessBalance = newBalance - balance;
             }
-            safeTransfer(IERC20(token), to, excessBalance);
+            GammaSwapLibrary.safeTransfer(IERC20(token), to, excessBalance);
         }
     }
 
     /// @dev See {ITransfers-clearToken}
-    function clearToken(address token, address to) external override {
-        if(isCFMMToken(token) || isCollateralToken(token)) { // can't clear CFMM LP tokens or collateral tokens
+    function clearToken(address token, address to, uint256 minAmt) external override {
+        // Can't clear CFMM LP tokens or collateral tokens
+        if(isCFMMToken(token) || isCollateralToken(token)) {
             revert RestrictedToken();
         }
 
         uint256 tokenBal = IERC20(token).balanceOf(address(this));
-        if (tokenBal > 0) safeTransfer(IERC20(token), to, tokenBal); // if not CFMM LP token or collateral token send entire amount
+        if(tokenBal < minAmt) { // Only clear if past threshold
+            revert NotEnoughTokens();
+        }
+
+        // If not CFMM LP token or collateral token send entire amount
+        if (tokenBal > 0) GammaSwapLibrary.safeTransfer(IERC20(token), to, tokenBal);
     }
 
     /// @dev Check if ERC20 token is LP token of the CFMM the GammaPool is made for

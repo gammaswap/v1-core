@@ -95,7 +95,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
 
         getPool[key] = pool; // map unique key to new instance of GammaPool
         allPools.push(pool); // store new GammaPool instance in an array
-        emit PoolCreated(pool, _cfmm, _protocolId, implementation, allPools.length); // store creation details in blockchain
+        emit PoolCreated(pool, _cfmm, _protocolId, implementation, _tokensOrdered, allPools.length); // store creation details in blockchain
     }
 
     /// @dev See {IGammaPoolFactory-feeInfo}
