@@ -8,21 +8,6 @@ import "../interfaces/strategies/base/IShortStrategy.sol";
 /// @author Daniel D. Alcarraz
 /// @dev Vault implementation of GammaPool, assets are CFMM LP tokens, shares are GS LP tokens
 abstract contract GammaPoolERC4626 is GammaPoolERC20 {
-    /// @dev Event emitted when a deposit of CFMM LP tokens in exchange of GS LP tokens happens (e.g. _deposit, _mint, _depositReserves, _depositNoPull)
-    /// @param caller - address calling the function to deposit CFMM LP tokens
-    /// @param to - address receiving GS LP tokens
-    /// @param assets - CFMM LP tokens deposited
-    /// @param shares - GS LP tokens minted
-    event Deposit(address indexed caller, address indexed to, uint256 assets, uint256 shares);
-
-    /// @dev Event emitted when CFMM LP tokens are withdrawn (e.g. _withdraw, _redeem, _withdrawReserves, _withdrawNoPull)
-    /// @param caller - address calling the function to withdraw CFMM LP tokens
-    /// @param to - address receiving CFMM LP tokens
-    /// @param from - address redeeming/burning GS LP tokens
-    /// @param assets - CFMM LP tokens withdrawn
-    /// @param shares - GS LP tokens redeemed
-    event Withdraw(address indexed caller, address indexed to, address indexed from, uint256 assets, uint256 shares);
-
     /// @return address - implementation contract that implements vault logic (e.g. ShortStrategy)
     function vaultImplementation() internal virtual view returns(address);
 

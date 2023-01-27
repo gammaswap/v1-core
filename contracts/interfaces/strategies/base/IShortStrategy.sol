@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
-import "./IBaseStrategy.sol";
+import "../events/IShortStrategyEvents.sol";
 
 /// @title Interface for Short Strategy
 /// @author Daniel D. Alcarraz
 /// @dev Used in strategies that deposit and withdraw liquidity from CFMM for liquidity providers
-interface IShortStrategy is IBaseStrategy {
+interface IShortStrategy is IShortStrategyEvents {
     /// @dev Deposit CFMM LP tokens and get GS LP tokens, without doing a transferFrom transaction. Must have sent CFMM LP tokens first
     /// @param to - address of receiver of GS LP token
     /// @return shares - quantity of GS LP tokens received for CFMM LP tokens
@@ -69,19 +69,4 @@ interface IShortStrategy is IBaseStrategy {
     /// @param from - address redeeming GS LP tokens
     /// @return assets - quantity of CFMM LP tokens sent to receiver address (`to`) for GS LP tokens redeemed
     function _redeem(uint256 shares, address to, address from) external returns (uint256 assets);
-
-    /// @dev Event emitted when a deposit of CFMM LP tokens in exchange of GS LP tokens happens (e.g. _deposit, _mint, _depositReserves, _depositNoPull)
-    /// @param caller - address calling the function to deposit CFMM LP tokens
-    /// @param to - address receiving GS LP tokens
-    /// @param assets - amount CFMM LP tokens deposited
-    /// @param shares - amount GS LP tokens minted
-    event Deposit(address indexed caller, address indexed to, uint256 assets, uint256 shares);
-
-    /// @dev Event emitted when a withdrawal of CFMM LP tokens happens (e.g. _withdraw, _redeem, _withdrawReserves, _withdrawNoPull)
-    /// @param caller - address calling the function to withdraw CFMM LP tokens
-    /// @param to - address receiving CFMM LP tokens
-    /// @param from - address redeeming/burning GS LP tokens
-    /// @param assets - amount of CFMM LP tokens withdrawn
-    /// @param shares - amount of GS LP tokens redeemed
-    event Withdraw(address indexed caller, address indexed to, address indexed from, uint256 assets, uint256 shares);
 }

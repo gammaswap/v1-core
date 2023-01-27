@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
-/// @title Interface for Base Strategy contract used in all strategies
+/// @title Strategy Events interface
 /// @author Daniel D. Alcarraz
-/// @dev Only used to define PoolUpdated event to avoid redefining the event in all strategies
-interface IBaseStrategy {
+/// @dev Events that should be emitted by all strategy implementations (root of all strategy events interfaces)
+interface IStrategyEvents {
     /// @dev Event emitted when the Pool's global state variables is updated
     /// @param lpTokenBalance - quantity of CFMM LP tokens deposited in the pool
     /// @param lpTokenBorrowed - quantity of CFMM LP tokens that have been borrowed from the pool (principal)

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
-import "./IBaseStrategy.sol";
+import "./IStrategyEvents.sol";
 
-/// @title Interface for Base Strategy contract used in strategies that deal with borrowed liquidity
-/// @author Daniel D. Alcarraz
-/// @dev Only used to define LoanUpdated event to avoid redefining the event in all the strategies that deal with borrowed liquidity
-interface IBaseLongStrategy is IBaseStrategy {
+/// @title Long Strategy Events Interface
+/// @author Daniel D. Alcarraz LongStrategyEvents
+/// @dev Events emitted by all long strategy implementations
+interface ILongStrategyEvents is IStrategyEvents {
     /// @dev Event emitted when a Loan is updated
     /// @param tokenId - unique id that identifies the loan in question
     /// @param tokensHeld - amounts of tokens held as collateral against the loan
