@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
-import "./ILiquidationStrategyEvents.sol";
-import "./IShortStrategyEvents.sol";
+import "./strategies/events/ILiquidationStrategyEvents.sol";
+import "./strategies/events/IShortStrategyEvents.sol";
 
 /// @title GammaPool Events Interface
 /// @author Daniel D. Alcarraz
