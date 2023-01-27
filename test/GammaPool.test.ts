@@ -451,11 +451,11 @@ describe("GammaPool", function () {
     it("Clear Restricted Tokens, Fail", async function () {
       for (let i = 0; i < tokens.length; i++) {
         await expect(
-          gammaPool.clearToken(tokens[i], owner.address)
+          gammaPool.clearToken(tokens[i], owner.address, 0)
         ).to.be.revertedWith("RestrictedToken");
       }
       await expect(
-        gammaPool.clearToken(cfmm.address, owner.address)
+        gammaPool.clearToken(cfmm.address, owner.address, 0)
       ).to.be.revertedWith("RestrictedToken");
     });
 
@@ -467,17 +467,33 @@ describe("GammaPool", function () {
       expect(balance1).to.eq(100);
       const addr1Balance0 = await tokenC.balanceOf(addr1.address);
       expect(addr1Balance0).to.eq(0);
-      await (await gammaPool.clearToken(tokenC.address, addr1.address)).wait();
+      await (
+        await gammaPool.clearToken(tokenC.address, addr1.address, 0)
+      ).wait();
       const addr1Balance1 = await tokenC.balanceOf(addr1.address);
       expect(addr1Balance1).to.eq(100);
       const balance2 = await tokenC.balanceOf(gammaPool.address);
       expect(balance2).to.eq(0);
 
-      await (await gammaPool.clearToken(tokenC.address, addr1.address)).wait();
+      await (
+        await gammaPool.clearToken(tokenC.address, addr1.address, 0)
+      ).wait();
       const addr1Balance2 = await tokenC.balanceOf(addr1.address);
       expect(addr1Balance2).to.eq(100);
       const balance3 = await tokenC.balanceOf(gammaPool.address);
       expect(balance3).to.eq(0);
+    });
+
+    it("Check Token Threshold Balance Before Clearing", async function () {
+      const balance0 = await tokenC.balanceOf(gammaPool.address);
+      expect(balance0).to.eq(0);
+      await (await tokenC.transfer(gammaPool.address, 100)).wait();
+      const balance1 = await tokenC.balanceOf(gammaPool.address);
+      expect(balance1).to.eq(100);
+
+      await expect(
+        gammaPool.clearToken(tokenC.address, owner.address, 101)
+      ).to.be.revertedWith("NotEnoughTokens");
     });
 
     it("Skimming nothing off the top", async function () {
