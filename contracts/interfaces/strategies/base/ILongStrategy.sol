@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
-import "./IBaseLongStrategy.sol";
+import "../events/ILongStrategyEvents.sol";
 
 /// @title Interface for Long Strategy
 /// @author Daniel D. Alcarraz
 /// @dev Used in strategies that borrow and repay liquidity loans
-interface ILongStrategy is IBaseLongStrategy {
+interface ILongStrategy is ILongStrategyEvents {
     /// @dev Get latest reserves in the CFMM, which can be used for pricing
     /// @param cfmm - address of CFMM
     /// @return cfmmReserves - reserves in the CFMM

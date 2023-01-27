@@ -1,38 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
+import "./IGammaPoolEvents.sol";
+
 /// @title Interface for GammaPool
 /// @author Daniel D. Alcarraz
 /// @dev Interface used to clear tokens from the GammaPool
-interface IGammaPool {
-    /// @dev See {IBaseStrategy-PoolUpdated}
-    event PoolUpdated(uint256 lpTokenBalance, uint256 lpTokenBorrowed, uint256 lastBlockNumber, uint256 accFeeIndex,
-        uint256 lpTokenBorrowedPlusInterest, uint256 lpInvariant, uint256 borrowedInvariant);
-
-    /// @dev Event emitted when a Loan is created
-    /// @param caller - address that created the loan
-    /// @param tokenId - unique id that identifies the loan in question
-    event LoanCreated(address indexed caller, uint256 tokenId);
-
-    /// @dev See {IBaseLongStrategy-LoanUpdated}
-    event LoanUpdated(uint256 indexed tokenId, uint128[] tokensHeld, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
-
-    /// @dev See {ILiquidationStrategy-Liquidation}
-    event Liquidation(uint256 indexed tokenId, uint256 collateral, uint256 liquidity, uint8 typ);
-
-    /// @dev See {ILiquidationStrategy-BatchLiquidations}
-    event BatchLiquidations(uint256 liquidityTotal, uint256 collateralTotal, uint256 lpTokensPrincipalTotal, uint128[] tokensHeldTotal, uint256[] tokenIds);
-
-    /// @dev Event emitted when a write down due to bad debt happens in the GammaPool
-    /// @param tokenId - unique id that identifies the loan causing the write down
-    /// @param writeDownAmt - amount written down
-    event WriteDown(uint256 indexed tokenId, uint256 writeDownAmt);
-
-    /// @dev Event emitted when synchronizing CFMM LP token amounts (CFMM LP tokens deposited do not match LP_TOKEN_BALANCE)
-    /// @param oldLpTokenBalance - previous LP_TOKEN_BALANCE
-    /// @param newLpTokenBalance - updated LP_TOKEN_BALANCE
-    event Sync(uint256 oldLpTokenBalance, uint256 newLpTokenBalance);
-
+interface IGammaPool is IGammaPoolEvents {
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
     struct PoolData {
         /// @dev Protocol id of the implementation contract for this GammaPool
@@ -146,7 +120,7 @@ interface IGammaPool {
     /// @return _decimals - decimal places of tokens in CFMM. Their index matches _tokensOrdered.
     function validateCFMM(address[] calldata _tokens, address _cfmm) external view returns(address[] memory _tokensOrdered, uint8[] memory _decimals);
 
-    //Short Gamma
+    // Short Gamma
 
     /// @dev Deposit CFMM LP token and get GS LP token, without doing a transferFrom transaction. Must have sent CFMM LP token first
     /// @param to - address of receiver of GS LP token
@@ -173,7 +147,7 @@ interface IGammaPool {
     /// @return shares - quantity of GS LP tokens received for reserve tokens deposited
     function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external returns(uint256[] memory reserves, uint256 shares);
 
-    //Long Gamma
+    // Long Gamma
 
     /// @return cfmmReserves - latest token reserves in the CFMM
     function getLatestCFMMReserves() external view returns(uint256[] memory cfmmReserves);
@@ -241,7 +215,7 @@ interface IGammaPool {
     /// @return refund - amounts from collateral tokens being refunded to liquidator
     function batchLiquidations(uint256[] calldata tokenIds) external returns(uint256[] memory refund);
 
-    //sync functions
+    // Sync functions
 
     /// @dev Skim excess collateral tokens or CFMM LP tokens from GammaPool and send them to receiver (`to`) address
     /// @param to - address receiving excess tokens
