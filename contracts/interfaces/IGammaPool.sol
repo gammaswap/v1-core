@@ -182,8 +182,9 @@ interface IGammaPool is IGammaPoolEvents {
     /// @dev Borrow liquidity from the CFMM and add it to the debt and collateral of loan identified by tokenId
     /// @param tokenId - unique id identifying loan
     /// @param lpTokens - quantity of CFMM LP tokens requested to short
+    /// @return liquidityBorrowed - liquidity amount that has been borrowed
     /// @return amounts - reserves quantities withdrawn from CFMM that correspond to the LP tokens shorted, now used as collateral
-    function borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint256[] memory amounts);
+    function borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint256 liquidityBorrowed, uint256[] memory amounts);
 
     /// @dev Repay liquidity debt of loan identified by tokenId, debt is repaid using available collateral in loan
     /// @param tokenId - unique id identifying loan
@@ -202,18 +203,22 @@ interface IGammaPool is IGammaPoolEvents {
     /// @dev Function to liquidate a loan using its own collateral or depositing additional tokens. Seeks full liquidation
     /// @param tokenId - tokenId of loan being liquidated
     /// @param deltas - amount tokens to trade to re-balance the collateral
+    /// @return loanLiquidity - loan liquidity liquidated (after write down)
     /// @return refund - amounts from collateral tokens being refunded to liquidator
-    function liquidate(uint256 tokenId, int256[] calldata deltas) external returns(uint256[] memory refund);
+    function liquidate(uint256 tokenId, int256[] calldata deltas) external returns(uint256 loanLiquidity, uint256[] memory refund);
 
     /// @dev Function to liquidate a loan using external LP tokens. Allows partial liquidation
     /// @param tokenId - tokenId of loan being liquidated
+    /// @return loanLiquidity - loan liquidity liquidated (after write down)
     /// @return refund - amounts from collateral tokens being refunded to liquidator
-    function liquidateWithLP(uint256 tokenId) external returns(uint256[] memory refund);
+    function liquidateWithLP(uint256 tokenId) external returns(uint256 loanLiquidity, uint256[] memory refund);
 
     /// @dev Function to liquidate multiple loans in batch.
     /// @param tokenIds - list of tokenIds of loans to liquidate
+    /// @return totalLoanLiquidity - total loan liquidity liquidated (after write down)
+    /// @return totalCollateral - total collateral available for liquidation
     /// @return refund - amounts from collateral tokens being refunded to liquidator
-    function batchLiquidations(uint256[] calldata tokenIds) external returns(uint256[] memory refund);
+    function batchLiquidations(uint256[] calldata tokenIds) external returns(uint256 totalLoanLiquidity, uint256 totalCollateral, uint256[] memory refund);
 
     // Sync functions
 

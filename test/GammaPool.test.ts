@@ -283,8 +283,10 @@ describe("GammaPool", function () {
       expect(res0.events[0].args.tokensHeld[0]).to.eq(1);
       expect(res0.events[0].args.tokensHeld[1]).to.eq(2);
       expect(res0.events[0].args.liquidity).to.eq(11);
-      expect(res0.events[0].args.lpTokens).to.eq(12);
-      expect(res0.events[0].args.rateIndex).to.eq(13);
+      expect(res0.events[0].args.initLiquidity).to.eq(12);
+      expect(res0.events[0].args.lpTokens).to.eq(13);
+      expect(res0.events[0].args.rateIndex).to.eq(14);
+      expect(res0.events[0].args.txType).to.eq(4);
 
       const res1 = await (
         await gammaPool.decreaseCollateral(tokenId, [100, 200], addr1.address)
@@ -294,8 +296,10 @@ describe("GammaPool", function () {
       expect(res1.events[0].args.tokensHeld[0]).to.eq(100);
       expect(res1.events[0].args.tokensHeld[1]).to.eq(200);
       expect(res1.events[0].args.liquidity).to.eq(21);
-      expect(res1.events[0].args.lpTokens).to.eq(22);
-      expect(res1.events[0].args.rateIndex).to.eq(23);
+      expect(res1.events[0].args.initLiquidity).to.eq(22);
+      expect(res1.events[0].args.lpTokens).to.eq(23);
+      expect(res1.events[0].args.rateIndex).to.eq(24);
+      expect(res1.events[0].args.txType).to.eq(5);
 
       const res2 = await (await gammaPool.borrowLiquidity(tokenId, 300)).wait();
       expect(res2.events[0].args.tokenId).to.eq(tokenId);
@@ -303,8 +307,10 @@ describe("GammaPool", function () {
       expect(res2.events[0].args.tokensHeld[0]).to.eq(600);
       expect(res2.events[0].args.tokensHeld[1]).to.eq(300);
       expect(res2.events[0].args.liquidity).to.eq(31);
-      expect(res2.events[0].args.lpTokens).to.eq(32);
-      expect(res2.events[0].args.rateIndex).to.eq(33);
+      expect(res2.events[0].args.initLiquidity).to.eq(32);
+      expect(res2.events[0].args.lpTokens).to.eq(33);
+      expect(res2.events[0].args.rateIndex).to.eq(34);
+      expect(res2.events[0].args.txType).to.eq(7);
 
       const res3 = await (await gammaPool.repayLiquidity(tokenId, 400)).wait();
       expect(res3.events[0].args.tokenId).to.eq(tokenId);
@@ -312,8 +318,10 @@ describe("GammaPool", function () {
       expect(res3.events[0].args.tokensHeld[0]).to.eq(9);
       expect(res3.events[0].args.tokensHeld[1]).to.eq(10);
       expect(res3.events[0].args.liquidity).to.eq(400);
-      expect(res3.events[0].args.lpTokens).to.eq(42);
-      expect(res3.events[0].args.rateIndex).to.eq(43);
+      expect(res3.events[0].args.initLiquidity).to.eq(42);
+      expect(res3.events[0].args.lpTokens).to.eq(43);
+      expect(res3.events[0].args.rateIndex).to.eq(44);
+      expect(res3.events[0].args.txType).to.eq(8);
 
       const res4 = await (
         await gammaPool.rebalanceCollateral(tokenId, [500, 600])
@@ -323,8 +331,10 @@ describe("GammaPool", function () {
       expect(res4.events[0].args.tokensHeld[0]).to.eq(500);
       expect(res4.events[0].args.tokensHeld[1]).to.eq(600);
       expect(res4.events[0].args.liquidity).to.eq(51);
-      expect(res4.events[0].args.lpTokens).to.eq(52);
-      expect(res4.events[0].args.rateIndex).to.eq(53);
+      expect(res4.events[0].args.initLiquidity).to.eq(52);
+      expect(res4.events[0].args.lpTokens).to.eq(53);
+      expect(res4.events[0].args.rateIndex).to.eq(54);
+      expect(res4.events[0].args.txType).to.eq(6);
     });
   });
 
@@ -345,20 +355,24 @@ describe("GammaPool", function () {
       const res0 = await (
         await gammaPool.batchLiquidations([tokenId1, tokenId2])
       ).wait();
-
-      expect(res0.events[0].event).to.eq("BatchLiquidations");
-      expect(res0.events[0].args.liquidityTotal).to.eq(100);
-      expect(res0.events[0].args.collateralTotal).to.eq(13);
-      expect(res0.events[0].args.lpTokensPrincipalTotal).to.eq(14);
-      expect(res0.events[0].args.tokensHeldTotal.length).to.eq(2);
-      expect(res0.events[0].args.tokensHeldTotal[0]).to.eq(11);
-      expect(res0.events[0].args.tokensHeldTotal[1]).to.eq(12);
+      expect(res0.events[0].event).to.eq("Liquidation");
+      expect(res0.events[0].args.tokenId).to.eq(0);
+      expect(res0.events[0].args.collateral).to.eq(11);
+      expect(res0.events[0].args.liquidity).to.eq(12);
+      expect(res0.events[0].args.writeDownAmt).to.eq(15);
+      expect(res0.events[0].args.txType).to.eq(11);
       expect(res0.events[0].args.tokenIds.length).to.eq(2);
       expect(res0.events[0].args.tokenIds[0]).to.eq(tokenId1);
       expect(res0.events[0].args.tokenIds[1]).to.eq(tokenId2);
-      expect(res0.events[1].event).to.eq("WriteDown");
-      expect(res0.events[1].args.tokenId).to.eq(0);
-      expect(res0.events[1].args.writeDownAmt).to.eq(123);
+      expect(res0.events[1].event).to.eq("PoolUpdated");
+      expect(res0.events[1].args.lpTokenBalance).to.eq(16);
+      expect(res0.events[1].args.lpTokenBorrowed).to.eq(13);
+      expect(res0.events[1].args.lastBlockNumber).to.eq(14);
+      expect(res0.events[1].args.accFeeIndex).to.eq(700);
+      expect(res0.events[1].args.lpTokenBorrowedPlusInterest).to.eq(800);
+      expect(res0.events[1].args.lpInvariant).to.eq(900);
+      expect(res0.events[1].args.borrowedInvariant).to.eq(1000);
+      expect(res0.events[1].args.txType).to.eq(11);
     });
 
     it("Liquidate with LP", async function () {
@@ -375,13 +389,17 @@ describe("GammaPool", function () {
       expect(res0.events[0].args.tokensHeld[0]).to.eq(6);
       expect(res0.events[0].args.tokensHeld[1]).to.eq(7);
       expect(res0.events[0].args.liquidity).to.eq(8);
-      expect(res0.events[0].args.lpTokens).to.eq(9);
-      expect(res0.events[0].args.rateIndex).to.eq(10);
+      expect(res0.events[0].args.initLiquidity).to.eq(9);
+      expect(res0.events[0].args.lpTokens).to.eq(10);
+      expect(res0.events[0].args.rateIndex).to.eq(11);
+      expect(res0.events[0].args.txType).to.eq(10);
       expect(res0.events[1].event).to.eq("Liquidation");
       expect(res0.events[1].args.tokenId).to.eq(tokenId);
-      expect(res0.events[1].args.collateral).to.eq(200);
-      expect(res0.events[1].args.liquidity).to.eq(300);
-      expect(res0.events[1].args.typ).to.eq(1);
+      expect(res0.events[1].args.collateral).to.eq(400);
+      expect(res0.events[1].args.liquidity).to.eq(500);
+      expect(res0.events[1].args.writeDownAmt).to.eq(600);
+      expect(res0.events[1].args.txType).to.eq(10);
+      expect(res0.events[1].args.tokenIds.length).to.eq(0);
     });
 
     it("Liquidate", async function () {
@@ -398,16 +416,17 @@ describe("GammaPool", function () {
       expect(res0.events[0].args.tokensHeld[0]).to.eq(1);
       expect(res0.events[0].args.tokensHeld[1]).to.eq(3);
       expect(res0.events[0].args.liquidity).to.eq(777);
-      expect(res0.events[0].args.lpTokens).to.eq(888);
+      expect(res0.events[0].args.initLiquidity).to.eq(888);
+      expect(res0.events[0].args.lpTokens).to.eq(4);
       expect(res0.events[0].args.rateIndex).to.eq(5);
-      expect(res0.events[1].event).to.eq("WriteDown");
+      expect(res0.events[0].args.txType).to.eq(9);
+      expect(res0.events[1].event).to.eq("Liquidation");
       expect(res0.events[1].args.tokenId).to.eq(tokenId);
-      expect(res0.events[1].args.writeDownAmt).to.eq(123);
-      expect(res0.events[2].event).to.eq("Liquidation");
-      expect(res0.events[2].args.tokenId).to.eq(tokenId);
-      expect(res0.events[2].args.collateral).to.eq(200);
-      expect(res0.events[2].args.liquidity).to.eq(300);
-      expect(res0.events[2].args.typ).to.eq(0);
+      expect(res0.events[1].args.collateral).to.eq(100);
+      expect(res0.events[1].args.liquidity).to.eq(200);
+      expect(res0.events[1].args.writeDownAmt).to.eq(300);
+      expect(res0.events[1].args.txType).to.eq(9);
+      expect(res0.events[1].args.tokenIds.length).to.eq(0);
 
       const res1 = await (
         await gammaPool.liquidate(tokenId, [999, 1111])
@@ -417,16 +436,16 @@ describe("GammaPool", function () {
       expect(res1.events[0].args.tokensHeld[0]).to.eq(1);
       expect(res1.events[0].args.tokensHeld[1]).to.eq(2);
       expect(res1.events[0].args.liquidity).to.eq(999);
-      expect(res1.events[0].args.lpTokens).to.eq(1111);
+      expect(res1.events[0].args.initLiquidity).to.eq(1111);
+      expect(res1.events[0].args.lpTokens).to.eq(4);
       expect(res1.events[0].args.rateIndex).to.eq(5);
-      expect(res1.events[1].event).to.eq("WriteDown");
+      expect(res1.events[0].args.txType).to.eq(9);
+      expect(res1.events[1].event).to.eq("Liquidation");
       expect(res1.events[1].args.tokenId).to.eq(tokenId);
-      expect(res1.events[1].args.writeDownAmt).to.eq(123);
-      expect(res0.events[2].event).to.eq("Liquidation");
-      expect(res0.events[2].args.tokenId).to.eq(tokenId);
-      expect(res0.events[2].args.collateral).to.eq(200);
-      expect(res0.events[2].args.liquidity).to.eq(300);
-      expect(res0.events[2].args.typ).to.eq(0);
+      expect(res1.events[1].args.collateral).to.eq(100);
+      expect(res1.events[1].args.liquidity).to.eq(200);
+      expect(res1.events[1].args.writeDownAmt).to.eq(300);
+      expect(res1.events[1].args.txType).to.eq(9);
     });
   });
 
