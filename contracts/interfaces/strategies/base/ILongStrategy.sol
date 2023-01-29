@@ -27,8 +27,9 @@ interface ILongStrategy is ILongStrategyEvents {
     /// @dev Borrow liquidity from the CFMM and add it to the debt and collateral of loan identified by tokenId
     /// @param tokenId - unique id identifying loan
     /// @param lpTokens - amount of CFMM LP tokens requested to short
+    /// @return liquidityBorrowed - liquidity amount that has been borrowed
     /// @return amounts - reserves quantities withdrawn from CFMM that correspond to the LP tokens shorted, now used as collateral
-    function _borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint256[] memory amounts);
+    function _borrowLiquidity(uint256 tokenId, uint256 lpTokens) external returns(uint256 liquidityBorrowed, uint256[] memory amounts);
 
     /// @dev Repay liquidity debt of loan identified by tokenId, debt is repaid using available collateral in loan
     /// @param tokenId - unique id identifying loan
