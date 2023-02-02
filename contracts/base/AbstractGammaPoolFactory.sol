@@ -87,7 +87,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
             revert NotNewOwner();
         }
         address oldOwner = owner;
-        owner = pendingOwner;
+        owner = newOwner;
         delete pendingOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
