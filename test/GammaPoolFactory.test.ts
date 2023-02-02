@@ -296,12 +296,55 @@ describe("GammaPoolFactory", function () {
       ).to.be.revertedWith("ZeroAddress");
     });
 
-    it("Successful Transfer", async function () {
+    it("Replace Transfer Started", async function () {
       expect(await factory.owner()).to.equal(owner.address);
       const res = await (await factory.transferOwnership(addr1.address)).wait();
-      expect(res.events[0].event).to.equal("OwnershipTransferred");
-      expect(res.events[0].args.previousOwner).to.equal(owner.address);
+      expect(res.events[0].event).to.equal("OwnershipTransferStarted");
+      expect(res.events[0].args.currentOwner).to.equal(owner.address);
       expect(res.events[0].args.newOwner).to.equal(addr1.address);
+      expect(await factory.pendingOwner()).to.equal(addr1.address);
+      expect(await factory.owner()).to.equal(owner.address);
+
+      const res0 = await (
+        await factory.transferOwnership(addr2.address)
+      ).wait();
+      expect(res0.events[0].event).to.equal("OwnershipTransferStarted");
+      expect(res0.events[0].args.currentOwner).to.equal(owner.address);
+      expect(res0.events[0].args.newOwner).to.equal(addr2.address);
+      expect(await factory.pendingOwner()).to.equal(addr2.address);
+      expect(await factory.owner()).to.equal(owner.address);
+    });
+
+    it("Accept Transfer Fail", async function () {
+      expect(await factory.owner()).to.equal(owner.address);
+      const res = await (await factory.transferOwnership(addr1.address)).wait();
+      expect(res.events[0].event).to.equal("OwnershipTransferStarted");
+      expect(res.events[0].args.currentOwner).to.equal(owner.address);
+      expect(res.events[0].args.newOwner).to.equal(addr1.address);
+      expect(await factory.pendingOwner()).to.equal(addr1.address);
+      expect(await factory.owner()).to.equal(owner.address);
+      await expect(factory.acceptOwnership()).to.be.revertedWith("NotNewOwner");
+    });
+
+    it("Accept Transfer Success", async function () {
+      expect(await factory.owner()).to.equal(owner.address);
+      const res = await (await factory.transferOwnership(addr1.address)).wait();
+      expect(res.events[0].event).to.equal("OwnershipTransferStarted");
+      expect(res.events[0].args.currentOwner).to.equal(owner.address);
+      expect(res.events[0].args.newOwner).to.equal(addr1.address);
+      expect(await factory.pendingOwner()).to.equal(addr1.address);
+      expect(await factory.owner()).to.equal(owner.address);
+
+      const res0 = await (
+        await factory.connect(addr1).acceptOwnership()
+      ).wait();
+      expect(res0.events[0].event).to.equal("OwnershipTransferred");
+      expect(res0.events[0].args.previousOwner).to.equal(owner.address);
+      expect(res0.events[0].args.newOwner).to.equal(addr1.address);
+      expect(await factory.pendingOwner()).to.equal(
+        ethers.constants.AddressZero
+      );
+      expect(await factory.owner()).to.equal(addr1.address);
     });
   });
 });
