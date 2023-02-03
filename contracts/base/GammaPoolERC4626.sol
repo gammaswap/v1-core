@@ -8,6 +8,12 @@ import "../interfaces/strategies/base/IShortStrategy.sol";
 /// @author Daniel D. Alcarraz
 /// @dev Vault implementation of GammaPool, assets are CFMM LP tokens, shares are GS LP tokens
 abstract contract GammaPoolERC4626 is GammaPoolERC20 {
+
+    error MinShares();
+
+    /// @dev Minimum number of shares issued on first deposit to avoid rounding issues
+    uint256 public constant MIN_SHARES = 1e3;
+
     /// @return address - implementation contract that implements vault logic (e.g. ShortStrategy)
     function vaultImplementation() internal virtual view returns(address);
 
@@ -61,20 +67,41 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     /// @param assets - CFMM LP tokens
     /// @return shares - GS LP tokens quantity that corresponds to assets quantity provided as a parameter (CFMM LP tokens)
     function convertToShares(uint256 assets) public view virtual returns (uint256) {
-        uint256 supply = totalSupply(); // total amount of GS LP tokens issued
-        uint256 _totalAssets = totalAssets(); // calculates total CFMM LP tokens, including accrued interest, using state variables
+        if(assets == 0) {
+            return 0;
+        }
+        uint256 supply = totalSupply(); // Total amount of GS LP tokens issued
+        uint256 _totalAssets = totalAssets(); // Calculates total CFMM LP tokens, including accrued interest, using state variables
 
-        return supply == 0 || _totalAssets == 0 ? assets : (assets * supply) / _totalAssets;
+        if(supply == 0 || _totalAssets == 0) {
+            if(assets <= MIN_SHARES) {
+                revert MinShares();
+            }
+            unchecked {
+                return assets - MIN_SHARES;
+            }
+        }
+        return (assets * supply) / _totalAssets;
     }
 
     /// @dev Convert GS LP tokens to GS LP tokens
     /// @param shares - GS LP tokens
     /// @return assets - CFMM LP tokens quantity that corresponds to shares quantity provided as a parameter (GS LP tokens)
     function convertToAssets(uint256 shares) public view virtual returns (uint256) {
-        uint256 supply = totalSupply(); // total amount of GS LP tokens issued
-
+        if(shares == 0) {
+            return 0;
+        }
+        uint256 supply = totalSupply(); // Total amount of GS LP tokens issued
+        if(supply == 0) {
+            if(shares <= MIN_SHARES) {
+                revert MinShares();
+            }
+            unchecked {
+                return shares - MIN_SHARES;
+            }
+        }
         // totalAssets is total CFMM LP tokens, including accrued interest, calculated using state variables
-        return supply == 0 ? shares : (shares * totalAssets()) / supply;
+        return (shares * totalAssets()) / supply;
     }
 
     /// @dev Allows an on-chain or off-chain user to simulate the effects of their deposit at the current block, given current on-chain conditions.
