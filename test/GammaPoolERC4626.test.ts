@@ -3,6 +3,7 @@ import { expect } from "chai";
 import { BigNumber } from "ethers";
 
 const PROTOCOL_ID = 1;
+const MIN_SHARES = 1000;
 
 describe("GammaPoolERC4626", function () {
   let TestERC20: any;
@@ -86,9 +87,13 @@ describe("GammaPoolERC4626", function () {
     supply: BigNumber,
     totalAssets: BigNumber
   ): Promise<BigNumber> {
-    return supply.eq(0) || totalAssets.eq(0)
-      ? assets
-      : assets.mul(supply).div(totalAssets);
+    if (assets.eq(0)) {
+      return ethers.constants.Zero;
+    }
+    if (supply.eq(0) || totalAssets.eq(0)) {
+      return assets.sub(MIN_SHARES); // First deposit in GammaPool will require minting MIN_SHARES
+    }
+    return assets.mul(supply).div(totalAssets);
   }
 
   async function convertToAssets(
@@ -96,7 +101,13 @@ describe("GammaPoolERC4626", function () {
     supply: BigNumber,
     totalAssets: BigNumber
   ): Promise<BigNumber> {
-    return supply.eq(0) ? shares : shares.mul(totalAssets).div(supply);
+    if (shares.eq(0)) {
+      return ethers.constants.Zero;
+    }
+    if (supply.eq(0)) {
+      return shares.sub(MIN_SHARES); // First deposit in GammaPool will require minting MIN_SHARES
+    }
+    return shares.mul(totalAssets).div(supply);
   }
 
   // increase totalAssets by assets, increase totalSupply by shares
@@ -376,7 +387,7 @@ describe("GammaPoolERC4626", function () {
           gammaPool.convertToShares,
           gammaPool.convertToAssets
         )
-      ).to.be.equal(assets1);
+      ).to.be.equal(assets1.sub(MIN_SHARES));
       expect(
         await testConvertToAssets(
           shares1,
@@ -489,7 +500,7 @@ describe("GammaPoolERC4626", function () {
           gammaPool.previewMint,
           gammaPool.convertToAssets
         )
-      ).to.be.equal(assets1);
+      ).to.be.equal(assets1.sub(MIN_SHARES));
       expect(
         await testConvertToAssets(
           shares1,
@@ -600,7 +611,7 @@ describe("GammaPoolERC4626", function () {
           gammaPool.previewWithdraw,
           gammaPool.previewRedeem
         )
-      ).to.be.equal(assets1);
+      ).to.be.equal(assets1.sub(MIN_SHARES));
       expect(
         await testConvertToAssets(
           shares1,
