@@ -161,6 +161,7 @@ describe("GammaPool", function () {
       const res2 = await gammaPool.getRates();
       const ONE = ethers.BigNumber.from(10).pow(18);
       expect(res2.accFeeIndex).to.equal(ONE);
+      expect(res2.lastCFMMFeeIndex).to.equal(ONE);
       expect(res2.lastBlockNumber).to.gt(0);
 
       const res3 = await gammaPool.getPoolData();
@@ -192,9 +193,10 @@ describe("GammaPool", function () {
       expect(_cfmmReserves.length).to.equal(2);
       expect(_cfmmReserves[0]).to.equal(0);
       expect(_cfmmReserves[1]).to.equal(0);
-      expect(res3.lastCFMMInvariant).to.equal(res3.lastCFMMInvariant);
-      expect(res3.lastCFMMTotalSupply).to.equal(res3.lastCFMMTotalSupply);
-      expect(res3.totalSupply).to.equal(res3.totalSupply);
+      expect(res3.lastCFMMFeeIndex).to.equal(res2.lastCFMMFeeIndex);
+      expect(res3.lastCFMMInvariant).to.equal(res1.cfmmInvariant);
+      expect(res3.lastCFMMTotalSupply).to.equal(res1.cfmmTotalSupply);
+      expect(res3.totalSupply).to.equal(await gammaPool.totalSupply());
     });
   });
 
