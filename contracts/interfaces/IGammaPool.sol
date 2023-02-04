@@ -18,10 +18,6 @@ interface IGammaPool is IGammaPoolEvents {
         /// @dev Liquidation Strategy implementation contract for this GammaPool
         address liquidationStrategy;
 
-        /// @dev cfmm - address of CFMM this GammaPool is for
-        address cfmm;
-        /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
-        uint96 LAST_BLOCK_NUMBER;
         /// @dev factory - address of factory contract that instantiated this GammaPool
         address factory;
 
@@ -40,8 +36,14 @@ interface IGammaPool is IGammaPoolEvents {
         uint128 LP_INVARIANT;//Invariant from LP Tokens, TOTAL_INVARIANT = BORROWED_INVARIANT + LP_INVARIANT
 
         // Rates
+        /// @dev cfmm - address of CFMM this GammaPool is for
+        address cfmm;
         /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 7.9% trillion
         uint96 accFeeIndex;
+        /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
+        uint48 LAST_BLOCK_NUMBER;
+        /// @dev percent accrual in CFMM invariant since last update
+        uint80 lastCFMMFeeIndex; // 80 bits
         /// @dev Total liquidity invariant amount in CFMM (from GammaPool and others), read in last update to GammaPool's storage variables
         uint128 lastCFMMInvariant;
         /// @dev Total LP token supply from CFMM (belonging to GammaPool and others), read in last update to GammaPool's storage variables
@@ -107,8 +109,9 @@ interface IGammaPool is IGammaPoolEvents {
 
     /// @dev Interest rate information in GammaPool at last update
     /// @return accFeeIndex - total accrued interest in GammaPool at last update
+    /// @return lastCFMMFeeIndex - total accrued CFMM fee since last update
     /// @return lastBlockNumber - last block GammaPool was updated
-    function getRates() external view returns(uint256 accFeeIndex, uint256 lastBlockNumber);
+    function getRates() external view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastBlockNumber);
 
     /// @return data - struct containing all relevant global state variables and descriptive information of GammaPool. Used to avoid making multiple calls
     function getPoolData() external view returns(PoolData memory data);

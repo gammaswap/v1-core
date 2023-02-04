@@ -32,11 +32,7 @@ library LibStorage {
     /// @dev Storage struct used to track GammaPool's state variables
     /// @notice `LP_TOKEN_TOTAL = LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST` and `TOTAL_INVARIANT = BORROWED_INVARIANT + LP_INVARIANT`
     struct Storage {
-        // 2x256 bits
-        /// @dev cfmm - address of CFMM this GammaPool is for
-        address cfmm; // 160 bits
-        /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
-        uint96 LAST_BLOCK_NUMBER; // 96 bits
+        // 1x256 bits
         /// @dev factory - address of factory contract that instantiated this GammaPool
         address factory; // 160 bits
         /// @dev unlocked - flag used in mutex implementation (1 = unlocked, 0 = locked). Initialized at 1
@@ -56,9 +52,15 @@ library LibStorage {
         /// @dev Quantity of CFMM's liquidity invariant held in GammaPool as LP tokens, maps to LP_TOKEN_BALANCE
         uint128 LP_INVARIANT; // 128 bits
 
-        // 2x256 bits, Rates
+        // 3x256 bits, Rates & CFMM
+        /// @dev cfmm - address of CFMM this GammaPool is for
+        address cfmm; // 160 bits
         /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 7.9% trillion
         uint96 accFeeIndex; // 96 bits
+        /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
+        uint48 LAST_BLOCK_NUMBER; // 48 bits
+        /// @dev percent accrual in CFMM invariant since last update
+        uint80 lastCFMMFeeIndex; // 80 bits
         /// @dev Total liquidity invariant amount in CFMM (from GammaPool and others), read in last update to GammaPool's storage variables
         uint128 lastCFMMInvariant; // 128 bits
         /// @dev Total LP token supply from CFMM (belonging to GammaPool and others), read in last update to GammaPool's storage variables
@@ -106,8 +108,9 @@ library LibStorage {
         self.tokens = _tokens;
         self.decimals = _decimals;
 
+        self.lastCFMMFeeIndex = 1e18;
         self.accFeeIndex = 1e18; // initialized as 1 with 18 decimal places
-        self.LAST_BLOCK_NUMBER = uint96(block.number); // first block update number is block at initialization
+        self.LAST_BLOCK_NUMBER = uint48(block.number); // first block update number is block at initialization
 
         self.nextId = 1; // loan counter starts at 1
         self.unlocked = 1; // mutex initialized as unlocked

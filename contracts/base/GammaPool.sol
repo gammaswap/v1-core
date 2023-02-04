@@ -77,8 +77,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     }
 
     /// @dev See {IGammaPool-getRates}
-    function getRates() external virtual override view returns(uint256 accFeeIndex, uint256 lastBlockNumber) {
-        return(s.accFeeIndex, s.LAST_BLOCK_NUMBER);
+    function getRates() external virtual override view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastBlockNumber) {
+        return(s.accFeeIndex, s.lastCFMMFeeIndex, s.LAST_BLOCK_NUMBER);
     }
 
     /// @dev See {IGammaPool-getPoolData}
@@ -96,6 +96,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
         data.LP_INVARIANT = s.LP_INVARIANT;
         data.accFeeIndex = s.accFeeIndex;
+        data.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
         data.lastCFMMInvariant = s.lastCFMMInvariant;
         data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
         data.totalSupply = s.totalSupply;
