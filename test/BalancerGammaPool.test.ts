@@ -273,18 +273,17 @@ describe.only("BalancerGammaPool", function () {
     });
 
     it("Error Incorrect Token Length", async function () {
+      // The WeightedPool given has more than 2 tokens
       await expect(
         pool.validateCFMM([tokenA.address, tokenB.address], weighted3Pool)
       ).to.be.revertedWith("IncorrectTokenLength");
     });
 
-    it.skip("Error Incorrect Tokens", async function () {
-      // TODO: This is difficult to test since the validate call fails on Pool ID check for incorrect tokens
-      // Hence this test may be redundant
-
-      // await expect(
-      //   pool.validateCFMM([tokenA.address, tokenB.address], badWeightedPool)
-      // ).to.be.revertedWith("IncorrectTokens");
+    it("Error Incorrect Tokens", async function () {
+      // The WeightedPool given has the wrong tokens
+      await expect(
+        pool.validateCFMM([tokenA.address, tokenC.address], cfmm)
+      ).to.be.revertedWith("IncorrectTokens");
     });
 
     it("Correct Validation #1", async function () {
