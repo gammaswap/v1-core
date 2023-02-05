@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "../base/GammaPool.sol";
 import "../libraries/AddressCalculator.sol";
 import "../libraries/GammaSwapLibrary.sol";
@@ -71,21 +73,18 @@ contract BalancerGammaPool is GammaPool {
             revert BadVaultAddress();
         }
 
+        // Fetch the tokens corresponding to the CFMM address
+        (IERC20[] memory vaultTokens, ,) = IVault(IWeightedPool(_cfmm).getVault()).getPoolTokens(IWeightedPool(_cfmm).getPoolId());
+
+        // Verify the number of tokens in the CFMM matches the number of tokens given in the constructor
+        if(vaultTokens.length != tokenCount) {
+            revert IncorrectTokenLength();
+        }
+
         // Verify the pool ID implied from the WeightedPool contract matches the pool ID given in the constructor
         bytes32 vaultPoolId = IWeightedPool(_cfmm).getPoolId();
         if(vaultPoolId != poolId) {
             revert BadPoolId();
-        }
-
-        // Verify the pool address implied from the Vault at the pool ID matches the CFMM address
-        address poolAddress = IVault(balancerVault).getPool(poolId);
-        if(poolAddress != _cfmm) {
-            revert BadPoolAddress();
-        }
-
-        uint256[] memory vaultTokens = IVault(balancerVault).getPoolTokens(poolId);
-        if(vaultTokens.length != tokenCount) {
-            revert IncorrectTokenLength();
         }
 
         // Verify the tokens in the CFMM match the tokens given in the constructor
