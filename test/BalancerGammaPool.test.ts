@@ -11,7 +11,7 @@ const _WeightedPoolBytecode = require("@balancer-labs/v2-deployments/dist/tasks/
 // Protocol ID for Balancer
 const PROTOCOL_ID = 2;
 
-describe.only("BalancerGammaPool", function () {
+describe("BalancerGammaPool", function () {
   let TestERC20: any;
   let BalancerGammaPool: any;
   let tokenA: any;
