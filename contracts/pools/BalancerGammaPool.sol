@@ -32,15 +32,21 @@ contract BalancerGammaPool is GammaPool {
     address immutable public balancerVault;
 
     /**
+     * @return poolFactory Address corresponding to the WeightedPoolFactory which created the Balancer weighted pool.
+     */
+    address immutable public poolFactory;
+
+    /**
      * @return poolId Pool ID of the Balancer weighted pool.
      */
     bytes32 immutable public poolId;
 
-    /// @dev Initializes the contract by setting `protocolId`, `factory`, `longStrategy`, `shortStrategy`, `liquidationStrategy`, `balancerVault`, and `poolId`.
-    constructor(uint16 _protocolId, address _factory, address _longStrategy, address _shortStrategy, address _liquidationStrategy, address _balancerVault, bytes32 _poolId)
+    /// @dev Initializes the contract by setting `protocolId`, `factory`, `longStrategy`, `shortStrategy`, `liquidationStrategy`, `balancerVault`, `poolFactory` and `poolId`.
+    constructor(uint16 _protocolId, address _factory, address _longStrategy, address _shortStrategy, address _liquidationStrategy, address _balancerVault, address _poolFactory, bytes32 _poolId)
         GammaPool(_protocolId, _factory, _longStrategy, _shortStrategy, _liquidationStrategy) {
         balancerVault = _balancerVault;
         poolId = _poolId;
+        poolFactory = _poolFactory;
     }
 
     /// @dev See {IGammaPool-createLoan}
