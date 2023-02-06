@@ -43,8 +43,9 @@ interface IGammaPoolFactory {
     /// @param _protocolId - id identifier of GammaPool protocol (can be thought of as version)
     /// @param _cfmm - address of CFMM the GammaPool is created for
     /// @param _tokens - addresses of ERC20 tokens in CFMM, used for validation during runtime of function
+    /// @param _data - custom struct containing additional information used to verify the `_cfmm`
     /// @return _address - address of new GammaPool proxy contract that was instantiated
-    function createPool(uint16 _protocolId, address _cfmm, address[] calldata _tokens) external returns(address);
+    function createPool(uint16 _protocolId, address _cfmm, address[] calldata _tokens, bytes calldata _data) external returns(address);
 
     /// @dev mapping of bytes32 salts (key) to GammaPool addresses. The salt is predetermined and used to instantiate a GammaPool with a unique address
     /// @param _salt - the bytes32 key that is unique to the GammaPool and therefore also used as a unique identifier of the GammaPool

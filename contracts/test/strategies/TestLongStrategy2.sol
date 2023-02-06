@@ -3,7 +3,7 @@ pragma solidity 0.8.4;
 
 import "../../interfaces/strategies/base/ILongStrategy.sol";
 
-contract TestLongStrategy is ILongStrategy {
+contract TestLongStrategy2 is ILongStrategy {
 
     function _getLatestCFMMReserves(address) external override pure returns(uint256[] memory cfmmReserves) {
         cfmmReserves = new uint256[](2);

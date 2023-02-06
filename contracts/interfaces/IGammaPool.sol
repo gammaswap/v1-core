@@ -119,9 +119,10 @@ interface IGammaPool is IGammaPoolEvents {
     /// @dev Check GammaPool for CFMM and tokens can be created with this implementation
     /// @param _tokens - assumed tokens of CFMM, validate function should check CFMM is indeed for these tokens
     /// @param _cfmm - address of CFMM GammaPool will be for
+    /// @param _data - custom struct containing additional information used to verify the `_cfmm`
     /// @return _tokensOrdered - tokens ordered to match the same order as in CFMM
     /// @return _decimals - decimal places of tokens in CFMM. Their index matches _tokensOrdered.
-    function validateCFMM(address[] calldata _tokens, address _cfmm) external view returns(address[] memory _tokensOrdered, uint8[] memory _decimals);
+    function validateCFMM(address[] calldata _tokens, address _cfmm, bytes calldata _data) external view returns(address[] memory _tokensOrdered, uint8[] memory _decimals);
 
     // Short Gamma
 

@@ -3,7 +3,7 @@ pragma solidity 0.8.4;
 
 import "../../interfaces/strategies/base/IShortStrategy.sol";
 
-contract TestShortStrategy is IShortStrategy{
+contract TestShortStrategy2 is IShortStrategy{
 
     function _depositNoPull(address to) external override returns(uint256 shares) {
         shares = 2;

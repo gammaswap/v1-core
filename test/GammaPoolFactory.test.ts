@@ -144,10 +144,21 @@ describe("GammaPoolFactory", function () {
         cfmm: addr3.address,
         tokens: [tokenA.address, tokenB.address],
       };
+
+      const params = {
+        protocolId: 1,
+        cfmm: addr3.address,
+      };
+      const data = ethers.utils.defaultAbiCoder.encode(
+        ["tuple(uint16 protocolId, address cfmm)"],
+        [params]
+      );
+
       await factory.createPool(
         createPoolParams.protocolId,
         createPoolParams.cfmm,
-        createPoolParams.tokens
+        createPoolParams.tokens,
+        data
       );
       const key = await addressCalculator.getGammaPoolKey(addr3.address, 1);
       const pool = await factory.getPool(key);
@@ -170,25 +181,45 @@ describe("GammaPoolFactory", function () {
         protocolId: 1,
         tokens: [tokenA.address, tokenB.address],
       };
-      await expect(
-        factory.createPool(
-          createPoolParams.protocolId,
-          createPoolParams.cfmm,
-          createPoolParams.tokens
-        )
-      ).to.be.revertedWith("ProtocolNotSet");
-      await factory.addProtocol(protocol.address);
-
-      await factory.createPool(
-        createPoolParams.protocolId,
-        createPoolParams.cfmm,
-        createPoolParams.tokens
+      const params = {
+        protocolId: 1,
+        cfmm: addr3.address,
+      };
+      const data = ethers.utils.defaultAbiCoder.encode(
+        ["tuple(uint16 protocolId, address cfmm)"],
+        [params]
       );
       await expect(
         factory.createPool(
           createPoolParams.protocolId,
           createPoolParams.cfmm,
-          createPoolParams.tokens
+          createPoolParams.tokens,
+          data
+        )
+      ).to.be.revertedWith("ProtocolNotSet");
+      await factory.addProtocol(protocol.address);
+
+      await expect(
+        factory.createPool(
+          createPoolParams.protocolId,
+          owner.address,
+          createPoolParams.tokens,
+          data
+        )
+      ).to.be.revertedWith("Validation");
+
+      await factory.createPool(
+        createPoolParams.protocolId,
+        createPoolParams.cfmm,
+        createPoolParams.tokens,
+        data
+      );
+      await expect(
+        factory.createPool(
+          createPoolParams.protocolId,
+          createPoolParams.cfmm,
+          createPoolParams.tokens,
+          data
         )
       ).to.be.revertedWith("PoolExists");
 
@@ -199,13 +230,22 @@ describe("GammaPoolFactory", function () {
         protocolId: 1,
         tokens: [tokenA.address, tokenC.address],
       };
+      const params2 = {
+        protocolId: 1,
+        cfmm: addr4.address,
+      };
+      const data2 = ethers.utils.defaultAbiCoder.encode(
+        ["tuple(uint16 protocolId, address cfmm)"],
+        [params2]
+      );
       await expect(
         factory
           .connect(addr1)
           .createPool(
             createPoolParams2.protocolId,
             createPoolParams2.cfmm,
-            createPoolParams2.tokens
+            createPoolParams2.tokens,
+            data2
           )
       ).to.be.revertedWith("ProtocolRestricted");
 
@@ -216,14 +256,16 @@ describe("GammaPoolFactory", function () {
         .createPool(
           createPoolParams2.protocolId,
           createPoolParams2.cfmm,
-          createPoolParams2.tokens
+          createPoolParams2.tokens,
+          data2
         );
 
       await expect(
         factory.createPool(
           createPoolParams2.protocolId,
           createPoolParams2.cfmm,
-          createPoolParams2.tokens
+          createPoolParams2.tokens,
+          data2
         )
       ).to.be.revertedWith("PoolExists");
     });
