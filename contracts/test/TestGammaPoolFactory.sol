@@ -35,7 +35,7 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
         getPool[key] = pool;
     }
 
-    function createPool(uint16, address, address[] calldata) external override virtual returns(address) {
+    function createPool(uint16, address, address[] calldata, bytes calldata) external override virtual returns(address) {
     }
 
     function isProtocolRestricted(uint16) external pure override returns(bool) {
