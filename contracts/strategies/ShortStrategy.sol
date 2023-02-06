@@ -1,0 +1,298 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity 0.8.4;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../interfaces/strategies/base/IShortStrategy.sol";
+import "../interfaces/periphery/ISendTokensCallback.sol";
+import "./BaseStrategy.sol";
+
+/// @title Short Strategy abstract contract implementation of IShortStrategy
+/// @author Daniel D. Alcarraz
+/// @notice All external functions are locked to avoid reentrancy
+/// @dev Only defines common functions that would be used by all concrete contracts that deposit and withdraw liquidity
+abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
+
+    error ZeroShares();
+    error ZeroAssets();
+    error ExcessiveWithdrawal();
+    error ExcessiveSpend();
+
+    /// @dev Error thrown when wrong amount of ERC20 token is deposited in GammaPool
+    /// @param token - address of ERC20 token that caused the error
+    error WrongTokenBalance(address token);
+
+    // ShortGamma
+
+    /// @dev Minimum number of shares issued on first deposit to avoid rounding issues
+    uint256 public constant MIN_SHARES = 1e3;
+
+    /// @notice Calculate amounts to deposit in CFMM depending on the CFMM's formula
+    /// @dev The user requests desired amounts to deposit and sets minimum amounts since actual amounts are unknown at time of request
+    /// @param amountsDesired - desired amounts of reserve tokens to deposit in CFMM
+    /// @param amountsMin - minimum amounts of reserve tokens expected to deposit in CFMM
+    /// @return reserves - amounts that will be deposited in CFMM
+    /// @return payee - address reserve tokens will be sent to. Address holding CFMM's reserves might be different from CFMM's address
+    function calcDepositAmounts(uint256[] calldata amountsDesired, uint256[] calldata amountsMin) internal virtual view returns (uint256[] memory reserves, address payee);
+
+    /// @dev The user requests desired amounts to deposit and sets minimum amounts since actual amounts are unknown at time of request
+    /// @param cfmm - address of GammaPool's CFMM
+    /// @return reserves - amounts that will be deposited in CFMM
+    function getReserves(address cfmm) internal virtual view returns(uint128[] memory);
+
+    /// @dev See {IShortStrategy-totalAssets}.
+    function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum) public view virtual override returns(uint256) {
+        // Get liquidity invariant from CFMM
+        uint256 lastCFMMInvariant = calcInvariant(cfmm, getReserves(cfmm));
+
+        // Get total minted LP tokens from CFMM
+        uint256 lastCFMMTotalSupply = GammaSwapLibrary.totalSupply(IERC20(cfmm));
+
+        // Calculate liquidity invariant in CFMM from LP tokens in GammaPool
+        uint256 lpInvariant = convertLPToInvariant(lpBalance, prevCFMMInvariant, prevCFMMTotalSupply);
+
+        // Get fee growth in CFMM since last update
+        uint256 blockDiff = block.number - lastBlockNum;
+        uint256 lastCFMMFeeIndex = blockDiff > 0 ? calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply) : 1e18;
+
+        // Calculate interest that would be charged to entire pool's liquidity debt if pool were updated in this transaction
+        uint256 lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, calcBorrowRate(lpInvariant, borrowedInvariant), blockDiff);
+
+        // Return CFMM LP tokens depositedin GammaPool plus borrowed liquidity invariant with accrued interest in terms of CFMM LP tokens
+        return lpBalance + convertInvariantToLP(accrueBorrowedInvariant(borrowedInvariant, lastFeeIndex), lastCFMMTotalSupply, lastCFMMInvariant);
+    }
+
+    //********* Short Gamma Functions *********//
+
+    /// @dev See {IShortStrategy-_depositNoPull}.
+    function _depositNoPull(address to) external virtual override lock returns(uint256 shares) {
+        shares = depositAssetsNoPull(to, false);
+    }
+
+    /// @notice Deposit CFMM LP tokens without calling transferFrom
+    /// @dev There has to be unaccounted for CFMM LP tokens before calling this function
+    /// @param to - address of receiver of GS LP tokens that will be minted
+    /// @param isDepositReserves - true if depositing reserve tokens, false if depositing CFMM LP tokens
+    /// @return shares - amount of GS LP tokens minted
+    function depositAssetsNoPull(address to, bool isDepositReserves) internal virtual returns(uint256 shares) {
+        // Unaccounted for CFMM LP tokens in GammaPool, presumably deposited by user requesting GS LP tokens
+        uint256 assets = GammaSwapLibrary.balanceOf(IERC20(s.cfmm), address(this)) - s.LP_TOKEN_BALANCE;
+
+        // Update interest rate and state variables before conversion
+        updateIndex();
+
+        // Convert CFMM LP tokens (`assets`) to GS LP tokens (`shares`)
+        shares = convertToShares(assets);
+        if(shares == 0) { // revert if request is for 0 GS LP tokens
+            revert ZeroShares();
+        }
+
+        // To prevent rounding errors, lock min shares in first deposit
+        if(s.totalSupply == 0) {
+            shares = shares - MIN_SHARES;
+            assets = assets - MIN_SHARES;
+            depositAssets(msg.sender, address(0), MIN_SHARES, MIN_SHARES, isDepositReserves);
+        }
+        // Track CFMM LP tokens (`assets`) in GammaPool and mint GS LP tokens (`shares`) to receiver (`to`)
+        depositAssets(msg.sender, to, assets, shares, isDepositReserves);
+    }
+
+    /// @dev See {IShortStrategy-_withdrawNoPull}.
+    function _withdrawNoPull(address to) external virtual override lock returns(uint256 assets) {
+        (,assets) = withdrawAssetsNoPull(to, false); // withdraw CFMM LP tokens
+    }
+
+    /// @notice Transactions to perform before calling the deposit function in CFMM (e.g. transferring reserve tokens)
+    /// @dev Tokens are usually sent to an address calculated by the `calcDepositAmounts` function before calling the deposit function in the CFMM
+    /// @param amounts - amounts of reserve tokens to transfer
+    /// @param to - destination address of reserve tokens
+    /// @param data - information to verify transaction request in contract performing the transfer
+    /// @return deposits - amounts deposited at `to`
+    function preDepositToCFMM(uint256[] memory amounts, address to, bytes memory data) internal virtual returns (uint256[] memory deposits) {
+        address[] storage tokens = s.tokens;
+        deposits = new uint256[](tokens.length);
+        for(uint256 i; i < tokens.length;) {
+            // Get current reserve token balances in destination address
+            deposits[i] = GammaSwapLibrary.balanceOf(IERC20(tokens[i]), to);
+            unchecked {
+                ++i;
+            }
+        }
+        // Ask msg.sender to send reserve tokens to destination address
+        ISendTokensCallback(msg.sender).sendTokensCallback(tokens, amounts, to, data);
+        uint256 newBalance;
+        for(uint256 i; i < tokens.length;) {
+            if(amounts[i] > 0) {
+                newBalance = GammaSwapLibrary.balanceOf(IERC20(tokens[i]), to);
+                // Check destination address received reserve tokens by comparing with previous balances
+                if(deposits[i] >= newBalance) {
+                    revert WrongTokenBalance(tokens[i]);
+                }
+                unchecked {
+                    deposits[i] = newBalance - deposits[i];
+                }
+            } else {
+                deposits[i] = 0;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /// @dev See {IShortStrategy-_depositReserves}.
+    function _depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external virtual override lock returns(uint256[] memory reserves, uint256 shares) {
+        address payee; // address that will receive reserve tokens from depositor
+
+        // Calculate amounts of reserve tokens to send and address to send them to
+        (reserves, payee) = calcDepositAmounts(amountsDesired, amountsMin);
+
+        // Transfer reserve tokens
+        reserves = preDepositToCFMM(reserves, payee, data);
+
+        // Call deposit function requesting CFMM LP tokens from CFMM and deposit them in GammaPool
+        depositToCFMM(s.cfmm, address(this), reserves);
+
+        // Mint GS LP Tokens to receiver (`to`) equivalent in value to CFMM LP tokens just deposited
+        shares = depositAssetsNoPull(to, true);
+    }
+
+    /// @dev See {IShortStrategy-_withdrawReserves}.
+    function _withdrawReserves(address to) external virtual override lock returns(uint256[] memory reserves, uint256 assets) {
+        (reserves, assets) = withdrawAssetsNoPull(to, true); // Withdraw reserve tokens
+    }
+
+    /// @dev Withdraw CFMM LP tokens from GammaPool or reserve tokens from CFMM and send them to receiver address (`to`)
+    /// @param to - receiver address of CFMM LP tokens or reserve tokens
+    /// @param askForReserves - send reserve tokens to receiver (`to`) if true, send CFMM LP tokens otherwise
+    function withdrawAssetsNoPull(address to, bool askForReserves) internal virtual returns(uint256[] memory reserves, uint256 assets) {
+        // Check is GammaPool has received GS LP tokens
+        uint256 shares = s.balanceOf[address(this)];
+
+        // Update interest rate and state variables before conversion
+        updateIndex();
+
+        // Convert GS LP tokens (`shares`) to CFMM LP tokens (`assets`)
+        assets = convertToAssets(shares);
+        if(assets == 0) { // revert if request is for 0 CFMM LP tokens
+            revert ZeroAssets();
+        }
+
+        // Revert if not enough CFMM LP tokens in GammaPool
+        if(assets > s.LP_TOKEN_BALANCE) {
+            revert ExcessiveWithdrawal();
+        }
+
+        // Send CFMM LP tokens or reserve tokens to receiver (`to`) and burn corresponding GS LP tokens from GammaPool address
+        reserves = withdrawAssets(address(this), to, address(this), assets, shares, askForReserves);
+    }
+
+    //*************ERC-4626 functions************//
+
+    /// @dev Mint GS LP tokens (`shares`) to receiver (`to`) and track CFMM LP tokens (`assets`)
+    /// @param caller - user address that requested to deposit CFMM LP tokens
+    /// @param to - address receiving GS LP tokens (`shares`)
+    /// @param assets - amount of CFMM LP tokens deposited
+    /// @param shares - amount of GS LP tokens minted to receiver
+    /// @param isDepositReserves - true if depositing reserve tokens, false if depositing CFMM LP tokens
+    function depositAssets(address caller, address to, uint256 assets, uint256 shares, bool isDepositReserves) internal virtual {
+        _mint(to, shares); // mint GS LP tokens to receiver (`to`)
+
+        // Update CFMM LP token amount tracked by GammaPool and invariant in CFMM belonging to GammaPool
+        uint256 lpTokenBalance = GammaSwapLibrary.balanceOf(IERC20(s.cfmm), address(this));
+        uint128 lpInvariant = uint128(convertLPToInvariant(lpTokenBalance, s.lastCFMMInvariant, s.lastCFMMTotalSupply));
+        s.LP_TOKEN_BALANCE = lpTokenBalance;
+        s.LP_INVARIANT = lpInvariant;
+
+        emit Deposit(caller, to, assets, shares);
+        emit PoolUpdated(lpTokenBalance, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
+            lpInvariant, s.BORROWED_INVARIANT, isDepositReserves ? TX_TYPE.DEPOSIT_RESERVES : TX_TYPE.DEPOSIT_LIQUIDITY);
+
+        afterDeposit(assets, shares);
+    }
+
+    /// @dev Withdraw CFMM LP tokens (`assets`) or their reserve token equivalent to receiver (`to`) by burning GS LP tokens (`shares`)
+    /// @param caller - user address that requested to withdraw CFMM LP tokens
+    /// @param to - address receiving CFMM LP tokens (`shares`) or their reserve token equivalent
+    /// @param owner - address that owns GS LP tokens (`shares`) that will be burned
+    /// @param assets - amount of CFMM LP tokens that will be sent to receiver (`to`)
+    /// @param shares - amount of GS LP tokens that will be burned
+    /// @param askForReserves - withdraw reserve tokens if true, CFMM LP tokens otherwise
+    /// @return reserves - amount of reserve tokens withdrawn if `askForReserves` is true
+    function withdrawAssets(address caller, address to, address owner, uint256 assets, uint256 shares, bool askForReserves) internal virtual returns(uint256[] memory reserves){
+        if (caller != owner) { // If caller does not own GS LP tokens, check if allowed to burn them
+            spendAllowance(owner, caller, shares);
+        }
+
+        beforeWithdraw(assets, shares); // Before withdraw hook
+
+        _burn(owner, shares); // Burn owner's GS LP tokens
+
+        address cfmm = s.cfmm; // Save gas
+        uint256 lpTokenBalance;
+        uint128 lpInvariant;
+        if(askForReserves) { // If withdrawing reserve tokens
+            reserves = withdrawFromCFMM(cfmm, to, assets); // Changes lastCFMMTotalSupply and lastCFMMInvariant (less assets, less invariant)
+            lpTokenBalance = GammaSwapLibrary.balanceOf(IERC20(cfmm), address(this));
+            uint256 lastCFMMInvariant = calcInvariant(cfmm, getReserves(cfmm));
+            uint256 lastCFMMTotalSupply = GammaSwapLibrary.totalSupply(IERC20(cfmm));
+            lpInvariant = uint128(convertLPToInvariant(lpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply));
+            s.lastCFMMInvariant = uint128(lastCFMMInvariant); // Less invariant
+            s.lastCFMMTotalSupply = lastCFMMTotalSupply; // Less CFMM LP tokens in existence
+        } else { // If withdrawing CFMM LP tokens
+            GammaSwapLibrary.safeTransfer(IERC20(cfmm), to, assets); // doesn't change lastCFMMTotalSupply or lastCFMMInvariant
+            lpTokenBalance = GammaSwapLibrary.balanceOf(IERC20(cfmm), address(this));
+            lpInvariant = uint128(convertLPToInvariant(lpTokenBalance, s.lastCFMMInvariant, s.lastCFMMTotalSupply));
+        }
+        s.LP_INVARIANT = lpInvariant;
+        s.LP_TOKEN_BALANCE = lpTokenBalance;
+
+        emit Withdraw(caller, to, owner, assets, shares);
+        emit PoolUpdated(lpTokenBalance, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
+            lpInvariant, s.BORROWED_INVARIANT, askForReserves ? TX_TYPE.WITHDRAW_RESERVES : TX_TYPE.WITHDRAW_LIQUIDITY);
+    }
+
+    /// @dev Check if `spender` has permissions to spend `amount` of GS LP tokens belonging to `owner`
+    /// @param owner - address that owns the GS LP tokens
+    /// @param spender - address that will spend the GS LP tokens (`amount`) of the owner
+    /// @param amount - amount of owner's GS LP tokens that will be spent
+    function spendAllowance(address owner, address spender, uint256 amount) internal virtual {
+        uint256 allowed = s.allowance[owner][spender]; // Saves gas for limited approvals.
+        if (allowed != type(uint256).max) { // If limited spending
+            if(allowed < amount) { // Not allowed to spend that much
+                revert ExcessiveSpend();
+            }
+            unchecked {
+                s.allowance[owner][spender] = allowed - amount;
+            }
+        }
+    }
+
+    // ACCOUNTING LOGIC
+
+    /// @dev Check if `spender` has permissions to spend `amount` of GS LP tokens belonging to `owner`
+    /// @param assets - address that owns the GS LP tokens
+    function convertToShares(uint256 assets) internal view virtual returns (uint256) {
+        uint256 supply = s.totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
+        uint256 _totalAssets = s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST;
+        return supply == 0 || _totalAssets == 0 ? assets : (assets * supply / _totalAssets);
+    }
+
+    /// @dev Check if `spender` has permissions to spend `amount` of GS LP tokens belonging to `owner`
+    /// @param shares - address that owns the GS LP tokens
+    function convertToAssets(uint256 shares) internal view virtual returns (uint256) {
+        uint256 supply = s.totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
+        return supply == 0 ? shares : (shares * (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST) / supply);
+    }
+
+    // INTERNAL HOOKS LOGIC
+
+    /// @dev Hook function that executes before withdrawal of CFMM LP tokens (`withdrawAssets`) but after token conversion
+    /// @param assets - amount of CFMM LP tokens
+    /// @param shares - amount GS LP tokens
+    function beforeWithdraw(uint256 assets, uint256 shares) internal virtual {}
+
+    /// @dev Hook function that executes after deposit of CFMM LP tokens
+    /// @param assets - amount of CFMM LP tokens
+    /// @param shares - amount GS LP tokens
+    function afterDeposit(uint256 assets, uint256 shares) internal virtual {}
+}

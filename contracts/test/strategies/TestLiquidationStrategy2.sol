@@ -3,7 +3,7 @@ pragma solidity 0.8.4;
 
 import "../../interfaces/strategies/base/ILiquidationStrategy.sol";
 
-contract TestLiquidationStrategy is ILiquidationStrategy  {
+contract TestLiquidationStrategy2 is ILiquidationStrategy  {
 
     function _liquidate(uint256 tokenId, int256[] calldata deltas) external override virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
         uint128[] memory tokensHeld = new uint128[](2);

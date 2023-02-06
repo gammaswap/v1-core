@@ -41,10 +41,10 @@ describe("GammaPool", function () {
       "TestGammaPoolFactory"
     );
 
-    TestLongStrategy = await ethers.getContractFactory("TestLongStrategy");
-    TestShortStrategy = await ethers.getContractFactory("TestShortStrategy");
+    TestLongStrategy = await ethers.getContractFactory("TestLongStrategy2");
+    TestShortStrategy = await ethers.getContractFactory("TestShortStrategy2");
     TestLiquidationStrategy = await ethers.getContractFactory(
-      "TestLiquidationStrategy"
+      "TestLiquidationStrategy2"
     );
 
     GammaPool = await ethers.getContractFactory("TestGammaPool");
