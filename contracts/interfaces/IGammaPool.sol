@@ -193,9 +193,10 @@ interface IGammaPool is IGammaPoolEvents {
     /// @dev Repay liquidity debt of loan identified by tokenId, debt is repaid using available collateral in loan
     /// @param tokenId - unique id identifying loan
     /// @param liquidity - liquidity debt being repaid, capped at actual liquidity owed. Can't repay more than you owe
+    /// @param fees - fee on transfer for tokens[i]. Send empty array if no token in pool has fee on transfer or array of zeroes
     /// @return liquidityPaid - liquidity amount that has been repaid
     /// @return amounts - collateral amounts consumed in repaying liquidity debt
-    function repayLiquidity(uint256 tokenId, uint256 liquidity) external returns(uint256 liquidityPaid, uint256[] memory amounts);
+    function repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees) external returns(uint256 liquidityPaid, uint256[] memory amounts);
 
     /// @dev Rebalance collateral amounts of loan identified by tokenId by purchasing or selling some of the collateral
     /// @param tokenId - unique id identifying loan
@@ -207,9 +208,10 @@ interface IGammaPool is IGammaPoolEvents {
     /// @dev Function to liquidate a loan using its own collateral or depositing additional tokens. Seeks full liquidation
     /// @param tokenId - tokenId of loan being liquidated
     /// @param deltas - amount tokens to trade to re-balance the collateral
+    /// @param fees - fee on transfer for tokens[i]. Send empty array if no token in pool has fee on transfer or array of zeroes
     /// @return loanLiquidity - loan liquidity liquidated (after write down)
     /// @return refund - amounts from collateral tokens being refunded to liquidator
-    function liquidate(uint256 tokenId, int256[] calldata deltas) external returns(uint256 loanLiquidity, uint256[] memory refund);
+    function liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external returns(uint256 loanLiquidity, uint256[] memory refund);
 
     /// @dev Function to liquidate a loan using external LP tokens. Allows partial liquidation
     /// @param tokenId - tokenId of loan being liquidated

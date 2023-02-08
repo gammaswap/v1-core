@@ -11,9 +11,10 @@ interface ILiquidationStrategy is ILiquidationStrategyEvents {
     /// @dev Function to liquidate a loan using its own collateral or depositing additional tokens. Seeks full liquidation
     /// @param tokenId - tokenId of loan being liquidated
     /// @param deltas - amount tokens to trade to re-balance the collateral
+    /// @param fees - fee on transfer for tokens[i]. Send empty array if no token in pool has fee on transfer or array of zeroes
     /// @return loanLiquidity - loan liquidity liquidated (after write down)
     /// @return refund - amounts from collateral tokens being refunded to liquidator
-    function _liquidate(uint256 tokenId, int256[] calldata deltas) external returns(uint256 loanLiquidity, uint256[] memory refund);
+    function _liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external returns(uint256 loanLiquidity, uint256[] memory refund);
 
     /// @dev Function to liquidate a loan using external LP tokens. Allows partial liquidation
     /// @param tokenId - tokenId of loan being liquidated

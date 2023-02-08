@@ -5,7 +5,7 @@ import "../../interfaces/strategies/base/ILiquidationStrategy.sol";
 
 contract TestLiquidationStrategy2 is ILiquidationStrategy  {
 
-    function _liquidate(uint256 tokenId, int256[] calldata deltas) external override virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
+    function _liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external override virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
         uint128[] memory tokensHeld = new uint128[](2);
         tokensHeld[0] = 1;
         tokensHeld[1] = deltas.length > 0 ? 2 : 3;
@@ -13,8 +13,10 @@ contract TestLiquidationStrategy2 is ILiquidationStrategy  {
         refund[0] = deltas.length > 0 ? uint128(uint256(deltas[0])) : 777;
         refund[1] = deltas.length > 1 ? uint128(uint256(deltas[1])) : 888;
         loanLiquidity = 4;
+        uint128 fee0 = fees.length > 0 ? uint128(fees[0]) : 0;
+        uint128 fee1 = fees.length > 1 ? uint128(fees[1]) : 0;
         emit LoanUpdated(tokenId, tokensHeld, uint128(refund[0]), uint128(refund[1]), loanLiquidity, 5, TX_TYPE.LIQUIDATE);
-        emit Liquidation(tokenId, 100, 200, 300, TX_TYPE.LIQUIDATE, new uint256[](0));
+        emit Liquidation(tokenId, 100, 200 + fee0, 300 + fee1, TX_TYPE.LIQUIDATE, new uint256[](0));
     }
 
     function _liquidateWithLP(uint256 tokenId) external override virtual returns(uint256 loanLiquidity, uint256[] memory refund) {

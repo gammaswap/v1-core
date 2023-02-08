@@ -19,7 +19,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
     function liquidationFeeThreshold() internal virtual view returns(uint16);
 
     /// @dev See {LiquidationStrategy-_liquidate}.
-    function _liquidate(uint256 tokenId, int256[] calldata deltas) external override lock virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
+    function _liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external override lock virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
         // Check can liquidate loan and get loan with updated loan liquidity
         LibStorage.Loan storage _loan;
         uint256 writeDownAmt;
@@ -29,7 +29,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
         // Update loan collateral amounts (e.g. re-balance and/or account for deposited collateral)
         // Repay liquidity debt in full and get back remaining collateral amounts
-        uint128[] memory tokensHeld = rebalanceAndDepositCollateral(_loan, loanLiquidity, deltas);
+        uint128[] memory tokensHeld = rebalanceAndDepositCollateral(_loan, loanLiquidity, deltas, fees);
 
         // Pay loan liquidity in full with collateral amounts and refund remaining collateral to liquidator
         // CFMM LP token principal paid will be calculated during function call, hence pass 0
@@ -339,8 +339,9 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
     /// @param _loan - loan whose collateral will be rebalanced
     /// @param loanLiquidity - liquidity of loan to liquidate (avoids reading from _loan again to save gas)
     /// @param deltas - amounts of collateral to swap if re-balancing.
+    /// @param fees - fee on transfer for tokens[i]. Send empty array if no token in pool has fee on transfer or array of zeroes
     /// @return tokensHeld - remaining loan collateral amounts
-    function rebalanceAndDepositCollateral(LibStorage.Loan storage _loan, uint256 loanLiquidity, int256[] calldata deltas) internal virtual returns(uint128[] memory tokensHeld) {
+    function rebalanceAndDepositCollateral(LibStorage.Loan storage _loan, uint256 loanLiquidity, int256[] calldata deltas, uint256[] calldata fees) internal virtual returns(uint128[] memory tokensHeld) {
         if(deltas.length > 0) {
             (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas);
             swapTokens(_loan, outAmts, inAmts);
@@ -348,7 +349,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         updateCollateral(_loan); // Update collateral from token deposits or rebalancing
 
         // Repay liquidity debt, increase lastCFMMTotalSupply and lastCFMMTotalInvariant
-        repayTokens(_loan, calcTokensToRepay(loanLiquidity));
+        repayTokens(_loan, addFees(calcTokensToRepay(loanLiquidity), fees));
         tokensHeld = updateCollateral(_loan); // Update remaining collateral
     }
 }

@@ -288,6 +288,23 @@ abstract contract BaseLongStrategy is BaseStrategy {
         }
     }
 
+    /// @dev Add transfer fees to amounts if any
+    /// @param amounts - amount of `token` being transferred
+    /// @param fees - transfer fees charged to amount of `token` being transferred in basis points
+    /// @return amountsWithFees - amount of `token` being transferred including fees
+    function addFees(uint256[] memory amounts, uint256[] calldata fees) internal virtual pure returns(uint256[] memory) {
+        if(fees.length != amounts.length) {
+            return amounts;
+        }
+        for(uint256 i; i < amounts.length;) {
+            amounts[i] += amounts[i] * fees[i] / 10000;
+            unchecked {
+                i++;
+            }
+        }
+        return amounts;
+    }
+
     /// @dev Send collateral amount from loan out of GammaPool
     /// @param token - address of ERC20 token being transferred
     /// @param to - receiver of `token` amount

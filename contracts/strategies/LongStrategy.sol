@@ -97,7 +97,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     }
 
     /// @dev See {ILongStrategy-_repayLiquidity}.
-    function _repayLiquidity(uint256 tokenId, uint256 payLiquidity) external virtual override lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
+    function _repayLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees) external virtual override lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
@@ -108,7 +108,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         liquidityPaid = payLiquidity > loanLiquidity ? loanLiquidity : payLiquidity;
 
         // Calculate reserve tokens that liquidity repayment represents
-        amounts = calcTokensToRepay(liquidityPaid);
+        amounts = addFees(calcTokensToRepay(liquidityPaid), fees);
 
         // Repay liquidity debt with reserve tokens, must check against available loan collateral
         repayTokens(_loan, amounts);
