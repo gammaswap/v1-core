@@ -20,13 +20,13 @@ describe("LongStrategy", function () {
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
     // Get the ContractFactory and Signers here.
-    TestERC20 = await ethers.getContractFactory("TestERC20WithFee");
+    TestERC20 = await ethers.getContractFactory("TestERC20");
     TestCFMM = await ethers.getContractFactory("TestCFMM");
     TestStrategy = await ethers.getContractFactory("TestLongStrategy");
     [owner, addr1, addr2] = await ethers.getSigners();
 
-    tokenA = await TestERC20.deploy("Test Token A", "TOKA", 0);
-    tokenB = await TestERC20.deploy("Test Token B", "TOKB", 0);
+    tokenA = await TestERC20.deploy("Test Token A", "TOKA");
+    tokenB = await TestERC20.deploy("Test Token B", "TOKB");
 
     cfmm = await TestCFMM.deploy(
       tokenA.address,
