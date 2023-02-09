@@ -34,9 +34,10 @@ interface ILongStrategy is ILongStrategyEvents {
     /// @dev Repay liquidity debt of loan identified by tokenId, debt is repaid using available collateral in loan
     /// @param tokenId - unique id identifying loan
     /// @param liquidity - liquidity debt being repaid, capped at actual liquidity owed. Can't repay more than you owe
+    /// @param fees - fee on transfer for tokens[i]. Send empty array if no token in pool has fee on transfer or array of zeroes
     /// @return liquidityPaid - liquidity amount that has been repaid
     /// @return amounts - collateral amounts consumed in repaying liquidity debt
-    function _repayLiquidity(uint256 tokenId, uint256 liquidity) external returns(uint256 liquidityPaid, uint256[] memory amounts);
+    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees) external returns(uint256 liquidityPaid, uint256[] memory amounts);
 
     /// @dev Rebalance collateral amounts of loan identified by tokenId by purchasing or selling some of the collateral
     /// @param tokenId - unique id identifying loan

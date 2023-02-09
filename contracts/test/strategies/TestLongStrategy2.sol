@@ -36,7 +36,7 @@ contract TestLongStrategy2 is ILongStrategy {
         emit LoanUpdated(tokenId, heldTokens, 31, 32, 33, 34, TX_TYPE.BORROW_LIQUIDITY);
     }
 
-    function _repayLiquidity(uint256 tokenId, uint256 liquidity) external override returns(uint256 liquidityPaid, uint256[] memory amounts){
+    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees) external override returns(uint256 liquidityPaid, uint256[] memory amounts){
         liquidityPaid = tokenId;
         amounts = new uint256[](2);
         amounts[0] = 9;
@@ -44,7 +44,7 @@ contract TestLongStrategy2 is ILongStrategy {
         uint128[] memory heldTokens = new uint128[](2);
         heldTokens[0] = 9;
         heldTokens[1] = 10;
-        emit LoanUpdated(tokenId, heldTokens, uint128(liquidity), 42, 43, 44, TX_TYPE.REPAY_LIQUIDITY);
+        emit LoanUpdated(tokenId, heldTokens, uint128(liquidity), uint128(40 + fees.length), fees[0], uint96(fees[1]), TX_TYPE.REPAY_LIQUIDITY);
     }
 
     function _rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external override returns(uint128[] memory tokensHeld){

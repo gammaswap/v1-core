@@ -2487,16 +2487,16 @@ describe("LiquidationStrategy", function () {
 
       // function _liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external override lock virtual returns(uint256[] memory refund)
       await expect(
-        liquidationStrategy._liquidate(tokenIds[0], [])
+        liquidationStrategy._liquidate(tokenIds[0], [], [])
       ).to.be.revertedWith("HasMargin");
       await expect(
-        liquidationStrategy._liquidate(tokenIds[0], [1, 0])
+        liquidationStrategy._liquidate(tokenIds[0], [1, 0], [])
       ).to.be.revertedWith("HasMargin");
       await expect(
-        liquidationStrategy._liquidate(tokenIds[0], [])
+        liquidationStrategy._liquidate(tokenIds[0], [], [])
       ).to.be.revertedWith("HasMargin");
       await expect(
-        liquidationStrategy._liquidate(tokenIds[0], [1, 0])
+        liquidationStrategy._liquidate(tokenIds[0], [1, 0], [])
       ).to.be.revertedWith("HasMargin");
     });
 
@@ -2536,7 +2536,7 @@ describe("LiquidationStrategy", function () {
       ).wait();
 
       await borrowMostOfIt(ONE.mul(30)); // spike up interest, (this doesn't change the result)
-      await liquidationStrategy._liquidate(tokenId, [0, 0]);
+      await liquidationStrategy._liquidate(tokenId, [0, 0], []);
 
       const res2 = await liquidationStrategy.getLoan(tokenId);
       expect(res2.poolId).to.equal(liquidationStrategy.address);
@@ -2582,7 +2582,7 @@ describe("LiquidationStrategy", function () {
         )
       ).wait();
       await borrowMostOfIt(ONE.mul(30)); // spike up interest
-      await liquidationStrategy._liquidate(tokenId, true, [1000, -1000]);
+      await liquidationStrategy._liquidate(tokenId, true, [1000, -1000], []);
 
       const res2 = await liquidationStrategy.getLoan(tokenId);
       expect(res2.poolId).to.equal(liquidationStrategy.address);
