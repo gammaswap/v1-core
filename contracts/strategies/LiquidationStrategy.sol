@@ -29,7 +29,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
         // Update loan collateral amounts (e.g. re-balance and/or account for deposited collateral)
         // Repay liquidity debt in full and get back remaining collateral amounts
-        uint128[] memory tokensHeld = rebalanceAndDepositCollateral(_loan, loanLiquidity, deltas, fees);
+        uint128[] memory tokensHeld = rebalanceAndDepositCollateral(_loan, loanLiquidity + minBorrow(), deltas, fees);
 
         // Pay loan liquidity in full with collateral amounts and refund remaining collateral to liquidator
         // CFMM LP token principal paid will be calculated during function call, hence pass 0
