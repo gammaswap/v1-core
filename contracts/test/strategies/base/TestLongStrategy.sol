@@ -17,6 +17,7 @@ contract TestLongStrategy is LongStrategy {
     uint80 public borrowRate = 1;
     uint16 public origFee = 0;
     uint16 public protocolId;
+    uint256 private _minBorrow = 1e3;
 
     constructor() {
     }
@@ -24,6 +25,14 @@ contract TestLongStrategy is LongStrategy {
     function initialize(address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) external virtual {
         protocolId = _protocolId;
         s.initialize(msg.sender, _cfmm, _tokens, _decimals);
+    }
+
+    function setMinBorrow(uint256 _newMinBorrow) external virtual {
+        _minBorrow = _newMinBorrow;
+    }
+
+    function minBorrow() internal virtual override view returns(uint256) {
+        return _minBorrow;
     }
 
     function maxTotalApy() internal virtual override view returns(uint256) {
