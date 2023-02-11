@@ -13,8 +13,8 @@ abstract contract BaseLongStrategy is BaseStrategy {
     error Margin();
     error MinBorrow();
 
-    /// @dev Minimum number of CFMM LP tokens borrowed to avoid rounding issues. Assumes invariant >= CFMM LP Token
-    uint256 public constant MIN_BORROW = 1e3;
+    /// @dev Minimum number of liquidity borrowed to avoid rounding issues. Assumes invariant >= CFMM LP Token. Default should be 1e3
+    function minBorrow() internal view virtual returns(uint256);
 
     /// @dev Perform necessary transaction before repaying liquidity debt
     /// @param _loan - liquidity loan that will be repaid
@@ -130,7 +130,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
         uint256 liquidityBorrowedExFee = convertLPToInvariant(lpTokens, lastCFMMInvariant, lastCFMMTotalSupply);
 
         // Can't borrow less than minimum liquidity to avoid rounding issues
-        if (liquidityBorrowedExFee < MIN_BORROW) {
+        if (liquidityBorrowedExFee < minBorrow()) {
             revert MinBorrow();
         }
 
@@ -276,7 +276,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
         remainingLiquidity = loanLiquidity - liquidity;
 
         // Can't be less than min liquidity to avoid rounding issues
-        if (remainingLiquidity > 0 && remainingLiquidity < MIN_BORROW) {
+        if (remainingLiquidity > 0 && remainingLiquidity < minBorrow()) {
             revert MinBorrow();
         }
 

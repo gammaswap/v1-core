@@ -105,10 +105,11 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         uint256 loanLiquidity = updateLoan(_loan);
 
         // Cap liquidity repayment at total liquidity debt
-        liquidityPaid = payLiquidity > loanLiquidity ? loanLiquidity : payLiquidity;
+        uint256 liquidityToCalculate;
+        (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minBorrow()) : (payLiquidity, payLiquidity);
 
         // Calculate reserve tokens that liquidity repayment represents
-        amounts = addFees(calcTokensToRepay(liquidityPaid), fees);
+        amounts = addFees(calcTokensToRepay(liquidityToCalculate), fees);
 
         // Repay liquidity debt with reserve tokens, must check against available loan collateral
         repayTokens(_loan, amounts);

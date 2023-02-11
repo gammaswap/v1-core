@@ -32,6 +32,10 @@ contract TestLiquidationStrategy is LiquidationStrategy {
         s.initialize(msg.sender, cfmm, tokens, decimals);
     }
 
+    function minBorrow() internal virtual override view returns(uint256) {
+        return 1e3;
+    }
+
     function ltvThreshold() internal virtual override pure returns(uint16) {
         return 950;
     }
