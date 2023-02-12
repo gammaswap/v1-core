@@ -21,15 +21,22 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
     /// @dev See {LiquidationStrategy-_liquidate}.
     function _liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external override lock virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
         // Check can liquidate loan and get loan with updated loan liquidity
-        LibStorage.Loan storage _loan;
         uint256 writeDownAmt;
         uint256 collateral;
         address cfmm = s.cfmm;
-        (_loan, loanLiquidity, collateral,, writeDownAmt) = getLoanLiquidityAndCollateral(cfmm, tokenId);
+        // No need to check if msg.sender has permission
+        LibStorage.Loan storage _loan = s.loans[tokenId];
+
+        if(deltas.length > 0) { // Done here because if pool charges trading fee, it increases the CFMM invariant
+            (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas);
+            swapTokens(_loan, outAmts, inAmts); // Re-balance collateral
+        }
+
+        (loanLiquidity, collateral,, writeDownAmt) = getLoanLiquidityAndCollateral(_loan, cfmm);
 
         // Update loan collateral amounts (e.g. re-balance and/or account for deposited collateral)
         // Repay liquidity debt in full and get back remaining collateral amounts
-        uint128[] memory tokensHeld = rebalanceAndDepositCollateral(_loan, loanLiquidity + minBorrow(), deltas, fees);
+        uint128[] memory tokensHeld = depositCollateralIntoCFMM(_loan, loanLiquidity + minBorrow(), fees);
 
         // Pay loan liquidity in full with collateral amounts and refund remaining collateral to liquidator
         // CFMM LP token principal paid will be calculated during function call, hence pass 0
@@ -46,12 +53,14 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
     /// @dev See {LiquidationStrategy-_liquidateWithLP}.
     function _liquidateWithLP(uint256 tokenId) external override lock virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
         // Check can liquidate loan and get loan with updated loan liquidity and collateral
-        LibStorage.Loan storage _loan;
         uint128[] memory tokensHeld;
         uint256 writeDownAmt;
         uint256 collateral;
         address cfmm = s.cfmm;
-        (_loan, loanLiquidity, collateral, tokensHeld, writeDownAmt) = getLoanLiquidityAndCollateral(cfmm, tokenId);
+        // No need to check if msg.sender has permission
+        LibStorage.Loan storage _loan = s.loans[tokenId];
+
+        (loanLiquidity, collateral, tokensHeld, writeDownAmt) = getLoanLiquidityAndCollateral(_loan, cfmm);
 
         // Pay loan liquidity in full or partially with previously deposited CFMM LP tokens and refund remaining liquidated share of collateral to liquidator
         // CFMM LP token principal paid will be calculated during function call, hence pass 0
@@ -92,18 +101,14 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, TX_TYPE.BATCH_LIQUIDATION);
     }
 
-    /// @dev Gets loan and its updated loan liquidity
+    /// @dev Update loan liquidity and check if can liquidate
+    /// @param _loan - loan to liquidate
     /// @param cfmm - adress of CFMM
-    /// @param tokenId - id of loan to liquidate
-    /// @return _loan - loan to liquidate
     /// @return loanLiquidity - most updated loan liquidity debt
     /// @return collateral - loan collateral liquidity invariant units
     /// @return tokensHeld - loan collateral token amounts
     /// @return writeDownAmt - collateral liquidity invariant units written down from loan's debt
-    function getLoanLiquidityAndCollateral(address cfmm, uint256 tokenId) internal virtual returns(LibStorage.Loan storage _loan, uint256 loanLiquidity, uint256 collateral, uint128[] memory tokensHeld, uint256 writeDownAmt) {
-        // No need to check if msg.sender has permission
-        _loan = s.loans[tokenId];
-
+    function getLoanLiquidityAndCollateral(LibStorage.Loan storage _loan, address cfmm) internal virtual returns(uint256 loanLiquidity, uint256 collateral, uint128[] memory tokensHeld, uint256 writeDownAmt) {
         // Update loan's liquidity debt and GammaPool's state variables
         loanLiquidity = updateLoan(_loan);
 
@@ -335,17 +340,12 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         }
     }
 
-    /// @dev Re-balance and/or increase loan collateral amounts, then repay liquidity debt
+    /// @dev Increase loan collateral amounts then repay liquidity debt
     /// @param _loan - loan whose collateral will be rebalanced
     /// @param loanLiquidity - liquidity of loan to liquidate (avoids reading from _loan again to save gas)
-    /// @param deltas - amounts of collateral to swap if re-balancing.
     /// @param fees - fee on transfer for tokens[i]. Send empty array if no token in pool has fee on transfer or array of zeroes
     /// @return tokensHeld - remaining loan collateral amounts
-    function rebalanceAndDepositCollateral(LibStorage.Loan storage _loan, uint256 loanLiquidity, int256[] calldata deltas, uint256[] calldata fees) internal virtual returns(uint128[] memory tokensHeld) {
-        if(deltas.length > 0) {
-            (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas);
-            swapTokens(_loan, outAmts, inAmts);
-        }
+    function depositCollateralIntoCFMM(LibStorage.Loan storage _loan, uint256 loanLiquidity, uint256[] calldata fees) internal virtual returns(uint128[] memory tokensHeld) {
         updateCollateral(_loan); // Update collateral from token deposits or rebalancing
 
         // Repay liquidity debt, increase lastCFMMTotalSupply and lastCFMMTotalInvariant
