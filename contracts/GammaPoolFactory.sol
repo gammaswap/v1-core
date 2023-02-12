@@ -81,7 +81,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         address implementation = getProtocol[_protocolId];
 
         // check GammaPool can be created with this implementation
-        (address[] memory _tokensOrdered, uint8[] memory _decimals) = IGammaPool(implementation).validateCFMM(_tokens, _cfmm, _data);
+        (address[] memory _tokensOrdered, uint8[] memory _decimals, uint256[] memory _weights) = IGammaPool(implementation).validateCFMM(_tokens, _cfmm, _data);
 
         // calculate unique identifier of GammaPool that will also be used as salt for instantiating the proxy contract address
         bytes32 key = AddressCalculator.getGammaPoolKey(_cfmm, _protocolId);
@@ -91,7 +91,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         // instantiate GammaPool proxy contract address for protocol's implementation contract using unique key as salt for the pool's address
         pool = cloneDeterministic(implementation, key);
 
-        IGammaPool(pool).initialize(_cfmm, _tokensOrdered, _decimals); // initialize GammaPool's state variables
+        IGammaPool(pool).initialize(_cfmm, _tokensOrdered, _decimals, _weights); // initialize GammaPool's state variables
 
         getPool[key] = pool; // map unique key to new instance of GammaPool
         allPools.push(pool); // store new GammaPool instance in an array

@@ -85,6 +85,8 @@ library LibStorage {
         address[] tokens;
         /// @dev Decimals of tokens in CFMM, indices match tokens[] array
         uint8[] decimals;
+        /// @dev Normalized weights of tokens in CFMM, indices match tokens[] array. Weights should be normalized to 1e18
+        uint256[] weights;
         /// @dev Amounts of ERC20 tokens from the CFMM held as collateral in the GammaPool. Equals to the sum of all tokensHeld[] quantities in all loans
         uint128[] TOKEN_BALANCE;
         /// @dev Amounts of ERC20 tokens from the CFMM held in the CFMM as reserve quantities. Used to log prices quoted by the CFMM during updates to the GammaPool
@@ -99,7 +101,7 @@ library LibStorage {
     /// @param _cfmm - address of CFMM this GammaPool is for
     /// @param _tokens - tokens of CFMM this GammaPool is for
     /// @param _decimals -decimals of the tokens of the CFMM the GammaPool is for, indices must match tokens array
-    function initialize(Storage storage self, address _factory, address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) internal {
+    function initialize(Storage storage self, address _factory, address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals, uint256[] calldata _weights) internal {
         if(self.factory != address(0)) // cannot initialize twice
             revert Initialized();
 
@@ -107,6 +109,7 @@ library LibStorage {
         self.cfmm = _cfmm;
         self.tokens = _tokens;
         self.decimals = _decimals;
+        self.weights = _weights;
 
         self.lastCFMMFeeIndex = 1e18;
         self.accFeeIndex = 1e18; // initialized as 1 with 18 decimal places

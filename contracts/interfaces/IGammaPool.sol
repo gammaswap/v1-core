@@ -58,6 +58,8 @@ interface IGammaPool is IGammaPoolEvents {
         address[] tokens;
         /// @dev Decimals of CFMM tokens, indices match tokens[] array
         uint8[] decimals;
+        /// @dev Normalized weights of CFMM tokens, indices match tokens[] array
+        uint256[] weights;
         /// @dev Amounts of ERC20 tokens from the CFMM held as collateral in the GammaPool. Equals to the sum of all tokensHeld[] quantities in all loans
         uint128[] TOKEN_BALANCE;
         /// @dev Amounts of ERC20 tokens from the CFMM held in the CFMM as reserve quantities. Used to log prices in the CFMM during updates to the GammaPool
@@ -68,7 +70,8 @@ interface IGammaPool is IGammaPoolEvents {
     /// @param _cfmm - address of CFMM GammaPool is for
     /// @param _tokens - ERC20 tokens of CFMM
     /// @param _decimals - decimals of CFMM tokens, indices must match _tokens[] array
-    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) external;
+    /// @param _weights - normalized weights of CFMM tokens, indices must match _tokens[] array
+    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals, uint256[] calldata _weights) external;
 
     /// @dev cfmm - address of CFMM this GammaPool is for
     function cfmm() external view returns(address);
@@ -78,6 +81,9 @@ interface IGammaPool is IGammaPoolEvents {
 
     /// @dev ERC20 tokens of CFMM
     function tokens() external view returns(address[] memory);
+
+    /// @dev Weights of CFMM tokens
+    function weights() external view returns(uint256[] memory);
 
     /// @dev factory - address of factory contract that instantiated this GammaPool
     function factory() external view returns(address);
@@ -122,7 +128,7 @@ interface IGammaPool is IGammaPoolEvents {
     /// @param _data - custom struct containing additional information used to verify the `_cfmm`
     /// @return _tokensOrdered - tokens ordered to match the same order as in CFMM
     /// @return _decimals - decimal places of tokens in CFMM. Their index matches _tokensOrdered.
-    function validateCFMM(address[] calldata _tokens, address _cfmm, bytes calldata _data) external view returns(address[] memory _tokensOrdered, uint8[] memory _decimals);
+    function validateCFMM(address[] calldata _tokens, address _cfmm, bytes calldata _data) external view returns(address[] memory _tokensOrdered, uint8[] memory _decimals, uint256[] memory _weights);
 
     // Short Gamma
 

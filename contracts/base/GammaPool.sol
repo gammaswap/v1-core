@@ -41,11 +41,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     }
 
     /// @dev See {IGammaPool-initialize}
-    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) external virtual override {
+    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals, uint256[] calldata _weights) external virtual override {
         if(msg.sender != factory) // only factory is allowed to initialize
             revert Forbidden();
 
-        s.initialize(factory, _cfmm, _tokens, _decimals);
+        s.initialize(factory, _cfmm, _tokens, _decimals, _weights);
     }
 
     /// @dev See {IGammaPool-cfmm}
@@ -56,6 +56,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     /// @dev See {IGammaPool-tokens}
     function tokens() external virtual override view returns(address[] memory) {
         return s.tokens;
+    }
+
+    /// @dev See {IGammaPool-weights}
+    function weights() external virtual override view returns(uint256[] memory) {
+        return s.weights;
     }
 
     /// @dev See {IGammaPool-vaultImplementation}
@@ -102,6 +107,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.totalSupply = s.totalSupply;
         data.decimals = s.decimals;
         data.tokens = s.tokens;
+        data.weights = s.weights;
         data.TOKEN_BALANCE = s.TOKEN_BALANCE;
         data.CFMM_RESERVES = s.CFMM_RESERVES;
     }
