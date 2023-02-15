@@ -6,7 +6,7 @@ import "../libraries/Math.sol";
 import "./AbstractRateModel.sol";
 
 /// @title Logarithmic Derivative Rate Model used to calculate the yearly rate charged to liquidity borrowers according to the current utilization rate of the pool
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice Function that is defined here is the calcBorrowRate
 /// @dev This contract is abstract and therefore supposed to be inherited by BaseStrategy
 abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRateModel {

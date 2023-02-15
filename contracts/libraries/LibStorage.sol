@@ -2,7 +2,7 @@
 pragma solidity 0.8.4;
 
 /// @title Library containing global storage variables for GammaPools according to App Storage pattern
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Structs are packed to minimize storage size
 library LibStorage {
 
@@ -89,6 +89,12 @@ library LibStorage {
         uint128[] TOKEN_BALANCE;
         /// @dev Amounts of ERC20 tokens from the CFMM held in the CFMM as reserve quantities. Used to log prices quoted by the CFMM during updates to the GammaPool
         uint128[] CFMM_RESERVES;
+
+        // Custom parameters
+        /// @dev Custom fields
+        mapping(uint256 => bytes32) fields;
+        /// @dev Custom object (e.g. struct)
+        bytes obj;
     }
 
     error Initialized();
@@ -140,5 +146,69 @@ library LibStorage {
             lpTokens: 0,
             tokensHeld: new uint128[](_tokenCount)
         });
+    }
+
+    /// @dev Get custom field as uint256
+    /// @param self - pointer to storage variables (doesn't need to be passed)
+    /// @param idx - index of mapping of uint256 field
+    /// @return field - value of custom field from storage as uint256
+    function getUint256(Storage storage self, uint256 idx) internal view returns(uint256) {
+        return uint256(self.fields[idx]);
+    }
+
+    /// @dev Set custom field as uint256
+    /// @param self - pointer to storage variables (doesn't need to be passed)
+    /// @param idx - index of mapping of uint256 field
+    /// @param val - value of custom field to store in storage as uint256
+    function setUint256(Storage storage self, uint256 idx, uint256 val) internal {
+        self.fields[idx] = bytes32(val);
+    }
+
+    /// @dev Get custom field as int256
+    /// @param self - pointer to storage variables (doesn't need to be passed)
+    /// @param idx - index of mapping of int256 field
+    /// @return field - value of custom field from storage as int256
+    function getInt256(Storage storage self, uint256 idx) internal view returns(int256) {
+        return int256(uint256(self.fields[idx]));
+    }
+
+    /// @dev Set custom field as int256
+    /// @param self - pointer to storage variables (doesn't need to be passed)
+    /// @param idx - index of mapping of int256 field
+    /// @param val - value of custom field to store in storage as int256
+    function setInt256(Storage storage self, uint256 idx, int256 val) internal {
+        self.fields[idx] = bytes32(uint256(val));
+    }
+
+    /// @dev Get custom field as bytes32
+    /// @param self - pointer to storage variables (doesn't need to be passed)
+    /// @param idx - index of mapping of bytes32 field
+    /// @return field - value of custom field from storage as bytes32
+    function getBytes32(Storage storage self, uint256 idx) internal view returns(bytes32) {
+        return self.fields[idx];
+    }
+
+    /// @dev Set custom field as bytes32
+    /// @param self - pointer to storage variables (doesn't need to be passed)
+    /// @param idx - index of mapping of bytes32 field
+    /// @param val - value of custom field to store in storage as bytes32
+    function setBytes32(Storage storage self, uint256 idx, bytes32 val) internal {
+        self.fields[idx] = val;
+    }
+
+    /// @dev Get custom field as address
+    /// @param self - pointer to storage variables (doesn't need to be passed)
+    /// @param idx - index of mapping of address field
+    /// @return field - value of custom field from storage as address
+    function getAddress(Storage storage self, uint256 idx) internal view returns(address) {
+        return address(uint160(uint256(self.fields[idx])));
+    }
+
+    /// @dev Set custom field as address
+    /// @param self - pointer to storage variables (doesn't need to be passed)
+    /// @param idx - index of mapping of address field
+    /// @param val - value of custom field to store in storage as address
+    function setAddress(Storage storage self, uint256 idx, address val) internal {
+        self.fields[idx] = bytes32(uint256(uint160(val)));
     }
 }

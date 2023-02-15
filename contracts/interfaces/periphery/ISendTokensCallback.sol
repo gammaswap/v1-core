@@ -2,7 +2,7 @@
 pragma solidity 0.8.4;
 
 /// @title ISendTokensCallback interface to handle callbacks to send tokens
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice Used by periphery contracts to transfer token amounts requested by a GammaPool
 /// @dev Verifies sender is GammaPool by hashing SendTokensCallbackData contents into msg.sender
 interface ISendTokensCallback {

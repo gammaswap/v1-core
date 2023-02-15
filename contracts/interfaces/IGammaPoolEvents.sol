@@ -5,7 +5,7 @@ import "./strategies/events/ILiquidationStrategyEvents.sol";
 import "./strategies/events/IShortStrategyEvents.sol";
 
 /// @title GammaPool Events Interface
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Events emitted by all GammaPool implementations (contains all strategy events)
 interface IGammaPoolEvents is IShortStrategyEvents, ILiquidationStrategyEvents {
     /// @dev Event emitted when a Loan is created

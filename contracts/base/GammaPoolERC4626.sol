@@ -5,7 +5,7 @@ import "./GammaPoolERC20.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
 
 /// @title ERC4626 (GS LP) implementation of GammaPool
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Vault implementation of GammaPool, assets are CFMM LP tokens, shares are GS LP tokens
 abstract contract GammaPoolERC4626 is GammaPoolERC20 {
 

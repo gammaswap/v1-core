@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "../interfaces/IGammaPoolFactory.sol";
 
 /// @title Library used calculate the deterministic addresses used to instantiate GammaPools
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev These algorithms are based on EIP-1014 (https://eips.ethereum.org/EIPS/eip-1014)
 library AddressCalculator {
 

@@ -8,7 +8,7 @@ import "./GammaPoolERC4626.sol";
 import "./Refunds.sol";
 
 /// @title Basic GammaPool smart contract
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used as template for building other GammaPool contract implementations for other CFMMs
 abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
 
@@ -41,7 +41,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     }
 
     /// @dev See {IGammaPool-initialize}
-    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) external virtual override {
+    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals, bytes calldata) external virtual override {
         if(msg.sender != factory) // only factory is allowed to initialize
             revert Forbidden();
 

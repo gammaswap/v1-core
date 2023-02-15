@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "./IStrategyEvents.sol";
 
 /// @title Long Strategy Events Interface
-/// @author Daniel D. Alcarraz LongStrategyEvents
+/// @author Daniel D. Alcarraz  (https://github.com/0xDanr)
 /// @dev Events emitted by all long strategy implementations
 interface ILongStrategyEvents is IStrategyEvents {
     /// @dev Event emitted when a Loan is updated

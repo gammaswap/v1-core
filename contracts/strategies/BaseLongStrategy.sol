@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "./BaseStrategy.sol";
 
 /// @title Base Long Strategy abstract contract
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice Common functions used by all strategy implementations that need access to loans
 /// @dev This contract inherits from BaseStrategy and should normally be inherited by LongStrategy and LiquidationStrategy
 abstract contract BaseLongStrategy is BaseStrategy {

@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "../events/ILiquidationStrategyEvents.sol";
 
 /// @title Interface for Liquidation Strategy contract used in all strategies
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Only used to define PoolUpdated event to avoid redefining the event in all strategies
 interface ILiquidationStrategy is ILiquidationStrategyEvents {
     /// @notice When calling this function and adding additional collateral it is assumed that you have sent the collateral first

@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "./ShortStrategy.sol";
 
 /// @title Short Strategy ERC4626 abstract contract implementation of IShortStrategy's ERC4626 functions
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice All external functions that modify the state are locked to avoid reentrancy
 /// @dev Only defines ERC4626 functions of ShortStrategy
 abstract contract ShortStrategyERC4626 is ShortStrategy {

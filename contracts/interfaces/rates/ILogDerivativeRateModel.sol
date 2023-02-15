@@ -2,7 +2,7 @@
 pragma solidity 0.8.4;
 
 /// @title Interface of Rate Model that calculates borrow rate according to a first derivative of the logarithmic function
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice Interface for Logarithmic Derivative rate model contract
 /// @dev Inheritors of this interface has to also inherit AbstractRateModel
 interface ILogDerivativeRateModel {

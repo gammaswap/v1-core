@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "./IGammaPoolEvents.sol";
 
 /// @title Interface for GammaPool
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Interface used to clear tokens from the GammaPool
 interface IGammaPool is IGammaPoolEvents {
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
@@ -68,7 +68,8 @@ interface IGammaPool is IGammaPoolEvents {
     /// @param _cfmm - address of CFMM GammaPool is for
     /// @param _tokens - ERC20 tokens of CFMM
     /// @param _decimals - decimals of CFMM tokens, indices must match _tokens[] array
-    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) external;
+    /// @param _data - custom struct containing additional information used to verify the `_cfmm`
+    function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals, bytes calldata _data) external;
 
     /// @dev cfmm - address of CFMM this GammaPool is for
     function cfmm() external view returns(address);
