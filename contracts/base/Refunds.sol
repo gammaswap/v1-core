@@ -6,7 +6,7 @@ import "../interfaces/IRefunds.sol";
 import "../libraries/GammaSwapLibrary.sol";
 
 /// @title Contract used to handle token transfers by the GammaPool
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Abstract contract meant to be inherited by the GammaPool abstract contract to handle token transfers and clearing
 abstract contract Refunds is IRefunds {
 

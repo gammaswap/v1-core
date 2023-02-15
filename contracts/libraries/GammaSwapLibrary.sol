@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Library used to perform common ERC20 transactions
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Library performs approvals, transfers and views ERC20 state fields
 library GammaSwapLibrary {
 

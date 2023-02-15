@@ -2,7 +2,7 @@
 pragma solidity 0.8.4;
 
 /// @title Interface of Rate Model that calculates borrow rate according to a linear kinked rate model
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice Interface for Linear Kinked rate model contract
 /// @dev Inheritors of this interface has to also inherit AbstractRateModel
 interface ILinearKinkedRateModel {

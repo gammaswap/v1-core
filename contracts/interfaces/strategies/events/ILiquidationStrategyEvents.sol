@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "./ILongStrategyEvents.sol";
 
 /// @title Liquidation Strategy Events Interface
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Events emitted by all liquidation strategy implementations
 interface ILiquidationStrategyEvents is ILongStrategyEvents {
     /// @dev Event emitted when liquidating through _liquidate or _liquidateWithLP functions

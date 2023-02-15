@@ -7,7 +7,7 @@ import "../interfaces/periphery/ISendTokensCallback.sol";
 import "./BaseStrategy.sol";
 
 /// @title Short Strategy abstract contract implementation of IShortStrategy
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice All external functions are locked to avoid reentrancy
 /// @dev Only defines common functions that would be used by all concrete contracts that deposit and withdraw liquidity
 abstract contract ShortStrategy is IShortStrategy, BaseStrategy {

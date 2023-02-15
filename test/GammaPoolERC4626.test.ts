@@ -69,7 +69,8 @@ describe("GammaPoolERC4626", function () {
   });
 
   async function deployGammaPool() {
-    await (await factory.createPool2()).wait();
+    const data = ethers.utils.defaultAbiCoder.encode([], []);
+    await (await factory.createPool2(data)).wait();
 
     const key = await addressCalculator.getGammaPoolKey(
       cfmm.address,

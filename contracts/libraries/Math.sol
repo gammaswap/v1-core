@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.4;
 
-// A library for performing various math operations
-
+/// @title Math Library
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
+/// @dev Library for performing various math operations
 library Math {
     function max(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x > y ? x : y;

@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "../events/ILongStrategyEvents.sol";
 
 /// @title Interface for Long Strategy
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used in strategies that borrow and repay liquidity loans
 interface ILongStrategy is ILongStrategyEvents {
     /// @dev Get latest reserves in the CFMM, which can be used for pricing

@@ -2,7 +2,7 @@
 pragma solidity 0.8.4;
 
 /// @title Interface for Refunds abstract contract
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Interface used to clear tokens from a contract
 interface IRefunds {
     /// @dev Withdraw ERC20 tokens from contract

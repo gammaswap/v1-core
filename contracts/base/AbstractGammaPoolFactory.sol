@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "../interfaces/IGammaPoolFactory.sol";
 
 /// @title Abstract factory contract to create more GammaPool contracts.
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev If another GammaPoolFactory contract is created it is recommended to inherit from this contract
 abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
 

@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "../events/IShortStrategyEvents.sol";
 
 /// @title Interface for Short Strategy
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used in strategies that deposit and withdraw liquidity from CFMM for liquidity providers
 interface IShortStrategy is IShortStrategyEvents {
     /// @dev Deposit CFMM LP tokens and get GS LP tokens, without doing a transferFrom transaction. Must have sent CFMM LP tokens first

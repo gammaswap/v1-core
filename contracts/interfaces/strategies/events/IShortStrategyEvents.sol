@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "./IStrategyEvents.sol";
 
 /// @title Short Strategy Events Interface
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Events emitted by all short strategy implementations
 interface IShortStrategyEvents is IStrategyEvents {
     /// @dev Event emitted when a deposit of CFMM LP tokens in exchange of GS LP tokens happens (e.g. _deposit, _mint, _depositReserves, _depositNoPull)

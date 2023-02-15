@@ -5,7 +5,7 @@ import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "./BaseLongStrategy.sol";
 
 /// @title Liquidation Strategy abstract contract implementation of ILiquidationStrategy
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice All external functions are locked to avoid reentrancy
 /// @dev Only defines common functions that would be used by all concrete contracts that liquidate loans
 abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy {

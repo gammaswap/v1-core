@@ -2,7 +2,7 @@
 pragma solidity 0.8.4;
 
 /// @title Interface for factory contract to create more GammaPool contracts.
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev All instantiated GammaPoolFactory contracts must implement this interface
 interface IGammaPoolFactory {
     /// @dev Event emitted when a new GammaPool is instantiated

@@ -4,10 +4,11 @@ pragma solidity 0.8.4;
 import "../base/GammaPool.sol";
 
 contract TestGammaPool is GammaPool {
+
+    using LibStorage for LibStorage.Storage;
+
     struct params {
-        /// @dev protocolId that will be used to identify GammaPool
         uint16 protocolId;
-        /// @dev address of CFMM that will be used to identify GammaPool
         address cfmm;
     }
 
@@ -33,5 +34,54 @@ contract TestGammaPool is GammaPool {
         _decimals = new uint8[](_tokens.length);
         _decimals[0] = 18;
         _decimals[1] = 18;
+    }
+
+    function setUint256(uint256 idx, uint256 val) external virtual {
+        s.setUint256(idx, val);
+    }
+
+    function getUint256(uint256 idx) external virtual view returns(uint256) {
+        return s.getUint256(idx);
+    }
+
+    function setInt256(uint256 idx, int256 val) external virtual {
+        s.setInt256(idx, val);
+    }
+
+    function getInt256(uint256 idx) external virtual view returns(int256) {
+        return s.getInt256(idx);
+    }
+
+    function setBytes32(uint256 idx, bytes32 val) external virtual {
+        s.setBytes32(idx, val);
+    }
+
+    function getBytes32(uint256 idx) external virtual view returns(bytes32) {
+        return s.getBytes32(idx);
+    }
+
+    function setAddress(uint256 idx, address val) external virtual {
+        s.setAddress(idx, val);
+    }
+
+    function getAddress(uint256 idx) external virtual view returns(address) {
+        return s.getAddress(idx);
+    }
+
+    function setObj(uint16 _protocolId, address _cfmm) external virtual {
+        bytes memory _params = abi.encode(params({cfmm: _cfmm, protocolId: _protocolId}));
+        s.obj = _params;
+    }
+
+    function setObjData(bytes calldata _data) external virtual {
+        s.obj = _data;
+    }
+
+    function getObj() external virtual view returns(params memory _params) {
+        if(s.obj.length > 0) {
+            _params = abi.decode(s.obj, (params));
+        } else {
+            _params = params({protocolId: 0, cfmm: address(0)});
+        }
     }
 }

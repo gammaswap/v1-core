@@ -84,7 +84,8 @@ describe("GammaPool", function () {
   });
 
   async function deployGammaPool() {
-    await (await factory.createPool2()).wait();
+    const data = ethers.utils.defaultAbiCoder.encode([], []);
+    await (await factory.createPool2(data)).wait();
     const key = await addressCalculator.getGammaPoolKey(
       cfmm.address,
       PROTOCOL_ID
@@ -197,6 +198,124 @@ describe("GammaPool", function () {
       expect(res3.lastCFMMInvariant).to.equal(res1.cfmmInvariant);
       expect(res3.lastCFMMTotalSupply).to.equal(res1.cfmmTotalSupply);
       expect(res3.totalSupply).to.equal(await gammaPool.totalSupply());
+    });
+
+    it("Custom Fields Set & Get", async function () {
+      await (await gammaPool.setUint256(1, 253146)).wait();
+      expect(await gammaPool.getUint256(1)).to.equal(253146);
+
+      await (await gammaPool.setUint256(1, 253147)).wait();
+      expect(await gammaPool.getUint256(1)).to.not.equal(253146);
+      expect(await gammaPool.getUint256(1)).to.equal(253147);
+
+      expect(await gammaPool.getUint256(2)).to.equal(0);
+      await (await gammaPool.setUint256(2, 253246)).wait();
+      expect(await gammaPool.getUint256(2)).to.equal(253246);
+      await (await gammaPool.setUint256(2, 0)).wait();
+      expect(await gammaPool.getUint256(1)).to.not.equal(253146);
+      expect(await gammaPool.getUint256(2)).to.equal(0);
+
+      await (await gammaPool.setInt256(1, -253146)).wait();
+      expect(await gammaPool.getInt256(1)).to.equal(-253146);
+
+      await (await gammaPool.setInt256(1, 253147)).wait();
+      expect(await gammaPool.getInt256(1)).to.not.equal(253146);
+      expect(await gammaPool.getInt256(1)).to.equal(253147);
+
+      expect(await gammaPool.getInt256(2)).to.equal(0);
+      await (await gammaPool.setInt256(2, -253246)).wait();
+      expect(await gammaPool.getInt256(2)).to.equal(-253246);
+      await (await gammaPool.setInt256(2, 0)).wait();
+      expect(await gammaPool.getInt256(1)).to.not.equal(253146);
+      expect(await gammaPool.getInt256(2)).to.equal(0);
+
+      const abi = ethers.utils.defaultAbiCoder;
+      const data0 = abi.encode(
+        ["address"], // encode as address array
+        [addr3.address]
+      );
+      await (await gammaPool.setBytes32(1, data0)).wait();
+      expect(await gammaPool.getBytes32(1)).to.equal(data0);
+
+      const data1 = abi.encode(
+        ["uint8"], // encode as address array
+        [123]
+      );
+      await (await gammaPool.setBytes32(1, data1)).wait();
+      expect(await gammaPool.getBytes32(1)).to.not.equal(data0);
+      expect(await gammaPool.getBytes32(1)).to.equal(data1);
+
+      const data2 = abi.encode(
+        ["int16"], // encode as address array
+        [122]
+      );
+      const empty =
+        "0x0000000000000000000000000000000000000000000000000000000000000000";
+      expect(await gammaPool.getBytes32(2)).to.equal(empty);
+      await (await gammaPool.setBytes32(2, data2)).wait();
+      expect(await gammaPool.getBytes32(2)).to.equal(data2);
+      await (await gammaPool.setBytes32(2, empty)).wait();
+      expect(await gammaPool.getBytes32(1)).to.not.equal(data2);
+      expect(await gammaPool.getBytes32(2)).to.equal(empty);
+
+      await (await gammaPool.setAddress(1, addr1.address)).wait();
+      expect(await gammaPool.getAddress(1)).to.equal(addr1.address);
+
+      await (await gammaPool.setAddress(1, addr2.address)).wait();
+      expect(await gammaPool.getAddress(1)).to.not.equal(addr1.address);
+      expect(await gammaPool.getAddress(1)).to.equal(addr2.address);
+
+      expect(await gammaPool.getAddress(2)).to.equal(
+        ethers.constants.AddressZero
+      );
+      await (await gammaPool.setAddress(2, addr3.address)).wait();
+      expect(await gammaPool.getAddress(2)).to.equal(addr3.address);
+      await (
+        await gammaPool.setAddress(2, ethers.constants.AddressZero)
+      ).wait();
+      expect(await gammaPool.getAddress(1)).to.not.equal(addr1.address);
+      expect(await gammaPool.getAddress(2)).to.equal(
+        ethers.constants.AddressZero
+      );
+    });
+
+    it("Custom Struct Set & Get", async function () {
+      const _obj = await gammaPool.getObj();
+      expect(_obj.protocolId).to.equal(0);
+      expect(_obj.cfmm).to.equal(ethers.constants.AddressZero);
+      const params = {
+        protocolId: 1,
+        cfmm: addr3.address,
+      };
+      const data = ethers.utils.defaultAbiCoder.encode(
+        ["tuple(uint16 protocolId, address cfmm)"],
+        [params]
+      );
+      await (await gammaPool.setObjData(data)).wait();
+      const _obj1 = await gammaPool.getObj();
+      expect(_obj1.protocolId).to.equal(1);
+      expect(_obj1.cfmm).to.equal(addr3.address);
+
+      await (await gammaPool.setObj(2, addr2.address)).wait();
+      const _obj2 = await gammaPool.getObj();
+      expect(_obj2.protocolId).to.equal(2);
+      expect(_obj2.cfmm).to.equal(addr2.address);
+
+      await (await gammaPool.setObj(0, ethers.constants.AddressZero)).wait();
+      const _obj3 = await gammaPool.getObj();
+      expect(_obj3.protocolId).to.equal(0);
+      expect(_obj3.cfmm).to.equal(ethers.constants.AddressZero);
+
+      await (await gammaPool.setObj(4, addr1.address)).wait();
+      const _obj4 = await gammaPool.getObj();
+      expect(_obj4.protocolId).to.equal(4);
+      expect(_obj4.cfmm).to.equal(addr1.address);
+
+      const empty = ethers.utils.defaultAbiCoder.encode([], []);
+      await (await gammaPool.setObjData(empty)).wait();
+      const _obj5 = await gammaPool.getObj();
+      expect(_obj5.protocolId).to.equal(0);
+      expect(_obj5.cfmm).to.equal(ethers.constants.AddressZero);
     });
   });
 

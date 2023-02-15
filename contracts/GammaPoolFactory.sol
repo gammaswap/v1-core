@@ -6,7 +6,7 @@ import "./base/AbstractGammaPoolFactory.sol";
 import "./libraries/AddressCalculator.sol";
 
 /// @title Factory contract to create more GammaPool contracts.
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Creates new GammaPool instances as minimal proxy contracts (EIP-1167) to implementation contracts identified by a protocol id
 contract GammaPoolFactory is AbstractGammaPoolFactory {
 
@@ -91,7 +91,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         // instantiate GammaPool proxy contract address for protocol's implementation contract using unique key as salt for the pool's address
         pool = cloneDeterministic(implementation, key);
 
-        IGammaPool(pool).initialize(_cfmm, _tokensOrdered, _decimals); // initialize GammaPool's state variables
+        IGammaPool(pool).initialize(_cfmm, _tokensOrdered, _decimals, _data); // initialize GammaPool's state variables
 
         getPool[key] = pool; // map unique key to new instance of GammaPool
         allPools.push(pool); // store new GammaPool instance in an array

@@ -6,7 +6,7 @@ import "../interfaces/strategies/base/ILongStrategy.sol";
 import "./BaseLongStrategy.sol";
 
 /// @title Long Strategy abstract contract implementation of ILongStrategy
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice All external functions are locked to avoid reentrancy
 /// @dev Only defines common functions that would be used by all concrete contracts that borrow and repay liquidity
 abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {

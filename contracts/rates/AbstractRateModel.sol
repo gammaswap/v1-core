@@ -2,7 +2,7 @@
 pragma solidity 0.8.4;
 
 /// @title Abstract contract to calculate the utilization rate of the GammaPool.
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice All rate models inherit this contract since all rate models depend on utilization rate
 /// @dev All strategies inherit a rate model in its base and therefore all strategies inherit this contract.
 abstract contract AbstractRateModel {

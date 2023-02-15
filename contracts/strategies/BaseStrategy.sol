@@ -9,7 +9,7 @@ import "../libraries/Math.sol";
 import "../rates/AbstractRateModel.sol";
 
 /// @title Base Strategy abstract contract
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice Common functions used by all strategy implementations
 /// @dev Root Strategy contract. Only place where AppStorage and AbstractRateModel should be inherited
 abstract contract BaseStrategy is AppStorage, AbstractRateModel {

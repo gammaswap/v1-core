@@ -2,7 +2,7 @@
 pragma solidity 0.8.4;
 
 /// @title Strategy Events interface
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Events that should be emitted by all strategy implementations (root of all strategy events interfaces)
 interface IStrategyEvents {
     enum TX_TYPE {

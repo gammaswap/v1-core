@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 import "../storage/AppStorage.sol";
 
 /// @title ERC20 (GS LP) implementation of GammaPool
-/// @author Daniel D. Alcarraz
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev The root contract in GammaPool inheritance hierarchy. Inherits AppStorage contract to implement App Storage pattern
 abstract contract GammaPoolERC20 is AppStorage {
     /// @dev Emitted when `amount` GS LP tokens are moved from account `from` to account `to`.
