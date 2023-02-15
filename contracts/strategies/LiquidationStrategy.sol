@@ -265,12 +265,13 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         }
 
         // Write down pool liquidity debt
-        uint128 borrowedInvariant = s.BORROWED_INVARIANT; // Save gas
+        uint256 borrowedInvariant = s.BORROWED_INVARIANT; // Save gas
 
-        // Won't overflow because borrowedInvariant = sum(loanLiquidity of all loans)
-        borrowedInvariant = borrowedInvariant - uint128(writeDownAmt);
+        // Shouldn't overflow because borrowedInvariant = sum(loanLiquidity of all loans)
+        assert(borrowedInvariant >= writeDownAmt);
+        borrowedInvariant = borrowedInvariant - writeDownAmt;
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(borrowedInvariant, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
-        s.BORROWED_INVARIANT = borrowedInvariant;
+        s.BORROWED_INVARIANT = uint128(borrowedInvariant);
 
         // Loan's liquidity debt is written down to its available collateral liquidity debt
         return(writeDownAmt,collateralAsLiquidity);
