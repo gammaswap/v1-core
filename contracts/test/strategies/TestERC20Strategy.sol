@@ -78,4 +78,6 @@ contract TestERC20Strategy is AppStorage, IShortStrategy {
         emit Transfer(account, address(0), amount);
     }
 
+    function _sync() external override {
+    }
 }

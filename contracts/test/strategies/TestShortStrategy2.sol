@@ -61,4 +61,10 @@ contract TestShortStrategy2 is IShortStrategy{
         assets = 6*10**18;
         emit Withdraw(msg.sender, to, from, assets, shares);
     }
+
+    /***** Sync Function *****/
+
+    function _sync() external override {
+        emit PoolUpdated(1, 2, 3, 4, 5, 6, 7, TX_TYPE.SYNC);
+    }
 }

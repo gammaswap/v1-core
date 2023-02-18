@@ -21,7 +21,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     /// @param token - address of ERC20 token that caused the error
     error WrongTokenBalance(address token);
 
-    // ShortGamma
+    // Short Gamma
 
     /// @dev Minimum number of shares issued on first deposit to avoid rounding issues
     uint256 public constant MIN_SHARES = 1e3;
@@ -186,7 +186,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         reserves = withdrawAssets(address(this), to, address(this), assets, shares, askForReserves);
     }
 
-    //*************ERC-4626 functions************//
+    //************* ERC-4626 Functions ************//
 
     /// @dev Mint GS LP tokens (`shares`) to receiver (`to`) and track CFMM LP tokens (`assets`)
     /// @param caller - user address that requested to deposit CFMM LP tokens

@@ -8,4 +8,7 @@ contract TestShortStrategyERC4626 is TestBaseShortStrategy, ShortStrategyERC4626
 
     function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal override(BaseStrategy, TestBaseShortStrategy) virtual {
     }
+
+    function _sync() external override virtual {
+    }
 }

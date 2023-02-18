@@ -883,6 +883,7 @@ describe("ShortStrategy", function () {
         expect(depositEvent2.args.shares).to.equal(expectedGSShares3);
       });
     });
+
     describe("Withdraw No Pull", function () {
       it("Withdraw Shares Error", async function () {
         const ONE = BigNumber.from(10).pow(18);
@@ -941,6 +942,7 @@ describe("ShortStrategy", function () {
         );
       });
     });
+
     describe("Deposit Reserves", function () {
       it("Error Deposit Reserves", async function () {
         const ONE = BigNumber.from(10).pow(18);
@@ -1102,7 +1104,9 @@ describe("ShortStrategy", function () {
         const cfmmBalance0 = await cfmm.balanceOf(strategy.address);
         const cfmmTotalSupply0 = await cfmm.totalSupply();
         const cfmmInvariant0 = await cfmm.invariant();
-        const lpInvariant0 = cfmmBalance0.mul(cfmmInvariant0).div(cfmmTotalSupply0);
+        const lpInvariant0 = cfmmBalance0
+          .mul(cfmmInvariant0)
+          .div(cfmmTotalSupply0);
         expect(poolUpdatedEvent0.args.lpInvariant).to.equal(lpInvariant0);
         expect(poolUpdatedEvent0.args.borrowedInvariant).to.equal(0);
         expect(poolUpdatedEvent0.args.txType).to.equal(2);

@@ -42,6 +42,9 @@ interface IShortStrategy is IShortStrategyEvents {
     /// @return totalAssets - total CFMM LP tokens in existence in the pool (real and virtual) including accrued interest
     function totalAssets(address cfmm, uint256 borrowedInvariant, uint256 lpBalance, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum) external view returns(uint256);
 
+    /// @dev Synchronize LP_TOKEN_BALANCE with actual CFMM LP tokens deposited in GammaPool
+    function _sync() external;
+
     /***** ERC4626 Functions *****/
 
     /// @dev Deposit CFMM LP tokens and get GS LP tokens, does a transferFrom according to ERC4626 implementation
