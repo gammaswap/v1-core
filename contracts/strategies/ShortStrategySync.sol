@@ -1,8 +1,12 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity >=0.8.4;
 
 import "./ShortStrategyERC4626.sol";
 
+/// @title Short Strategy Synchronization abstract contract
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
+/// @notice Inherits all functions from ShortStrategy already defined by inheriting ShortStrategyERC4626
+/// @dev Only defines function to synchronize LP_TOKEN_BALANCE (deposit without issuing shares)
 abstract contract ShortStrategySync is ShortStrategyERC4626 {
 
     /// @dev See {IShortStrategy-_sync}.

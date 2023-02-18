@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.4;
+pragma solidity >=0.8.0;
 
 /// @title ISendTokensCallback interface to handle callbacks to send tokens
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)

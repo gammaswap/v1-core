@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.4;
+pragma solidity >=0.8.0;
 
 import "./IStrategyEvents.sol";
 
 /// @title Long Strategy Events Interface
-/// @author Daniel D. Alcarraz  (https://github.com/0xDanr)
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Events emitted by all long strategy implementations
 interface ILongStrategyEvents is IStrategyEvents {
     /// @dev Event emitted when a Loan is updated
