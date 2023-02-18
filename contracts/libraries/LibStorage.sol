@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.4;
+pragma solidity >=0.8.4;
 
 /// @title Library containing global storage variables for GammaPools according to App Storage pattern
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
