@@ -16,7 +16,7 @@ contract TestLiquidationStrategy is LiquidationStrategy {
 
     struct PoolBalances {
         // LP Tokens
-        uint256 LP_TOKEN_BALANCE;//LP Tokens in GS, LP_TOKEN_TOTAL = LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST (will remove this)
+        uint256 LP_TOKEN_BALANCE;//LP Tokens in GS, LP_TOKEN_TOTAL = LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST
         uint256 LP_TOKEN_BORROWED;//LP Tokens that have been borrowed (Principal)
         uint256 LP_TOKEN_BORROWED_PLUS_INTEREST;//(LP Tokens that have been borrowed (principal) plus interest in LP Tokens)
 

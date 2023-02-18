@@ -53,7 +53,6 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         prevCFMMTotalSupply = s.lastCFMMTotalSupply;
         lastBlockNum = s.LAST_BLOCK_NUMBER;
         lpTokenBorrowedPlusInterest = s.LP_TOKEN_BORROWED_PLUS_INTEREST;
-        //lpTokenTotal = s.LP_TOKEN_TOTAL;
         lpTokenTotal = lpBalance + lpTokenBorrowedPlusInterest;
     }
 

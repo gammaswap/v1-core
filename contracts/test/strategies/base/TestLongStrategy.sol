@@ -185,9 +185,6 @@ contract TestLongStrategy is LongStrategy {
         s.LP_TOKEN_BORROWED = lpTokens;
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = lpTokens;
 
-        //s.TOTAL_INVARIANT = s.LP_INVARIANT + s.BORROWED_INVARIANT;
-        //s.LP_TOKEN_TOTAL = s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST;
-
         s.lastCFMMInvariant = uint128(lastCFMMInvariant);
         s.lastCFMMTotalSupply = lastCFMMTotalSupply;
 
@@ -197,9 +194,7 @@ contract TestLongStrategy is LongStrategy {
 
     function setLPTokenBalance(uint256 lpInvariant, uint256 lpTokenBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) public virtual {
         s.LP_TOKEN_BALANCE = lpTokenBalance;
-        //s.LP_TOKEN_TOTAL = lpTokenBalance;
         s.LP_INVARIANT = uint128(lpInvariant);
-        //s.TOTAL_INVARIANT = lpInvariant;
         s.lastCFMMInvariant = uint128(lastCFMMInvariant);
         s.lastCFMMTotalSupply = lastCFMMTotalSupply;
     }
@@ -210,10 +205,8 @@ contract TestLongStrategy is LongStrategy {
         uint128 invariantInterest = uint128(lpTokenInterest * s.LP_INVARIANT / s.LP_TOKEN_BALANCE);
         _loan.liquidity = _loan.liquidity + invariantInterest;
         s.BORROWED_INVARIANT = s.BORROWED_INVARIANT + invariantInterest;
-        //s.TOTAL_INVARIANT = s.TOTAL_INVARIANT + invariantInterest;
 
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST + lpTokenInterest;
-        //s.LP_TOKEN_TOTAL = s.LP_TOKEN_TOTAL + lpTokenInterest;
     }
 
     function getLoanChangeData(uint256 tokenId) public virtual view returns(uint256 loanLiquidity, uint256 loanLpTokens,
