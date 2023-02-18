@@ -20,4 +20,7 @@ contract TestShortStrategy is TestBaseShortStrategy {
     function _redeem(uint256, address, address) external override pure returns (uint256){
         return 0;
     }
+
+    function _sync() external override virtual {
+    }
 }

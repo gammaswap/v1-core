@@ -63,7 +63,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         return shortStrategy;
     }
 
-    //GamamPool Data
+    /***** GammaPool Data *****/
 
     /// @dev See {IGammaPool-getPoolBalances}
     function getPoolBalances() external virtual override view returns(uint128[] memory tokenBalances, uint256 lpTokenBalance, uint256 lpTokenBorrowed,
@@ -106,7 +106,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.CFMM_RESERVES = s.CFMM_RESERVES;
     }
 
-    /*****SHORT*****/
+    /***** SHORT *****/
 
     /// @dev See {IGammaPool-depositNoPull}
     function depositNoPull(address to) external virtual override returns(uint256 shares) {
@@ -128,7 +128,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         return abi.decode(callStrategy(shortStrategy, abi.encodeWithSelector(IShortStrategy._withdrawReserves.selector, to)), (uint256[],uint256));
     }
 
-    /*****LONG*****/
+    /***** LONG *****/
 
     /// @dev See {IGammaPool-getLatestCFMMReserves}
     function getLatestCFMMReserves() external virtual override view returns(uint256[] memory cfmmReserves) {
@@ -174,22 +174,29 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     }
 
     /// @dev See {IGammaPool-liquidate}
-    function liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external override virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
+    function liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external virtual override returns(uint256 loanLiquidity, uint256[] memory refund) {
         return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._liquidate.selector, tokenId, deltas, fees)), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-liquidateWithLP}
-    function liquidateWithLP(uint256 tokenId) external override virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
+    function liquidateWithLP(uint256 tokenId) external virtual override returns(uint256 loanLiquidity, uint256[] memory refund) {
         return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._liquidateWithLP.selector, tokenId)), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-batchLiquidations}
-    function batchLiquidations(uint256[] calldata tokenIds) external override virtual returns(uint256 totalLoanLiquidity, uint256 totalCollateral, uint256[] memory refund) {
+    function batchLiquidations(uint256[] calldata tokenIds) external virtual override returns(uint256 totalLoanLiquidity, uint256 totalCollateral, uint256[] memory refund) {
         return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._batchLiquidations.selector, tokenIds)), (uint256, uint256, uint256[]));
     }
 
+    /***** SYNC POOL *****/
+
+    /// @dev See {IGammaPool-sync}
+    function sync() external virtual override {
+        callStrategy(shortStrategy, abi.encodeWithSelector(IShortStrategy._sync.selector));
+    }
+
     /// @dev See {IGammaPool-skim}
-    function skim(address to) external override lock {
+    function skim(address to) external virtual override lock {
         address[] memory _tokens = s.tokens; // gas savings
         uint128[] memory _tokenBalances = s.TOKEN_BALANCE;
         for(uint256 i; i < _tokens.length;) {
@@ -199,14 +206,6 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
             }
         }
         skim(s.cfmm, s.LP_TOKEN_BALANCE, to); // skim cfmm LP tokens
-    }
-
-    /// @dev See {IGammaPool-sync}
-    function sync() external override lock {
-        uint256 oldLpTokenBalance = s.LP_TOKEN_BALANCE;
-        uint256 newLpTokenBalance = IERC20(s.cfmm).balanceOf(address(this));
-        s.LP_TOKEN_BALANCE = newLpTokenBalance;
-        emit Sync(oldLpTokenBalance, newLpTokenBalance);
     }
 
     /// @dev See {Transfers-isCFMMToken}
