@@ -79,12 +79,6 @@ describe("LiquidationStrategy", function () {
     await (await liquidationStrategy.updatePoolBalances()).wait();
   });
 
-  const borrowMostOfIt = async (amount: BigNumber) => {
-    const res = await (await liquidationStrategy.createLoan()).wait();
-    const tokenId = res.events[0].args.tokenId;
-    await liquidationStrategy.testOpenLoan(tokenId, amount);
-  };
-
   const borrowLiquidity = async (
     amt0: BigNumber,
     amt1: BigNumber,

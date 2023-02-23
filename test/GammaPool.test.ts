@@ -495,6 +495,9 @@ describe("GammaPool", function () {
       expect(res0.events[1].args.lpTokenBorrowedPlusInterest).to.eq(800);
       expect(res0.events[1].args.lpInvariant).to.eq(900);
       expect(res0.events[1].args.borrowedInvariant).to.eq(1000);
+      expect(res0.events[1].args.cfmmReserves.length).to.eq(2);
+      expect(res0.events[1].args.cfmmReserves[0]).to.eq(15);
+      expect(res0.events[1].args.cfmmReserves[1]).to.eq(16);
       expect(res0.events[1].args.txType).to.eq(11);
     });
 
@@ -713,6 +716,9 @@ describe("GammaPool", function () {
       expect(res.events[0].args.lpTokenBorrowedPlusInterest).to.eq(5);
       expect(res.events[0].args.lpInvariant).to.eq(6);
       expect(res.events[0].args.borrowedInvariant).to.eq(7);
+      expect(res.events[0].args.cfmmReserves.length).to.eq(2);
+      expect(res.events[0].args.cfmmReserves[0]).to.eq(8);
+      expect(res.events[0].args.cfmmReserves[1]).to.eq(9);
       expect(res.events[0].args.txType).to.eq(12);
     });
   });

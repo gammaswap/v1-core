@@ -26,6 +26,6 @@ abstract contract ShortStrategySync is ShortStrategyERC4626 {
         s.LP_INVARIANT = lpInvariant;
 
         emit PoolUpdated(lpTokenBalance, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
-            lpInvariant, s.BORROWED_INVARIANT, TX_TYPE.SYNC);
+            lpInvariant, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.SYNC);
     }
 }

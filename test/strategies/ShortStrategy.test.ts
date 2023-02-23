@@ -648,6 +648,8 @@ describe("ShortStrategy", function () {
 
         await (await cfmm.transfer(strategy.address, assets)).wait();
 
+        const cfmmReserves = await cfmm.getReserves();
+
         const { events } = await (
           await strategy._depositNoPull(owner.address)
         ).wait();
@@ -677,6 +679,13 @@ describe("ShortStrategy", function () {
         expect(poolUpdatedEvent0.args.lpTokenBorrowedPlusInterest).to.equal(0);
         expect(poolUpdatedEvent0.args.lpInvariant).to.equal(lpInvariant0);
         expect(poolUpdatedEvent0.args.borrowedInvariant).to.equal(0);
+        expect(poolUpdatedEvent0.args.cfmmReserves.length).to.equal(2);
+        expect(poolUpdatedEvent0.args.cfmmReserves[0]).to.equal(
+          cfmmReserves[0]
+        );
+        expect(poolUpdatedEvent0.args.cfmmReserves[1]).to.equal(
+          cfmmReserves[1]
+        );
         expect(poolUpdatedEvent0.args.txType).to.equal(0);
 
         const depositEvent = events[events.length - 2];
@@ -704,6 +713,9 @@ describe("ShortStrategy", function () {
         expect(poolUpdatedEvent.args.lpTokenBorrowedPlusInterest).to.equal(0);
         expect(poolUpdatedEvent.args.lpInvariant).to.equal(lpInvariant);
         expect(poolUpdatedEvent.args.borrowedInvariant).to.equal(0);
+        expect(poolUpdatedEvent.args.cfmmReserves.length).to.equal(2);
+        expect(poolUpdatedEvent.args.cfmmReserves[0]).to.equal(cfmmReserves[0]);
+        expect(poolUpdatedEvent.args.cfmmReserves[1]).to.equal(cfmmReserves[1]);
         expect(poolUpdatedEvent.args.txType).to.equal(0);
 
         expect(await strategy.totalSupply()).to.equal(expectedGSShares);
@@ -1080,6 +1092,8 @@ describe("ShortStrategy", function () {
 
         const minShares = 1000;
 
+        const cfmmReserves = await cfmm.getReserves();
+
         const res = await (
           await posManager.depositReserves(owner.address, [1000, 1000], [0, 0])
         ).wait();
@@ -1109,6 +1123,13 @@ describe("ShortStrategy", function () {
           .div(cfmmTotalSupply0);
         expect(poolUpdatedEvent0.args.lpInvariant).to.equal(lpInvariant0);
         expect(poolUpdatedEvent0.args.borrowedInvariant).to.equal(0);
+        expect(poolUpdatedEvent0.args.cfmmReserves.length).to.equal(2);
+        expect(poolUpdatedEvent0.args.cfmmReserves[0]).to.equal(
+          cfmmReserves[0] + 1000
+        );
+        expect(poolUpdatedEvent0.args.cfmmReserves[1]).to.equal(
+          cfmmReserves[1] + 1000
+        );
         expect(poolUpdatedEvent0.args.txType).to.equal(2);
 
         const depositEvent = res.events[res.events.length - 3];
@@ -1134,6 +1155,13 @@ describe("ShortStrategy", function () {
         const lpInvariant = cfmmBalance.mul(cfmmInvariant).div(cfmmTotalSupply);
         expect(poolUpdatedEvent.args.lpInvariant).to.equal(lpInvariant);
         expect(poolUpdatedEvent.args.borrowedInvariant).to.equal(0);
+        expect(poolUpdatedEvent.args.cfmmReserves.length).to.equal(2);
+        expect(poolUpdatedEvent.args.cfmmReserves[0]).to.equal(
+          cfmmReserves[0] + 1000
+        );
+        expect(poolUpdatedEvent.args.cfmmReserves[1]).to.equal(
+          cfmmReserves[1] + 1000
+        );
         expect(poolUpdatedEvent.args.txType).to.equal(2);
 
         const depositReserveEvent = res.events[res.events.length - 1];

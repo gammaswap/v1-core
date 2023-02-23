@@ -37,11 +37,6 @@ describe("BaseStrategy", function () {
     );
 
     GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
-    /*GammaPoolFactory = new ethers.ContractFactory(
-      GammaPoolFactoryJSON.abi,
-      GammaPoolFactoryJSON.bytecode,
-      owner
-    );/**/
 
     factory = await GammaPoolFactory.deploy(owner.address);
     await factory.setFee(0);

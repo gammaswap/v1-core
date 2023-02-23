@@ -9,12 +9,6 @@ import "./strategies/base/TestShortStrategy.sol";
 contract TestPositionManager is IGammaPoolEvents, ISendTokensCallback {
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    //event Deposit(address indexed caller, address indexed to, uint256 assets, uint256 shares);
-    //event Withdraw(address indexed caller, address indexed to, address indexed from, uint256 assets, uint256 shares);
-
-    //event PoolUpdated(uint256 lpTokenBalance, uint256 lpTokenBorrowed, uint256 lastBlockNumber, uint256 accFeeIndex,
-    //    uint256 lpTokenBorrowedPlusInterest, uint256 lpInvariant, uint256 borrowedInvariant);
-
     event DepositReserve(address indexed pool, uint256 reservesLen, uint256[] reserves, uint256 shares);
 
     address public immutable pool;

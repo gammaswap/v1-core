@@ -205,7 +205,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
 
         emit Deposit(caller, to, assets, shares);
         emit PoolUpdated(lpTokenBalance, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
-            lpInvariant, s.BORROWED_INVARIANT, isDepositReserves ? TX_TYPE.DEPOSIT_RESERVES : TX_TYPE.DEPOSIT_LIQUIDITY);
+            lpInvariant, s.BORROWED_INVARIANT, s.CFMM_RESERVES, isDepositReserves ? TX_TYPE.DEPOSIT_RESERVES : TX_TYPE.DEPOSIT_LIQUIDITY);
 
         afterDeposit(assets, shares);
     }
@@ -248,7 +248,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
 
         emit Withdraw(caller, to, owner, assets, shares);
         emit PoolUpdated(lpTokenBalance, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
-            lpInvariant, s.BORROWED_INVARIANT, askForReserves ? TX_TYPE.WITHDRAW_RESERVES : TX_TYPE.WITHDRAW_LIQUIDITY);
+            lpInvariant, s.BORROWED_INVARIANT, s.CFMM_RESERVES, askForReserves ? TX_TYPE.WITHDRAW_RESERVES : TX_TYPE.WITHDRAW_LIQUIDITY);
     }
 
     /// @dev Check if `spender` has permissions to spend `amount` of GS LP tokens belonging to `owner`

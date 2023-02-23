@@ -123,7 +123,8 @@ describe("LongStrategy", function () {
     lpTokenBorrowed: any,
     lpTokenBorrowedPlusInterest: any,
     lpInvariant: any,
-    borrowedInvariant: any
+    borrowedInvariant: any,
+    txType: any
   ) {
     expect(event.event).to.equal("PoolUpdated");
     expect(event.args.lpTokenBalance).to.equal(lpTokenBalance);
@@ -133,6 +134,7 @@ describe("LongStrategy", function () {
     );
     expect(event.args.lpInvariant).to.equal(lpInvariant);
     expect(event.args.borrowedInvariant).to.equal(borrowedInvariant);
+    expect(event.args.txType).to.equal(txType);
   }
 
   async function checkStrategyTokenBalances(bal1: any, bal2: any) {
@@ -486,7 +488,7 @@ describe("LongStrategy", function () {
         ONE
       );
 
-      checkPoolEventData(res2.events[res2.events.length - 1], 0, 0, 0, 0, 0);
+      checkPoolEventData(res2.events[res2.events.length - 1], 0, 0, 0, 0, 0, 5);
 
       expect(await tokenA.balanceOf(owner.address)).to.equal(
         ownerBalA.add(amtA.div(2))
@@ -550,7 +552,7 @@ describe("LongStrategy", function () {
         ONE
       );
 
-      checkPoolEventData(res3.events[res3.events.length - 1], 0, 0, 0, 0, 0);
+      checkPoolEventData(res3.events[res3.events.length - 1], 0, 0, 0, 0, 0, 5);
 
       expect(await tokenA.balanceOf(addr1.address)).to.equal(
         addr1BalA.add(amtA.div(4))
@@ -577,7 +579,15 @@ describe("LongStrategy", function () {
         ONE
       );
 
-      checkPoolEventData(res3a.events[res3a.events.length - 1], 0, 0, 0, 0, 0);
+      checkPoolEventData(
+        res3a.events[res3a.events.length - 1],
+        0,
+        0,
+        0,
+        0,
+        0,
+        5
+      );
 
       await checkStrategyTokenBalances(amtA.div(4), amtB.div(4));
 
@@ -605,7 +615,7 @@ describe("LongStrategy", function () {
         ONE
       );
 
-      checkPoolEventData(res4.events[res4.events.length - 1], 0, 0, 0, 0, 0);
+      checkPoolEventData(res4.events[res4.events.length - 1], 0, 0, 0, 0, 0, 5);
 
       expect(await tokenA.balanceOf(addr1.address)).to.equal(
         addr1BalA.add(amtA.div(4))
@@ -636,7 +646,7 @@ describe("LongStrategy", function () {
         ONE
       );
 
-      checkPoolEventData(res5.events[res5.events.length - 1], 0, 0, 0, 0, 0);
+      checkPoolEventData(res5.events[res5.events.length - 1], 0, 0, 0, 0, 0, 5);
 
       expect(await tokenA.balanceOf(addr1.address)).to.equal(
         addr1BalA.add(amtA.div(4)).add(amtA.div(8))
@@ -667,7 +677,7 @@ describe("LongStrategy", function () {
         ONE
       );
 
-      checkPoolEventData(res6.events[res6.events.length - 1], 0, 0, 0, 0, 0);
+      checkPoolEventData(res6.events[res6.events.length - 1], 0, 0, 0, 0, 0, 5);
 
       expect(await tokenA.balanceOf(addr1.address)).to.equal(
         addr1BalA.add(amtA.div(2))
@@ -728,7 +738,8 @@ describe("LongStrategy", function () {
         0,
         0,
         0,
-        0
+        0,
+        5
       );
 
       expect(await tokenA.balanceOf(owner.address)).to.equal(
@@ -1307,7 +1318,8 @@ describe("LongStrategy", function () {
         lpTokens,
         lpTokens,
         startLiquidity.sub(expectedLiquidity),
-        expectedLiquidity
+        expectedLiquidity,
+        7
       );
 
       const res2 = await strategy.getLoanChangeData(tokenId);
@@ -1531,7 +1543,8 @@ describe("LongStrategy", function () {
         loanLPTokens.div(2),
         loanLPTokens.div(2),
         startLiquidity.add(loanLiquidity.div(2)),
-        loanLiquidity.div(2)
+        loanLiquidity.div(2),
+        8
       );
 
       const res2a = await strategy.getLoanChangeData(tokenId);
@@ -1627,7 +1640,8 @@ describe("LongStrategy", function () {
         0,
         0,
         startLiquidity.add(loanLiquidity),
-        0
+        0,
+        8
       );
 
       const res2a = await strategy.getLoanChangeData(tokenId);
@@ -1786,7 +1800,8 @@ describe("LongStrategy", function () {
         0,
         0,
         startLiquidity.add(loanLiquidity.add(feeAmtA)),
-        0
+        0,
+        8
       );
 
       const res2a = await strategy.getLoanChangeData(tokenId);
@@ -1906,7 +1921,8 @@ describe("LongStrategy", function () {
         0,
         0,
         startLiquidity.add(loanLiquidity),
-        0
+        0,
+        8
       );
 
       const res2a = await strategy.getLoanChangeData(tokenId);
@@ -2023,7 +2039,8 @@ describe("LongStrategy", function () {
         0,
         0,
         startLiquidity.add(loanLiquidity.add(feeAmtA)),
-        0
+        0,
+        8
       );
 
       const res2a = await strategy.getLoanChangeData(tokenId);
@@ -2202,7 +2219,8 @@ describe("LongStrategy", function () {
         loanLPTokens,
         loanLPTokens,
         startLiquidity,
-        loanLiquidity
+        loanLiquidity,
+        6
       );
 
       const res1c = await strategy.getLoanChangeData(tokenId);
