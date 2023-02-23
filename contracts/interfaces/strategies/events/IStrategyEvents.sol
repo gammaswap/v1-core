@@ -18,7 +18,9 @@ interface IStrategyEvents {
         LIQUIDATE,            // 9
         LIQUIDATE_WITH_LP,    // 10
         BATCH_LIQUIDATION,    // 11
-        SYNC }                // 12
+        SYNC,                 // 12
+        EXTERNAL_REBALANCE,   // 13
+        EXTERNAL_LIQUIDATION }// 14
 
     /// @dev Event emitted when the Pool's global state variables is updated
     /// @param lpTokenBalance - quantity of CFMM LP tokens deposited in the pool
