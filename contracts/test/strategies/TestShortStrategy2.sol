@@ -65,6 +65,9 @@ contract TestShortStrategy2 is IShortStrategy{
     /***** Sync Function *****/
 
     function _sync() external override {
-        emit PoolUpdated(1, 2, 3, 4, 5, 6, 7, TX_TYPE.SYNC);
+        uint128[] memory cfmmReserves = new uint128[](2);
+        cfmmReserves[0] = 8;
+        cfmmReserves[1] = 9;
+        emit PoolUpdated(1, 2, 3, 4, 5, 6, 7, cfmmReserves, TX_TYPE.SYNC);
     }
 }

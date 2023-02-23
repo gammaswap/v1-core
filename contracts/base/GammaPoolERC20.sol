@@ -2,22 +2,12 @@
 pragma solidity >=0.8.4;
 
 import "../storage/AppStorage.sol";
+import "../interfaces/strategies/events/IGammaPoolERC20Events.sol";
 
 /// @title ERC20 (GS LP) implementation of GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev The root contract in GammaPool inheritance hierarchy. Inherits AppStorage contract to implement App Storage pattern
-abstract contract GammaPoolERC20 is AppStorage {
-    /// @dev Emitted when `amount` GS LP tokens are moved from account `from` to account `to`.
-    /// @param from - address sending GS LP tokens
-    /// @param to - address receiving GS LP tokens
-    /// @param amount - amount of GS LP tokens being sent
-    event Transfer(address indexed from, address indexed to, uint256 amount);
-
-    /// @dev Emitted when the allowance of a `spender` for an `owner` is set by a call to approve function. `amount` is the new allowance.
-    /// @param owner - address which owns the GS LP tokens spender is being given permission to spend
-    /// @param spender - address given permission to spend owner's GS LP tokens
-    /// @param amount - amount of GS LP tokens spender is given permission to spend
-    event Approval(address indexed owner, address indexed spender, uint256 amount);
+abstract contract GammaPoolERC20 is IGammaPoolERC20Events, AppStorage {
 
     error ERC20Transfer();
     error ERC20Allowance();

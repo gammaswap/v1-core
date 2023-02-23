@@ -47,7 +47,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
         emit LoanUpdated(tokenId, tokensHeld, 0, 0, 0, 0, TX_TYPE.LIQUIDATE);
 
-        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, TX_TYPE.LIQUIDATE);
+        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.LIQUIDATE);
     }
 
     /// @dev See {LiquidationStrategy-_liquidateWithLP}.
@@ -73,7 +73,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(_loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.LIQUIDATE_WITH_LP);
 
-        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, TX_TYPE.LIQUIDATE_WITH_LP);
+        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.LIQUIDATE_WITH_LP);
     }
 
     /// @dev See {LiquidationStrategy-_batchLiquidations}.
@@ -98,7 +98,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         // Store through event tokenIds of loans liquidated in batch and amounts liquidated
         emit Liquidation(0, uint128(totalCollateral), uint128(totalLoanLiquidity), uint128(writeDownAmt), TX_TYPE.BATCH_LIQUIDATION, _tokenIds);
 
-        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, TX_TYPE.BATCH_LIQUIDATION);
+        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.BATCH_LIQUIDATION);
     }
 
     /// @dev Update loan liquidity and check if can liquidate
@@ -176,13 +176,11 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
                 // If isFullPayment is false then loan was paid with CFMM LP tokens (`_liquidateWithLP` function was called)
                 // Therefore no CFMM LP tokens were minted during liquidation, thus lastCFMMTotalSupply & lastCFMMInvariant did not change => don't send lpDeposit
                 payPoolDebt(payLiquidity, lpTokenPrincipalPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, isFullPayment ? currLpBalance - s.LP_TOKEN_BALANCE : 0);
-                // emit PoolUpdated(currLpBalance, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, isFullPayment ? TX_TYPE.LIQUIDATE : TX_TYPE.LIQUIDATE_WITH_LP);
             } else {
                 // Liquidation was a batch liquidation
                 // Account for pool's liquidity debt paid.
                 // Batch liquidations are paid with CFMM LP tokens, therefore no need to pass lpDeposit (i.e. pass 0)
                 payPoolDebt(payLiquidity, lpTokenPrincipalPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, 0);
-                // emit PoolUpdated(currLpBalance, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, TX_TYPE.BATCH_LIQUIDATION);
             }
         }
 

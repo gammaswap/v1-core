@@ -517,6 +517,8 @@ describe("ShortStrategyERC4626", function () {
 
         const minShares = 1000;
 
+        const cfmmReserves = await cfmm.getReserves();
+
         const { events } = await (
           await strategy._deposit(assets, owner.address)
         ).wait();
@@ -538,11 +540,21 @@ describe("ShortStrategyERC4626", function () {
         const cfmmBalance0 = await cfmm.balanceOf(strategy.address);
         const cfmmTotalSupply0 = await cfmm.totalSupply();
         const cfmmInvariant0 = await cfmm.invariant();
-        const lpInvariant0 = cfmmBalance0.mul(cfmmInvariant0).div(cfmmTotalSupply0);
+        const lpInvariant0 = cfmmBalance0
+          .mul(cfmmInvariant0)
+          .div(cfmmTotalSupply0);
         expect(poolUpdatedEvent0.args.accFeeIndex).to.equal(ONE);
         expect(poolUpdatedEvent0.args.lpTokenBorrowedPlusInterest).to.equal(0);
         expect(poolUpdatedEvent0.args.lpInvariant).to.equal(lpInvariant0);
         expect(poolUpdatedEvent0.args.borrowedInvariant).to.equal(0);
+        expect(poolUpdatedEvent0.args.cfmmReserves.length).to.equal(2);
+        expect(poolUpdatedEvent0.args.cfmmReserves[0]).to.equal(
+          cfmmReserves[0]
+        );
+        expect(poolUpdatedEvent0.args.cfmmReserves[1]).to.equal(
+          cfmmReserves[1]
+        );
+        expect(poolUpdatedEvent0.args.txType).to.equal(0);
 
         const depositEvent = events[events.length - 2];
         expect(depositEvent.event).to.equal("Deposit");
@@ -568,6 +580,10 @@ describe("ShortStrategyERC4626", function () {
         expect(poolUpdatedEvent.args.lpTokenBorrowedPlusInterest).to.equal(0);
         expect(poolUpdatedEvent.args.lpInvariant).to.equal(lpInvariant);
         expect(poolUpdatedEvent.args.borrowedInvariant).to.equal(0);
+        expect(poolUpdatedEvent.args.cfmmReserves.length).to.equal(2);
+        expect(poolUpdatedEvent.args.cfmmReserves[0]).to.equal(cfmmReserves[0]);
+        expect(poolUpdatedEvent.args.cfmmReserves[1]).to.equal(cfmmReserves[1]);
+        expect(poolUpdatedEvent.args.txType).to.equal(0);
 
         expect(await strategy.totalSupply()).to.equal(expectedGSShares);
         expect(await strategy.balanceOf(owner.address)).to.equal(
@@ -785,6 +801,8 @@ describe("ShortStrategyERC4626", function () {
 
         const minShares = 1000;
 
+        const cfmmReserves = await cfmm.getReserves();
+
         const { events } = await (
           await strategy._mint(shares, owner.address)
         ).wait();
@@ -806,11 +824,21 @@ describe("ShortStrategyERC4626", function () {
         const cfmmBalance0 = await cfmm.balanceOf(strategy.address);
         const cfmmTotalSupply0 = await cfmm.totalSupply();
         const cfmmInvariant0 = await cfmm.invariant();
-        const lpInvariant0 = cfmmBalance0.mul(cfmmInvariant0).div(cfmmTotalSupply0);
+        const lpInvariant0 = cfmmBalance0
+          .mul(cfmmInvariant0)
+          .div(cfmmTotalSupply0);
         expect(poolUpdatedEvent0.args.accFeeIndex).to.equal(ONE);
         expect(poolUpdatedEvent0.args.lpTokenBorrowedPlusInterest).to.equal(0);
         expect(poolUpdatedEvent0.args.lpInvariant).to.equal(lpInvariant0);
         expect(poolUpdatedEvent0.args.borrowedInvariant).to.equal(0);
+        expect(poolUpdatedEvent0.args.cfmmReserves.length).to.equal(2);
+        expect(poolUpdatedEvent0.args.cfmmReserves[0]).to.equal(
+          cfmmReserves[0]
+        );
+        expect(poolUpdatedEvent0.args.cfmmReserves[1]).to.equal(
+          cfmmReserves[1]
+        );
+        expect(poolUpdatedEvent0.args.txType).to.equal(0);
 
         const depositEvent = events[events.length - 2];
         expect(depositEvent.event).to.equal("Deposit");
@@ -836,6 +864,10 @@ describe("ShortStrategyERC4626", function () {
         expect(poolUpdatedEvent.args.lpTokenBorrowedPlusInterest).to.equal(0);
         expect(poolUpdatedEvent.args.lpInvariant).to.equal(lpInvariant);
         expect(poolUpdatedEvent.args.borrowedInvariant).to.equal(0);
+        expect(poolUpdatedEvent.args.cfmmReserves.length).to.equal(2);
+        expect(poolUpdatedEvent.args.cfmmReserves[0]).to.equal(cfmmReserves[0]);
+        expect(poolUpdatedEvent.args.cfmmReserves[1]).to.equal(cfmmReserves[1]);
+        expect(poolUpdatedEvent.args.txType).to.equal(0);
 
         expect(await strategy.totalSupply()).to.equal(shares);
         expect(await strategy.balanceOf(owner.address)).to.equal(

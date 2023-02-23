@@ -2,11 +2,12 @@
 pragma solidity >=0.8.0;
 
 import "./IGammaPoolEvents.sol";
+import "./strategies/events/IGammaPoolERC20Events.sol";
 
 /// @title Interface for GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Interface used to clear tokens from the GammaPool
-interface IGammaPool is IGammaPoolEvents {
+interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
     struct PoolData {
         /// @dev Protocol id of the implementation contract for this GammaPool

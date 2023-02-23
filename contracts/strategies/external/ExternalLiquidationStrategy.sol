@@ -40,7 +40,7 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, L
 
         emit LoanUpdated(tokenId, tokensHeld, 0, 0, 0, 0, TX_TYPE.EXTERNAL_LIQUIDATION);
 
-        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, TX_TYPE.EXTERNAL_LIQUIDATION);
+        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.EXTERNAL_LIQUIDATION);
     }
 
 }
