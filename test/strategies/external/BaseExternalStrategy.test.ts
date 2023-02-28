@@ -4,7 +4,7 @@ import { BigNumber } from "ethers";
 
 const PROTOCOL_ID = 1;
 
-describe.only("BaseExternalStrategy", function () {
+describe("BaseExternalStrategy", function () {
   let TestERC20: any;
   let TestCFMM: any;
   let TestStrategy: any;
