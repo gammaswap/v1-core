@@ -4,10 +4,10 @@ pragma solidity >=0.8.4;
 import "../../interfaces/periphery/IExternalCallee.sol";
 import "../BaseLongStrategy.sol";
 
-/// @title BaseExternalStrategy, base contract for external swapping
+/// @title ExternalBaseStrategy, base contract for external swapping
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used to flash loan collateral and CFMM LP tokens to an external address
-abstract contract BaseExternalStrategy is BaseLongStrategy {
+abstract contract ExternalBaseStrategy is BaseLongStrategy {
     error WrongLPTokenBalance();
 
     /// @return feeRate - rate in basis points charged to liquidity flash loaned for external swaps

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.17;
 
-import "../../../strategies/external/BaseExternalStrategy.sol";
+import "../../../strategies/external/ExternalBaseStrategy.sol";
 import "../../../strategies/LongStrategy.sol";
 import "../../TestCFMM.sol";
 
-contract TestBaseExternalStrategy is BaseExternalStrategy {
+contract TestExternalBaseStrategy is ExternalBaseStrategy {
 
     using LibStorage for LibStorage.Storage;
 
@@ -13,7 +13,7 @@ contract TestBaseExternalStrategy is BaseExternalStrategy {
     event AmountsWithFees(uint256[] amounts);
 
     event SwapCollateral(uint256 collateral);
-    event ExternalSwap(uint256 liquiditySwapped, uint128[] tokensHeld);
+    event ExternalSwapFunc(uint256 liquiditySwapped, uint128[] tokensHeld);
     event SendLPTokens(uint256 lpTokens);
 
     uint80 public _borrowRate = 1;
@@ -83,7 +83,7 @@ contract TestBaseExternalStrategy is BaseExternalStrategy {
     function testExternalSwap(uint256 tokenId, address _cfmm, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) public virtual returns(uint256 liquiditySwapped, uint128[] memory tokensHeld) {
         LibStorage.Loan storage _loan = s.loans[tokenId];
         (liquiditySwapped, tokensHeld) = externalSwap(_loan, _cfmm, amounts, lpTokens, to, data);
-        emit ExternalSwap(liquiditySwapped, tokensHeld);
+        emit ExternalSwapFunc(liquiditySwapped, tokensHeld);
     }
 
     // deposit liquidity
@@ -116,7 +116,6 @@ contract TestBaseExternalStrategy is BaseExternalStrategy {
 
         checkMargin(heldLiquidity, liquidity);
 
-        _loan.tokensHeld = tokensHeld;
         _loan.lpTokens = convertInvariantToLP(liquidity, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
 
         emit LoanCreated(msg.sender, tokenId);

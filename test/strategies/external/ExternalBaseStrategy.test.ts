@@ -4,7 +4,7 @@ import { BigNumber } from "ethers";
 
 const PROTOCOL_ID = 1;
 
-describe("BaseExternalStrategy", function () {
+describe("ExternalBaseStrategy", function () {
   let TestERC20: any;
   let TestCFMM: any;
   let TestStrategy: any;
@@ -17,7 +17,6 @@ describe("BaseExternalStrategy", function () {
   let strategy: any;
   let owner: any;
   let addr1: any;
-  let addr2: any;
   let calleeEmpty: any;
   let callee: any;
   let callee2: any;
@@ -28,13 +27,13 @@ describe("BaseExternalStrategy", function () {
     // Get the ContractFactory and Signers here.
     TestERC20 = await ethers.getContractFactory("TestERC20");
     TestCFMM = await ethers.getContractFactory("TestCFMM");
-    TestStrategy = await ethers.getContractFactory("TestBaseExternalStrategy");
+    TestStrategy = await ethers.getContractFactory("TestExternalBaseStrategy");
     TestCalleeEmpty = await ethers.getContractFactory(
       "TestExternalCalleeEmpty"
     );
     TestCallee = await ethers.getContractFactory("TestExternalCallee");
     TestCallee2 = await ethers.getContractFactory("TestExternalCallee2");
-    [owner, addr1, addr2] = await ethers.getSigners();
+    [owner, addr1] = await ethers.getSigners();
 
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
     tokenB = await TestERC20.deploy("Test Token B", "TOKB");
@@ -924,7 +923,7 @@ describe("BaseExternalStrategy", function () {
       expect(strategyCfmmBalance1).to.equal(strategyCfmmBalance0);
     });
 
-    it("Error External swap function return rebalance amounts, NotEnoughBalance", async function () {
+    it("Error External swap function rebalance amounts, NotEnoughBalance", async function () {
       const ONE = BigNumber.from(10).pow(18);
       const amount0 = ONE.mul(10);
       const amount1 = ONE.mul(20);
@@ -979,7 +978,7 @@ describe("BaseExternalStrategy", function () {
       ).to.be.revertedWith("NotEnoughBalance");
     });
 
-    it("Error External swap function return rebalance amounts, NotEnoughCollateral", async function () {
+    it("Error External swap function rebalance amounts, NotEnoughCollateral", async function () {
       const ONE = BigNumber.from(10).pow(18);
       const amount0 = ONE.mul(10);
       const amount1 = ONE.mul(20);
@@ -1050,7 +1049,7 @@ describe("BaseExternalStrategy", function () {
       ).to.be.revertedWith("NotEnoughCollateral");
     });
 
-    it.skip("External swap function return rebalance amounts", async function () {
+    it("External swap function rebalance amounts, one loan", async function () {
       const ONE = BigNumber.from(10).pow(18);
       const amount0 = ONE.mul(10);
       const amount1 = ONE.mul(20);
@@ -1058,11 +1057,9 @@ describe("BaseExternalStrategy", function () {
       const tokenId = await createLoan(amount0, amount1, liquidity);
       const loan0 = await strategy.getLoan(tokenId);
 
-      //await (await tokenA.transfer(strategy.address, amount0)).wait();
-      //await (await tokenB.transfer(strategy.address, amount1)).wait();
-      //await createLoan(amount0, amount1, liquidity);
-
       const poolBalances0 = await strategy.getPoolBalances();
+      expect(poolBalances0.tokenBalances[0]).to.equal(loan0.tokensHeld[0]);
+      expect(poolBalances0.tokenBalances[1]).to.equal(loan0.tokensHeld[1]);
 
       const amounts = [amount0, amount1];
       const lpTokens = ONE.mul(20);
@@ -1105,10 +1102,10 @@ describe("BaseExternalStrategy", function () {
         poolBalances0.tokenBalances.length
       );
       expect(poolBalances1.tokenBalances[0]).to.equal(
-        poolBalances0.tokenBalances[0]
+        poolBalances0.tokenBalances[0].sub(amount0.div(2))
       );
       expect(poolBalances1.tokenBalances[1]).to.equal(
-        poolBalances0.tokenBalances[1]
+        poolBalances0.tokenBalances[1].sub(amount1.div(2))
       );
       expect(poolBalances1.lastCFMMTotalSupply).to.equal(
         poolBalances0.lastCFMMTotalSupply
@@ -1122,44 +1119,120 @@ describe("BaseExternalStrategy", function () {
       expect(loan1.initLiquidity).to.equal(loan0.initLiquidity);
       expect(loan1.lpTokens).to.equal(loan0.lpTokens);
       expect(loan1.tokensHeld.length).to.equal(loan0.tokensHeld.length);
-      expect(loan1.tokensHeld[0]).to.equal(loan0.tokensHeld[0]);
-      expect(loan1.tokensHeld[1]).to.equal(loan0.tokensHeld[1]);
+      expect(loan1.tokensHeld[0]).to.equal(
+        loan0.tokensHeld[0].sub(amount0.div(2))
+      );
+      expect(loan1.tokensHeld[1]).to.equal(
+        loan0.tokensHeld[1].sub(amount1.div(2))
+      );
+
+      expect(poolBalances1.tokenBalances[0]).to.equal(loan1.tokensHeld[0]);
+      expect(poolBalances1.tokenBalances[1]).to.equal(loan1.tokensHeld[1]);
 
       const strategyBalanceA1 = await tokenA.balanceOf(strategy.address);
       const strategyBalanceB1 = await tokenB.balanceOf(strategy.address);
       const strategyCfmmBalance1 = await cfmm.balanceOf(strategy.address);
-      expect(strategyBalanceA1).to.equal(strategyBalanceA0);
-      expect(strategyBalanceB1).to.equal(strategyBalanceB0);
+      expect(strategyBalanceA1).to.equal(strategyBalanceA0.sub(amount0.div(2)));
+      expect(strategyBalanceB1).to.equal(strategyBalanceB0.sub(amount1.div(2)));
+      expect(strategyCfmmBalance1).to.equal(strategyCfmmBalance0);
+    });
+
+    it("External swap function rebalance amounts, two loans", async function () {
+      const ONE = BigNumber.from(10).pow(18);
+      const amount0 = ONE.mul(10);
+      const amount1 = ONE.mul(20);
+      const liquidity = ONE.mul(10);
+      const tokenId = await createLoan(amount0, amount1, liquidity);
+      const loan0 = await strategy.getLoan(tokenId);
+
+      await createLoan(amount0, amount1, liquidity);
+
+      const poolBalances0 = await strategy.getPoolBalances();
+      expect(poolBalances0.tokenBalances[0].sub(amount0)).to.equal(
+        loan0.tokensHeld[0]
+      );
+      expect(poolBalances0.tokenBalances[1].sub(amount1)).to.equal(
+        loan0.tokensHeld[1]
+      );
+
+      const amounts = [amount0, amount1];
+      const lpTokens = ONE.mul(20);
+      const strategyBalanceA0 = await tokenA.balanceOf(strategy.address);
+      const strategyBalanceB0 = await tokenB.balanceOf(strategy.address);
+      const strategyCfmmBalance0 = await cfmm.balanceOf(strategy.address);
+
+      const swapData = {
+        strategy: strategy.address,
+        cfmm: cfmm.address,
+        token0: tokenA.address,
+        token1: tokenB.address,
+        amount0: amount0.div(2),
+        amount1: amount1.div(2),
+        lpTokens: lpTokens,
+      };
+      const data = ethers.utils.defaultAbiCoder.encode(
+        [
+          "tuple(address strategy, address cfmm, address token0, address token1, uint256 amount0, uint256 amount1, uint256 lpTokens)",
+        ],
+        [swapData]
+      );
+      await (
+        await strategy.testExternalSwap(
+          tokenId,
+          cfmm.address,
+          amounts,
+          lpTokens,
+          callee2.address,
+          data
+        )
+      ).wait();
+
+      const poolBalances1 = await strategy.getPoolBalances();
+      expect(poolBalances1.lpTokenBalance).to.equal(
+        poolBalances0.lpTokenBalance
+      );
+      expect(poolBalances1.lpInvariant).to.equal(poolBalances0.lpInvariant);
+      expect(poolBalances1.tokenBalances.length).to.equal(
+        poolBalances0.tokenBalances.length
+      );
+      expect(poolBalances1.tokenBalances[0]).to.equal(
+        poolBalances0.tokenBalances[0].sub(amount0.div(2))
+      );
+      expect(poolBalances1.tokenBalances[1]).to.equal(
+        poolBalances0.tokenBalances[1].sub(amount1.div(2))
+      );
+      expect(poolBalances1.lastCFMMTotalSupply).to.equal(
+        poolBalances0.lastCFMMTotalSupply
+      );
+      expect(poolBalances1.lastCFMMInvariant).to.equal(
+        poolBalances0.lastCFMMInvariant
+      );
+
+      const loan1 = await strategy.getLoan(tokenId);
+      expect(loan1.liquidity).to.equal(loan0.liquidity);
+      expect(loan1.initLiquidity).to.equal(loan0.initLiquidity);
+      expect(loan1.lpTokens).to.equal(loan0.lpTokens);
+      expect(loan1.tokensHeld.length).to.equal(loan0.tokensHeld.length);
+      expect(loan1.tokensHeld[0]).to.equal(
+        loan0.tokensHeld[0].sub(amount0.div(2))
+      );
+      expect(loan1.tokensHeld[1]).to.equal(
+        loan0.tokensHeld[1].sub(amount1.div(2))
+      );
+
+      expect(poolBalances1.tokenBalances[0].sub(amount0)).to.equal(
+        loan1.tokensHeld[0]
+      );
+      expect(poolBalances1.tokenBalances[1].sub(amount1)).to.equal(
+        loan1.tokensHeld[1]
+      );
+
+      const strategyBalanceA1 = await tokenA.balanceOf(strategy.address);
+      const strategyBalanceB1 = await tokenB.balanceOf(strategy.address);
+      const strategyCfmmBalance1 = await cfmm.balanceOf(strategy.address);
+      expect(strategyBalanceA1).to.equal(strategyBalanceA0.sub(amount0.div(2)));
+      expect(strategyBalanceB1).to.equal(strategyBalanceB0.sub(amount1.div(2)));
       expect(strategyCfmmBalance1).to.equal(strategyCfmmBalance0);
     });
   });
 });
-/*
-const params = {
-  protocolId: 1,
-  cfmm: addr3.address,
-};
-const data = ethers.utils.defaultAbiCoder.encode(
-  ["tuple(uint16 protocolId, address cfmm)"],
-  [params]
-);
-function testExternalSwap(uint256 tokenId, address _cfmm, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) public virtual returns(uint256 liquiditySwapped, uint128[] memory tokensHeld) {
-  LibStorage.Loan storage _loan = s.loans[tokenId];
-  (liquiditySwapped, tokensHeld) = externalSwap(_loan, _cfmm, amounts, lpTokens, to, data);
-  emit ExternalSwap(liquiditySwapped, tokensHeld);
-}
-**/
-
-/* const events = res.events;
-const idx = events.length - 1;
-expect(events[idx].event).to.equal("SwapCollateral");
-expect(events[idx].args.collateral).to.equal(collateralAsLPTokens);
-
-const strategyBalanceA1 = await tokenA.balanceOf(strategy.address);
-const strategyBalanceB1 = await tokenB.balanceOf(strategy.address);
-const addr1BalanceA1 = await tokenA.balanceOf(addr1.address);
-const addr1BalanceB1 = await tokenB.balanceOf(addr1.address);
-expect(strategyBalanceA1).to.equal(strategyBalanceA0.sub(amounts[0]));
-expect(strategyBalanceB1).to.equal(strategyBalanceB0.sub(amounts[1]));
-expect(addr1BalanceA1).to.equal(addr1BalanceA0.add(amounts[0]));
-expect(addr1BalanceB1).to.equal(addr1BalanceB0.add(amounts[1]));/**/

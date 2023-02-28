@@ -2,14 +2,14 @@
 pragma solidity >=0.8.4;
 
 import "../../interfaces/strategies/external/IExternalLongStrategy.sol";
-import "./BaseExternalStrategy.sol";
+import "./ExternalBaseStrategy.sol";
 import "../LongStrategy.sol";
 import "../../interfaces/periphery/ISendTokensCallback.sol";
 
 /// @title External Long Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used to rebalance loan collateral with an external swap (flash loan)
-abstract contract ExternalLongStrategy is IExternalLongStrategy, BaseExternalStrategy {
+abstract contract ExternalLongStrategy is IExternalLongStrategy, ExternalBaseStrategy {
 
     /// @dev See {IExternalLongStrategy-_rebalanceExternally}.
     function _rebalanceExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock returns(uint256 loanLiquidity, uint128[] memory tokensHeld) {
