@@ -49,7 +49,7 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
     /// @param to - recipient of token `lpTokens`
     /// @param lpTokens - quantities of pool's collateral tokens being sent to recipient
     /// @return lpTokens - quantity of LP tokens sent
-    function sendAndCalcCollateralLPTokens(address _cfmm, address to, uint256 lpTokens) internal virtual returns(uint256){
+    function sendCFMMLPTokens(address _cfmm, address to, uint256 lpTokens) internal virtual returns(uint256){
         sendToken(IERC20(_cfmm), to, lpTokens, s.LP_TOKEN_BALANCE, type(uint256).max);
         return lpTokens;
     }
@@ -71,7 +71,7 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
 
         // Send collateral tokens and CFMM LP tokens to external address and calculate their value as LP tokens
         if(amounts.length > 0) liquiditySwapped = sendAndCalcCollateralLPTokens(to, amounts, lastCFMMTotalSupply);
-        if(lpTokens > 0) liquiditySwapped += sendAndCalcCollateralLPTokens(_cfmm, to, lpTokens);
+        if(lpTokens > 0) liquiditySwapped += sendCFMMLPTokens(_cfmm, to, lpTokens);
 
         // Calculate liquidity sent out
         liquiditySwapped = convertLPToInvariant(liquiditySwapped, lastCFMMInvariant, lastCFMMTotalSupply);
