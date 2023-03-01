@@ -83,13 +83,13 @@ abstract contract ExternalBaseStrategy is BaseLongStrategy {
         tokensHeld = updateCollateral(_loan);
 
         // CFMM LP Tokens in pool must at least not decrease
-        uint256 newLpTokenBalance = GammaSwapLibrary.balanceOf(IERC20(_cfmm), address(this));
-        if(prevLpTokenBalance > newLpTokenBalance) {
-            revert WrongLPTokenBalance();
-        }
-
-        // Update CFMM LP Tokens in pool and the invariant it represents
-        s.LP_TOKEN_BALANCE = newLpTokenBalance;
-        s.LP_INVARIANT = uint128(convertLPToInvariant(newLpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply));
+        checkLPTokens(_cfmm, prevLpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply);
     }
+
+    /// @dev Check if CFMM LP tokens are above prevLpTokenBalance
+    /// @param _cfmm - recipient of token `amounts`
+    /// @param prevLpTokenBalance - quantities of pool's collateral tokens being sent to recipient
+    /// @param lastCFMMInvariant - total invariant in CFMM, used for conversion
+    /// @param lastCFMMTotalSupply - total supply of CFMM LP tokens, used for conversion
+    function checkLPTokens(address _cfmm, uint256 prevLpTokenBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) internal virtual;
 }
