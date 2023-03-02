@@ -8,6 +8,8 @@ contract TestExternalLiquidationStrategy is TestExternalBaseLongStrategy, Extern
 
     using LibStorage for LibStorage.Storage;
 
+    uint16 public liqFeeThreshold = 975;
+
     constructor(){
     }
 
@@ -40,7 +42,7 @@ contract TestExternalLiquidationStrategy is TestExternalBaseLongStrategy, Extern
     }
 
     function liquidationFeeThreshold() internal virtual override view returns(uint16) {
-        return 975;
+        return liqFeeThreshold;
     }
 
     function beforeRepay(LibStorage.Loan storage _loan, uint256[] memory amounts) internal virtual override {

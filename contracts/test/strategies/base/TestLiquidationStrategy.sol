@@ -119,8 +119,9 @@ contract TestLiquidationStrategy is LiquidationStrategy {
 
     function testPayBatchLoans(uint256 liquidity, uint256 lpTokenPrincipal) external virtual {
         uint256 currBalance = GammaSwapLibrary.balanceOf(IERC20(s.cfmm), address(this));
-        uint256 lpDeposit = currBalance - s.LP_TOKEN_BALANCE;
-        payPoolDebt(liquidity, lpTokenPrincipal, s.lastCFMMInvariant, s.lastCFMMTotalSupply, currBalance, lpDeposit);
+        // uint256 lpDeposit = currBalance - s.LP_TOKEN_BALANCE;
+        // payPoolDebt(liquidity, lpTokenPrincipal, s.lastCFMMInvariant, s.lastCFMMTotalSupply, currBalance, lpDeposit);
+        payPoolDebt(liquidity, lpTokenPrincipal, s.lastCFMMInvariant, s.lastCFMMTotalSupply, currBalance);
     }
 
     function testPayBatchLoanAndRefundLiquidator(uint256[] calldata tokenIds) external virtual {
