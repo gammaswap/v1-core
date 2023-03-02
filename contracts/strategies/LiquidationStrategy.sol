@@ -175,13 +175,14 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
                 // Therefore CFMM LP tokens were minted during liquidation, thus lastCFMMInvariant & lastCFMMTotalSupply increased => send lpDeposit to payPoolDebt
                 // If isFullPayment is false then loan was paid with CFMM LP tokens (`_liquidateWithLP` function was called)
                 // Therefore no CFMM LP tokens were minted during liquidation, thus lastCFMMTotalSupply & lastCFMMInvariant did not change => don't send lpDeposit
-                payPoolDebt(payLiquidity, lpTokenPrincipalPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, isFullPayment ? currLpBalance - s.LP_TOKEN_BALANCE : 0);
+                // payPoolDebt(payLiquidity, lpTokenPrincipalPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, isFullPayment ? currLpBalance - s.LP_TOKEN_BALANCE : 0);
             } else {
                 // Liquidation was a batch liquidation
                 // Account for pool's liquidity debt paid.
                 // Batch liquidations are paid with CFMM LP tokens, therefore no need to pass lpDeposit (i.e. pass 0)
-                payPoolDebt(payLiquidity, lpTokenPrincipalPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, 0);
+                // payPoolDebt(payLiquidity, lpTokenPrincipalPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, 0);
             }
+            payPoolDebt(payLiquidity, lpTokenPrincipalPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance);
         }
 
         return(tokensHeld, refund, loanLiquidity);

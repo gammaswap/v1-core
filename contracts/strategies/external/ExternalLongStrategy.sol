@@ -2,14 +2,14 @@
 pragma solidity >=0.8.4;
 
 import "../../interfaces/strategies/external/IExternalLongStrategy.sol";
-import "./BaseExternalStrategy.sol";
+import "./ExternalBaseStrategy.sol";
 import "../LongStrategy.sol";
 import "../../interfaces/periphery/ISendTokensCallback.sol";
 
 /// @title External Long Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used to rebalance loan collateral with an external swap (flash loan)
-abstract contract ExternalLongStrategy is IExternalLongStrategy, BaseExternalStrategy {
+abstract contract ExternalLongStrategy is IExternalLongStrategy, ExternalBaseStrategy {
 
     /// @dev See {IExternalLongStrategy-_rebalanceExternally}.
     function _rebalanceExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock returns(uint256 loanLiquidity, uint128[] memory tokensHeld) {
@@ -41,5 +41,17 @@ abstract contract ExternalLongStrategy is IExternalLongStrategy, BaseExternalStr
 
         emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex,
             s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.EXTERNAL_REBALANCE);
+    }
+
+    /// @dev See {ExternalBaseStrategy-checkLPTokens}.
+    function checkLPTokens(address _cfmm, uint256 prevLpTokenBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) internal virtual override {
+        uint256 newLpTokenBalance = GammaSwapLibrary.balanceOf(IERC20(_cfmm), address(this));
+        if(prevLpTokenBalance > newLpTokenBalance) {
+            revert WrongLPTokenBalance();
+        }
+
+        // Update CFMM LP Tokens in pool and the invariant it represents
+        s.LP_TOKEN_BALANCE = newLpTokenBalance;
+        s.LP_INVARIANT = uint128(convertLPToInvariant(newLpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply));
     }
 }

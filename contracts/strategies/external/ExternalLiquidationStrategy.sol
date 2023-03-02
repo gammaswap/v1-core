@@ -2,13 +2,13 @@
 pragma solidity >=0.8.4;
 
 import "../../interfaces/strategies/external/IExternalLiquidationStrategy.sol";
-import "./BaseExternalStrategy.sol";
+import "./ExternalBaseStrategy.sol";
 import "../LiquidationStrategy.sol";
 
 /// @title External Liquidation Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used to liquidate loans with an external swap (flash loan)
-abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, LiquidationStrategy, BaseExternalStrategy {
+abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, LiquidationStrategy, ExternalBaseStrategy {
 
     /// @dev See {IExternalLiquidationStrategy-_liquidateExternally}.
     function _liquidateExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
@@ -16,14 +16,14 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, L
         uint128[] memory tokensHeld;
         uint256 writeDownAmt;
         uint256 collateral;
-        address _cfmm = s.cfmm;
+
         // No need to check if msg.sender has permission
         LibStorage.Loan storage _loan = s.loans[tokenId];
 
-        (loanLiquidity, collateral, tokensHeld, writeDownAmt) = getLoanLiquidityAndCollateral(_loan, _cfmm);
+        (loanLiquidity, collateral, tokensHeld, writeDownAmt) = getLoanLiquidityAndCollateral(_loan, s.cfmm);
 
         uint256 liquiditySwapped;
-        (liquiditySwapped, tokensHeld) = externalSwap(_loan, _cfmm, amounts, lpTokens, to, data); // of the CFMM LP Tokens that we pulled out, more have to come back
+        (liquiditySwapped, tokensHeld) = externalSwap(_loan, s.cfmm, amounts, lpTokens, to, data); // of the CFMM LP Tokens that we pulled out, more have to come back
 
         if(liquiditySwapped > loanLiquidity) {
             loanLiquidity = loanLiquidity + calcExternalSwapFee(liquiditySwapped, loanLiquidity);
@@ -43,4 +43,7 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, L
         emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.EXTERNAL_LIQUIDATION);
     }
 
+    /// @dev See {ExternalBaseStrategy-checkLPTokens}.
+    function checkLPTokens(address _cfmm, uint256 prevLpTokenBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) internal virtual override {
+    }
 }

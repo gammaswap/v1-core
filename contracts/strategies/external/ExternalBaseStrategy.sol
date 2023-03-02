@@ -4,10 +4,10 @@ pragma solidity >=0.8.4;
 import "../../interfaces/periphery/IExternalCallee.sol";
 import "../BaseLongStrategy.sol";
 
-/// @title BaseExternalStrategy, base contract for external swapping
+/// @title ExternalBaseStrategy, base contract for external swapping
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used to flash loan collateral and CFMM LP tokens to an external address
-abstract contract BaseExternalStrategy is BaseLongStrategy {
+abstract contract ExternalBaseStrategy is BaseLongStrategy {
     error WrongLPTokenBalance();
 
     /// @return feeRate - rate in basis points charged to liquidity flash loaned for external swaps
@@ -49,7 +49,7 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
     /// @param to - recipient of token `lpTokens`
     /// @param lpTokens - quantities of pool's collateral tokens being sent to recipient
     /// @return lpTokens - quantity of LP tokens sent
-    function sendAndCalcCollateralLPTokens(address _cfmm, address to, uint256 lpTokens) internal virtual returns(uint256){
+    function sendCFMMLPTokens(address _cfmm, address to, uint256 lpTokens) internal virtual returns(uint256){
         sendToken(IERC20(_cfmm), to, lpTokens, s.LP_TOKEN_BALANCE, type(uint256).max);
         return lpTokens;
     }
@@ -71,7 +71,7 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
 
         // Send collateral tokens and CFMM LP tokens to external address and calculate their value as LP tokens
         if(amounts.length > 0) liquiditySwapped = sendAndCalcCollateralLPTokens(to, amounts, lastCFMMTotalSupply);
-        if(lpTokens > 0) liquiditySwapped += sendAndCalcCollateralLPTokens(_cfmm, to, lpTokens);
+        if(lpTokens > 0) liquiditySwapped += sendCFMMLPTokens(_cfmm, to, lpTokens);
 
         // Calculate liquidity sent out
         liquiditySwapped = convertLPToInvariant(liquiditySwapped, lastCFMMInvariant, lastCFMMTotalSupply);
@@ -83,13 +83,13 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
         tokensHeld = updateCollateral(_loan);
 
         // CFMM LP Tokens in pool must at least not decrease
-        uint256 newLpTokenBalance = GammaSwapLibrary.balanceOf(IERC20(_cfmm), address(this));
-        if(prevLpTokenBalance > newLpTokenBalance) {
-            revert WrongLPTokenBalance();
-        }
-
-        // Update CFMM LP Tokens in pool and the invariant it represents
-        s.LP_TOKEN_BALANCE = newLpTokenBalance;
-        s.LP_INVARIANT = uint128(convertLPToInvariant(newLpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply));
+        checkLPTokens(_cfmm, prevLpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply);
     }
+
+    /// @dev Check if CFMM LP tokens are above prevLpTokenBalance
+    /// @param _cfmm - recipient of token `amounts`
+    /// @param prevLpTokenBalance - quantities of pool's collateral tokens being sent to recipient
+    /// @param lastCFMMInvariant - total invariant in CFMM, used for conversion
+    /// @param lastCFMMTotalSupply - total supply of CFMM LP tokens, used for conversion
+    function checkLPTokens(address _cfmm, uint256 prevLpTokenBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) internal virtual;
 }
