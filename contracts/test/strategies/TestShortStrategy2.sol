@@ -5,6 +5,12 @@ import "../../interfaces/strategies/base/IShortStrategy.sol";
 
 contract TestShortStrategy2 is IShortStrategy{
 
+    function _getLatestCFMMReserves(bytes memory) external override pure returns(uint128[] memory cfmmReserves) {
+        cfmmReserves = new uint128[](2);
+        cfmmReserves[0] = 1;
+        cfmmReserves[1] = 2;
+    }
+
     function _depositNoPull(address to) external override returns(uint256 shares) {
         shares = 2;
         uint256 assets = 3;
@@ -36,7 +42,7 @@ contract TestShortStrategy2 is IShortStrategy{
         emit Deposit(from, to, assets, shares);
     }
 
-    function totalAssets(address, uint256, uint256, uint256, uint256, uint256) external override pure returns(uint256) {
+    function totalAssets(address, uint128[] memory, uint256, uint256, uint256, uint256, uint256) external override pure returns(uint256) {
         return 1000*(10**18);
     }
 

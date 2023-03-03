@@ -754,9 +754,12 @@ describe("ShortStrategy", function () {
 
         await borrowLPTokens(ONE.mul(10));
 
+        const reserves = await cfmm.getReserves();
+
         const params0 = await strategy.getTotalAssetsParams();
         const totalAssets0 = await strategy.totalAssets(
           cfmm.address,
+          [reserves[0], reserves[1]],
           params0.borrowedInvariant,
           params0.lpBalance,
           params0.prevCFMMInvariant,

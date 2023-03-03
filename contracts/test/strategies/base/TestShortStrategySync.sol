@@ -6,6 +6,12 @@ import "./TestBaseShortStrategy.sol";
 
 contract TestShortStrategySync is TestBaseShortStrategy, ShortStrategySync {
 
+    function _getLatestCFMMReserves(bytes memory) external override(IShortStrategy, TestBaseShortStrategy) pure returns(uint128[] memory cfmmReserves) {
+        cfmmReserves = new uint128[](2);
+        cfmmReserves[0] = 1;
+        cfmmReserves[1] = 2;
+    }
+
     function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal override(BaseStrategy, TestBaseShortStrategy) virtual {
     }
 

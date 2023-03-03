@@ -20,9 +20,6 @@ contract TestExternalLongStrategy is TestExternalBaseLongStrategy, ExternalLongS
     function _decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address to) external virtual override returns(uint128[] memory tokensHeld) {
     }
 
-    function _getLatestCFMMReserves(address cfmm) external virtual override view returns(uint256[] memory cfmmReserves) {
-    }
-
     function _increaseCollateral(uint256 tokenId) external virtual override returns(uint128[] memory tokensHeld) {
     }
 

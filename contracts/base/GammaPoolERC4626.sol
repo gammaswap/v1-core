@@ -59,7 +59,8 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     /// @dev Calculates and returns total CFMM LP tokens belonging to liquidity providers using state global variables. It does not update the GammaPool
     /// @return totalAssets - current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
     function totalAssets() public view virtual returns(uint256) {
-        return IShortStrategy(vaultImplementation()).totalAssets(s.cfmm, s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE,
+        uint128[] memory reserves = IShortStrategy(vaultImplementation())._getLatestCFMMReserves(abi.encode(s.cfmm));
+        return IShortStrategy(vaultImplementation()).totalAssets(s.cfmm, reserves, s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE,
             s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER);
     }
 
