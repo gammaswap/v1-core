@@ -130,6 +130,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
 
     /// @dev See {IGammaPool-getLatestCFMMReserves}
     function getLatestCFMMReserves() external virtual override view returns(uint128[] memory cfmmReserves) {
+        return _getLatestCFMMReserves();
+    }
+
+    /// @dev See {GammaPoolERC4626-_getLatestCFMMReserves}
+    function _getLatestCFMMReserves() internal virtual override view returns(uint128[] memory cfmmReserves) {
         return IShortStrategy(shortStrategy)._getLatestCFMMReserves(abi.encode(s.cfmm));
     }
 

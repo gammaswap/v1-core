@@ -17,6 +17,9 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     /// @return address - implementation contract that implements vault logic (e.g. ShortStrategy)
     function vaultImplementation() internal virtual view returns(address);
 
+    /// @return cfmmReserves - latest token reserves in the CFMM
+    function _getLatestCFMMReserves() internal virtual view returns(uint128[] memory cfmmReserves);
+
     /// @return address - CFMM LP token address used for the Vault for accounting, depositing, and withdrawing.
     function asset() external virtual view returns(address) {
         return s.cfmm;
@@ -59,8 +62,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     /// @dev Calculates and returns total CFMM LP tokens belonging to liquidity providers using state global variables. It does not update the GammaPool
     /// @return totalAssets - current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
     function totalAssets() public view virtual returns(uint256) {
-        uint128[] memory reserves = IShortStrategy(vaultImplementation())._getLatestCFMMReserves(abi.encode(s.cfmm));
-        return IShortStrategy(vaultImplementation()).totalAssets(s.cfmm, reserves, s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE,
+        return IShortStrategy(vaultImplementation()).totalAssets(s.cfmm, _getLatestCFMMReserves(), s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE,
             s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER);
     }
 
