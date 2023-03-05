@@ -7,11 +7,6 @@ import "../events/ILongStrategyEvents.sol";
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used in strategies that borrow and repay liquidity loans
 interface ILongStrategy is ILongStrategyEvents {
-    /// @dev Get latest reserves in the CFMM, which can be used for pricing
-    /// @param cfmm - address of CFMM
-    /// @return cfmmReserves - reserves in the CFMM
-    function _getLatestCFMMReserves(address cfmm) external view returns(uint256[] memory cfmmReserves);
-
     /// @dev Deposit more collateral in loan identified by tokenId
     /// @param tokenId - unique id identifying loan
     /// @return tokensHeld - updated collateral token amounts backing loan

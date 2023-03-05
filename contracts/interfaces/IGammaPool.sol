@@ -153,10 +153,10 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     /// @return shares - quantity of GS LP tokens received for reserve tokens deposited
     function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external returns(uint256[] memory reserves, uint256 shares);
 
-    // Long Gamma
-
     /// @return cfmmReserves - latest token reserves in the CFMM
-    function getLatestCFMMReserves() external view returns(uint256[] memory cfmmReserves);
+    function getLatestCFMMReserves() external view returns(uint128[] memory cfmmReserves);
+
+    // Long Gamma
 
     /// @dev Create a new Loan struct
     /// @return tokenId - unique id of loan struct created

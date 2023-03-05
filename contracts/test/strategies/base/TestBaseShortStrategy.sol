@@ -173,4 +173,10 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         TestERC20(TestCFMM(cfmm).token0()).mint(to, amounts[0]);
         TestERC20(TestCFMM(cfmm).token1()).mint(to, amounts[1]);
     }
+
+    function _getLatestCFMMReserves(bytes memory) external override pure virtual returns(uint128[] memory cfmmReserves) {
+        cfmmReserves = new uint128[](2);
+        cfmmReserves[0] = 1;
+        cfmmReserves[1] = 2;
+    }
 }

@@ -4,13 +4,6 @@ pragma solidity 0.8.17;
 import "../../interfaces/strategies/base/ILongStrategy.sol";
 
 contract TestLongStrategy2 is ILongStrategy {
-
-    function _getLatestCFMMReserves(address) external override pure returns(uint256[] memory cfmmReserves) {
-        cfmmReserves = new uint256[](2);
-        cfmmReserves[0] = 3;
-        cfmmReserves[1] = 4;
-    }
-
     function _increaseCollateral(uint256 tokenId) external override returns(uint128[] memory tokensHeld) {
         tokensHeld = new uint128[](2);
         tokensHeld[0] = 1;

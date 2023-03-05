@@ -321,6 +321,13 @@ describe("GammaPool", function () {
 
   // You can nest describe calls to create subsections.
   describe("Short Gamma", function () {
+    it("Get Latest CFMM Reserves", async function () {
+      const cfmmReserves = await gammaPool.getLatestCFMMReserves();
+      expect(cfmmReserves.length).to.eq(2);
+      expect(cfmmReserves[0]).to.eq(1);
+      expect(cfmmReserves[1]).to.eq(2);
+    });
+
     it("Deposit & Withdraw Liquidity", async function () {
       const res0 = await (await gammaPool.depositNoPull(addr1.address)).wait();
       expect(res0.events[0].args.caller).to.eq(owner.address);
@@ -381,13 +388,6 @@ describe("GammaPool", function () {
       expect(loan.initLiquidity).to.eq(0);
       expect(loan.liquidity).to.eq(0);
       expect(loan.rateIndex).to.eq(ethers.BigNumber.from(10).pow(18));
-    });
-
-    it("Get Latest CFMM Reserves", async function () {
-      const cfmmReserves = await gammaPool.getLatestCFMMReserves();
-      expect(cfmmReserves.length).to.eq(2);
-      expect(cfmmReserves[0]).to.eq(3);
-      expect(cfmmReserves[1]).to.eq(4);
     });
 
     it("Update Loan", async function () {
