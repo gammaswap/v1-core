@@ -666,8 +666,10 @@ describe("ShortStrategyERC4626", function () {
         const assets3 = assets2.div(2);
         const params1 = await strategy.getTotalAssetsParams();
 
+        const reserves1 = await cfmm.getReserves();
         const currTotalAssets = await strategy.totalAssets(
           cfmm.address,
+          reserves1,
           params1.borrowedInvariant,
           params1.lpBalance,
           params1.prevCFMMInvariant,
@@ -925,8 +927,10 @@ describe("ShortStrategyERC4626", function () {
         const shares2 = shares.div(2);
         const params1 = await strategy.getTotalAssetsParams();
 
+        const reserves1 = await cfmm.getReserves();
         const currTotalAssets = await strategy.totalAssets(
           cfmm.address,
+          reserves1,
           params1.borrowedInvariant,
           params1.lpBalance,
           params1.prevCFMMInvariant,
@@ -962,8 +966,10 @@ describe("ShortStrategyERC4626", function () {
         const shares3 = shares2.div(2);
         const params2 = await strategy.getTotalAssetsParams();
 
+        const reserves2 = await cfmm.getReserves();
         const currTotalAssets2 = await strategy.totalAssets(
           cfmm.address,
+          reserves2,
           params2.borrowedInvariant,
           params2.lpBalance,
           params2.prevCFMMInvariant,
@@ -1183,8 +1189,11 @@ describe("ShortStrategyERC4626", function () {
       expect(totAssets).to.equal(0);
 
       const params = await strategy.getTotalAssetsParams();
+      const reserves = await cfmm.getReserves();
+
       const currTotalAssets = await strategy.totalAssets(
         cfmm.address,
+        reserves,
         params.borrowedInvariant,
         params.lpBalance,
         params.prevCFMMInvariant,
@@ -1202,8 +1211,11 @@ describe("ShortStrategyERC4626", function () {
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
       const params1 = await strategy.getTotalAssetsParams();
+
+      const reserves1 = await cfmm.getReserves();
       const currTotalAssets1 = await strategy.totalAssets(
         cfmm.address,
+        reserves1,
         params1.borrowedInvariant,
         params1.lpBalance,
         params1.prevCFMMInvariant,
@@ -1250,8 +1262,10 @@ describe("ShortStrategyERC4626", function () {
 
       const params = await strategy.getTotalAssetsParams();
 
+      const reserves = await cfmm.getReserves();
       const currTotalAssets = await strategy.totalAssets(
         cfmm.address,
+        reserves,
         params.borrowedInvariant,
         params.lpBalance,
         params.prevCFMMInvariant,
