@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../libraries/GammaSwapLibrary.sol";
 import "../interfaces/IGammaPool.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/ILiquidationStrategy.sol";
@@ -61,6 +63,33 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     /// @dev See {IGammaPool-vaultImplementation}
     function vaultImplementation() internal virtual override view returns(address) {
         return shortStrategy;
+    }
+
+    /***** CFMM Data *****/
+
+    /// @dev See {GammaPoolERC4626-_getLatestCFMMReserves}
+    function _getLatestCFMMReserves() internal virtual override view returns(uint128[] memory cfmmReserves) {
+        return IShortStrategy(shortStrategy)._getLatestCFMMReserves(abi.encode(s.cfmm));
+    }
+
+    /// @dev See {GammaPoolERC4626-_getLatestCFMMInvariant}
+    function _getLatestCFMMInvariant() internal virtual override view returns(uint256 lastCFMMInvariant) {
+        return IShortStrategy(shortStrategy)._getLatestCFMMInvariant(abi.encode(s.cfmm));
+    }
+
+    /// @dev See {GammaPoolERC4626-_getLatestCFMMTotalSupply}
+    function _getLatestCFMMTotalSupply() internal virtual override view returns(uint256 lastCFMMTotalSupply) {
+        return GammaSwapLibrary.totalSupply(IERC20(s.cfmm));
+    }
+
+    /// @dev See {IGammaPool-getLatestCFMMReserves}
+    function getLatestCFMMReserves() external virtual override view returns(uint128[] memory cfmmReserves) {
+        return _getLatestCFMMReserves();
+    }
+
+    /// @dev See {IGammaPool-getCFMMBalances}
+    function getLatestCFMMBalances() external virtual override view returns(uint128[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply) {
+        return(_getLatestCFMMReserves(), _getLatestCFMMInvariant(), _getLatestCFMMTotalSupply());
     }
 
     /***** GammaPool Data *****/
@@ -126,16 +155,6 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     /// @dev See {IGammaPool-withdrawReserves}
     function withdrawReserves(address to) external virtual override returns (uint256[] memory reserves, uint256 assets) {
         return abi.decode(callStrategy(shortStrategy, abi.encodeWithSelector(IShortStrategy._withdrawReserves.selector, to)), (uint256[],uint256));
-    }
-
-    /// @dev See {IGammaPool-getLatestCFMMReserves}
-    function getLatestCFMMReserves() external virtual override view returns(uint128[] memory cfmmReserves) {
-        return _getLatestCFMMReserves();
-    }
-
-    /// @dev See {GammaPoolERC4626-_getLatestCFMMReserves}
-    function _getLatestCFMMReserves() internal virtual override view returns(uint128[] memory cfmmReserves) {
-        return IShortStrategy(shortStrategy)._getLatestCFMMReserves(abi.encode(s.cfmm));
     }
 
     /***** LONG *****/

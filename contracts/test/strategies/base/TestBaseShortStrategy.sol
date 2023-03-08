@@ -179,4 +179,9 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         cfmmReserves[0] = 1;
         cfmmReserves[1] = 2;
     }
+
+    function _getLatestCFMMInvariant(bytes memory data) external override view virtual returns(uint256 cfmmInvariant) {
+        address _cfmm = abi.decode(data, (address));
+        return uint128(TestCFMM(_cfmm).invariant());
+    }
 }

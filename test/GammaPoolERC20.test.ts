@@ -46,7 +46,7 @@ describe("GammaPoolERC20", function () {
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
     tokenB = await TestERC20.deploy("Test Token B", "TOKB");
     cfmm = await TestERC20.deploy("Test CFMM", "CFMM");
-    shortStrategy = await TestShortStrategy.deploy();
+    shortStrategy = await TestShortStrategy.deploy(cfmm.address);
     addressCalculator = await TestAddressCalculator.deploy();
 
     factory = await TestGammaPoolFactory.deploy(cfmm.address, PROTOCOL_ID, [
