@@ -156,6 +156,11 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     /// @return cfmmReserves - latest token reserves in the CFMM
     function getLatestCFMMReserves() external view returns(uint128[] memory cfmmReserves);
 
+    /// @return cfmmReserves - latest token reserves in the CFMM
+    /// @return cfmmInvariant - latest total invariant in the CFMM
+    /// @return cfmmTotalSupply - latest total supply of LP tokens in CFMM
+    function getLatestCFMMBalances() external view returns(uint128[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply);
+
     // Long Gamma
 
     /// @dev Create a new Loan struct

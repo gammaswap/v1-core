@@ -33,20 +33,25 @@ interface IShortStrategy is IShortStrategyEvents {
     function _depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external returns(uint256[] memory reserves, uint256 shares);
 
     /// @dev Get latest reserves in the CFMM, which can be used for pricing
-    /// @param cfmmData - bytes data identifying CFMM
+    /// @param cfmmData - bytes data for calculating CFMM reserves
     /// @return cfmmReserves - reserves in the CFMM
     function _getLatestCFMMReserves(bytes memory cfmmData) external view returns(uint128[] memory cfmmReserves);
 
+    /// @dev Get latest invariant from CFMM
+    /// @param cfmmData - bytes data for calculating CFMM invariant
+    /// @return cfmmInvariant - reserves in the CFMM
+    function _getLatestCFMMInvariant(bytes memory cfmmData) external view returns(uint256 cfmmInvariant);
+
     /// @dev Calculate current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
-    /// @param cfmm - address of CFMM
-    /// @param reserves - reserve token quantities in CFMM
     /// @param borrowedInvariant - invariant amount borrowed in GammaPool including accrued interest calculated in last update to GammaPool
     /// @param lpBalance - amount of LP tokens deposited in GammaPool
+    /// @param lastCFMMInvariant - invariant amount in CFMM
+    /// @param lastCFMMTotalSupply - total supply in CFMM
     /// @param prevCFMMInvariant - invariant amount in CFMM in last update to GammaPool
     /// @param prevCFMMTotalSupply - total supply in CFMM in last update to GammaPool
     /// @param lastBlockNum - last block GammaPool was updated
     /// @return totalAssets - total CFMM LP tokens in existence in the pool (real and virtual) including accrued interest
-    function totalAssets(address cfmm, uint128[] memory reserves, uint256 borrowedInvariant, uint256 lpBalance, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum) external view returns(uint256);
+    function totalAssets(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum) external view returns(uint256);
 
     /// @dev Synchronize LP_TOKEN_BALANCE with actual CFMM LP tokens deposited in GammaPool
     function _sync() external;

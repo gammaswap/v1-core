@@ -754,35 +754,31 @@ describe("ShortStrategy", function () {
 
         await borrowLPTokens(ONE.mul(10));
 
-        const reserves0 = await cfmm.getReserves();
+        const cfmmTotalSupply0 = await cfmm.totalSupply();
+        const cfmmInvariant0 = await cfmm.invariant();
 
         const params0 = await strategy.getTotalAssetsParams();
         const totalAssets0 = await strategy.totalAssets(
-          cfmm.address,
-          reserves0,
           params0.borrowedInvariant,
           params0.lpBalance,
+          cfmmInvariant0,
+          cfmmTotalSupply0,
           params0.prevCFMMInvariant,
           params0.prevCFMMTotalSupply,
           params0.lastBlockNum
         );
-
-        const cfmmTotalSupply0 = await cfmm.totalSupply();
-        const cfmmInvariant0 = await cfmm.invariant();
 
         await (await cfmm.trade(tradeYield)).wait();
 
         const cfmmTotalSupply1 = await cfmm.totalSupply();
         const cfmmInvariant1 = await cfmm.invariant();
 
-        const reserves1 = await cfmm.getReserves();
-
         const params1 = await strategy.getTotalAssetsParams();
         const totalAssets1 = await strategy.totalAssets(
-          cfmm.address,
-          reserves1,
           params1.borrowedInvariant,
           params1.lpBalance,
+          cfmmInvariant1,
+          cfmmTotalSupply1,
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.add(1)
@@ -874,12 +870,14 @@ describe("ShortStrategy", function () {
         const assets3 = assets2.div(2);
         const params1 = await strategy.getTotalAssetsParams();
 
-        const reserves1 = await cfmm.getReserves();
+        const cfmmTotalSupply1 = await cfmm.totalSupply();
+        const cfmmInvariant1 = await cfmm.invariant();
+
         const currTotalAssets = await strategy.totalAssets(
-          cfmm.address,
-          reserves1,
           params1.borrowedInvariant,
           params1.lpBalance,
+          cfmmInvariant1,
+          cfmmTotalSupply1,
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(2) // to account for the next 2 blocks update
@@ -1272,13 +1270,14 @@ describe("ShortStrategy", function () {
         const assets3 = assets2.div(2);
         const params1 = await strategy.getTotalAssetsParams();
 
-        const reserves1 = await cfmm.getReserves();
+        const cfmmTotalSupply1 = await cfmm.totalSupply();
+        const cfmmInvariant1 = await cfmm.invariant();
 
         const currTotalAssets = await strategy.totalAssets(
-          cfmm.address,
-          reserves1,
           params1.borrowedInvariant,
           params1.lpBalance,
+          cfmmInvariant1,
+          cfmmTotalSupply1,
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(1) // to account for the next 1 block update

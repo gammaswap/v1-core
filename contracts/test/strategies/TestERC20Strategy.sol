@@ -10,6 +10,12 @@ contract TestERC20Strategy is AppStorage, IShortStrategy {
 
     bytes4 private constant BALANCE_OF = bytes4(keccak256(bytes('balanceOf(address)')));
 
+    address public _cfmm;
+
+    constructor(address cfmm_) {
+        _cfmm = cfmm_;
+    }
+
     function _depositNoPull(address) external override returns(uint256) {
         (bool success, bytes memory data) = s.cfmm.staticcall(abi.encodeWithSelector(BALANCE_OF, msg.sender));
         require(success && data.length >= 32);
@@ -33,8 +39,12 @@ contract TestERC20Strategy is AppStorage, IShortStrategy {
         cfmmReserves = new uint128[](2);
     }
 
-    function totalAssets(address cfmm, uint128[] memory, uint256, uint256, uint256, uint256, uint256) external override view returns(uint256) {
-        (bool success, bytes memory data) = address(cfmm).staticcall(abi.encodeWithSelector(BALANCE_OF, msg.sender));
+    function _getLatestCFMMInvariant(bytes memory) external override pure virtual returns(uint256 cfmmInvariant) {
+        cfmmInvariant = 100;
+    }
+
+    function totalAssets(uint256, uint256, uint256, uint256, uint256, uint256, uint256) external override view returns(uint256) {
+        (bool success, bytes memory data) = address(_cfmm).staticcall(abi.encodeWithSelector(BALANCE_OF, msg.sender));
         require(success && data.length >= 32);
         return abi.decode(data, (uint256));
     }

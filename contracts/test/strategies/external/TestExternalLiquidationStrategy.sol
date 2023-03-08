@@ -20,17 +20,10 @@ contract TestExternalLiquidationStrategy is TestExternalBaseLongStrategy, Extern
     function createLoan(uint128 liquidity) external virtual override returns(uint256 tokenId) {
         tokenId = s.createLoan(s.tokens.length);
         LibStorage.Loan storage _loan = s.loans[tokenId];
-        //_loan.liquidity = liquidity;
-        //_loan.initLiquidity = liquidity;
         updateCollateral(_loan);
-        //uint128[] memory tokensHeld = updateCollateral(_loan);
-        //uint256 heldLiquidity = calcInvariant(s.cfmm, tokensHeld);
 
-        // checkMargin2(heldLiquidity, liquidity);
         uint256 lpTokens = convertInvariantToLP(liquidity, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
         openLoan(_loan, lpTokens);
-        //(liquidityBorrowed, loanLiquidity) = openLoan(_loan, lpTokens);
-        //_loan.lpTokens = convertInvariantToLP(liquidity, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
 
         emit LoanCreated(msg.sender, tokenId);
     }

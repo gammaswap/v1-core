@@ -666,12 +666,13 @@ describe("ShortStrategyERC4626", function () {
         const assets3 = assets2.div(2);
         const params1 = await strategy.getTotalAssetsParams();
 
-        const reserves1 = await cfmm.getReserves();
+        const cfmmTotalSupply1 = await cfmm.totalSupply();
+        const cfmmInvariant1 = await cfmm.invariant();
         const currTotalAssets = await strategy.totalAssets(
-          cfmm.address,
-          reserves1,
           params1.borrowedInvariant,
           params1.lpBalance,
+          cfmmInvariant1,
+          cfmmTotalSupply1,
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(1) // to account for the next block update
@@ -927,12 +928,13 @@ describe("ShortStrategyERC4626", function () {
         const shares2 = shares.div(2);
         const params1 = await strategy.getTotalAssetsParams();
 
-        const reserves1 = await cfmm.getReserves();
+        const cfmmTotalSupply1 = await cfmm.totalSupply();
+        const cfmmInvariant1 = await cfmm.invariant();
         const currTotalAssets = await strategy.totalAssets(
-          cfmm.address,
-          reserves1,
           params1.borrowedInvariant,
           params1.lpBalance,
+          cfmmInvariant1,
+          cfmmTotalSupply1,
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(1) // to account for the next block update
@@ -966,12 +968,13 @@ describe("ShortStrategyERC4626", function () {
         const shares3 = shares2.div(2);
         const params2 = await strategy.getTotalAssetsParams();
 
-        const reserves2 = await cfmm.getReserves();
+        const cfmmTotalSupply2 = await cfmm.totalSupply();
+        const cfmmInvariant2 = await cfmm.invariant();
         const currTotalAssets2 = await strategy.totalAssets(
-          cfmm.address,
-          reserves2,
           params2.borrowedInvariant,
           params2.lpBalance,
+          cfmmInvariant2,
+          cfmmTotalSupply2,
           params2.prevCFMMInvariant,
           params2.prevCFMMTotalSupply,
           params2.lastBlockNum.sub(1) // to account for the next block update
@@ -1189,13 +1192,14 @@ describe("ShortStrategyERC4626", function () {
       expect(totAssets).to.equal(0);
 
       const params = await strategy.getTotalAssetsParams();
-      const reserves = await cfmm.getReserves();
 
+      const cfmmInvariant = await cfmm.invariant();
+      const cfmmTotalSupply = await cfmm.totalSupply();
       const currTotalAssets = await strategy.totalAssets(
-        cfmm.address,
-        reserves,
         params.borrowedInvariant,
         params.lpBalance,
+        cfmmInvariant,
+        cfmmTotalSupply,
         params.prevCFMMInvariant,
         params.prevCFMMTotalSupply,
         params.lastBlockNum.sub(1) // to account for the next block update
@@ -1212,12 +1216,13 @@ describe("ShortStrategyERC4626", function () {
 
       const params1 = await strategy.getTotalAssetsParams();
 
-      const reserves1 = await cfmm.getReserves();
+      const cfmmInvariant1 = await cfmm.invariant();
+      const cfmmTotalSupply1 = await cfmm.totalSupply();
       const currTotalAssets1 = await strategy.totalAssets(
-        cfmm.address,
-        reserves1,
         params1.borrowedInvariant,
         params1.lpBalance,
+        cfmmInvariant1,
+        cfmmTotalSupply1,
         params1.prevCFMMInvariant,
         params1.prevCFMMTotalSupply,
         params1.lastBlockNum.sub(1) // to account for the next block update
@@ -1236,8 +1241,6 @@ describe("ShortStrategyERC4626", function () {
       await borrowLPTokens(ONE.mul(10));
       // trades happen
       await (await cfmm.trade(ONE.mul(50))).wait();
-      // const cfmmInvariant0 = await strategy.invariant();
-      // await (await strategy.setInvariant(cfmmInvariant0.mul(2))).wait();
 
       // time passes by
       // mine 256 blocks
@@ -1250,8 +1253,6 @@ describe("ShortStrategyERC4626", function () {
 
       // trades happen
       await (await cfmm.trade(ONE.mul(50))).wait();
-      // const cfmmInvariant1 = await strategy.invariant();
-      // await (await strategy.setInvariant(cfmmInvariant1.mul(2))).wait();
 
       // time passes by
       // mine 256 blocks
@@ -1262,12 +1263,13 @@ describe("ShortStrategyERC4626", function () {
 
       const params = await strategy.getTotalAssetsParams();
 
-      const reserves = await cfmm.getReserves();
+      const cfmmInvariant1 = await cfmm.invariant();
+      const cfmmTotalSupply1 = await cfmm.totalSupply();
       const currTotalAssets = await strategy.totalAssets(
-        cfmm.address,
-        reserves,
         params.borrowedInvariant,
         params.lpBalance,
+        cfmmInvariant1,
+        cfmmTotalSupply1,
         params.prevCFMMInvariant,
         params.prevCFMMTotalSupply,
         params.lastBlockNum.sub(1) // to account for the next block update
