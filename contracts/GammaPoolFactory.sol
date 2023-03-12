@@ -10,11 +10,21 @@ import "./libraries/AddressCalculator.sol";
 /// @dev Creates new GammaPool instances as minimal proxy contracts (EIP-1167) to implementation contracts identified by a protocol id
 contract GammaPoolFactory is AbstractGammaPoolFactory {
 
+    /*struct fee {
+        uint48 protocol;
+        uint48 origMin;
+        uint48 origMin;
+        bool isSet;
+    }/**/
+
     /// @dev See {IGammaPoolFactory-getProtocol}
     mapping(uint16 => address) public override getProtocol;
 
     /// @dev See {IGammaPoolFactory-isProtocolRestricted}
     mapping(uint16 => bool) public override isProtocolRestricted;
+
+    /// dev See {IGammaPoolFactory-getPoolFee}
+    // mapping(address => fee) public override getPoolFee;
 
     /// @dev Array of all GammaPool instances created by this factory contract
     address[] public allPools;
@@ -96,6 +106,10 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         getPool[key] = pool; // map unique key to new instance of GammaPool
         allPools.push(pool); // store new GammaPool instance in an array
         emit PoolCreated(pool, _cfmm, _protocolId, implementation, _tokensOrdered, allPools.length); // store creation details in blockchain
+    }
+
+    function setPoolFee(address pool, uint48 protocolFee, uint48 originationFee, bool isSet) external virtual {
+        isForbidden(feeToSetter); // only feeToSetter can set the protocol fee
     }
 
     /// @dev See {IGammaPoolFactory-feeInfo}
