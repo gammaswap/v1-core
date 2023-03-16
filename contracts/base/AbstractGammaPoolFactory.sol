@@ -31,6 +31,12 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
     /// @dev See {IGammaPoolFactory-getPool}
     mapping(bytes32 => address) public override getPool; // all GS Pools addresses can be predetermined
 
+    /// @dev See {IGammaPoolFactory-origMin}
+    uint24 public override origMin = 10000;
+
+    /// @dev See {IGammaPoolFactory-origMax}
+    uint24 public override origMax = 10000;
+
     /// @dev See {IGammaPoolFactory-fee}
     uint16 public override fee = 10000; // Default value is 10,000 basis points or 10%
 

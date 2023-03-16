@@ -10,11 +10,22 @@ import "./libraries/AddressCalculator.sol";
 /// @dev Creates new GammaPool instances as minimal proxy contracts (EIP-1167) to implementation contracts identified by a protocol id
 contract GammaPoolFactory is AbstractGammaPoolFactory {
 
+    struct Fee {
+        uint16 protocol;
+        uint24 origMin;
+        uint24 origMax;
+        address to;
+        bool isSet;
+    }
+
     /// @dev See {IGammaPoolFactory-getProtocol}
     mapping(uint16 => address) public override getProtocol;
 
     /// @dev See {IGammaPoolFactory-isProtocolRestricted}
     mapping(uint16 => bool) public override isProtocolRestricted;
+
+    /// @dev fee information by GammaPool
+    mapping(address => Fee) private poolFee;
 
     /// @dev Array of all GammaPool instances created by this factory contract
     address[] public allPools;
@@ -98,22 +109,52 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         emit PoolCreated(pool, _cfmm, _protocolId, implementation, _tokensOrdered, allPools.length); // store creation details in blockchain
     }
 
+    /// @dev See {IGammaPoolFactory-getPoolFee}
+    function getPoolFee(address _pool) external view override returns (address _to, uint256 _protocolFee, uint256 _origMinFee, uint256 _origMaxFee, bool _isSet) {
+        Fee storage _fee = poolFee[_pool];
+        _isSet = _fee.isSet;
+        if(_isSet) {
+            _to = _fee.to;
+            _protocolFee = _fee.protocol;
+            _origMinFee = _fee.origMin;
+            _origMaxFee = _fee.origMax;
+        } else {
+            _to = feeTo;
+            _protocolFee = fee;
+            _origMinFee = origMin;
+            _origMaxFee = origMax;
+        }
+    }
+
+    /// @dev See {IGammaPoolFactory-setPoolFee}
+    function setPoolFee(address _pool, address _to, uint16 _protocolFee, uint24 _origMinFee, uint24 _origMaxFee, bool _isSet) external virtual override {
+        isForbidden(feeToSetter); // only feeToSetter can set the protocol fee
+        poolFee[_pool] = Fee({protocol: _protocolFee, origMin: _origMinFee, origMax: _origMaxFee, to: _to, isSet: _isSet});
+        emit FeeUpdate(_pool, _to, _protocolFee, _origMinFee, _origMaxFee, _isSet);
+    }
+
     /// @dev See {IGammaPoolFactory-feeInfo}
-    function feeInfo() external virtual override view returns(address _feeTo, uint256 _fee) {
+    function feeInfo() external virtual override view returns(address _feeTo, uint256 _fee, uint256 _origMin, uint256 _origMax) {
         _feeTo = feeTo;
         _fee = fee;
+        _origMin = origMin;
+        _origMax = origMax;
     }
 
     /// @dev See {IGammaPoolFactory-setFee}
-    function setFee(uint16 _fee) external {
+    function setFee(uint16 _fee, uint24 _origMin, uint24 _origMax) external virtual {
         isForbidden(feeToSetter); // only feeToSetter can set the protocol fee
         fee = _fee;
+        origMin = _origMin;
+        origMax = _origMax;
+        emit FeeUpdate(address(0), feeTo, _fee, _origMin, _origMax, false);
     }
 
     /// @dev See {IGammaPoolFactory-setFeeTo}
     function setFeeTo(address _feeTo) external {
         isForbidden(feeToSetter); // only feeToSetter can set which address receives protocol fees
         feeTo = _feeTo;
+        emit FeeUpdate(address(0), feeTo, fee, origMin, origMax, false);
     }
 
     /// @dev See {IGammaPoolFactory-setFeeToSetter}
