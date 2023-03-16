@@ -39,7 +39,7 @@ describe("BaseStrategy", function () {
     GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
 
     factory = await GammaPoolFactory.deploy(owner.address);
-    await factory.setFee(0);
+    await factory.setFee(0, 0, 0);
 
     strategy = await TestStrategy.deploy(factory.address, PROTOCOL_ID);
     await (
@@ -1154,7 +1154,7 @@ describe("BaseStrategy", function () {
 
       // set the address before minting
       await (await factory.setFeeTo(addr1.address)).wait();
-      await (await factory.setFee(10000)).wait();
+      await (await factory.setFee(10000, 0, 0)).wait();
 
       // need premint values to calculate minted amount
       const reserves = await cfmm.getReserves();

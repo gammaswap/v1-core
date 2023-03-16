@@ -202,14 +202,14 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param lastFeeIndex - interest accrued to loans in GammaPool
     /// @param lastCFMMIndex - liquidity invariant lpTokenBalance represents
     function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal virtual {
-        (address feeTo, uint256 devFee) = IGammaPoolFactory(s.factory).feeInfo();
-        if(feeTo != address(0) && devFee > 0) {
-            uint256 gsFeeIndex = lastFeeIndex > lastCFMMIndex ? lastFeeIndex - lastCFMMIndex : 0; // devFee excludes CFMM fee yield
-            uint256 denominator =  lastFeeIndex - gsFeeIndex * devFee / 100000; // devFee is 10000 by default (10%)
+        (address _to, uint256 _protocolFee,,,) = IGammaPoolFactory(s.factory).getPoolFee(address(this));
+        if(_to != address(0) && _protocolFee > 0) {
+            uint256 gsFeeIndex = lastFeeIndex > lastCFMMIndex ? lastFeeIndex - lastCFMMIndex : 0; // _protocolFee excludes CFMM fee yield
+            uint256 denominator =  lastFeeIndex - gsFeeIndex * _protocolFee / 100000; // _protocolFee is 10000 by default (10%)
             uint256 pctToPrint = lastFeeIndex * 1e18 / denominator - 1e18; // Result always is percentage as 18 decimals number or zero
             uint256 devShares = pctToPrint > 0 ? s.totalSupply * pctToPrint / 1e18 : 0;
             if(devShares > 0) {
-                _mint(feeTo, devShares); // protocol fee is paid as dilution
+                _mint(_to, devShares); // protocol fee is paid as dilution
             }
         }
     }

@@ -14,6 +14,11 @@ interface IGammaPoolFactory {
     /// @param count - number of GammaPools instantiated including this contract
     event PoolCreated(address indexed pool, address indexed cfmm, uint16 indexed protocolId, address implementation, address[] tokens, uint256 count);
 
+    /// @dev Event emitted when a GammaPool fee is updated
+    /// @param pool - address of new pool whose fee is updated (zero address is default params)
+    /// @param isSet - bool flag, true use fee information, false use GammaSwap default fees
+    event FeeUpdate(address indexed pool, bool isSet);
+
     /// @dev Check if protocol is restricted. Which means only owner of GammaPoolFactory is allowed to instantiate GammaPools using this protocol
     /// @param _protocolId - id identifier of GammaPool protocol (can be thought of as version) that is being checked
     /// @return _isRestricted - true if protocol is restricted, false otherwise
@@ -55,8 +60,32 @@ interface IGammaPoolFactory {
     /// @return count - number of GammaPools that have been instantiated through this GammaPoolFactory contract
     function allPoolsLength() external view returns (uint256);
 
+    /// @dev Get pool fee parameters used to calculate protocol fees
+    /// @param _pool - pool address identifier
+    /// @return _to - address receiving fee
+    /// @return _protocolFee - address of CFMM the GammaPool is created for
+    /// @return _origMinFee - min origination fee
+    /// @return _origMaxFee - max origination fee
+    /// @return _isSet - bool flag, true use fee information, false use GammaSwap default fees
+    function getPoolFee(address _pool) external view returns (address _to, uint256 _protocolFee, uint256 _origMinFee, uint256 _origMaxFee, bool _isSet);
+
+    /// @dev Set pool fee parameters used to calculate protocol fees
+    /// @param _pool - id identifier of GammaPool protocol (can be thought of as version)
+    /// @param _to - address receiving fee
+    /// @param _protocolFee - address of CFMM the GammaPool is created for
+    /// @param _origMinFee - min origination fee
+    /// @param _origMaxFee - max origination fee
+    /// @param _isSet - bool flag, true use fee information, false use GammaSwap default fees
+    function setPoolFee(address _pool, address _to, uint16 _protocolFee, uint24 _origMinFee, uint24 _origMaxFee, bool _isSet) external;
+
     /// @return fee - protocol fee charged by GammaPool to liquidity borrowers in terms of basis points
     function fee() external view returns(uint16);
+
+    /// @return origMin - min origination fee charged by GammaPool to liquidity borrowers in terms of basis points
+    function origMin() external view returns(uint24);
+
+    /// @return origMax - max origination fee charged by GammaPool to liquidity borrowers in terms of basis points
+    function origMax() external view returns(uint24);
 
     /// @return feeTo - address that receives protocol fees
     function feeTo() external view returns(address);
@@ -66,7 +95,7 @@ interface IGammaPoolFactory {
 
     /// @return feeTo - address that receives protocol fees
     /// @return fee - protocol fee charged by GammaPool to liquidity borrowers in terms of basis points
-    function feeInfo() external view returns(address,uint256);
+    function feeInfo() external view returns(address,uint256,uint256,uint256);
 
     /// @return owner - address that owns the factory contract. Has full privileges over the factory. In a decentralized setting it's the Governance contract
     function owner() external view returns(address);
