@@ -16,8 +16,11 @@ interface IGammaPoolFactory {
 
     /// @dev Event emitted when a GammaPool fee is updated
     /// @param pool - address of new pool whose fee is updated (zero address is default params)
+    /// @return protocolFee - address of CFMM the GammaPool is created for
+    /// @return origMin - min origination fee
+    /// @return origMax - max origination fee
     /// @param isSet - bool flag, true use fee information, false use GammaSwap default fees
-    event FeeUpdate(address indexed pool, bool isSet);
+    event FeeUpdate(address indexed pool, address indexed to, uint16 protocolFee, uint24 origMin, uint24 origMax, bool isSet);
 
     /// @dev Check if protocol is restricted. Which means only owner of GammaPoolFactory is allowed to instantiate GammaPools using this protocol
     /// @param _protocolId - id identifier of GammaPool protocol (can be thought of as version) that is being checked

@@ -130,6 +130,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
     function setPoolFee(address _pool, address _to, uint16 _protocolFee, uint24 _origMinFee, uint24 _origMaxFee, bool _isSet) external virtual override {
         isForbidden(feeToSetter); // only feeToSetter can set the protocol fee
         poolFee[_pool] = Fee({protocol: _protocolFee, origMin: _origMinFee, origMax: _origMaxFee, to: _to, isSet: _isSet});
+        emit FeeUpdate(_pool, _to, _protocolFee, _origMinFee, _origMaxFee, _isSet);
     }
 
     /// @dev See {IGammaPoolFactory-feeInfo}
@@ -146,12 +147,14 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         fee = _fee;
         origMin = _origMin;
         origMax = _origMax;
+        emit FeeUpdate(address(0), feeTo, _fee, _origMin, _origMax, false);
     }
 
     /// @dev See {IGammaPoolFactory-setFeeTo}
     function setFeeTo(address _feeTo) external {
         isForbidden(feeToSetter); // only feeToSetter can set which address receives protocol fees
         feeTo = _feeTo;
+        emit FeeUpdate(address(0), feeTo, fee, origMin, origMax, false);
     }
 
     /// @dev See {IGammaPoolFactory-setFeeToSetter}

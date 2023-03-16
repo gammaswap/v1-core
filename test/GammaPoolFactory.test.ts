@@ -279,10 +279,19 @@ describe("GammaPoolFactory", function () {
       await expect(factory.connect(addr1).setFee(1, 2, 3)).to.be.revertedWith(
         "Forbidden"
       );
-      await factory.connect(owner).setFee(1, 2, 3);
+      const feeTo = await factory.feeTo();
+      const res = await (await factory.connect(owner).setFee(1, 2, 3)).wait();
       expect(await factory.fee()).to.equal(1);
       expect(await factory.origMin()).to.equal(2);
       expect(await factory.origMax()).to.equal(3);
+
+      expect(res.events[0].event).to.equal("FeeUpdate");
+      expect(res.events[0].args.pool).to.equal(ethers.constants.AddressZero);
+      expect(res.events[0].args.to).to.equal(feeTo);
+      expect(res.events[0].args.protocolFee).to.equal(1);
+      expect(res.events[0].args.origMin).to.equal(2);
+      expect(res.events[0].args.origMax).to.equal(3);
+      expect(res.events[0].args.isSet).to.equal(false);
 
       const feeInfo = await factory.connect(owner).feeInfo();
       expect(feeInfo._feeTo).to.equal(owner.address);
@@ -298,8 +307,16 @@ describe("GammaPoolFactory", function () {
       await expect(
         factory.connect(addr1).setFeeTo(addr2.address)
       ).to.be.revertedWith("Forbidden");
-      await factory.connect(owner).setFeeTo(addr2.address);
+      const res = await (await factory.connect(owner).setFeeTo(addr2.address)).wait();
       expect(await factory.feeTo()).to.equal(addr2.address);
+
+      expect(res.events[0].event).to.equal("FeeUpdate");
+      expect(res.events[0].args.pool).to.equal(ethers.constants.AddressZero);
+      expect(res.events[0].args.to).to.equal(addr2.address);
+      expect(res.events[0].args.protocolFee).to.equal(10000);
+      expect(res.events[0].args.origMin).to.equal(10000);
+      expect(res.events[0].args.origMax).to.equal(10000);
+      expect(res.events[0].args.isSet).to.equal(false);
 
       const feeInfo = await factory.connect(owner).feeInfo();
       expect(feeInfo._feeTo).to.equal(addr2.address);
@@ -315,7 +332,7 @@ describe("GammaPoolFactory", function () {
       expect(poolFee._origMinFee).to.equal(10000);
       expect(poolFee._origMaxFee).to.equal(10000);
       expect(poolFee._isSet).to.equal(false);
-      await (
+      const res = await (
         await factory.setPoolFee(
           addr1.address,
           addr2.address,
@@ -326,6 +343,14 @@ describe("GammaPoolFactory", function () {
         )
       ).wait();
 
+      expect(res.events[0].event).to.equal("FeeUpdate");
+      expect(res.events[0].args.pool).to.equal(addr1.address);
+      expect(res.events[0].args.to).to.equal(addr2.address);
+      expect(res.events[0].args.protocolFee).to.equal(20000);
+      expect(res.events[0].args.origMin).to.equal(30000);
+      expect(res.events[0].args.origMax).to.equal(40000);
+      expect(res.events[0].args.isSet).to.equal(true);
+
       const poolFee1 = await factory.getPoolFee(addr1.address);
       expect(poolFee1._to).to.equal(addr2.address);
       expect(poolFee1._protocolFee).to.equal(20000);
@@ -333,16 +358,24 @@ describe("GammaPoolFactory", function () {
       expect(poolFee1._origMaxFee).to.equal(40000);
       expect(poolFee1._isSet).to.equal(true);
 
-      await (
+      const res1 = await (
         await factory.setPoolFee(
           addr1.address,
           addr2.address,
-          20000,
-          30000,
-          40000,
+          50000,
+          60000,
+          70000,
           false
         )
       ).wait();
+
+      expect(res1.events[0].event).to.equal("FeeUpdate");
+      expect(res1.events[0].args.pool).to.equal(addr1.address);
+      expect(res1.events[0].args.to).to.equal(addr2.address);
+      expect(res1.events[0].args.protocolFee).to.equal(50000);
+      expect(res1.events[0].args.origMin).to.equal(60000);
+      expect(res1.events[0].args.origMax).to.equal(70000);
+      expect(res1.events[0].args.isSet).to.equal(false);
 
       const poolFee2 = await factory.getPoolFee(addr1.address);
       expect(poolFee2._to).to.equal(owner.address);
