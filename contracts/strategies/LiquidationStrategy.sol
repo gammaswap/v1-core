@@ -14,6 +14,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
     error NotFullLiquidation();
     error NoLiquidityDebt();
     error HasMargin();
+    error LoanNotExists();
 
     /// @return - liquidationFeeThreshold - threshold used to measure the liquidation fee
     function liquidationFeeThreshold() internal virtual view returns(uint16);
@@ -25,7 +26,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         uint256 collateral;
         address cfmm = s.cfmm;
         // No need to check if msg.sender has permission
-        LibStorage.Loan storage _loan = s.loans[tokenId];
+        LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         if(deltas.length > 0) { // Done here because if pool charges trading fee, it increases the CFMM invariant
             (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas);
@@ -58,7 +59,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         uint256 collateral;
         address cfmm = s.cfmm;
         // No need to check if msg.sender has permission
-        LibStorage.Loan storage _loan = s.loans[tokenId];
+        LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         (loanLiquidity, collateral, tokensHeld, writeDownAmt) = getLoanLiquidityAndCollateral(_loan, cfmm);
 
@@ -90,7 +91,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
         uint256 writeDownAmt;
         // Write down bad debt if any
-        (writeDownAmt, totalLoanLiquidity) = writeDown(totalCollateral * liquidationFeeThreshold() / 1000, totalLoanLiquidity);
+        (writeDownAmt, totalLoanLiquidity) = writeDown(adjustCollateralByLiqFee(totalCollateral), totalLoanLiquidity);
 
         // Pay total liquidity debts in full with previously deposited CFMM LP tokens and refund remaining collateral to liquidator
         (, refund,) = payLoanAndRefundLiquidator(0, tokensHeld, totalLoanLiquidity, lpTokenPrincipalPaid, true);
@@ -118,7 +119,11 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         checkMargin(collateral, loanLiquidity);
 
         // Write down any bad debt
-        (writeDownAmt, loanLiquidity) = writeDown(collateral * liquidationFeeThreshold() / 1000, loanLiquidity);
+        (writeDownAmt, loanLiquidity) = writeDown(adjustCollateralByLiqFee(collateral), loanLiquidity);
+    }
+
+    function adjustCollateralByLiqFee(uint256 collateral) internal virtual returns(uint256) {
+        return collateral * liquidationFeeThreshold() / 10000;
     }
 
     /// @dev Account for liquidity payments in the loan and pool

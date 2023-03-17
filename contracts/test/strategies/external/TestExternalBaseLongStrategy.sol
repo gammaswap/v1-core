@@ -32,14 +32,14 @@ abstract contract TestExternalBaseLongStrategy is ExternalBaseStrategy {
     }
 
     function ltvThreshold() internal virtual override view returns(uint16) {
-        return 800;
+        return 8000;
     }
 
     function minBorrow() internal view virtual override returns(uint256) {
         return 1e3;
     }
 
-    function originationFee() internal virtual view override returns(uint16) {
+    function originationFee() internal virtual view override returns(uint24) {
         return 10;
     }
 

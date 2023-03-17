@@ -89,7 +89,7 @@ describe("ExternalLiquidationStrategy", function () {
   // You can nest describe calls to create subsections.
   describe("Deployment", function () {
     it("Should set right init params", async function () {
-      expect(await strategy.liqFeeThreshold()).to.equal(975);
+      expect(await strategy.liqFeeThreshold()).to.equal(9750);
       const params = await strategy.getParameters();
       expect(params.cfmm).to.equal(cfmm.address);
       expect(params.tokens[0]).to.equal(tokenA.address);
@@ -972,6 +972,65 @@ describe("ExternalLiquidationStrategy", function () {
   });
 
   describe("Unsuccessful Liquidations", function () {
+    it("error, loan does not exist", async function () {
+      expect(await strategy.swapFee()).to.equal(0);
+      await strategy.setExternalSwapFee(10);
+      expect(await strategy.swapFee()).to.equal(10);
+      const ONE = BigNumber.from(10).pow(18);
+      const amount0 = ONE.mul(10);
+      const amount1 = ONE.mul(20);
+      const liquidity = ONE;
+      const tokenId = await createLoan(amount0, amount1, liquidity);
+      const loan0 = await strategy.getLoan(tokenId);
+
+      await createLoan(amount0, amount1, liquidity);
+
+      const poolBalances0 = await strategy.getPoolBalances();
+      expect(poolBalances0.tokenBalances[0].sub(amount0)).to.equal(
+        loan0.tokensHeld[0]
+      );
+      expect(poolBalances0.tokenBalances[1].sub(amount1)).to.equal(
+        loan0.tokensHeld[1]
+      );
+
+      const amounts = [0, 0];
+      const lpTokens = ONE.mul(20);
+
+      const swapData = {
+        strategy: strategy.address,
+        cfmm: cfmm.address,
+        token0: tokenA.address,
+        token1: tokenB.address,
+        amount0: 0,
+        amount1: 0,
+        lpTokens: lpTokens,
+      };
+      const data = ethers.utils.defaultAbiCoder.encode(
+        [
+          "tuple(address strategy, address cfmm, address token0, address token1, uint256 amount0, uint256 amount1, uint256 lpTokens)",
+        ],
+        [swapData]
+      );
+      await expect(
+        strategy._liquidateExternally(
+          tokenId.add(1),
+          amounts,
+          lpTokens,
+          callee2.address,
+          data
+        )
+      ).to.be.revertedWith("LoanDoesNotExist");
+      await expect(
+        strategy._liquidateExternally(
+          tokenId.sub(1),
+          amounts,
+          lpTokens,
+          callee2.address,
+          data
+        )
+      ).to.be.revertedWith("LoanDoesNotExist");
+    });
+
     it("Has margin", async function () {
       expect(await strategy.swapFee()).to.equal(0);
       await strategy.setExternalSwapFee(10);

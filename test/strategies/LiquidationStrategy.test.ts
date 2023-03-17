@@ -283,14 +283,14 @@ describe("LiquidationStrategy", function () {
 
     it("Can Liquidate", async function () {
       await expect(
-        liquidationStrategy.testCanLiquidate(1001, 950)
+        liquidationStrategy.testCanLiquidate(10001, 9500)
       ).to.be.revertedWith("HasMargin");
 
       await expect(
-        liquidationStrategy.testCanLiquidate(1000, 950)
+        liquidationStrategy.testCanLiquidate(10000, 9500)
       ).to.be.revertedWith("HasMargin");
 
-      await liquidationStrategy.testCanLiquidate(999, 950);
+      await liquidationStrategy.testCanLiquidate(9999, 9500);
     });
   });
 
@@ -876,6 +876,23 @@ describe("LiquidationStrategy", function () {
       ).to.be.revertedWith("HasMargin");
     });
 
+    it("error, loan does not exist", async function () {
+      const lpTokens = ONE.mul(2);
+      const amt0 = ONE.mul(1);
+      const amt1 = ONE.mul(1);
+
+      const tokenIds = await borrowLiquidity(
+        amt0.mul(1),
+        amt1.mul(1),
+        lpTokens,
+        1
+      );
+
+      await expect(
+        liquidationStrategy._liquidateWithLP(BigNumber.from(tokenIds[0]).add(1))
+      ).to.be.revertedWith("DoesNotExist");
+    });
+
     it("returns error NoLiquidityProvided", async function () {
       const lpTokens = ONE.mul(2);
       const amt0 = ONE.mul(1);
@@ -1070,7 +1087,7 @@ describe("LiquidationStrategy", function () {
       const lpTokenPayment = loan0.liquidity.div(4); // paying half the lp token debt
       const payLiquidity = lpTokenPayment.mul(2);
       const collateral = sqrt(loan0.tokensHeld[0].mul(loan0.tokensHeld[1]));
-      const adjLiquidity = collateral.mul(975).div(1000);
+      const adjLiquidity = collateral.mul(9750).div(10000);
       const payableLiquidity = adjLiquidity.lt(loan0.liquidity)
         ? adjLiquidity
         : loan0.liquidity;
@@ -1199,7 +1216,7 @@ describe("LiquidationStrategy", function () {
 
       const collateral1 = sqrt(loan1.tokensHeld[0].mul(loan1.tokensHeld[1]));
       const ltvRatio = loan1.liquidity.mul(ONE).div(collateral1);
-      expect(ltvRatio).lte(ONE.mul(975).div(1000));
+      expect(ltvRatio).lte(ONE.mul(9750).div(10000));
       expect(ltvRatio).gt(ONE.mul(974999).div(1000000));
       // expect(tokenAChange.mul(2)).to.equal(amt0.mul(5));
       // expect(tokenBChange.mul(2)).to.equal(amt1.mul(5));
@@ -1378,7 +1395,7 @@ describe("LiquidationStrategy", function () {
       const loan0 = await liquidationStrategy.getLoan(tokenIds[0]);
 
       const collateral = sqrt(loan0.tokensHeld[0].mul(loan0.tokensHeld[1]));
-      const adjLiquidity = collateral.mul(975).div(1000);
+      const adjLiquidity = collateral.mul(9750).div(10000);
       const lpTokenPayment = adjLiquidity.div(2); // paying full lp token debt
       const payLiquidity = lpTokenPayment.mul(2);
       const payableLiquidity = adjLiquidity.lt(loan0.liquidity)
@@ -1689,7 +1706,7 @@ describe("LiquidationStrategy", function () {
       const loan0 = await liquidationStrategy.getLoan(tokenIds[0]);
 
       const collateral = sqrt(loan0.tokensHeld[0].mul(loan0.tokensHeld[1]));
-      const adjLiquidity = collateral.mul(975).div(1000);
+      const adjLiquidity = collateral.mul(9750).div(10000);
       const lpTokenPayment = adjLiquidity.div(2); // paying full lp token debt
       const payLiquidity = lpTokenPayment.mul(2);
       const payableLiquidity = adjLiquidity.lt(loan0.liquidity)
@@ -1830,7 +1847,7 @@ describe("LiquidationStrategy", function () {
   });
 
   describe("batch liquidations", function () {
-    it("returns error HasMargin", async function () {
+    it("returns error no liquidity to liquidate", async function () {
       const lpTokens = ONE.mul(2);
       const amt0 = ONE.mul(1);
       const amt1 = ONE.mul(1);
@@ -1847,8 +1864,8 @@ describe("LiquidationStrategy", function () {
       ).wait();
 
       await expect(
-        liquidationStrategy._liquidateWithLP(tokenIds[0])
-      ).to.be.revertedWith("HasMargin");
+        liquidationStrategy._batchLiquidations(tokenIds)
+      ).to.be.revertedWith("NoLiquidityDebt");
     });
 
     it("returns error NoLiquidityProvided", async function () {
@@ -1866,7 +1883,7 @@ describe("LiquidationStrategy", function () {
       await (await liquidationStrategy.incBorrowedInvariant(ONE)).wait();
 
       await expect(
-        liquidationStrategy._liquidateWithLP(tokenIds[0])
+        liquidationStrategy._batchLiquidations(tokenIds)
       ).to.be.revertedWith("NoLiquidityProvided");
     });
 
@@ -2492,6 +2509,27 @@ describe("LiquidationStrategy", function () {
       await expect(
         liquidationStrategy._liquidate(tokenIds[0], [1, 0], [])
       ).to.be.revertedWith("HasMargin");
+    });
+
+    it("error, loan does not exist", async function () {
+      const lpTokens = ONE.mul(2);
+      const amt0 = ONE.mul(1);
+      const amt1 = ONE.mul(1);
+
+      const tokenIds = await borrowLiquidity(
+        amt0.mul(1),
+        amt1.mul(1),
+        lpTokens,
+        1
+      );
+
+      await expect(
+        liquidationStrategy._liquidate(
+          BigNumber.from(tokenIds[0]).add(1),
+          [1, 0],
+          []
+        )
+      ).to.be.revertedWith("DoesNotExist");
     });
   });
 });

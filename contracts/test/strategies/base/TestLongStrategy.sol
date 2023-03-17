@@ -15,7 +15,7 @@ contract TestLongStrategy is LongStrategy {
     event LoanCreated(address indexed caller, uint256 tokenId);
     event AmountsWithFees(uint256[] amounts);
     uint80 public borrowRate = 1;
-    uint16 public origFee = 0;
+    uint24 public origFee = 0;
     uint16 public protocolId;
     uint256 private _minBorrow = 1e3;
 
@@ -81,7 +81,7 @@ contract TestLongStrategy is LongStrategy {
     }
 
     function ltvThreshold() internal virtual override view returns(uint16){
-        return 800;
+        return 8000;
     }
 
     function checkMargin2(uint256 tokenId) public virtual view returns(bool) {
@@ -221,11 +221,11 @@ contract TestLongStrategy is LongStrategy {
             (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST), s.lastCFMMInvariant, s.lastCFMMTotalSupply);
     }
 
-    function setOriginationFee(uint16 _origFee) external virtual {
+    function setOriginationFee(uint24 _origFee) external virtual {
         origFee = _origFee;
     }
 
-    function originationFee() internal override virtual view returns(uint16) {
+    function originationFee() internal override virtual view returns(uint24) {
         return origFee;
     }
 
