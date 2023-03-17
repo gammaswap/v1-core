@@ -876,6 +876,23 @@ describe("LiquidationStrategy", function () {
       ).to.be.revertedWith("HasMargin");
     });
 
+    it("error, loan does not exist", async function () {
+      const lpTokens = ONE.mul(2);
+      const amt0 = ONE.mul(1);
+      const amt1 = ONE.mul(1);
+
+      const tokenIds = await borrowLiquidity(
+        amt0.mul(1),
+        amt1.mul(1),
+        lpTokens,
+        1
+      );
+
+      await expect(
+        liquidationStrategy._liquidateWithLP(BigNumber.from(tokenIds[0]).add(1))
+      ).to.be.revertedWith("DoesNotExist");
+    });
+
     it("returns error NoLiquidityProvided", async function () {
       const lpTokens = ONE.mul(2);
       const amt0 = ONE.mul(1);
@@ -1830,7 +1847,7 @@ describe("LiquidationStrategy", function () {
   });
 
   describe("batch liquidations", function () {
-    it("returns error HasMargin", async function () {
+    it("returns error no liquidity to liquidate", async function () {
       const lpTokens = ONE.mul(2);
       const amt0 = ONE.mul(1);
       const amt1 = ONE.mul(1);
@@ -1847,8 +1864,8 @@ describe("LiquidationStrategy", function () {
       ).wait();
 
       await expect(
-        liquidationStrategy._liquidateWithLP(tokenIds[0])
-      ).to.be.revertedWith("HasMargin");
+        liquidationStrategy._batchLiquidations(tokenIds)
+      ).to.be.revertedWith("NoLiquidityDebt");
     });
 
     it("returns error NoLiquidityProvided", async function () {
@@ -1866,7 +1883,7 @@ describe("LiquidationStrategy", function () {
       await (await liquidationStrategy.incBorrowedInvariant(ONE)).wait();
 
       await expect(
-        liquidationStrategy._liquidateWithLP(tokenIds[0])
+        liquidationStrategy._batchLiquidations(tokenIds)
       ).to.be.revertedWith("NoLiquidityProvided");
     });
 
@@ -2492,6 +2509,27 @@ describe("LiquidationStrategy", function () {
       await expect(
         liquidationStrategy._liquidate(tokenIds[0], [1, 0], [])
       ).to.be.revertedWith("HasMargin");
+    });
+
+    it("error, loan does not exist", async function () {
+      const lpTokens = ONE.mul(2);
+      const amt0 = ONE.mul(1);
+      const amt1 = ONE.mul(1);
+
+      const tokenIds = await borrowLiquidity(
+        amt0.mul(1),
+        amt1.mul(1),
+        lpTokens,
+        1
+      );
+
+      await expect(
+        liquidationStrategy._liquidate(
+          BigNumber.from(tokenIds[0]).add(1),
+          [1, 0],
+          []
+        )
+      ).to.be.revertedWith("DoesNotExist");
     });
   });
 });
