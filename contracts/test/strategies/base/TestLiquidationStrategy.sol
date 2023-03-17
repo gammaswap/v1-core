@@ -37,11 +37,11 @@ contract TestLiquidationStrategy is LiquidationStrategy {
     }
 
     function ltvThreshold() internal virtual override pure returns(uint16) {
-        return 950;
+        return 9500;
     }
 
     function liquidationFeeThreshold() internal virtual override pure returns(uint16) {
-        return 975;
+        return 9750;
     }
 
     function maxTotalApy() internal virtual override view returns(uint256) {
@@ -99,7 +99,7 @@ contract TestLiquidationStrategy is LiquidationStrategy {
         (,uint256 liquidity) = openLoan(_loan, lpTokens);
         _loan.rateIndex = s.accFeeIndex;
         uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
-        checkMargin2(collateral, liquidity, 800);
+        checkMargin2(collateral, liquidity, 8000);
 
         emit LoanCreated(msg.sender, tokenId);
     }
@@ -230,7 +230,7 @@ contract TestLiquidationStrategy is LiquidationStrategy {
     function swapTokens(LibStorage.Loan storage, uint256[] memory, uint256[] memory) internal virtual override {
     }
 
-    function originationFee() internal virtual override view returns(uint16) {
+    function originationFee() internal virtual override view returns(uint24) {
         return 0;
     }
 

@@ -283,14 +283,14 @@ describe("LiquidationStrategy", function () {
 
     it("Can Liquidate", async function () {
       await expect(
-        liquidationStrategy.testCanLiquidate(1001, 950)
+        liquidationStrategy.testCanLiquidate(10001, 9500)
       ).to.be.revertedWith("HasMargin");
 
       await expect(
-        liquidationStrategy.testCanLiquidate(1000, 950)
+        liquidationStrategy.testCanLiquidate(10000, 9500)
       ).to.be.revertedWith("HasMargin");
 
-      await liquidationStrategy.testCanLiquidate(999, 950);
+      await liquidationStrategy.testCanLiquidate(9999, 9500);
     });
   });
 
@@ -1070,7 +1070,7 @@ describe("LiquidationStrategy", function () {
       const lpTokenPayment = loan0.liquidity.div(4); // paying half the lp token debt
       const payLiquidity = lpTokenPayment.mul(2);
       const collateral = sqrt(loan0.tokensHeld[0].mul(loan0.tokensHeld[1]));
-      const adjLiquidity = collateral.mul(975).div(1000);
+      const adjLiquidity = collateral.mul(9750).div(10000);
       const payableLiquidity = adjLiquidity.lt(loan0.liquidity)
         ? adjLiquidity
         : loan0.liquidity;
@@ -1199,7 +1199,7 @@ describe("LiquidationStrategy", function () {
 
       const collateral1 = sqrt(loan1.tokensHeld[0].mul(loan1.tokensHeld[1]));
       const ltvRatio = loan1.liquidity.mul(ONE).div(collateral1);
-      expect(ltvRatio).lte(ONE.mul(975).div(1000));
+      expect(ltvRatio).lte(ONE.mul(9750).div(10000));
       expect(ltvRatio).gt(ONE.mul(974999).div(1000000));
       // expect(tokenAChange.mul(2)).to.equal(amt0.mul(5));
       // expect(tokenBChange.mul(2)).to.equal(amt1.mul(5));
@@ -1378,7 +1378,7 @@ describe("LiquidationStrategy", function () {
       const loan0 = await liquidationStrategy.getLoan(tokenIds[0]);
 
       const collateral = sqrt(loan0.tokensHeld[0].mul(loan0.tokensHeld[1]));
-      const adjLiquidity = collateral.mul(975).div(1000);
+      const adjLiquidity = collateral.mul(9750).div(10000);
       const lpTokenPayment = adjLiquidity.div(2); // paying full lp token debt
       const payLiquidity = lpTokenPayment.mul(2);
       const payableLiquidity = adjLiquidity.lt(loan0.liquidity)
@@ -1689,7 +1689,7 @@ describe("LiquidationStrategy", function () {
       const loan0 = await liquidationStrategy.getLoan(tokenIds[0]);
 
       const collateral = sqrt(loan0.tokensHeld[0].mul(loan0.tokensHeld[1]));
-      const adjLiquidity = collateral.mul(975).div(1000);
+      const adjLiquidity = collateral.mul(9750).div(10000);
       const lpTokenPayment = adjLiquidity.div(2); // paying full lp token debt
       const payLiquidity = lpTokenPayment.mul(2);
       const payableLiquidity = adjLiquidity.lt(loan0.liquidity)

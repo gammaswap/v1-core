@@ -8,7 +8,7 @@ contract TestExternalLiquidationStrategy is TestExternalBaseLongStrategy, Extern
 
     using LibStorage for LibStorage.Storage;
 
-    uint16 public liqFeeThreshold = 975;
+    uint16 public liqFeeThreshold = 9750;
 
     constructor(){
     }

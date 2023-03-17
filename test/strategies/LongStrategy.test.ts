@@ -1174,10 +1174,10 @@ describe("LongStrategy", function () {
       const lpTokens = ONE;
 
       await expect(strategy._borrowLiquidity(0, 0)).to.be.revertedWith(
-        "Forbidden"
+        "LoanDoesNotExist"
       );
       await expect(strategy._borrowLiquidity(0, 1)).to.be.revertedWith(
-        "Forbidden"
+        "LoanDoesNotExist"
       );
       await expect(
         strategy._borrowLiquidity(addr3TokenId, 1)
@@ -1185,6 +1185,14 @@ describe("LongStrategy", function () {
       await expect(
         strategy._borrowLiquidity(addr3TokenId, lpTokens)
       ).to.be.revertedWith("Forbidden");
+
+      await expect(
+        strategy._borrowLiquidity(addr3TokenId.add(1), lpTokens)
+      ).to.be.revertedWith("LoanDoesNotExist");
+
+      await expect(
+        strategy._borrowLiquidity(addr3TokenId.sub(1), lpTokens)
+      ).to.be.revertedWith("LoanDoesNotExist");
     });
 
     it("Error Borrow Liquidity, > margin", async function () {

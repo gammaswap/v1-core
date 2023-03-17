@@ -89,7 +89,7 @@ describe("ExternalLiquidationStrategy", function () {
   // You can nest describe calls to create subsections.
   describe("Deployment", function () {
     it("Should set right init params", async function () {
-      expect(await strategy.liqFeeThreshold()).to.equal(975);
+      expect(await strategy.liqFeeThreshold()).to.equal(9750);
       const params = await strategy.getParameters();
       expect(params.cfmm).to.equal(cfmm.address);
       expect(params.tokens[0]).to.equal(tokenA.address);

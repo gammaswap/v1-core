@@ -12,6 +12,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     error Forbidden();
     error Margin();
     error MinBorrow();
+    error LoanDoesNotExist();
 
     /// @dev Minimum number of liquidity borrowed to avoid rounding issues. Assumes invariant >= CFMM LP Token. Default should be 1e3
     function minBorrow() internal view virtual returns(uint256);
@@ -40,7 +41,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     function swapTokens(LibStorage.Loan storage _loan, uint256[] memory outAmts, uint256[] memory inAmts) internal virtual;
 
     /// @return origFee - origination fee charged to every new loan that is issued
-    function originationFee() internal virtual view returns(uint16);
+    function originationFee() internal virtual view returns(uint24);
 
     /// @return ltvThreshold - max ltv ratio acceptable before a loan is eligible for liquidation
     function ltvThreshold() internal virtual view returns(uint16);
@@ -50,10 +51,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @return _loan - origination fee charged to every new loan that is issued
     function _getLoan(uint256 tokenId) internal virtual view returns(LibStorage.Loan storage _loan) {
         _loan = s.loans[tokenId]; // Get loan
-        // Revert if msg.sender is not the creator of this loan
-        if(tokenId != uint256(keccak256(abi.encode(msg.sender, address(this), _loan.id)))) {
-            revert Forbidden();
-        }
+        if(_loan.id == 0) revert LoanDoesNotExist();
     }
 
     /// @dev Check if loan is undercollateralized
@@ -67,7 +65,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @param limit - loan to value ratio limit in tenths of a percent (e.g. 800 => 80%)
     /// @return bool - true if loan is over collateralized, false otherwise
     function hasMargin(uint256 collateral, uint256 liquidity, uint256 limit) internal virtual pure returns(bool) {
-        return collateral * limit / 1000 >= liquidity;
+        return collateral * limit / 1e4 >= liquidity;
     }
 
     /// @dev Send tokens `amounts` from `loan` collateral to receiver (`to`)
