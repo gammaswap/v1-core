@@ -166,29 +166,41 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     }
 
     /// @dev See {IGammaPool-loan}
-    function loan(uint256 tokenId) external virtual override view returns (uint256 id, address poolId,
-        uint128[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex) {
-        LibStorage.Loan storage _loan = s.loans[tokenId];
-        return (_loan.id, _loan.poolId, _loan.tokensHeld, _loan.initLiquidity, _loan.liquidity, _loan.lpTokens, _loan.rateIndex);
+    function loan(uint256 tokenId) external virtual override view returns(LoanData memory _loanData) {
+        _loanData = getLoanData(tokenId);
+    }
+
+    /// @dev Get loan and convert to LoanData struct
+    /// @param _tokenId - tokenId of loan to convert
+    /// @return _loanData - loan data struct (same as Loan + tokenId)
+    function getLoanData(uint256 _tokenId) internal virtual view returns(LoanData memory _loanData) {
+        LibStorage.Loan storage _loan = s.loans[_tokenId];
+        _loanData.tokenId = _tokenId;
+        _loanData.id = _loan.id;
+        _loanData.poolId = _loan.poolId;
+        _loanData.tokensHeld = _loan.tokensHeld;
+        _loanData.initLiquidity = _loan.initLiquidity;
+        _loanData.liquidity = _loan.liquidity;
+        _loanData.lpTokens = _loan.lpTokens;
+        _loanData.rateIndex = _loan.rateIndex;
+        _loanData.px = _loan.px;
     }
 
     /// @dev See {IGammaPool-getLoans}
-    function getLoans(uint256 start, uint256 end) external virtual override view returns(LibStorage.Loan[] memory _loans, uint256[] memory _tokenIdList) {
+    function getLoans(uint256 start, uint256 end) external virtual override view returns(LoanData[] memory _loans) {
         uint256[] storage _tokenIds = s.tokenIds;
-        uint256 lastIdx = _tokenIds.length - 1;
         if(start > end || _tokenIds.length == 0) {
-            return (new LibStorage.Loan[](0), new uint256[](0));
+            return new LoanData[](0);
         }
+        uint256 lastIdx = _tokenIds.length - 1;
         if(start <= lastIdx) {
             uint256 _start = start;
             uint256 _end = lastIdx < end ? lastIdx : end;
             uint256 _size = _end - _start + 1;
-            _tokenIdList = new uint256[](_size);
-            _loans = new LibStorage.Loan[](_size);
+            _loans = new LoanData[](_size);
             uint256 k = 0;
             for(uint256 i = _start; i <= _end;) {
-                _tokenIdList[k] = _tokenIds[i];
-                _loans[k] = s.loans[_tokenIds[i]];
+                _loans[k] = getLoanData(_tokenIds[i]);
                 unchecked {
                     k++;
                     i++;
