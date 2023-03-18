@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import "./IGammaPoolEvents.sol";
 import "./strategies/events/IGammaPoolERC20Events.sol";
+import "../libraries/LibStorage.sol";
 
 /// @title Interface for GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
@@ -177,6 +178,16 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     /// @return lpTokens - quantity of CFMM LP tokens borrowed to create liquidity debt
     /// @return rateIndex - total accrued interest rate index of GammaPool at time of last loan update
     function loan(uint256 tokenId) external view returns (uint256 id, address poolId, uint128[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
+
+    /// @dev Get list of loans and their corresponding tokenIds created in GammaPool. Capped at s.tokenIds.length.
+    /// @param start - index from where to start getting tokenIds from array
+    /// @param end - end index of array wishing to get tokenIds. If end > s.tokenIds.length, end is s.tokenIds.length
+    /// @return _loans - list of loans created in GammaPool
+    /// @return _tokenIdList - list of tokenIds created in GammaPool
+    function getLoans(uint256 start, uint256 end) external view returns(LibStorage.Loan[] memory _loans, uint256[] memory _tokenIdList);
+
+    /// @return loanCount - total number of loans opened
+    function getLoanCount() external view returns(uint256);
 
     /// @dev Deposit more collateral in loan identified by tokenId
     /// @param tokenId - unique id identifying loan

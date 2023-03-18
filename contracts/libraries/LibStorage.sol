@@ -27,6 +27,9 @@ library LibStorage {
         uint256 lpTokens;
         /// @dev Reserve tokens held as collateral for the liquidity debt, indices match GammaPool's tokens[] array indices
         uint128[] tokensHeld; // array of 128 bit numbers
+
+        /// @dev price at which loan was opened
+        uint256 px;
     }
 
     /// @dev Storage struct used to track GammaPool's state variables
@@ -89,6 +92,8 @@ library LibStorage {
         uint128[] TOKEN_BALANCE;
         /// @dev Amounts of ERC20 tokens from the CFMM held in the CFMM as reserve quantities. Used to log prices quoted by the CFMM during updates to the GammaPool
         uint128[] CFMM_RESERVES;
+        /// @dev List of all tokenIds created in GammaPool
+        uint256[] tokenIds;
 
         // Custom parameters
         /// @dev Custom fields
@@ -144,8 +149,11 @@ library LibStorage {
             initLiquidity: 0,
             liquidity: 0,
             lpTokens: 0,
-            tokensHeld: new uint128[](_tokenCount)
+            tokensHeld: new uint128[](_tokenCount),
+            px: 0
         });
+
+        self.tokenIds.push(_tokenId);
     }
 
     /// @dev Get custom field as uint256

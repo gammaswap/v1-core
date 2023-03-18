@@ -388,6 +388,150 @@ describe("GammaPool", function () {
       expect(loan.initLiquidity).to.eq(0);
       expect(loan.liquidity).to.eq(0);
       expect(loan.rateIndex).to.eq(ethers.BigNumber.from(10).pow(18));
+      expect(await gammaPool.getLoanCount()).to.equal(1);
+    });
+
+    it("Increase Loan Count", async function () {
+      await (await gammaPool.createLoan()).wait();
+      await (await gammaPool.createLoan()).wait();
+      await (await gammaPool.createLoan()).wait();
+      await (await gammaPool.createLoan()).wait();
+      await (await gammaPool.createLoan()).wait();
+      expect(await gammaPool.getLoanCount()).to.equal(5);
+      await (await gammaPool.createLoan()).wait();
+      await (await gammaPool.createLoan()).wait();
+      await (await gammaPool.createLoan()).wait();
+      expect(await gammaPool.getLoanCount()).to.equal(8);
+      await (await gammaPool.connect(addr1).createLoan()).wait();
+      await (await gammaPool.connect(addr1).createLoan()).wait();
+      expect(await gammaPool.getLoanCount()).to.equal(10);
+    });
+
+    function checkLoan(loan: any, id: number) {
+      expect(loan.id).to.eq(id);
+      expect(loan.poolId).to.eq(gammaPool.address);
+      expect(loan.rateIndex).to.eq(ethers.BigNumber.from(10).pow(18));
+      expect(loan.initLiquidity).to.eq(0);
+      expect(loan.liquidity).to.eq(0);
+      expect(loan.lpTokens).to.eq(0);
+      expect(loan.px).to.eq(0);
+    }
+
+    it("Get List of Loans", async function () {
+      const res0 = await (await gammaPool.createLoan()).wait();
+      const tokenId0 = res0.events[0].args.tokenId;
+      const res1 = await (await gammaPool.createLoan()).wait();
+      const tokenId1 = res1.events[0].args.tokenId;
+      const res2 = await (await gammaPool.createLoan()).wait();
+      const tokenId2 = res2.events[0].args.tokenId;
+      const res3 = await (await gammaPool.createLoan()).wait();
+      const tokenId3 = res3.events[0].args.tokenId;
+      const res4 = await (await gammaPool.createLoan()).wait();
+      const tokenId4 = res4.events[0].args.tokenId;
+      const res5 = await (await gammaPool.createLoan()).wait();
+      const tokenId5 = res5.events[0].args.tokenId;
+      const res6 = await (await gammaPool.createLoan()).wait();
+      const tokenId6 = res6.events[0].args.tokenId;
+      const res7 = await (await gammaPool.createLoan()).wait();
+      const tokenId7 = res7.events[0].args.tokenId;
+      const res8 = await (await gammaPool.createLoan()).wait();
+      const tokenId8 = res8.events[0].args.tokenId;
+      const res9 = await (await gammaPool.createLoan()).wait();
+      const tokenId9 = res9.events[0].args.tokenId;
+      const res10 = await (await gammaPool.createLoan()).wait();
+      const tokenId10 = res10.events[0].args.tokenId;
+
+      const ONE = ethers.BigNumber.from(10).pow(18);
+
+      const resp = await gammaPool.getLoans(1, 10);
+      expect(resp._tokenIdList.length).to.eq(10);
+      expect(resp._tokenIdList[0]).to.eq(tokenId1);
+      expect(resp._tokenIdList[3]).to.eq(tokenId4);
+      expect(resp._tokenIdList[9]).to.eq(tokenId10);
+
+      const resp1 = await gammaPool.getLoans(5, 6);
+      expect(resp1._tokenIdList.length).to.eq(2);
+      expect(resp1._tokenIdList[0]).to.eq(tokenId5);
+      checkLoan(resp1._loans[0], 6);
+      expect(resp1._tokenIdList[1]).to.eq(tokenId6);
+      checkLoan(resp1._loans[1], 7);
+
+      const resp2 = await gammaPool.getLoans(7, 7);
+      expect(resp2._tokenIdList.length).to.eq(1);
+      expect(resp2._tokenIdList[0]).to.eq(tokenId7);
+      checkLoan(resp2._loans[0], 8);
+
+      const resp3 = await gammaPool.getLoans(7, 100);
+      expect(resp3._tokenIdList.length).to.eq(4);
+      expect(resp3._tokenIdList[0]).to.eq(tokenId7);
+      checkLoan(resp3._loans[0], 8);
+      expect(resp3._tokenIdList[1]).to.eq(tokenId8);
+      checkLoan(resp3._loans[1], 9);
+      expect(resp3._tokenIdList[2]).to.eq(tokenId9);
+      checkLoan(resp3._loans[2], 10);
+      expect(resp3._tokenIdList[3]).to.eq(tokenId10);
+      checkLoan(resp3._loans[3], 11);
+
+      const resp4 = await gammaPool.getLoans(0, 100);
+      expect(resp4._tokenIdList.length).to.eq(11);
+      expect(resp4._tokenIdList[0]).to.eq(tokenId0);
+      expect(resp4._tokenIdList[1]).to.eq(tokenId1);
+      expect(resp4._tokenIdList[2]).to.eq(tokenId2);
+      expect(resp4._tokenIdList[3]).to.eq(tokenId3);
+      expect(resp4._tokenIdList[4]).to.eq(tokenId4);
+      expect(resp4._tokenIdList[5]).to.eq(tokenId5);
+      expect(resp4._tokenIdList[6]).to.eq(tokenId6);
+      expect(resp4._tokenIdList[7]).to.eq(tokenId7);
+      expect(resp4._tokenIdList[8]).to.eq(tokenId8);
+      expect(resp4._tokenIdList[9]).to.eq(tokenId9);
+      expect(resp4._tokenIdList[10]).to.eq(tokenId10);
+
+      const resp5 = await gammaPool.getLoans(0, 10);
+      expect(resp5._tokenIdList.length).to.eq(11);
+      expect(resp5._tokenIdList[0]).to.eq(tokenId0);
+      checkLoan(resp5._loans[0], 1);
+      expect(resp5._tokenIdList[1]).to.eq(tokenId1);
+      checkLoan(resp5._loans[1], 2);
+      expect(resp5._tokenIdList[2]).to.eq(tokenId2);
+      checkLoan(resp5._loans[2], 3);
+      expect(resp5._tokenIdList[3]).to.eq(tokenId3);
+      checkLoan(resp5._loans[3], 4);
+      expect(resp5._tokenIdList[4]).to.eq(tokenId4);
+      checkLoan(resp5._loans[4], 5);
+      expect(resp5._tokenIdList[5]).to.eq(tokenId5);
+      checkLoan(resp5._loans[5], 6);
+      expect(resp5._tokenIdList[6]).to.eq(tokenId6);
+      checkLoan(resp5._loans[6], 7);
+      expect(resp5._tokenIdList[7]).to.eq(tokenId7);
+      checkLoan(resp5._loans[7], 8);
+      expect(resp5._tokenIdList[8]).to.eq(tokenId8);
+      checkLoan(resp5._loans[8], 9);
+      expect(resp5._tokenIdList[9]).to.eq(tokenId9);
+      checkLoan(resp5._loans[9], 10);
+      expect(resp5._tokenIdList[10]).to.eq(tokenId10);
+      checkLoan(resp5._loans[10], 11);
+
+      const resp6 = await gammaPool.getLoans(10, 11);
+      expect(resp6._loans.length).to.eq(1);
+      checkLoan(resp6._loans[0], 11);
+      expect(resp6._tokenIdList.length).to.eq(1);
+      expect(resp6._tokenIdList[0]).to.eq(tokenId10);
+
+      const resp7 = await gammaPool.getLoans(11, 11);
+      expect(resp7._loans.length).to.eq(0);
+      expect(resp7._tokenIdList.length).to.eq(0);
+
+      const resp8 = await gammaPool.getLoans(11, 110);
+      expect(resp8._loans.length).to.eq(0);
+      expect(resp8._tokenIdList.length).to.eq(0);
+
+      const resp9 = await gammaPool.getLoans(2, 1);
+      expect(resp9._loans.length).to.eq(0);
+      expect(resp9._tokenIdList.length).to.eq(0);
+
+      const resp10 = await gammaPool.getLoans(8, 4);
+      expect(resp10._loans.length).to.eq(0);
+      expect(resp10._tokenIdList.length).to.eq(0);
     });
 
     it("Update Loan", async function () {

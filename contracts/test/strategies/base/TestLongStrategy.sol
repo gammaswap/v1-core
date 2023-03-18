@@ -18,6 +18,7 @@ contract TestLongStrategy is LongStrategy {
     uint24 public origFee = 0;
     uint16 public protocolId;
     uint256 private _minBorrow = 1e3;
+    uint256 private mCurrPrice = 1e18;
 
     constructor() {
     }
@@ -45,6 +46,18 @@ contract TestLongStrategy is LongStrategy {
 
     function tokens() public virtual view returns(address[] memory) {
         return s.tokens;
+    }
+
+    function getCurrentCFMMPrice() internal virtual override view returns(uint256) {
+        return mCurrPrice;
+    }
+
+    function setCurrentCFMMPrice(uint256 _currPrice) external virtual {
+        mCurrPrice = _currPrice;
+    }
+
+    function testUpdateLoanPrice(uint256 newLiquidity, uint256 currPrice, uint256 liquidity, uint256 lastPx) external virtual view returns(uint256) {
+        return updateLoanPrice(newLiquidity, currPrice, liquidity, lastPx);
     }
 
     function tokenBalances() public virtual view returns(uint128[] memory) {
@@ -210,12 +223,12 @@ contract TestLongStrategy is LongStrategy {
     }
 
     function getLoanChangeData(uint256 tokenId) public virtual view returns(uint256 loanLiquidity, uint256 loanLpTokens,
-        uint256 borrowedInvariant, uint256 lpInvariant, uint256 totalInvariant,
+        uint256 loanPx, uint256 borrowedInvariant, uint256 lpInvariant, uint256 totalInvariant,
         uint256 lpTokenBorrowed, uint256 lpTokenBalance, uint256 lpTokenBorrowedPlusInterest,
         uint256 lpTokenTotal, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
-        return(_loan.liquidity, _loan.lpTokens,
+        return(_loan.liquidity, _loan.lpTokens, _loan.px,
             s.BORROWED_INVARIANT, s.LP_INVARIANT, (s.BORROWED_INVARIANT + s.LP_INVARIANT),
             s.LP_TOKEN_BORROWED, s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
             (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST), s.lastCFMMInvariant, s.lastCFMMTotalSupply);
