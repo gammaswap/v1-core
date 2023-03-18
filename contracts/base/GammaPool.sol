@@ -172,6 +172,36 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         return (_loan.id, _loan.poolId, _loan.tokensHeld, _loan.initLiquidity, _loan.liquidity, _loan.lpTokens, _loan.rateIndex);
     }
 
+    /// @dev See {IGammaPool-getLoans}
+    function getLoans(uint256 start, uint256 end) external virtual override view returns(LibStorage.Loan[] memory _loans, uint256[] memory _tokenIdList) {
+        uint256[] storage _tokenIds = s.tokenIds;
+        uint256 lastIdx = _tokenIds.length - 1;
+        if(start > end || _tokenIds.length == 0) {
+            return (new LibStorage.Loan[](0), new uint256[](0));
+        }
+        if(start <= lastIdx) {
+            uint256 _start = start;
+            uint256 _end = lastIdx < end ? lastIdx : end;
+            uint256 _size = _end - _start + 1;
+            _tokenIdList = new uint256[](_size);
+            _loans = new LibStorage.Loan[](_size);
+            uint256 k = 0;
+            for(uint256 i = _start; i <= _end;) {
+                _tokenIdList[k] = _tokenIds[i];
+                _loans[k] = s.loans[_tokenIds[i]];
+                unchecked {
+                    k++;
+                    i++;
+                }
+            }
+        }
+    }
+
+    /// @dev See {IGammaPool-getLoanCount}
+    function getLoanCount() external virtual override view returns(uint256) {
+        return s.tokenIds.length;
+    }
+
     /// @dev See {IGammaPool-increaseCollateral}
     function increaseCollateral(uint256 tokenId) external virtual override returns(uint128[] memory tokensHeld) {
         return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._increaseCollateral.selector, tokenId)), (uint128[]));

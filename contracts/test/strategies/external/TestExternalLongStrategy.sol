@@ -50,4 +50,8 @@ contract TestExternalLongStrategy is TestExternalBaseLongStrategy, ExternalLongS
 
     function withdrawFromCFMM(address cfmm, address to, uint256 lpTokens) internal virtual override returns(uint256[] memory amounts) {
     }
+
+    function getCurrentCFMMPrice() internal virtual override view returns(uint256) {
+        return 0;
+    }
 }

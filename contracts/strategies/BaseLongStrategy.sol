@@ -40,6 +40,18 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @param inAmts - expected amounts to receive from CFMM (bought)
     function swapTokens(LibStorage.Loan storage _loan, uint256[] memory outAmts, uint256[] memory inAmts) internal virtual;
 
+    /// @dev Calculate loan price every time more liquidity is borrowed
+    /// @param newLiquidity - new added liquidity debt to loan
+    /// @param currPrice - current entry price of loan
+    /// @param liquidity - existing liquidity debt of loan
+    /// @param lastPx - current entry price of loan
+    /// @return px - reserve token amounts in CFMM that liquidity invariant converted to
+    function updateLoanPrice(uint256 newLiquidity, uint256 currPrice, uint256 liquidity, uint256 lastPx) internal virtual view returns(uint256) {
+        uint256 totalLiquidity = newLiquidity + liquidity;
+        uint256 totalLiquidityPx = newLiquidity * currPrice + liquidity * lastPx;
+        return totalLiquidityPx / totalLiquidity;
+    }
+
     /// @return origFee - origination fee charged to every new loan that is issued
     function originationFee() internal virtual view returns(uint24);
 
@@ -58,6 +70,9 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @param collateral - liquidity invariant collateral
     /// @param liquidity - liquidity invariant debt
     function checkMargin(uint256 collateral, uint256 liquidity) internal virtual view;
+
+    /// @return currPrice - calculates and gets current price at CFMM
+    function getCurrentCFMMPrice() internal virtual view returns(uint256);
 
     /// @dev Check if loan is over collateralized
     /// @param collateral - liquidity invariant collateral
@@ -163,7 +178,9 @@ abstract contract BaseLongStrategy is BaseStrategy {
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST + lpTokensPlusOrigFee;
 
         // Update loan's total liquidity debt and principal amounts
-        liquidity = _loan.liquidity + liquidityBorrowed;
+        uint256 loanLiquidity = _loan.liquidity;
+        _loan.px = updateLoanPrice(liquidityBorrowed, getCurrentCFMMPrice(), loanLiquidity, _loan.px);
+        liquidity = loanLiquidity + liquidityBorrowed;
         _loan.initLiquidity = _loan.initLiquidity + uint128(liquidityBorrowed);
         _loan.lpTokens = _loan.lpTokens + lpTokens;
         _loan.liquidity = uint128(liquidity);
