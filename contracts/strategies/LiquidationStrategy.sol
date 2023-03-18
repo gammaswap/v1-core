@@ -26,7 +26,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         uint256 collateral;
         address cfmm = s.cfmm;
         // No need to check if msg.sender has permission
-        LibStorage.Loan storage _loan = _getLoan(tokenId);
+        LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
 
         if(deltas.length > 0) { // Done here because if pool charges trading fee, it increases the CFMM invariant
             (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas);
@@ -59,7 +59,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         uint256 collateral;
         address cfmm = s.cfmm;
         // No need to check if msg.sender has permission
-        LibStorage.Loan storage _loan = _getLoan(tokenId);
+        LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
 
         (loanLiquidity, collateral, tokensHeld, writeDownAmt) = getLoanLiquidityAndCollateral(_loan, cfmm);
 

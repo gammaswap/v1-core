@@ -58,12 +58,24 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @return ltvThreshold - max ltv ratio acceptable before a loan is eligible for liquidation
     function ltvThreshold() internal virtual view returns(uint16);
 
-    /// @dev Get `loan` from `tokenId` and authenticate requester has permission to get loan
+    /// @dev Get `loan` from `tokenId` if it exists
     /// @param tokenId - liquidity loan whose collateral will be traded
-    /// @return _loan - origination fee charged to every new loan that is issued
-    function _getLoan(uint256 tokenId) internal virtual view returns(LibStorage.Loan storage _loan) {
+    /// @return _loan - existing loan (id > 0)
+    function _getExistingLoan(uint256 tokenId) internal virtual view returns(LibStorage.Loan storage _loan) {
         _loan = s.loans[tokenId]; // Get loan
         if(_loan.id == 0) revert LoanDoesNotExist();
+    }
+
+    /// @dev Get `loan` from `tokenId` and authenticate
+    /// @param tokenId - liquidity loan whose collateral will be traded
+    /// @return _loan - existing loan created by caller
+    function _getLoan(uint256 tokenId) internal virtual view returns(LibStorage.Loan storage _loan) {
+        _loan = _getExistingLoan(tokenId);
+
+        // Revert if msg.sender is not the creator of this loan
+        if(tokenId != uint256(keccak256(abi.encode(msg.sender, address(this), _loan.id)))) {
+            revert Forbidden();
+        }
     }
 
     /// @dev Check if loan is undercollateralized
