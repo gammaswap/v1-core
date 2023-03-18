@@ -175,10 +175,10 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     /// @dev See {IGammaPool-getLoans}
     function getLoans(uint256 start, uint256 end) external virtual override view returns(LibStorage.Loan[] memory _loans, uint256[] memory _tokenIdList) {
         uint256[] storage _tokenIds = s.tokenIds;
-        uint256 lastIdx = _tokenIds.length - 1;
         if(start > end || _tokenIds.length == 0) {
             return (new LibStorage.Loan[](0), new uint256[](0));
         }
+        uint256 lastIdx = _tokenIds.length - 1;
         if(start <= lastIdx) {
             uint256 _start = start;
             uint256 _end = lastIdx < end ? lastIdx : end;
