@@ -3,12 +3,40 @@ pragma solidity >=0.8.0;
 
 import "./IGammaPoolEvents.sol";
 import "./strategies/events/IGammaPoolERC20Events.sol";
-import "../libraries/LibStorage.sol";
 
 /// @title Interface for GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Interface used to clear tokens from the GammaPool
 interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
+    /// @dev Struct containing Loan data plus tokenId
+    struct LoanData {
+        /// @dev Loan counter, used to generate unique tokenId which indentifies the loan in the GammaPool
+        uint256 id;
+
+        /// @dev Loan tokenId
+        uint256 tokenId;
+
+        // 1x256 bits
+        /// @dev GammaPool address loan belongs to
+        address poolId; // 160 bits
+        /// @dev Index of GammaPool interest rate at time loan is created/updated, max 7.9% trillion
+        uint96 rateIndex; // 96 bits
+
+        // 1x256 bits
+        /// @dev Initial loan debt in liquidity invariant units. Only increase when more liquidity is borrowed, decreases when liquidity is paid
+        uint128 initLiquidity; // 128 bits
+        /// @dev Loan debt in liquidity invariant units, increases with every update according to how many blocks have passed
+        uint128 liquidity; // 128 bits
+
+        /// @dev Initial loan debt in terms of LP tokens at time liquidity was borrowed, updates along with initLiquidity
+        uint256 lpTokens;
+        /// @dev Reserve tokens held as collateral for the liquidity debt, indices match GammaPool's tokens[] array indices
+        uint128[] tokensHeld; // array of 128 bit numbers
+
+        /// @dev price at which loan was opened
+        uint256 px;
+    }
+
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
     struct PoolData {
         /// @dev Protocol id of the implementation contract for this GammaPool
@@ -169,22 +197,15 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     function createLoan() external returns(uint256 tokenId);
 
     /// @dev Get loan information for loan identified by tokenId
-    /// @param tokenId - unique id of loan, used to look up loan in GammaPool
-    /// @return id - loan counter of the GammaPool at the time the loan was created
-    /// @return poolId - address of the GammaPool
-    /// @return tokensHeld - collateral tokens held to collateralize liquidity debt
-    /// @return initLiquidity - initial liquidity invariant debt
-    /// @return liquidity - liquidity debt at last update
-    /// @return lpTokens - quantity of CFMM LP tokens borrowed to create liquidity debt
-    /// @return rateIndex - total accrued interest rate index of GammaPool at time of last loan update
-    function loan(uint256 tokenId) external view returns (uint256 id, address poolId, uint128[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex);
+    /// @param _tokenId - unique id of loan, used to look up loan in GammaPool
+    /// @return _loanData - loan data struct (same as Loan + tokenId)
+    function loan(uint256 _tokenId) external view returns(LoanData memory _loanData);
 
     /// @dev Get list of loans and their corresponding tokenIds created in GammaPool. Capped at s.tokenIds.length.
     /// @param start - index from where to start getting tokenIds from array
     /// @param end - end index of array wishing to get tokenIds. If end > s.tokenIds.length, end is s.tokenIds.length
     /// @return _loans - list of loans created in GammaPool
-    /// @return _tokenIdList - list of tokenIds created in GammaPool
-    function getLoans(uint256 start, uint256 end) external view returns(LibStorage.Loan[] memory _loans, uint256[] memory _tokenIdList);
+    function getLoans(uint256 start, uint256 end) external view returns(LoanData[] memory _loans);
 
     /// @return loanCount - total number of loans opened
     function getLoanCount() external view returns(uint256);
