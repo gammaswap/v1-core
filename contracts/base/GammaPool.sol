@@ -165,13 +165,6 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         emit LoanCreated(msg.sender, tokenId);
     }
 
-    /*// @dev See {IGammaPool-loan}
-    function loan(uint256 tokenId) external virtual override view returns (uint256 id, address poolId,
-        uint128[] memory tokensHeld, uint256 initLiquidity, uint256 liquidity, uint256 lpTokens, uint256 rateIndex, uint256 px) {
-        LibStorage.Loan storage _loan = s.loans[tokenId];
-        return (_loan.id, _loan.poolId, _loan.tokensHeld, _loan.initLiquidity, _loan.liquidity, _loan.lpTokens, _loan.rateIndex, _loan.px);
-    }/**/
-
     /// @dev See {IGammaPool-loan}
     function loan(uint256 tokenId) external virtual override view returns(LoanData memory _loanData) {
         _loanData = getLoanData(tokenId);
