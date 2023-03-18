@@ -18,7 +18,7 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, L
         uint256 collateral;
 
         // No need to check if msg.sender has permission
-        LibStorage.Loan storage _loan = _getLoan(tokenId);
+        LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
 
         (loanLiquidity, collateral, tokensHeld, writeDownAmt) = getLoanLiquidityAndCollateral(_loan, s.cfmm);
 

@@ -22,16 +22,6 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         }
     }
 
-    /// @dev See {BaseLongStrategy-_getLoan}.
-    function _getLoan(uint256 tokenId) internal virtual override view returns(LibStorage.Loan storage _loan) {
-        _loan = super._getLoan(tokenId);
-
-        // Revert if msg.sender is not the creator of this loan
-        if(tokenId != uint256(keccak256(abi.encode(msg.sender, address(this), _loan.id)))) {
-            revert Forbidden();
-        }
-    }
-
     /// @notice Assumes that collateral tokens were already deposited but not accounted for
     /// @dev See {ILongStrategy-_increaseCollateral}.
     function _increaseCollateral(uint256 tokenId) external virtual override lock returns(uint128[] memory tokensHeld) {
