@@ -16,7 +16,7 @@ contract TestGammaPool is GammaPool {
         GammaPool(_protocolId, _factory, _longStrategy, _shortStrategy, _liquidationStrategy) {
     }
 
-    function getRebalanceDeltas(uint256 tokenId) external returns(int256[] memory deltas) {
+    function getRebalanceDeltas(uint256 tokenId) external view returns(int256[] memory deltas) {
         return (new int256[](2));
     }
 
