@@ -93,6 +93,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         return(_getLatestCFMMReserves(), _getLatestCFMMInvariant(), _getLatestCFMMTotalSupply());
     }
 
+    /// @dev See {IGammaPool.getLastCFMMPrice}.
+    function getLastCFMMPrice() external virtual override view returns(uint256) {
+        return _getLastCFMMPrice();
+    }
+
     /***** GammaPool Data *****/
 
     /// @dev See {IGammaPool-getPoolBalances}
