@@ -15,12 +15,16 @@ describe("GammaPoolFactory", function () {
   let tokenA: any;
   let tokenB: any;
   let tokenC: any;
+  let tokenD: any;
   let owner: any;
   let addr1: any;
   let addr2: any;
   let addr3: any;
   let addr4: any;
   let addr5: any;
+  let addr6: any;
+  let addr7: any;
+  let addr8: any;
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
@@ -31,7 +35,8 @@ describe("GammaPoolFactory", function () {
     TestAddressCalculator = await ethers.getContractFactory(
       "TestAddressCalculator"
     );
-    [owner, addr1, addr2, addr3, addr4, addr5] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8] =
+      await ethers.getSigners();
 
     // To deploy our contract, we just have to call Token.deploy() and await
     // for it to be deployed(), which happens onces its transaction has been
@@ -39,6 +44,7 @@ describe("GammaPoolFactory", function () {
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
     tokenB = await TestERC20.deploy("Test Token B", "TOKB");
     tokenC = await TestERC20.deploy("Test Token C", "TOKC");
+    tokenD = await TestERC20.deploy("Test Token D", "TOKD");
     factory = await GammaPoolFactory.deploy(owner.address);
 
     protocol = await GammaPool.deploy(
@@ -67,6 +73,36 @@ describe("GammaPoolFactory", function () {
     await factory.deployed();
     await protocol.deployed();
   });
+
+  function createPoolParamsObj(cfmmAddress: any, tokenA: any, tokenB: any) {
+    const params = {
+      protocolId: 1,
+      cfmm: cfmmAddress,
+    };
+
+    const createPoolParams = {
+      protocolId: 1,
+      cfmm: cfmmAddress,
+      tokens: [tokenA.address, tokenB.address],
+    };
+
+    const data = ethers.utils.defaultAbiCoder.encode(
+      ["tuple(uint16 protocolId, address cfmm)"],
+      [params]
+    );
+    return { createPoolParams: createPoolParams, data: data };
+  }
+
+  async function checkPoolDetails(details: any, tokenA: any, tokenB: any) {
+    expect(details.tokens[0]).to.equal(tokenA.address);
+    expect(details.tokens[1]).to.equal(tokenB.address);
+    expect(details.symbols[0]).to.equal(await tokenA.symbol());
+    expect(details.symbols[1]).to.equal(await tokenB.symbol());
+    expect(details.names[0]).to.equal(await tokenA.name());
+    expect(details.names[1]).to.equal(await tokenB.name());
+    expect(details.decimals[0]).to.equal(await tokenA.decimals());
+    expect(details.decimals[1]).to.equal(await tokenB.decimals());
+  }
 
   // You can nest describe calls to create subsections.
   describe("Deployment", function () {
@@ -137,32 +173,22 @@ describe("GammaPoolFactory", function () {
     });
 
     it("Create Pool", async function () {
-      await factory.addProtocol(protocol.address);
+      await (await factory.addProtocol(protocol.address)).wait();
       expect(await factory.allPoolsLength()).to.equal(0);
-      const createPoolParams = {
-        protocolId: 1,
-        cfmm: addr3.address,
-        tokens: [tokenA.address, tokenB.address],
-      };
 
-      const params = {
-        protocolId: 1,
-        cfmm: addr3.address,
-      };
-      const data = ethers.utils.defaultAbiCoder.encode(
-        ["tuple(uint16 protocolId, address cfmm)"],
-        [params]
-      );
+      const params = createPoolParamsObj(addr3.address, tokenA, tokenB);
 
       await factory.createPool(
-        createPoolParams.protocolId,
-        createPoolParams.cfmm,
-        createPoolParams.tokens,
-        data
+        params.createPoolParams.protocolId,
+        params.createPoolParams.cfmm,
+        params.createPoolParams.tokens,
+        params.data
       );
+
       const key = await addressCalculator.getGammaPoolKey(addr3.address, 1);
       const pool = await factory.getPool(key);
       expect(pool).to.not.equal(ethers.constants.AddressZero);
+      expect(key).to.equal(await factory.getKey(pool));
 
       // Precalculated address
       const expectedPoolAddress = await addressCalculator.calcAddress(
@@ -172,6 +198,52 @@ describe("GammaPoolFactory", function () {
       );
       expect(pool).to.equal(expectedPoolAddress);
       expect(await factory.allPoolsLength()).to.equal(1);
+
+      const details = await factory.getPoolDetails(pool);
+      expect(details.symbols.length).to.equal(2);
+      expect(details.tokens[0]).to.equal(tokenA.address);
+      expect(details.tokens[1]).to.equal(tokenB.address);
+      expect(details.symbols[0]).to.equal(await tokenA.symbol());
+      expect(details.symbols[1]).to.equal(await tokenB.symbol());
+      expect(details.names.length).to.equal(2);
+      expect(details.names[0]).to.equal(await tokenA.name());
+      expect(details.names[1]).to.equal(await tokenB.name());
+      expect(details.decimals[0]).to.equal(await tokenA.decimals());
+      expect(details.decimals[1]).to.equal(await tokenB.decimals());
+
+      const params2 = createPoolParamsObj(addr4.address, tokenA, tokenC);
+
+      await factory.createPool(
+        params2.createPoolParams.protocolId,
+        params2.createPoolParams.cfmm,
+        params2.createPoolParams.tokens,
+        params2.data
+      );
+      const key2 = await addressCalculator.getGammaPoolKey(addr4.address, 1);
+      const pool2 = await factory.getPool(key2);
+      expect(pool2).to.not.equal(ethers.constants.AddressZero);
+      expect(key2).to.equal(await factory.getKey(pool2));
+
+      // Precalculated address
+      const expectedPoolAddress2 = await addressCalculator.calcAddress(
+        factory.address,
+        1,
+        key2
+      );
+      expect(pool2).to.equal(expectedPoolAddress2);
+      expect(await factory.allPoolsLength()).to.equal(2);
+
+      const details2 = await factory.getPoolDetails(pool2);
+      expect(details2.symbols.length).to.equal(2);
+      expect(details2.tokens[0]).to.equal(tokenA.address);
+      expect(details2.tokens[1]).to.equal(tokenC.address);
+      expect(details2.symbols[0]).to.equal(await tokenA.symbol());
+      expect(details2.symbols[1]).to.equal(await tokenC.symbol());
+      expect(details2.names.length).to.equal(2);
+      expect(details2.names[0]).to.equal(await tokenA.name());
+      expect(details2.names[1]).to.equal(await tokenC.name());
+      expect(details2.decimals[0]).to.equal(await tokenA.decimals());
+      expect(details2.decimals[1]).to.equal(await tokenC.decimals());
     });
 
     it("Create Pool Errors", async function () {
@@ -269,6 +341,122 @@ describe("GammaPoolFactory", function () {
         )
       ).to.be.revertedWith("PoolExists");
     });
+
+    it("Query Pools", async function () {
+      await (await factory.addProtocol(protocol.address)).wait();
+      expect(await factory.allPoolsLength()).to.equal(0);
+
+      const params = createPoolParamsObj(addr3.address, tokenA, tokenB);
+      await factory.createPool(
+        params.createPoolParams.protocolId,
+        params.createPoolParams.cfmm,
+        params.createPoolParams.tokens,
+        params.data
+      );
+
+      const params2 = createPoolParamsObj(addr4.address, tokenA, tokenC);
+      await factory.createPool(
+        params2.createPoolParams.protocolId,
+        params2.createPoolParams.cfmm,
+        params2.createPoolParams.tokens,
+        params2.data
+      );
+
+      const params3 = createPoolParamsObj(addr5.address, tokenA, tokenD);
+      await factory.createPool(
+        params3.createPoolParams.protocolId,
+        params3.createPoolParams.cfmm,
+        params3.createPoolParams.tokens,
+        params3.data
+      );
+
+      const params4 = createPoolParamsObj(addr6.address, tokenB, tokenC);
+      await factory.createPool(
+        params4.createPoolParams.protocolId,
+        params4.createPoolParams.cfmm,
+        params4.createPoolParams.tokens,
+        params4.data
+      );
+
+      const params5 = createPoolParamsObj(addr7.address, tokenB, tokenD);
+      await factory.createPool(
+        params5.createPoolParams.protocolId,
+        params5.createPoolParams.cfmm,
+        params5.createPoolParams.tokens,
+        params5.data
+      );
+
+      const params6 = createPoolParamsObj(addr8.address, tokenC, tokenD);
+      await factory.createPool(
+        params6.createPoolParams.protocolId,
+        params6.createPoolParams.cfmm,
+        params6.createPoolParams.tokens,
+        params6.data
+      );
+
+      expect(await factory.allPoolsLength()).to.equal(6);
+      const resp1 = await factory.getPools(0, 0);
+      expect(resp1._pools.length).to.equal(1);
+      expect(resp1._pools[0]).to.equal(await factory.allPools(0));
+      await checkPoolDetails(resp1._details[0], tokenA, tokenB);
+
+      const resp2 = await factory.getPools(0, 2);
+      expect(resp2._pools.length).to.equal(3);
+      expect(resp2._pools[0]).to.equal(await factory.allPools(0));
+      await checkPoolDetails(resp2._details[0], tokenA, tokenB);
+      expect(resp2._pools[1]).to.equal(await factory.allPools(1));
+      await checkPoolDetails(resp2._details[1], tokenA, tokenC);
+      expect(resp2._pools[2]).to.equal(await factory.allPools(2));
+      await checkPoolDetails(resp2._details[2], tokenA, tokenD);
+
+      const resp3 = await factory.getPools(0, 5);
+      expect(resp3._pools.length).to.equal(await factory.allPoolsLength());
+      expect(resp3._pools[0]).to.equal(await factory.allPools(0));
+      await checkPoolDetails(resp3._details[0], tokenA, tokenB);
+      expect(resp3._pools[1]).to.equal(await factory.allPools(1));
+      await checkPoolDetails(resp3._details[1], tokenA, tokenC);
+      expect(resp3._pools[2]).to.equal(await factory.allPools(2));
+      await checkPoolDetails(resp3._details[2], tokenA, tokenD);
+      expect(resp3._pools[3]).to.equal(await factory.allPools(3));
+      await checkPoolDetails(resp3._details[3], tokenB, tokenC);
+      expect(resp3._pools[4]).to.equal(await factory.allPools(4));
+      await checkPoolDetails(resp3._details[4], tokenB, tokenD);
+      expect(resp3._pools[5]).to.equal(await factory.allPools(5));
+      await checkPoolDetails(resp3._details[5], tokenC, tokenD);
+
+      const resp4 = await factory.getPools(0, 100);
+      expect(resp4._pools.length).to.equal(await factory.allPoolsLength());
+      expect(resp4._pools[0]).to.equal(await factory.allPools(0));
+      await checkPoolDetails(resp4._details[0], tokenA, tokenB);
+      expect(resp4._pools[1]).to.equal(await factory.allPools(1));
+      await checkPoolDetails(resp4._details[1], tokenA, tokenC);
+      expect(resp4._pools[2]).to.equal(await factory.allPools(2));
+      await checkPoolDetails(resp4._details[2], tokenA, tokenD);
+      expect(resp4._pools[3]).to.equal(await factory.allPools(3));
+      await checkPoolDetails(resp4._details[3], tokenB, tokenC);
+      expect(resp4._pools[4]).to.equal(await factory.allPools(4));
+      await checkPoolDetails(resp4._details[4], tokenB, tokenD);
+      expect(resp4._pools[5]).to.equal(await factory.allPools(5));
+      await checkPoolDetails(resp4._details[5], tokenC, tokenD);
+
+      const resp5 = await factory.getPools(2, 4);
+      expect(resp5._pools.length).to.equal(3);
+      expect(resp5._pools[0]).to.equal(await factory.allPools(2));
+      await checkPoolDetails(resp5._details[0], tokenA, tokenD);
+      expect(resp5._pools[1]).to.equal(await factory.allPools(3));
+      await checkPoolDetails(resp5._details[1], tokenB, tokenC);
+      expect(resp5._pools[2]).to.equal(await factory.allPools(4));
+      await checkPoolDetails(resp5._details[2], tokenB, tokenD);
+
+      const resp6 = await factory.getPools(3, 100);
+      expect(resp6._pools.length).to.equal(3);
+      expect(resp6._pools[0]).to.equal(await factory.allPools(3));
+      await checkPoolDetails(resp6._details[0], tokenB, tokenC);
+      expect(resp6._pools[1]).to.equal(await factory.allPools(4));
+      await checkPoolDetails(resp6._details[1], tokenB, tokenD);
+      expect(resp6._pools[2]).to.equal(await factory.allPools(5));
+      await checkPoolDetails(resp6._details[2], tokenC, tokenD);
+    });
   });
 
   describe("Setting Fees", function () {
@@ -307,7 +495,9 @@ describe("GammaPoolFactory", function () {
       await expect(
         factory.connect(addr1).setFeeTo(addr2.address)
       ).to.be.revertedWith("Forbidden");
-      const res = await (await factory.connect(owner).setFeeTo(addr2.address)).wait();
+      const res = await (
+        await factory.connect(owner).setFeeTo(addr2.address)
+      ).wait();
       expect(await factory.feeTo()).to.equal(addr2.address);
 
       expect(res.events[0].event).to.equal("FeeUpdate");

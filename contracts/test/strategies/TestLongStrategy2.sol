@@ -46,4 +46,8 @@ contract TestLongStrategy2 is ILongStrategy {
         tokensHeld[1] = uint128(uint256(deltas[1]));
         emit LoanUpdated(tokenId, tokensHeld, 51, 52, 53, 54, TX_TYPE.REBALANCE_COLLATERAL);
     }
+
+    function _updatePool(uint256 tokenId) external override returns(uint256,uint256){
+        return(tokenId,tokenId + 1);
+    }
 }

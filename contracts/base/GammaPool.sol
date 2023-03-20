@@ -239,6 +239,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._rebalanceCollateral.selector, tokenId, deltas)), (uint128[]));
     }
 
+    /// @dev See {IGammaPool-updatePool}
+    function updatePool(uint256 tokenId) external virtual override returns(uint256 loanLiquidityDebt, uint256 poolLiquidityDebt) {
+        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._updatePool.selector, tokenId)), (uint256, uint256));
+    }
+
     /// @dev See {IGammaPool-liquidate}
     function liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external virtual override returns(uint256 loanLiquidity, uint256[] memory refund) {
         return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._liquidate.selector, tokenId, deltas, fees)), (uint256, uint256[]));
