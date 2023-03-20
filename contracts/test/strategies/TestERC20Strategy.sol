@@ -49,6 +49,16 @@ contract TestERC20Strategy is AppStorage, IShortStrategy {
         return abi.decode(data, (uint256));
     }
 
+    function getLastFees(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum)
+        external override view returns(uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate) {
+        return (1,2,3);
+    }
+
+    function getLatestBalances(uint256 lastFeeIndex, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply)
+        external override view returns(uint256 lastLPBalance, uint256 lastBorrowedLPBalance, uint256 lastBorrowedInvariant) {
+        return (4,5,6);
+    }
+
     /***** ERC4626 Functions *****/
 
     function _deposit(uint256 assets, address to) external override returns (uint256 shares) {

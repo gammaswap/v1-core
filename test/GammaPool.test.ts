@@ -185,6 +185,11 @@ describe("GammaPool", function () {
       expect(_tokenBalances.length).to.equal(2);
       expect(_tokenBalances[0]).to.equal(0);
       expect(_tokenBalances[1]).to.equal(0);
+      expect(res3.symbols[0]).to.equal("TestSymb0");
+      expect(res3.symbols[1]).to.equal("TestSymb1");
+      expect(res3.names.length).to.equal(2);
+      expect(res3.names[0]).to.equal("Test Symbol 0");
+      expect(res3.names[1]).to.equal("Test Symbol 1");
 
       expect(res3.accFeeIndex).to.equal(ONE);
       expect(res3.LAST_BLOCK_NUMBER).to.gt(0);
@@ -202,6 +207,101 @@ describe("GammaPool", function () {
       expect(res3.lastCFMMInvariant).to.equal(res1.cfmmInvariant);
       expect(res3.lastCFMMTotalSupply).to.equal(res1.cfmmTotalSupply);
       expect(res3.totalSupply).to.equal(await gammaPool.totalSupply());
+      expect(res3.lastPrice).to.equal(0);
+      expect(res3.lastCFMMFeeIndex).to.equal(ONE);
+      expect(res3.lastFeeIndex).to.equal(0);
+      expect(res3.borrowRate).to.equal(0);
+
+      const res4 = await gammaPool.getConstantPoolData();
+      expect(res4.cfmm).to.equal(cfmm.address);
+      expect(res4.protocolId).to.equal(PROTOCOL_ID);
+      const _toks = res4.tokens;
+      expect(_toks.length).to.equal(2);
+      expect(_toks[0]).to.equal(tokenA.address);
+      expect(_toks[1]).to.equal(tokenB.address);
+      const _decs = res4.decimals;
+      expect(_decs.length).to.equal(2);
+      expect(_decs[0]).to.equal(await tokenA.decimals());
+      expect(_decs[1]).to.equal(await tokenB.decimals());
+
+      expect(res4.factory).to.equal(factory.address);
+      expect(res4.longStrategy).to.equal(longStrategy.address);
+      expect(res4.shortStrategy).to.equal(shortStrategy.address);
+      expect(res4.liquidationStrategy).to.equal(liquidationStrategy.address);
+      const _tokBalances = res4.TOKEN_BALANCE;
+      expect(_tokBalances.length).to.equal(2);
+      expect(_tokBalances[0]).to.equal(0);
+      expect(_tokBalances[1]).to.equal(0);
+      expect(res4.symbols.length).to.equal(2);
+      expect(res4.symbols[0]).to.equal("TestSymb0");
+      expect(res4.symbols[1]).to.equal("TestSymb1");
+      expect(res4.names.length).to.equal(2);
+      expect(res4.names[0]).to.equal("Test Symbol 0");
+      expect(res4.names[1]).to.equal("Test Symbol 1");
+
+      expect(res4.accFeeIndex).to.equal(0);
+      expect(res4.LAST_BLOCK_NUMBER).to.gt(0);
+      expect(res4.LP_TOKEN_BALANCE).to.equal(0);
+      expect(res4.LP_TOKEN_BORROWED).to.equal(0);
+      expect(res4.LP_TOKEN_BORROWED_PLUS_INTEREST).to.equal(0);
+      expect(res4.BORROWED_INVARIANT).to.equal(0);
+      expect(res4.LP_INVARIANT).to.equal(0);
+
+      const _cfmmReserv = res4.CFMM_RESERVES;
+      expect(_cfmmReserv.length).to.equal(0);
+      expect(res4.lastCFMMFeeIndex).to.equal(0);
+      expect(res4.lastCFMMInvariant).to.equal(0);
+      expect(res4.lastCFMMTotalSupply).to.equal(0);
+      expect(res4.totalSupply).to.equal(await gammaPool.totalSupply());
+      expect(res4.lastPrice).to.equal(0);
+      expect(res4.lastCFMMFeeIndex).to.equal(0);
+      expect(res4.lastFeeIndex).to.equal(0);
+      expect(res4.borrowRate).to.equal(0);
+
+      await (await cfmm.mint(addr1.address, ONE.mul(100))).wait();
+
+      const res5 = await gammaPool.getLatestPoolData();
+      expect(res5.cfmm).to.equal(cfmm.address);
+      expect(res5.protocolId).to.equal(PROTOCOL_ID);
+      const _tokss = res5.tokens;
+      expect(_tokss.length).to.equal(2);
+      expect(_tokss[0]).to.equal(tokenA.address);
+      expect(_tokss[1]).to.equal(tokenB.address);
+      const _decss = res5.decimals;
+      expect(_decss.length).to.equal(2);
+      expect(_decss[0]).to.equal(await tokenA.decimals());
+      expect(_decss[1]).to.equal(await tokenB.decimals());
+
+      expect(res5.factory).to.equal(factory.address);
+      expect(res5.longStrategy).to.equal(longStrategy.address);
+      expect(res5.shortStrategy).to.equal(shortStrategy.address);
+      expect(res5.liquidationStrategy).to.equal(liquidationStrategy.address);
+      const _toksBalances = res5.TOKEN_BALANCE;
+      expect(_toksBalances.length).to.equal(2);
+      expect(_toksBalances[0]).to.equal(0);
+      expect(_toksBalances[1]).to.equal(0);
+      expect(res5.symbols.length).to.equal(2);
+      expect(res5.symbols[0]).to.equal("TestSymb0");
+      expect(res5.symbols[1]).to.equal("TestSymb1");
+      expect(res5.names.length).to.equal(2);
+      expect(res5.names[0]).to.equal("Test Symbol 0");
+      expect(res5.names[1]).to.equal("Test Symbol 1");
+      expect(res5.lastCFMMTotalSupply).to.equal(await cfmm.totalSupply());
+      expect(res5.lastCFMMInvariant).to.equal(100);
+      expect(res5.lastPrice).to.equal(1);
+
+      const _cfmmReser = res5.CFMM_RESERVES;
+      expect(_cfmmReser.length).to.equal(2);
+      expect(_cfmmReser[0]).to.equal(1);
+      expect(_cfmmReser[1]).to.equal(2);
+
+      expect(res5.lastCFMMFeeIndex).to.equal(1);
+      expect(res5.lastFeeIndex).to.equal(2);
+      expect(res5.borrowRate).to.equal(3);
+
+      expect(res5.LP_TOKEN_BALANCE).to.equal(0);
+      expect(res5.LP_TOKEN_BORROWED_PLUS_INTEREST).to.equal(5);
+      expect(res5.BORROWED_INVARIANT).to.equal(6);
     });
 
     it("Custom Fields Set & Get", async function () {

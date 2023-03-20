@@ -26,6 +26,9 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     /// @return cfmmReserves - latest token reserves in the CFMM
     function _getLatestCFMMReserves() internal virtual view returns(uint128[] memory cfmmReserves);
 
+    /// @return lastPrice - latest token reserves in the CFMM
+    function _getLastCFMMPrice() internal virtual view returns(uint256 lastPrice);
+
     /// @return address - CFMM LP token address used for the Vault for accounting, depositing, and withdrawing.
     function asset() external virtual view returns(address) {
         return s.cfmm;
