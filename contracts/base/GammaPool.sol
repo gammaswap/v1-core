@@ -4,6 +4,7 @@ pragma solidity >=0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/GammaSwapLibrary.sol";
 import "../interfaces/IGammaPool.sol";
+import "../interfaces/IGammaPoolFactory.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "./GammaPoolERC4626.sol";
@@ -110,8 +111,9 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         return(s.accFeeIndex, s.lastCFMMFeeIndex, s.LAST_BLOCK_NUMBER);
     }
 
-    /// @dev See {IGammaPool-getPoolData}
-    function getPoolData() external virtual override view returns(PoolData memory data) {
+    /// @dev See {IGammaPool-getConstantPoolData}
+    function getConstantPoolData() public virtual override view returns(PoolData memory data) {
+        data.poolId = address(this);
         data.protocolId = protocolId;
         data.longStrategy = longStrategy;
         data.shortStrategy = shortStrategy;
@@ -121,6 +123,18 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.factory = s.factory;
         data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         data.LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED;
+        data.totalSupply = s.totalSupply;
+        data.decimals = s.decimals;
+        data.tokens = s.tokens;
+        data.TOKEN_BALANCE = s.TOKEN_BALANCE;
+        IGammaPoolFactory.PoolDetails memory _details = IGammaPoolFactory(data.factory).getPoolDetails(address(this));
+        data.symbols = _details.symbols;
+        data.names = _details.names;
+    }
+
+    /// @dev See {IGammaPool-getPoolData}
+    function getPoolData() external virtual override view returns(PoolData memory data) {
+        data = getConstantPoolData();
         data.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST;
         data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
         data.LP_INVARIANT = s.LP_INVARIANT;
@@ -128,11 +142,32 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
         data.lastCFMMInvariant = s.lastCFMMInvariant;
         data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
-        data.totalSupply = s.totalSupply;
-        data.decimals = s.decimals;
-        data.tokens = s.tokens;
-        data.TOKEN_BALANCE = s.TOKEN_BALANCE;
         data.CFMM_RESERVES = s.CFMM_RESERVES;
+    }
+
+    /// @dev See {IGammaPool-getLatestPoolData}
+    function getLatestPoolData() external virtual override view returns(PoolData memory data) {
+        data = getConstantPoolData();
+        uint256 borrowedInvariant = s.BORROWED_INVARIANT;
+        data.lastCFMMInvariant = uint128(_getLatestCFMMInvariant());
+        data.lastCFMMTotalSupply = _getLatestCFMMTotalSupply();
+
+        uint256 lastCFMMFeeIndex;
+        (lastCFMMFeeIndex, data.lastFeeIndex, data.borrowRate) = IShortStrategy(shortStrategy)
+        .getLastFees(borrowedInvariant, data.LP_TOKEN_BALANCE, data.lastCFMMInvariant, data.lastCFMMTotalSupply,
+            s.lastCFMMInvariant, s.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER);
+
+        data.lastCFMMFeeIndex = uint80(lastCFMMFeeIndex);
+        (,data.LP_TOKEN_BORROWED_PLUS_INTEREST, borrowedInvariant) = IShortStrategy(shortStrategy)
+        .getLatestBalances(data.lastFeeIndex, borrowedInvariant, data.LP_TOKEN_BALANCE,
+            data.lastCFMMInvariant, data.lastCFMMTotalSupply);
+
+        data.BORROWED_INVARIANT = uint128(borrowedInvariant);
+        data.LP_INVARIANT = uint128(data.LP_TOKEN_BALANCE * data.lastCFMMInvariant / data.lastCFMMTotalSupply);
+        data.accFeeIndex = uint96(s.accFeeIndex * data.lastFeeIndex / 1e18);
+
+        data.CFMM_RESERVES = _getLatestCFMMReserves();
+        data.lastPrice = _getLastCFMMPrice();
     }
 
     /***** SHORT *****/

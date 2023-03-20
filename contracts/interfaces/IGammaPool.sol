@@ -39,6 +39,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
 
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
     struct PoolData {
+        /// @dev GammaPool address
+        address poolId;
         /// @dev Protocol id of the implementation contract for this GammaPool
         uint16 protocolId;
         /// @dev Long Strategy implementation contract for this GammaPool
@@ -72,7 +74,7 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
         uint96 accFeeIndex;
         /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
         uint48 LAST_BLOCK_NUMBER;
-        /// @dev percent accrual in CFMM invariant since last update
+        /// @dev Percent accrual in CFMM invariant since last update
         uint80 lastCFMMFeeIndex; // 80 bits
         /// @dev Total liquidity invariant amount in CFMM (from GammaPool and others), read in last update to GammaPool's storage variables
         uint128 lastCFMMInvariant;
@@ -86,12 +88,23 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
         // tokens and balances
         /// @dev ERC20 tokens of CFMM
         address[] tokens;
+        /// @dev symbols of ERC20 tokens of CFMM
+        string[] symbols;
+        /// @dev names of ERC20 tokens of CFMM
+        string[] names;
         /// @dev Decimals of CFMM tokens, indices match tokens[] array
         uint8[] decimals;
         /// @dev Amounts of ERC20 tokens from the CFMM held as collateral in the GammaPool. Equals to the sum of all tokensHeld[] quantities in all loans
         uint128[] TOKEN_BALANCE;
         /// @dev Amounts of ERC20 tokens from the CFMM held in the CFMM as reserve quantities. Used to log prices in the CFMM during updates to the GammaPool
         uint128[] CFMM_RESERVES; //keeps track of price of CFMM at time of update
+
+        /// @dev Last Price in CFMM
+        uint256 lastPrice;
+        /// @dev Percent accrual in CFMM invariant and GammaPool interest since last update
+        uint256 lastFeeIndex;
+        /// @dev Borrow rate of LP tokens in GammaPool
+        uint256 borrowRate;
     }
 
     /// @dev Function to initialize state variables GammaPool, called usually from GammaPoolFactory contract right after GammaPool instantiation
@@ -144,8 +157,16 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     /// @return lastBlockNumber - last block GammaPool was updated
     function getRates() external view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastBlockNumber);
 
+    /// @return data - struct containing all relevant global state variables that are not updated from time passage or accrued trading fees
+    function getConstantPoolData() external view returns(PoolData memory data);
+
     /// @return data - struct containing all relevant global state variables and descriptive information of GammaPool. Used to avoid making multiple calls
     function getPoolData() external view returns(PoolData memory data);
+
+    /// @dev Returns additional nonzero fields (e.g. lastPrice, borrowRate, etc.)
+    /// @notice Difference with getPoolData() is this struct is what PoolData would return if an update of the GammaPool were to occur at the current block
+    /// @return data - struct containing all relevant global state variables and descriptive information of GammaPool. Used to avoid making multiple calls
+    function getLatestPoolData() external view returns(PoolData memory data);
 
     /// @dev Check GammaPool for CFMM and tokens can be created with this implementation
     /// @param _tokens - assumed tokens of CFMM, validate function should check CFMM is indeed for these tokens
@@ -188,6 +209,9 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     /// @return cfmmInvariant - latest total invariant in the CFMM
     /// @return cfmmTotalSupply - latest total supply of LP tokens in CFMM
     function getLatestCFMMBalances() external view returns(uint128[] memory cfmmReserves, uint256 cfmmInvariant, uint256 cfmmTotalSupply);
+
+    /// @return lastPrice - calculates and gets current price at CFMM
+    function getLastCFMMPrice() external view returns(uint256);
 
     // Long Gamma
 

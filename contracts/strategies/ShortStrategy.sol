@@ -41,19 +41,36 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
 
     /// @dev See {IShortStrategy-totalAssets}.
     function totalAssets(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply,
-        uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum) public view virtual override returns(uint256) {
+        uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum) public virtual override view returns(uint256 lastLPBalance) {
+        (uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate) = getLastFees(borrowedInvariant, lpBalance, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply, lastBlockNum);
+        // Return CFMM LP tokens depositedin GammaPool plus borrowed liquidity invariant with accrued interest in terms of CFMM LP tokens
+        (lastLPBalance,,) = getLatestBalances(lastFeeIndex, borrowedInvariant, lpBalance, lastCFMMInvariant, lastCFMMTotalSupply);
+    }
+
+    /// @dev See {IShortStrategy-getLatestBalances}.
+    function getLatestBalances(uint256 lastFeeIndex, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) public virtual override view
+        returns(uint256 lastLPBalance, uint256 lastBorrowedLPBalance, uint256 lastBorrowedInvariant) {
+        lastBorrowedInvariant = accrueBorrowedInvariant(borrowedInvariant, lastFeeIndex);
+        lastBorrowedLPBalance =  convertInvariantToLP(lastBorrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
+        lastLPBalance = lpBalance + lastBorrowedLPBalance;
+    }
+
+    /// @dev See {IShortStrategy-getLastFees}.
+    function getLastFees(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply,
+        uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum) public virtual override view returns(uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate) {
+
         // Calculate liquidity invariant in CFMM from LP tokens in GammaPool
         uint256 lpInvariant = convertLPToInvariant(lpBalance, prevCFMMInvariant, prevCFMMTotalSupply);
 
         // Get fee growth in CFMM since last update
         uint256 blockDiff = block.number - lastBlockNum;
-        uint256 lastCFMMFeeIndex = blockDiff > 0 ? calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply) : 1e18;
+        lastCFMMFeeIndex = blockDiff > 0 ? calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply) : 1e18;
+
+        // Calculate borrow rate
+        borrowRate = calcBorrowRate(lpInvariant, borrowedInvariant);
 
         // Calculate interest that would be charged to entire pool's liquidity debt if pool were updated in this transaction
-        uint256 lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, calcBorrowRate(lpInvariant, borrowedInvariant), blockDiff);
-
-        // Return CFMM LP tokens depositedin GammaPool plus borrowed liquidity invariant with accrued interest in terms of CFMM LP tokens
-        return lpBalance + convertInvariantToLP(accrueBorrowedInvariant(borrowedInvariant, lastFeeIndex), lastCFMMTotalSupply, lastCFMMInvariant);
+        lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, blockDiff);
     }
 
     //********* Short Gamma Functions *********//

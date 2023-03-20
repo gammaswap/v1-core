@@ -16,6 +16,14 @@ contract TestGammaPool is GammaPool {
         GammaPool(_protocolId, _factory, _longStrategy, _shortStrategy, _liquidationStrategy) {
     }
 
+    function _getLastCFMMPrice() internal virtual override view returns(uint256) {
+        return 1;
+    }
+
+    function getLastCFMMPrice() external virtual override view returns(uint256) {
+        return _getLastCFMMPrice();
+    }
+
     function syncTokens() external virtual {
         address[] memory _tokens = s.tokens;
         for(uint256 i; i < _tokens.length;) {

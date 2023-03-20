@@ -77,6 +77,12 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
     function getPools(uint256 start, uint256 end) external override view returns(address[] memory _pools, PoolDetails[] memory _symbols) {
     }
 
-    function getPoolDetails(address) external virtual override view returns (PoolDetails memory) {
+    function getPoolDetails(address) external virtual override view returns (PoolDetails memory _details) {
+        _details.symbols = new string[](2);
+        _details.names = new string[](2);
+        _details.symbols[0] = "TestSymb0";
+        _details.symbols[1] = "TestSymb1";
+        _details.names[0] = "Test Symbol 0";
+        _details.names[1] = "Test Symbol 1";
     }
 }
