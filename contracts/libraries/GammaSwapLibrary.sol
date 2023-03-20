@@ -13,8 +13,14 @@ library GammaSwapLibrary {
     error SA_Fail();
     error STE_Fail();
 
-    /// @dev selector of decimals function in ERC20 implementation
+    /// @dev Selector of decimals function in ERC20 implementation
     bytes4 private constant DECIMALS = bytes4(keccak256(bytes('decimals()')));
+
+    /// @dev Selector of symbol function in ERC20 implementation
+    bytes4 private constant SYMBOL = bytes4(keccak256(bytes('symbol()')));
+
+    /// @dev Selector of name function in ERC20 implementation
+    bytes4 private constant NAME = bytes4(keccak256(bytes('name()')));
 
     /// @dev Check the ERC20 balance of an address
     /// @param _token - address of ERC20 token we're checking the balance of
@@ -45,6 +51,26 @@ library GammaSwapLibrary {
         _token.staticcall(abi.encodeWithSelector(DECIMALS)); // requesting via ERC20 decimals implementation
         require(success && data.length >= 1);
         return abi.decode(data, (uint8));
+    }
+
+    /// @dev Get symbol of ERC20 token
+    /// @param _token - address of ERC20 token we are getting the symbol information from
+    /// @return symbol - symbol of ERC20 token
+    function symbol(address _token) internal view returns (string memory) {
+        (bool success, bytes memory data) =
+        _token.staticcall(abi.encodeWithSelector(SYMBOL)); // requesting via ERC20 symbol implementation
+        require(success && data.length >= 1);
+        return abi.decode(data, (string));
+    }
+
+    /// @dev Get name of ERC20 token
+    /// @param _token - address of ERC20 token we are getting the name information from
+    /// @return name - name of ERC20 token
+    function name(address _token) internal view returns (string memory) {
+        (bool success, bytes memory data) =
+        _token.staticcall(abi.encodeWithSelector(NAME)); // requesting via ERC20 name implementation
+        require(success && data.length >= 1);
+        return abi.decode(data, (string));
     }
 
     /// @dev Safe transfer any ERC20 token, only used internally

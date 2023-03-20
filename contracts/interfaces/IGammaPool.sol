@@ -152,8 +152,7 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     /// @param _cfmm - address of CFMM GammaPool will be for
     /// @param _data - custom struct containing additional information used to verify the `_cfmm`
     /// @return _tokensOrdered - tokens ordered to match the same order as in CFMM
-    /// @return _decimals - decimal places of tokens in CFMM. Their index matches _tokensOrdered.
-    function validateCFMM(address[] calldata _tokens, address _cfmm, bytes calldata _data) external view returns(address[] memory _tokensOrdered, uint8[] memory _decimals);
+    function validateCFMM(address[] calldata _tokens, address _cfmm, bytes calldata _data) external view returns(address[] memory _tokensOrdered);
 
     // Short Gamma
 
@@ -242,6 +241,12 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     /// @param deltas - collateral amounts being bought or sold (>0 buy, <0 sell), index matches tokensHeld[] index. Only n-1 tokens can be traded
     /// @return tokensHeld - updated collateral token amounts backing loan
     function rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external returns(uint128[] memory tokensHeld);
+
+    /// @dev Update pool liquidity debt and optinally also loan liquidity debt
+    /// @param tokenId - (optional) unique ids identifying loan, pass zero to ignore this parameter
+    /// @return loanLiquidityDebt - updated liquidity debt amount of loan
+    /// @return poolLiquidityDebt - updated liquidity debt amount of pool
+    function updatePool(uint256 tokenId) external returns(uint256 loanLiquidityDebt, uint256 poolLiquidityDebt);
 
     /// @notice When calling this function and adding additional collateral it is assumed that you have sent the collateral first
     /// @dev Function to liquidate a loan using its own collateral or depositing additional tokens. Seeks full liquidation

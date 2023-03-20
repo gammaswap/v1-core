@@ -172,6 +172,10 @@ describe("GammaPool", function () {
       expect(_tokens.length).to.equal(2);
       expect(_tokens[0]).to.equal(tokenA.address);
       expect(_tokens[1]).to.equal(tokenB.address);
+      const _decimals = res3.decimals;
+      expect(_decimals.length).to.equal(2);
+      expect(_decimals[0]).to.equal(await tokenA.decimals());
+      expect(_decimals[1]).to.equal(await tokenB.decimals());
 
       expect(res3.factory).to.equal(factory.address);
       expect(res3.longStrategy).to.equal(longStrategy.address);

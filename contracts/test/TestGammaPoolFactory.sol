@@ -33,6 +33,7 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
         IGammaPool(pool).initialize(cfmm, tokens, decimals, _data);
 
         getPool[key] = pool;
+        getKey[pool] = key;
     }
 
     function createPool(uint16, address, address[] calldata, bytes calldata) external override virtual returns(address) {
@@ -71,6 +72,11 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
     }
 
     function setPoolFee(address _pool, address _to, uint16 _protocolFee, uint24 _origMinFee, uint24 _origMaxFee, bool _isSet) external override {
+    }
 
+    function getPools(uint256 start, uint256 end) external override view returns(address[] memory _pools, PoolDetails[] memory _symbols) {
+    }
+
+    function getPoolDetails(address) external virtual override view returns (PoolDetails memory) {
     }
 }

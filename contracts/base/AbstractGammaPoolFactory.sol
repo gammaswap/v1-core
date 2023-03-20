@@ -29,7 +29,10 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
     event OwnershipTransferStarted(address indexed currentOwner, address indexed newOwner);
 
     /// @dev See {IGammaPoolFactory-getPool}
-    mapping(bytes32 => address) public override getPool; // all GS Pools addresses can be predetermined
+    mapping(bytes32 => address) public override getPool; // all GS Pools addresses can be predetermined through key
+
+    /// @dev See {IGammaPoolFactory-getKey}
+    mapping(address => bytes32) public override getKey; // predetermined key maps to pool address
 
     /// @dev See {IGammaPoolFactory-origMin}
     uint24 public override origMin = 10000;

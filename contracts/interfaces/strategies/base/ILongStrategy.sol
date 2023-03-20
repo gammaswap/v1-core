@@ -39,4 +39,10 @@ interface ILongStrategy is ILongStrategyEvents {
     /// @param deltas - collateral amounts being bought or sold (>0 buy, <0 sell), index matches tokensHeld[] index. Only n-1 tokens can be traded
     /// @return tokensHeld - updated collateral token amounts backing loan
     function _rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external returns(uint128[] memory tokensHeld);
+
+    /// @dev Update pool liquidity debt and loan liquidity debt
+    /// @param tokenId - (optional) unique id identifying loan
+    /// @return loanLiquidityDebt - updated liquidity debt amount of loan
+    /// @return poolLiquidityDebt - updated liquidity debt amount of pool
+    function _updatePool(uint256 tokenId) external returns(uint256 loanLiquidityDebt, uint256 poolLiquidityDebt);
 }

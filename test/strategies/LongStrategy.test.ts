@@ -361,6 +361,111 @@ describe("LongStrategy", function () {
       const loan1 = await strategy.getLoan(tokenId);
       expect(loan1.liquidity).to.gt(liquidity);
     });
+
+    it("Update Pool", async function () {
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      await (await strategy.testUpdateIndex()).wait();
+
+      // updateLoanLiquidity
+      const res = await (await strategy.createLoan()).wait();
+      expect(res.events[0].args.caller).to.equal(owner.address);
+      const tokenId = res.events[0].args.tokenId;
+
+      const ONE = BigNumber.from(10).pow(18);
+      const loan = await strategy.getLoan(tokenId);
+      expect(loan.id).to.equal(1);
+      expect(loan.poolId).to.equal(strategy.address);
+      expect(loan.tokensHeld.length).to.equal(2);
+      expect(loan.tokensHeld[0]).to.equal(0);
+      expect(loan.tokensHeld[1]).to.equal(0);
+      expect(loan.liquidity).to.equal(0);
+      expect(loan.lpTokens).to.equal(0);
+      const accFeeIndex = await strategy.getAccFeeIndex();
+      expect(loan.rateIndex).to.equal(accFeeIndex);
+
+      const liquidity = ONE.mul(100);
+      await (await strategy.setLoanLiquidity(tokenId, liquidity)).wait();
+
+      await (await strategy.setBorrowRate(ONE.mul(2))).wait();
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      const _data = await strategy.getPoolData();
+      expect(_data.accFeeIndex).to.equal(ONE);
+
+      const resp = await (await strategy._updatePool(0)).wait();
+      const _data1 = await strategy.getPoolData();
+      expect(resp.events.length).to.eq(1);
+      expect(resp.events[0].event).to.equal("PoolUpdated");
+      expect(resp.events[0].args.accFeeIndex).to.gt(_data.accFeeIndex);
+      expect(resp.events[0].args.accFeeIndex).to.eq(_data1.accFeeIndex);
+      expect(resp.events[0].args.txType).to.eq(15);
+      expect(_data1.accFeeIndex).to.gt(_data.accFeeIndex);
+    });
+
+    it("Update Pool with Loan", async function () {
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      await (await strategy.testUpdateIndex()).wait();
+
+      // updateLoanLiquidity
+      const res = await (await strategy.createLoan()).wait();
+      expect(res.events[0].args.caller).to.equal(owner.address);
+      const tokenId = res.events[0].args.tokenId;
+
+      const ONE = BigNumber.from(10).pow(18);
+      const loan = await strategy.getLoan(tokenId);
+      expect(loan.id).to.equal(1);
+      expect(loan.poolId).to.equal(strategy.address);
+      expect(loan.tokensHeld.length).to.equal(2);
+      expect(loan.tokensHeld[0]).to.equal(0);
+      expect(loan.tokensHeld[1]).to.equal(0);
+      expect(loan.liquidity).to.equal(0);
+      expect(loan.lpTokens).to.equal(0);
+      const accFeeIndex = await strategy.getAccFeeIndex();
+      expect(loan.rateIndex).to.equal(accFeeIndex);
+
+      const liquidity = ONE.mul(100);
+      await (await strategy.setLoanLiquidity(tokenId, liquidity)).wait();
+
+      await (await strategy.setBorrowRate(ONE.mul(2))).wait();
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      const _data = await strategy.getPoolData();
+      expect(_data.accFeeIndex).to.equal(ONE);
+
+      const resp = await (await strategy._updatePool(tokenId)).wait();
+
+      const loan1 = await strategy.getLoan(tokenId);
+      expect(loan1.liquidity).to.gt(liquidity);
+
+      const _data1 = await strategy.getPoolData();
+      expect(resp.events.length).to.eq(2);
+      expect(resp.events[0].event).to.equal("LoanUpdated");
+      expect(resp.events[0].args.tokenId).to.eq(tokenId);
+      expect(resp.events[0].args.tokensHeld.length).to.eq(2);
+      expect(resp.events[0].args.tokensHeld[0]).to.eq(0);
+      expect(resp.events[0].args.tokensHeld[1]).to.eq(0);
+      expect(resp.events[0].args.liquidity).to.gt(liquidity);
+      expect(resp.events[0].args.rateIndex).to.gt(loan.rateIndex);
+      expect(resp.events[0].args.initLiquidity).to.eq(0);
+      expect(resp.events[0].args.lpTokens).to.eq(0);
+      expect(resp.events[0].args.txType).to.eq(15);
+
+      expect(resp.events[1].event).to.equal("PoolUpdated");
+      expect(resp.events[1].args.accFeeIndex).to.gt(_data.accFeeIndex);
+      expect(resp.events[1].args.accFeeIndex).to.eq(_data1.accFeeIndex);
+      expect(resp.events[1].args.txType).to.eq(15);
+      expect(_data1.accFeeIndex).to.gt(_data.accFeeIndex);
+    });
   });
 
   describe("Collateral Management", function () {

@@ -154,4 +154,25 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex,
             s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.REBALANCE_COLLATERAL);
     }
+
+    /// @dev See {ILongStrategy-_updatePool}
+    function _updatePool(uint256 tokenId) external virtual override lock returns(uint256 loanLiquidityDebt, uint256 poolLiquidityDebt) {
+        if(tokenId > 0) {
+            // Get loan for tokenId, revert if not loan creator
+            LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
+
+            // Update pool and loan liquidity debt to include accrued interest since last update
+            loanLiquidityDebt = updateLoan(_loan);
+
+            emit LoanUpdated(tokenId, _loan.tokensHeld, uint128(loanLiquidityDebt), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.UPDATE_POOL);
+        } else {
+            // Update pool liquidity debt to include accrued interest since last update
+            updateIndex();
+        }
+
+        poolLiquidityDebt = s.BORROWED_INVARIANT;
+
+        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex,
+            s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, uint128(poolLiquidityDebt), s.CFMM_RESERVES, TX_TYPE.UPDATE_POOL);
+    }
 }
