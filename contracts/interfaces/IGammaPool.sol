@@ -269,7 +269,7 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     /// @dev Get rebalancing quantity to be able to fully close loan
     /// @param tokenId - unique id identifying loan
     /// @return deltas - collateral amounts being bought or sold (>0 buy, <0 sell), index matches tokensHeld[] index. Only n-1 tokens can be traded
-    function getRebalanceDeltas(uint256 tokenId) external returns(int256[] memory deltas);
+    function getRebalanceDeltas(uint256 tokenId) external view returns(int256[] memory deltas);
 
     /// @dev Update pool liquidity debt and optinally also loan liquidity debt
     /// @param tokenId - (optional) unique ids identifying loan, pass zero to ignore this parameter
