@@ -5,18 +5,6 @@ pragma solidity >=0.8.0;
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev All instantiated GammaPoolFactory contracts must implement this interface
 interface IGammaPoolFactory {
-    /// @dev Details from pool not stored in GammaPool
-    struct PoolDetails {
-        /// @dev addresses of tokens in CFMM pool of GammaPool
-        address[] tokens;
-        /// @dev decimals of tokens in CFMM pool of GammaPool
-        uint8[] decimals;
-        /// @dev symbols of tokens in CFMM pool of GammaPool
-        string[] symbols;
-        /// @dev names of tokens in CFMM pool of GammaPool
-        string[] names;
-    }
-
     /// @dev Event emitted when a new GammaPool is instantiated
     /// @param pool - address of new pool that is created
     /// @param cfmm - address of CFMM the GammaPool is created for
@@ -77,11 +65,6 @@ interface IGammaPoolFactory {
     /// @return _salt - the bytes32 key that is unique to the GammaPool and therefore also used as a unique identifier of the GammaPool
     function getKey(address _pool) external view returns(bytes32);
 
-    /// @dev Get names and symbols of pool's CFMM tokens
-    /// @param _pool - address of GammaPool requesting details for
-    /// @return _details - names of symbols of pool's CFMM tokens
-    function getPoolDetails(address _pool) external view returns(PoolDetails memory _details);
-
     /// @return count - number of GammaPools that have been instantiated through this GammaPoolFactory contract
     function allPoolsLength() external view returns (uint256);
 
@@ -129,7 +112,6 @@ interface IGammaPoolFactory {
     /// @param start - start index of pools to search
     /// @param end - end index of pools to search
     /// @return _pools - all pools requested
-    /// @return _details - detail info of all pools requested
-    function getPools(uint256 start, uint256 end) external view returns(address[] memory _pools, PoolDetails[] memory _details);
+    function getPools(uint256 start, uint256 end) external view returns(address[] memory _pools);
 
 }

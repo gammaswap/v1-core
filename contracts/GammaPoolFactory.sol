@@ -31,9 +31,6 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
     /// @dev Array of all GammaPool instances created by this factory contract
     address[] public allPools;
 
-    /// @dev Detail information for a GammaPool
-    mapping(address => PoolDetails) private poolDetails;
-
     /// @dev Initializes the contract by setting `feeToSetter`, `feeTo`, and `owner`.
     constructor(address _feeToSetter) {
         feeToSetter = _feeToSetter;
@@ -106,7 +103,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         // instantiate GammaPool proxy contract address for protocol's implementation contract using unique key as salt for the pool's address
         pool = cloneDeterministic(implementation, key);
 
-        uint8[] memory _decimals = saveDetails(pool, _tokensOrdered);
+        uint8[] memory _decimals = getDecimals(_tokensOrdered);
         IGammaPool(pool).initialize(_cfmm, _tokensOrdered, _decimals, _data); // initialize GammaPool's state variables
 
         getPool[key] = pool; // map unique key to new instance of GammaPool
@@ -115,29 +112,17 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         emit PoolCreated(pool, _cfmm, _protocolId, implementation, _tokensOrdered, allPools.length); // store creation details in blockchain
     }
 
-    /// @dev Save symbols and names of ERC20 tokens of GammaPool and get decimals of CFMM ERC20 tokens in pool
+    /// @dev Get decimals of ERC20 tokens of GammaPool's CFMM
     /// @param _tokens - tokens of CFMM tokens in pool
     /// @return _decimals - decimals of CFMM tokens, indices must match _tokens[] array
-    function saveDetails(address _pool, address[] memory _tokens) internal virtual returns (uint8[] memory _decimals) {
-        uint256 len = _tokens.length;
-        _decimals = new uint8[](len);
-        poolDetails[_pool].tokens = _tokens;
-        poolDetails[_pool].symbols = new string[](len);
-        poolDetails[_pool].names = new string[](len);
-        for(uint256 i = 0; i < len;) {
-            poolDetails[_pool].symbols[i] = GammaSwapLibrary.symbol(_tokens[i]);
-            poolDetails[_pool].names[i] = GammaSwapLibrary.name(_tokens[i]);
+    function getDecimals(address[] memory _tokens) internal virtual returns(uint8[] memory _decimals) {
+        _decimals = new uint8[](_tokens.length);
+        for(uint256 i = 0; i < _tokens.length;) {
             _decimals[i] = GammaSwapLibrary.decimals(_tokens[i]);
             unchecked {
                 i++;
             }
         }
-        poolDetails[_pool].decimals = _decimals;
-    }
-
-    /// @dev See {IGammaPoolFactory-getPoolDetails}
-    function getPoolDetails(address _pool) external virtual override view returns(PoolDetails memory _details) {
-        _details = poolDetails[_pool];
     }
 
     /// @dev See {IGammaPoolFactory-getPoolFee}
@@ -196,9 +181,9 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
     }
 
     /// @dev See {IGammaPoolFactory-getPools}.
-    function getPools(uint256 start, uint256 end) external virtual override view returns(address[] memory _pools, PoolDetails[] memory _details) {
+    function getPools(uint256 start, uint256 end) external virtual override view returns(address[] memory _pools) {
         if(start > end || allPools.length == 0) {
-            return (new address[](0), new PoolDetails[](0));
+            return new address[](0);
         }
         uint256 lastIdx = allPools.length - 1;
         if(start <= lastIdx) {
@@ -206,11 +191,9 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
             uint256 _end = lastIdx < end ? lastIdx : end;
             uint256 _size = _end - _start + 1;
             _pools = new address[](_size);
-            _details = new PoolDetails[](_size);
             uint256 k = 0;
             for(uint256 i = _start; i <= _end;) {
                 _pools[k] = allPools[i];
-                _details[k] = poolDetails[_pools[k]];
                 unchecked {
                     k++;
                     i++;

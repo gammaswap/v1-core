@@ -199,18 +199,6 @@ describe("GammaPoolFactory", function () {
       expect(pool).to.equal(expectedPoolAddress);
       expect(await factory.allPoolsLength()).to.equal(1);
 
-      const details = await factory.getPoolDetails(pool);
-      expect(details.symbols.length).to.equal(2);
-      expect(details.tokens[0]).to.equal(tokenA.address);
-      expect(details.tokens[1]).to.equal(tokenB.address);
-      expect(details.symbols[0]).to.equal(await tokenA.symbol());
-      expect(details.symbols[1]).to.equal(await tokenB.symbol());
-      expect(details.names.length).to.equal(2);
-      expect(details.names[0]).to.equal(await tokenA.name());
-      expect(details.names[1]).to.equal(await tokenB.name());
-      expect(details.decimals[0]).to.equal(await tokenA.decimals());
-      expect(details.decimals[1]).to.equal(await tokenB.decimals());
-
       const params2 = createPoolParamsObj(addr4.address, tokenA, tokenC);
 
       await factory.createPool(
@@ -232,18 +220,6 @@ describe("GammaPoolFactory", function () {
       );
       expect(pool2).to.equal(expectedPoolAddress2);
       expect(await factory.allPoolsLength()).to.equal(2);
-
-      const details2 = await factory.getPoolDetails(pool2);
-      expect(details2.symbols.length).to.equal(2);
-      expect(details2.tokens[0]).to.equal(tokenA.address);
-      expect(details2.tokens[1]).to.equal(tokenC.address);
-      expect(details2.symbols[0]).to.equal(await tokenA.symbol());
-      expect(details2.symbols[1]).to.equal(await tokenC.symbol());
-      expect(details2.names.length).to.equal(2);
-      expect(details2.names[0]).to.equal(await tokenA.name());
-      expect(details2.names[1]).to.equal(await tokenC.name());
-      expect(details2.decimals[0]).to.equal(await tokenA.decimals());
-      expect(details2.decimals[1]).to.equal(await tokenC.decimals());
     });
 
     it("Create Pool Errors", async function () {
@@ -396,66 +372,44 @@ describe("GammaPoolFactory", function () {
 
       expect(await factory.allPoolsLength()).to.equal(6);
       const resp1 = await factory.getPools(0, 0);
-      expect(resp1._pools.length).to.equal(1);
-      expect(resp1._pools[0]).to.equal(await factory.allPools(0));
-      await checkPoolDetails(resp1._details[0], tokenA, tokenB);
+      expect(resp1.length).to.equal(1);
+      expect(resp1[0]).to.equal(await factory.allPools(0));
 
       const resp2 = await factory.getPools(0, 2);
-      expect(resp2._pools.length).to.equal(3);
-      expect(resp2._pools[0]).to.equal(await factory.allPools(0));
-      await checkPoolDetails(resp2._details[0], tokenA, tokenB);
-      expect(resp2._pools[1]).to.equal(await factory.allPools(1));
-      await checkPoolDetails(resp2._details[1], tokenA, tokenC);
-      expect(resp2._pools[2]).to.equal(await factory.allPools(2));
-      await checkPoolDetails(resp2._details[2], tokenA, tokenD);
+      expect(resp2.length).to.equal(3);
+      expect(resp2[0]).to.equal(await factory.allPools(0));
+      expect(resp2[1]).to.equal(await factory.allPools(1));
+      expect(resp2[2]).to.equal(await factory.allPools(2));
 
       const resp3 = await factory.getPools(0, 5);
-      expect(resp3._pools.length).to.equal(await factory.allPoolsLength());
-      expect(resp3._pools[0]).to.equal(await factory.allPools(0));
-      await checkPoolDetails(resp3._details[0], tokenA, tokenB);
-      expect(resp3._pools[1]).to.equal(await factory.allPools(1));
-      await checkPoolDetails(resp3._details[1], tokenA, tokenC);
-      expect(resp3._pools[2]).to.equal(await factory.allPools(2));
-      await checkPoolDetails(resp3._details[2], tokenA, tokenD);
-      expect(resp3._pools[3]).to.equal(await factory.allPools(3));
-      await checkPoolDetails(resp3._details[3], tokenB, tokenC);
-      expect(resp3._pools[4]).to.equal(await factory.allPools(4));
-      await checkPoolDetails(resp3._details[4], tokenB, tokenD);
-      expect(resp3._pools[5]).to.equal(await factory.allPools(5));
-      await checkPoolDetails(resp3._details[5], tokenC, tokenD);
+      expect(resp3.length).to.equal(await factory.allPoolsLength());
+      expect(resp3[0]).to.equal(await factory.allPools(0));
+      expect(resp3[1]).to.equal(await factory.allPools(1));
+      expect(resp3[2]).to.equal(await factory.allPools(2));
+      expect(resp3[3]).to.equal(await factory.allPools(3));
+      expect(resp3[4]).to.equal(await factory.allPools(4));
+      expect(resp3[5]).to.equal(await factory.allPools(5));
 
       const resp4 = await factory.getPools(0, 100);
-      expect(resp4._pools.length).to.equal(await factory.allPoolsLength());
-      expect(resp4._pools[0]).to.equal(await factory.allPools(0));
-      await checkPoolDetails(resp4._details[0], tokenA, tokenB);
-      expect(resp4._pools[1]).to.equal(await factory.allPools(1));
-      await checkPoolDetails(resp4._details[1], tokenA, tokenC);
-      expect(resp4._pools[2]).to.equal(await factory.allPools(2));
-      await checkPoolDetails(resp4._details[2], tokenA, tokenD);
-      expect(resp4._pools[3]).to.equal(await factory.allPools(3));
-      await checkPoolDetails(resp4._details[3], tokenB, tokenC);
-      expect(resp4._pools[4]).to.equal(await factory.allPools(4));
-      await checkPoolDetails(resp4._details[4], tokenB, tokenD);
-      expect(resp4._pools[5]).to.equal(await factory.allPools(5));
-      await checkPoolDetails(resp4._details[5], tokenC, tokenD);
+      expect(resp4.length).to.equal(await factory.allPoolsLength());
+      expect(resp4[0]).to.equal(await factory.allPools(0));
+      expect(resp4[1]).to.equal(await factory.allPools(1));
+      expect(resp4[2]).to.equal(await factory.allPools(2));
+      expect(resp4[3]).to.equal(await factory.allPools(3));
+      expect(resp4[4]).to.equal(await factory.allPools(4));
+      expect(resp4[5]).to.equal(await factory.allPools(5));
 
       const resp5 = await factory.getPools(2, 4);
-      expect(resp5._pools.length).to.equal(3);
-      expect(resp5._pools[0]).to.equal(await factory.allPools(2));
-      await checkPoolDetails(resp5._details[0], tokenA, tokenD);
-      expect(resp5._pools[1]).to.equal(await factory.allPools(3));
-      await checkPoolDetails(resp5._details[1], tokenB, tokenC);
-      expect(resp5._pools[2]).to.equal(await factory.allPools(4));
-      await checkPoolDetails(resp5._details[2], tokenB, tokenD);
+      expect(resp5.length).to.equal(3);
+      expect(resp5[0]).to.equal(await factory.allPools(2));
+      expect(resp5[1]).to.equal(await factory.allPools(3));
+      expect(resp5[2]).to.equal(await factory.allPools(4));
 
       const resp6 = await factory.getPools(3, 100);
-      expect(resp6._pools.length).to.equal(3);
-      expect(resp6._pools[0]).to.equal(await factory.allPools(3));
-      await checkPoolDetails(resp6._details[0], tokenB, tokenC);
-      expect(resp6._pools[1]).to.equal(await factory.allPools(4));
-      await checkPoolDetails(resp6._details[1], tokenB, tokenD);
-      expect(resp6._pools[2]).to.equal(await factory.allPools(5));
-      await checkPoolDetails(resp6._details[2], tokenC, tokenD);
+      expect(resp6.length).to.equal(3);
+      expect(resp6[0]).to.equal(await factory.allPools(3));
+      expect(resp6[1]).to.equal(await factory.allPools(4));
+      expect(resp6[2]).to.equal(await factory.allPools(5));
     });
   });
 

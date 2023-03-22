@@ -142,12 +142,23 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         data.LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED;
         data.totalSupply = s.totalSupply;
-        data.decimals = s.decimals;
-        data.tokens = s.tokens;
         data.TOKEN_BALANCE = s.TOKEN_BALANCE;
-        IGammaPoolFactory.PoolDetails memory _details = IGammaPoolFactory(data.factory).getPoolDetails(address(this));
-        data.symbols = _details.symbols;
-        data.names = _details.names;
+        (data.tokens, data.symbols, data.names, data.decimals) = getTokensMetaData();
+    }
+
+    /// @dev See {IGammaPool-getTokensMetaData}
+    function getTokensMetaData() public virtual override view returns(address[] memory _tokens, string[] memory _symbols, string[] memory _names, uint8[] memory _decimals) {
+        _tokens = s.tokens;
+        _decimals = s.decimals;
+        _symbols = new string[](_tokens.length);
+        _names = new string[](_tokens.length);
+        for(uint256 i = 0; i < _tokens.length;) {
+            _symbols[i] = GammaSwapLibrary.symbol(_tokens[i]);
+            _names[i] = GammaSwapLibrary.name(_tokens[i]);
+            unchecked {
+                i++;
+            }
+        }
     }
 
     /// @dev See {IGammaPool-getPoolData}
@@ -227,7 +238,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     /// @param _tokenId - tokenId of loan to convert
     /// @return _loanData - loan data struct (same as Loan + tokenId)
     function getLoanData(uint256 _tokenId) internal virtual view returns(LoanData memory _loanData) {
-        LibStorage.Loan storage _loan = s.loans[_tokenId];
+        LibStorage.Loan memory _loan = s.loans[_tokenId];
         _loanData.tokenId = _tokenId;
         _loanData.id = _loan.id;
         _loanData.poolId = _loan.poolId;
@@ -237,12 +248,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         _loanData.lpTokens = _loan.lpTokens;
         _loanData.rateIndex = _loan.rateIndex;
         _loanData.px = _loan.px;
-        _loanData.tokens = s.tokens;
-        _loanData.decimals = s.decimals;
-
-        IGammaPoolFactory.PoolDetails memory _details = IGammaPoolFactory(factory).getPoolDetails(address(this));
-        _loanData.symbols = _details.symbols;
-        _loanData.names = _details.names;
+        (_loanData.tokens, _loanData.symbols, _loanData.names, _loanData.decimals) = getTokensMetaData();
     }
 
     /// @dev See {IGammaPool-getLoans}

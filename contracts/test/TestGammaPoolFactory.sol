@@ -66,7 +66,6 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
         return(feeTo, 0, 0, 0);
     }
 
-
     function getPoolFee(address) external view override returns (address, uint256, uint256, uint256, bool) {
         return(feeTo, 0, 0, 0, false);
     }
@@ -74,15 +73,6 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
     function setPoolFee(address _pool, address _to, uint16 _protocolFee, uint24 _origMinFee, uint24 _origMaxFee, bool _isSet) external override {
     }
 
-    function getPools(uint256 start, uint256 end) external override view returns(address[] memory _pools, PoolDetails[] memory _symbols) {
-    }
-
-    function getPoolDetails(address) external virtual override view returns (PoolDetails memory _details) {
-        _details.symbols = new string[](2);
-        _details.names = new string[](2);
-        _details.symbols[0] = "TestSymb0";
-        _details.symbols[1] = "TestSymb1";
-        _details.names[0] = "Test Symbol 0";
-        _details.names[1] = "Test Symbol 1";
+    function getPools(uint256 start, uint256 end) external override view returns(address[] memory _pools) {
     }
 }

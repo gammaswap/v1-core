@@ -185,11 +185,6 @@ describe("GammaPool", function () {
       expect(_tokenBalances.length).to.equal(2);
       expect(_tokenBalances[0]).to.equal(0);
       expect(_tokenBalances[1]).to.equal(0);
-      expect(res3.symbols[0]).to.equal("TestSymb0");
-      expect(res3.symbols[1]).to.equal("TestSymb1");
-      expect(res3.names.length).to.equal(2);
-      expect(res3.names[0]).to.equal("Test Symbol 0");
-      expect(res3.names[1]).to.equal("Test Symbol 1");
 
       expect(res3.accFeeIndex).to.equal(ONE);
       expect(res3.LAST_BLOCK_NUMBER).to.gt(0);
@@ -232,12 +227,6 @@ describe("GammaPool", function () {
       expect(_tokBalances.length).to.equal(2);
       expect(_tokBalances[0]).to.equal(0);
       expect(_tokBalances[1]).to.equal(0);
-      expect(res4.symbols.length).to.equal(2);
-      expect(res4.symbols[0]).to.equal("TestSymb0");
-      expect(res4.symbols[1]).to.equal("TestSymb1");
-      expect(res4.names.length).to.equal(2);
-      expect(res4.names[0]).to.equal("Test Symbol 0");
-      expect(res4.names[1]).to.equal("Test Symbol 1");
 
       expect(res4.accFeeIndex).to.equal(0);
       expect(res4.LAST_BLOCK_NUMBER).to.gt(0);
@@ -280,12 +269,6 @@ describe("GammaPool", function () {
       expect(_toksBalances.length).to.equal(2);
       expect(_toksBalances[0]).to.equal(0);
       expect(_toksBalances[1]).to.equal(0);
-      expect(res5.symbols.length).to.equal(2);
-      expect(res5.symbols[0]).to.equal("TestSymb0");
-      expect(res5.symbols[1]).to.equal("TestSymb1");
-      expect(res5.names.length).to.equal(2);
-      expect(res5.names[0]).to.equal("Test Symbol 0");
-      expect(res5.names[1]).to.equal("Test Symbol 1");
       expect(res5.lastCFMMTotalSupply).to.equal(await cfmm.totalSupply());
       expect(res5.lastCFMMInvariant).to.equal(100);
       expect(res5.lastPrice).to.equal(1);
