@@ -35,6 +35,15 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
 
         /// @dev price at which loan was opened
         uint256 px;
+
+        /// @dev ERC20 tokens of CFMM
+        address[] tokens;
+        /// @dev decimals of ERC20 tokens of CFMM
+        uint8[] decimals;
+        /// @dev symbols of ERC20 tokens of CFMM
+        string[] symbols;
+        /// @dev names of ERC20 tokens of CFMM
+        string[] names;
     }
 
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
@@ -212,6 +221,21 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
 
     /// @return lastPrice - calculates and gets current price at CFMM
     function getLastCFMMPrice() external view returns(uint256);
+
+    /// @dev Get latest rate information from GammaPool
+    /// @return accFeeIndex - latest accrued interest rate index (from trading fees + interest)
+    /// @return lastCFMMFeeIndex - latest accrued trading fees from CFMM
+    /// @return lastFeeIndex - latest interest accruals
+    /// @return borrowRate - latest borrowing rate
+    /// @return lastBlockNumber - block number of last update to GammaPool
+    function getLatestRates() external view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate, uint256 lastBlockNumber);
+
+    /// @dev Get CFMM tokens meta data
+    /// @return _tokens - array of token address of ERC20 tokens of CFMM
+    /// @return _symbols - array of symbols of ERC20 tokens of CFMM
+    /// @return _names - array of names of ERC20 tokens of CFMM
+    /// @return _decimals - array of decimals of ERC20 tokens of CFMM
+    function getTokensMetaData() external view returns(address[] memory _tokens, string[] memory _symbols, string[] memory _names, uint8[] memory _decimals);
 
     // Long Gamma
 
