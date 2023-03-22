@@ -302,6 +302,13 @@ describe("GammaPool", function () {
       expect(res5.LP_TOKEN_BALANCE).to.equal(0);
       expect(res5.LP_TOKEN_BORROWED_PLUS_INTEREST).to.equal(5);
       expect(res5.BORROWED_INVARIANT).to.equal(6);
+
+      const res6 = await gammaPool.getLatestRates();
+      expect(res6.accFeeIndex).to.eq(res5.accFeeIndex);
+      expect(res6.lastCFMMFeeIndex).to.eq(res5.lastCFMMFeeIndex);
+      expect(res6.lastFeeIndex).to.eq(res5.lastFeeIndex);
+      expect(res6.borrowRate).to.eq(res5.borrowRate);
+      expect(res6.lastBlockNumber).to.eq(res5.LAST_BLOCK_NUMBER);
     });
 
     it("Custom Fields Set & Get", async function () {

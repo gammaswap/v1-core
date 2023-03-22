@@ -35,6 +35,11 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
 
         /// @dev price at which loan was opened
         uint256 px;
+
+        address[] tokens;
+        uint8[] decimals;
+        string[] symbols;
+        string[] names;
     }
 
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
@@ -212,6 +217,14 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
 
     /// @return lastPrice - calculates and gets current price at CFMM
     function getLastCFMMPrice() external view returns(uint256);
+
+    /// @dev Get latest rate information from GammaPool
+    /// @return accFeeIndex - latest accrued interest rate index (from trading fees + interest)
+    /// @return lastCFMMFeeIndex - latest accrued trading fees from CFMM
+    /// @return lastFeeIndex - latest interest accruals
+    /// @return borrowRate - latest borrowing rate
+    /// @return lastBlockNumber - block number of last update to GammaPool
+    function getLatestRates() external view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate, uint256 lastBlockNumber);
 
     // Long Gamma
 

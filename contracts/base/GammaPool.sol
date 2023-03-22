@@ -116,6 +116,19 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         return(s.accFeeIndex, s.lastCFMMFeeIndex, s.LAST_BLOCK_NUMBER);
     }
 
+    /// @dev See {IGammaPool-getLatestRates}
+    function getLatestRates() external virtual override view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate, uint256 lastBlockNumber) {
+        uint256 borrowedInvariant = s.BORROWED_INVARIANT;
+        uint256 lastCFMMInvariant = _getLatestCFMMInvariant();
+        uint256 lastCFMMTotalSupply = _getLatestCFMMTotalSupply();
+        uint256 lpTokenBalance = s.LP_TOKEN_BALANCE;
+        lastBlockNumber = s.LAST_BLOCK_NUMBER;
+        (lastCFMMFeeIndex, lastFeeIndex, borrowRate) = IShortStrategy(shortStrategy)
+        .getLastFees(borrowedInvariant, lpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply,
+            s.lastCFMMInvariant, s.lastCFMMTotalSupply, lastBlockNumber);
+        accFeeIndex = s.accFeeIndex * lastFeeIndex / 1e18;
+    }
+
     /// @dev See {IGammaPool-getConstantPoolData}
     function getConstantPoolData() public virtual override view returns(PoolData memory data) {
         data.poolId = address(this);
@@ -224,6 +237,12 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         _loanData.lpTokens = _loan.lpTokens;
         _loanData.rateIndex = _loan.rateIndex;
         _loanData.px = _loan.px;
+        _loanData.tokens = s.tokens;
+        _loanData.decimals = s.decimals;
+
+        IGammaPoolFactory.PoolDetails memory _details = IGammaPoolFactory(factory).getPoolDetails(address(this));
+        _loanData.symbols = _details.symbols;
+        _loanData.names = _details.names;
     }
 
     /// @dev See {IGammaPool-getLoans}
