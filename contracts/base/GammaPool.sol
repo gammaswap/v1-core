@@ -117,12 +117,13 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     }
 
     /// @dev See {IGammaPool-getLatestRates}
-    function getLatestRates() external virtual override view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate, uint256 lastBlockNumber) {
+    function getLatestRates() external virtual override view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate, uint256 lastBlockNumber, uint256 currBlockNumber) {
         uint256 borrowedInvariant = s.BORROWED_INVARIANT;
         uint256 lastCFMMInvariant = _getLatestCFMMInvariant();
         uint256 lastCFMMTotalSupply = _getLatestCFMMTotalSupply();
         uint256 lpTokenBalance = s.LP_TOKEN_BALANCE;
         lastBlockNumber = s.LAST_BLOCK_NUMBER;
+        currBlockNumber = block.number;
         (lastCFMMFeeIndex, lastFeeIndex, borrowRate) = IShortStrategy(shortStrategy)
         .getLastFees(borrowedInvariant, lpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply,
             s.lastCFMMInvariant, s.lastCFMMTotalSupply, lastBlockNumber);
@@ -137,6 +138,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.shortStrategy = shortStrategy;
         data.liquidationStrategy = liquidationStrategy;
         data.cfmm = s.cfmm;
+        data.currBlockNumber = uint48(block.number);
         data.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         data.factory = s.factory;
         data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;

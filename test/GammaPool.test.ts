@@ -207,7 +207,9 @@ describe("GammaPool", function () {
       expect(res3.lastFeeIndex).to.equal(0);
       expect(res3.borrowRate).to.equal(0);
 
+      const latestBlock = await ethers.provider.getBlock("latest");
       const res4 = await gammaPool.getConstantPoolData();
+      expect(res4.currBlockNumber).to.equal(latestBlock.number);
       expect(res4.cfmm).to.equal(cfmm.address);
       expect(res4.protocolId).to.equal(PROTOCOL_ID);
       const _toks = res4.tokens;
