@@ -181,8 +181,8 @@ contract TestLiquidationStrategy is LiquidationStrategy {
     }
 
     //AbstractRateModel abstract functions
-    function calcBorrowRate(uint256, uint256) internal virtual override view returns(uint256) {
-        return 0;
+    function calcBorrowRate(uint256, uint256) internal virtual override view returns(uint256, uint256) {
+        return (0,0);
     }
 
     //BaseStrategy functions

@@ -163,8 +163,8 @@ contract TestBaseStrategy is BaseStrategy {
         return s.balanceOf[account];
     }
 
-    function calcBorrowRate(uint256, uint256) internal virtual override view returns(uint256) {
-        return borrowRate;
+    function calcBorrowRate(uint256, uint256) internal virtual override view returns(uint256, uint256) {
+        return (borrowRate, 0);
     }
 
     function getReserves() public virtual view returns(uint128[] memory) {

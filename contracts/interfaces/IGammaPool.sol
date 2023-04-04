@@ -46,6 +46,26 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
         string[] names;
     }
 
+    /// @dev Struct returned in getLatestRates function. Contains all relevant global state variables
+    struct RateData {
+        /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 7.9% trillion
+        uint256 accFeeIndex;
+        /// @dev Percent accrual in CFMM invariant since last update
+        uint256 lastCFMMFeeIndex;
+        /// @dev Percent accrual in CFMM invariant and GammaPool interest since last update
+        uint256 lastFeeIndex;
+        /// @dev Borrow rate of LP tokens in GammaPool
+        uint256 borrowRate;
+        /// @dev Utilization rate of GammaPool
+        uint256 utilizationRate;
+        /// @dev last block an update to the GammaPool's global storage variables happened
+        uint256 lastBlockNumber;
+        /// @dev Current block number when requesting pool data
+        uint256 currBlockNumber;
+        /// @dev Last Price in CFMM
+        uint256 lastPrice;
+    }
+
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
     struct PoolData {
         /// @dev GammaPool address
@@ -114,6 +134,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
         uint256 lastFeeIndex;
         /// @dev Borrow rate of LP tokens in GammaPool
         uint256 borrowRate;
+        /// @dev Utilization rate of GammaPool
+        uint256 utilizationRate;
         /// @dev Current block number when requesting pool data
         uint48 currBlockNumber;
     }
@@ -225,13 +247,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     function getLastCFMMPrice() external view returns(uint256);
 
     /// @dev Get latest rate information from GammaPool
-    /// @return accFeeIndex - latest accrued interest rate index (from trading fees + interest)
-    /// @return lastCFMMFeeIndex - latest accrued trading fees from CFMM
-    /// @return lastFeeIndex - latest interest accruals
-    /// @return borrowRate - latest borrowing rate
-    /// @return lastBlockNumber - block number of last update to GammaPool
-    /// @return currBlockNumber - current block number of request
-    function getLatestRates() external view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate, uint256 lastBlockNumber, uint256 currBlockNumber);
+    /// @return data - RateData struct containing latest rate information
+    function getLatestRates() external view returns(RateData memory data);
 
     /// @dev Get CFMM tokens meta data
     /// @return _tokens - array of token address of ERC20 tokens of CFMM

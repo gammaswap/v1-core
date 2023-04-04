@@ -117,17 +117,18 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     }
 
     /// @dev See {IGammaPool-getLatestRates}
-    function getLatestRates() external virtual override view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate, uint256 lastBlockNumber, uint256 currBlockNumber) {
+    function getLatestRates() external virtual override view returns(RateData memory data) {
         uint256 borrowedInvariant = s.BORROWED_INVARIANT;
         uint256 lastCFMMInvariant = _getLatestCFMMInvariant();
         uint256 lastCFMMTotalSupply = _getLatestCFMMTotalSupply();
         uint256 lpTokenBalance = s.LP_TOKEN_BALANCE;
-        lastBlockNumber = s.LAST_BLOCK_NUMBER;
-        currBlockNumber = block.number;
-        (lastCFMMFeeIndex, lastFeeIndex, borrowRate) = IShortStrategy(shortStrategy)
+        data.lastBlockNumber = s.LAST_BLOCK_NUMBER;
+        data.currBlockNumber = block.number;
+        (data.lastCFMMFeeIndex, data.lastFeeIndex, data.borrowRate, data.utilizationRate) = IShortStrategy(shortStrategy)
         .getLastFees(borrowedInvariant, lpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply,
-            s.lastCFMMInvariant, s.lastCFMMTotalSupply, lastBlockNumber);
-        accFeeIndex = s.accFeeIndex * lastFeeIndex / 1e18;
+            s.lastCFMMInvariant, s.lastCFMMTotalSupply, data.lastBlockNumber);
+        data.accFeeIndex = s.accFeeIndex * data.lastFeeIndex / 1e18;
+        data.lastPrice = _getLastCFMMPrice();
     }
 
     /// @dev See {IGammaPool-getConstantPoolData}
@@ -184,7 +185,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.lastCFMMTotalSupply = _getLatestCFMMTotalSupply();
 
         uint256 lastCFMMFeeIndex;
-        (lastCFMMFeeIndex, data.lastFeeIndex, data.borrowRate) = IShortStrategy(shortStrategy)
+        (lastCFMMFeeIndex, data.lastFeeIndex, data.borrowRate, data.utilizationRate) = IShortStrategy(shortStrategy)
         .getLastFees(borrowedInvariant, data.LP_TOKEN_BALANCE, data.lastCFMMInvariant, data.lastCFMMTotalSupply,
             s.lastCFMMInvariant, s.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER);
 

@@ -252,6 +252,7 @@ describe("GammaPool", function () {
       await (await cfmm.mint(addr1.address, ONE.mul(100))).wait();
 
       const res5 = await gammaPool.getLatestPoolData();
+      expect(res5.utilizationRate).to.equal(44);
       expect(res5.cfmm).to.equal(cfmm.address);
       expect(res5.protocolId).to.equal(PROTOCOL_ID);
       const _tokss = res5.tokens;
@@ -289,6 +290,8 @@ describe("GammaPool", function () {
       expect(res5.BORROWED_INVARIANT).to.equal(6);
 
       const res6 = await gammaPool.getLatestRates();
+      expect(res6.lastPrice).to.equal(res5.lastPrice);
+      expect(res6.utilizationRate).to.equal(res5.utilizationRate);
       expect(res6.accFeeIndex).to.eq(res5.accFeeIndex);
       expect(res6.lastCFMMFeeIndex).to.eq(res5.lastCFMMFeeIndex);
       expect(res6.lastFeeIndex).to.eq(res5.lastFeeIndex);

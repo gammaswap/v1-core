@@ -118,7 +118,8 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param blockDiff - change in blcoks since last update
     /// @return lastFeeIndex - (1 + fee yield) since last update
     function updateFeeIndex(uint256 lastCFMMFeeIndex, uint256 borrowedInvariant, uint256 blockDiff) internal virtual returns(uint256 lastFeeIndex) {
-        lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, calcBorrowRate(s.LP_INVARIANT, borrowedInvariant), blockDiff);
+        (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, borrowedInvariant);
+        lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, blockDiff);
     }
 
     /// @dev Accrue interest to borrowed invariant amount

@@ -110,8 +110,8 @@ contract TestLongStrategy is LongStrategy {
         borrowRate = _borrowRate;
     }
 
-    function calcBorrowRate(uint256, uint256) internal virtual override view returns(uint256) {
-        return borrowRate;
+    function calcBorrowRate(uint256, uint256) internal virtual override view returns(uint256, uint256) {
+        return (borrowRate,0);
     }
 
     //LongGamma

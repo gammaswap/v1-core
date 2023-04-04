@@ -64,7 +64,9 @@ interface IShortStrategy is IShortStrategyEvents {
     /// @return lastCFMMFeeIndex - last fees accrued by CFMM since last update
     /// @return lastFeeIndex - last fees charged by GammaPool since last update
     /// @return borrowRate - current borrow rate of GammaPool
-    function getLastFees(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum) external view returns(uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate);
+    /// @return utilizationRate - current utilization rate of GammaPool
+    function getLastFees(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum)
+        external view returns(uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate, uint256 utilizationRate);
 
     /// @dev Calculate balances updated by fees charged since last update
     /// @param lastFeeIndex - last fees charged by GammaPool since last update

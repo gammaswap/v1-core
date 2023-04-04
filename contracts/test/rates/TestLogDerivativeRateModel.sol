@@ -9,8 +9,8 @@ contract TestLogDerivativeRateModel is LogDerivativeRateModel {
         LogDerivativeRateModel(_baseRate, _factor, _maxApy){
     }
 
-    function testCalcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant) public virtual view returns(uint256) {
-        return calcBorrowRate(lpInvariant, borrowedInvariant);
+    function testCalcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant) public virtual view returns(uint256 borrowRate) {
+        (borrowRate,) = calcBorrowRate(lpInvariant, borrowedInvariant);
     }
 
 }

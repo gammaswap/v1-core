@@ -38,18 +38,18 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
 
     /// @notice formula is as follows: max{ baseRate + (utilRate * slope1) / optimalRate, baseRate + slope1 + slope2 * (utilRate - optimalRate) / (1 - optimalUtilRate) }
     /// @dev See {AbstractRateModel-calcBorrowRate}.
-    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant) internal virtual override view returns(uint256) {
-        uint256 utilizationRate = calcUtilizationRate(lpInvariant, borrowedInvariant);
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant) internal virtual override view returns(uint256 borrowRate, uint256 utilizationRate) {
+        utilizationRate = calcUtilizationRate(lpInvariant, borrowedInvariant);
         if(utilizationRate == 0) { // if utilization rate is zero, the borrow rate is zero
-            return 0;
+            return (0, 0);
         }
         if(utilizationRate <= optimalUtilRate) { // if pool funds are underutilized use slope1
             uint256 variableRate = (utilizationRate * slope1) / optimalUtilRate;
-            return baseRate + variableRate;
+            borrowRate = baseRate + variableRate;
         } else { // if pool funds are overutilized use slope2
             uint256 utilizationRateDiff = utilizationRate - optimalUtilRate;
             uint256 variableRate = (utilizationRateDiff * slope2) / (1e18 - optimalUtilRate);
-            return baseRate + slope1 + variableRate;
+            borrowRate = baseRate + slope1 + variableRate;
         }
     }
 }
