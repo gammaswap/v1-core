@@ -136,9 +136,10 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         return convertToAssets(shares);
     }
 
-    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant) internal virtual override view returns(uint256) {
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant) internal virtual override view returns(uint256, uint256) {
         uint256 totalInvariant = lpInvariant + borrowedInvariant;
-        return totalInvariant == 0 ? 0 : (borrowedInvariant * 1e18 / totalInvariant);
+        uint256 utilRate = totalInvariant == 0 ? 0 : (borrowedInvariant * 1e18 / totalInvariant);
+        return(utilRate, utilRate);
     }
 
     //ShortGamma

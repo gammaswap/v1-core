@@ -51,8 +51,8 @@ contract TestShortStrategy2 is IShortStrategy{
     }
 
     function getLastFees(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum)
-        external override view returns(uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate) {
-        return (1,2,3);
+        external override view returns(uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate, uint256 utilizationRate) {
+        return (1,2,3,44);
     }
 
     function getLatestBalances(uint256 lastFeeIndex, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply)

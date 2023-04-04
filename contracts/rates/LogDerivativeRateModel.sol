@@ -35,13 +35,13 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
 
     /// @notice formula is as follows: max{ baseRate + factor * (utilRate^2)/(1 - utilRate^2), maxApy }
     /// @dev See {AbstractRateModel-calcBorrowRate}.
-    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant) internal virtual override view returns(uint256) {
-        uint256 utilizationRate = calcUtilizationRate(lpInvariant, borrowedInvariant);
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant) internal virtual override view returns(uint256 borrowRate, uint256 utilizationRate) {
+        utilizationRate = calcUtilizationRate(lpInvariant, borrowedInvariant);
         if(utilizationRate == 0) { // if utilization rate is zero, the borrow rate is zero
-            return 0;
+            return (0, 0);
         }
         uint256 utilizationRateSquare = utilizationRate**2; // since utilizationRate is a fraction, this lowers its value in a non linear way
         uint256 denominator = 1e36 - utilizationRateSquare + 1; // add 1 so that it never becomes 0
-        return Math.min(baseRate + factor * utilizationRateSquare / denominator, maxApy); // division by an ever non linear decreasing denominator creates an exponential looking curve as util. rate increases
+        borrowRate = Math.min(baseRate + factor * utilizationRateSquare / denominator, maxApy); // division by an ever non linear decreasing denominator creates an exponential looking curve as util. rate increases
     }
 }
