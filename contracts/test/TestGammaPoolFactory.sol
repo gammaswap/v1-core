@@ -14,13 +14,10 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
     address public protocol;
     uint8[] public decimals;
 
-    constructor(address _cfmm, uint16 _protocolId, address[] memory _tokens) {
+    constructor(address _cfmm, uint16 _protocolId, address[] memory _tokens) AbstractGammaPoolFactory(msg.sender, msg.sender, msg.sender) {
         cfmm = _cfmm;
         protocolId = _protocolId;
         tokens = _tokens;
-        owner = msg.sender;
-        feeTo = owner;
-        feeToSetter = owner;
         decimals = new uint8[](2);
     }
 
