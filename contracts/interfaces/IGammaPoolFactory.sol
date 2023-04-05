@@ -105,9 +105,6 @@ interface IGammaPoolFactory {
     /// @return fee - protocol fee charged by GammaPool to liquidity borrowers in terms of basis points
     function feeInfo() external view returns(address,uint256,uint256,uint256);
 
-    /// @return owner - address that owns the factory contract. Has full privileges over the factory. In a decentralized setting it's the Governance contract
-    function owner() external view returns(address);
-
     /// @dev Get list of pools from start index to end index. If it goes over index it returns up to the max size of allPools array
     /// @param start - start index of pools to search
     /// @param end - end index of pools to search

@@ -32,10 +32,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
     address[] public allPools;
 
     /// @dev Initializes the contract by setting `feeToSetter`, `feeTo`, and `owner`.
-    constructor(address _feeToSetter) {
-        feeToSetter = _feeToSetter;
-        feeTo = _feeToSetter;
-        owner = msg.sender;
+    constructor(address _feeTo) AbstractGammaPoolFactory(msg.sender, _feeTo, _feeTo){
     }
 
     /// @dev See {IGammaPoolFactory-allPoolsLength}
@@ -61,8 +58,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
     }
 
     /// @dev See {IGammaPoolFactory-addProtocol}
-    function addProtocol(address implementation) external virtual override {
-        isForbidden(owner); // only owner can add an implementation contract (e.g. Governance contract)
+    function addProtocol(address implementation) external virtual override onlyOwner {
         if(IGammaPool(implementation).protocolId() == 0) {
             revert ZeroProtocol();// implementation contract cannot have zero as protocolId
         }
@@ -73,14 +69,12 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
     }
 
     /// @dev See {IGammaPoolFactory-removeProtocol}
-    function removeProtocol(uint16 _protocolId) external virtual override {
-        isForbidden(owner); // only owner can remove an implementation contract (e.g. Governance contract)
+    function removeProtocol(uint16 _protocolId) external virtual override onlyOwner {
         getProtocol[_protocolId] = address(0);
     }
 
     /// @dev See {IGammaPoolFactory-setIsProtocolRestricted}
-    function setIsProtocolRestricted(uint16 _protocolId, bool _isRestricted) external virtual override {
-        isForbidden(owner); // only owner can set an implementation as restricted (e.g. Governance contract)
+    function setIsProtocolRestricted(uint16 _protocolId, bool _isRestricted) external virtual override onlyOwner {
         isProtocolRestricted[_protocolId] = _isRestricted;
     }
 
@@ -174,8 +168,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
     }
 
     /// @dev See {IGammaPoolFactory-setFeeToSetter}
-    function setFeeToSetter(address _feeToSetter) external {
-        isForbidden(owner); // only owner (e.g. Governance) can transfer feeToSetter privileges
+    function setFeeToSetter(address _feeToSetter) external onlyOwner {
         isZeroAddress(_feeToSetter); // protocol fee setting privileges can't be transferred to the zero address
         feeToSetter = _feeToSetter;
     }

@@ -2,14 +2,14 @@
 pragma solidity >=0.8.4;
 
 import "../interfaces/IGammaPoolFactory.sol";
+import "../utils/TwoStepOwnable.sol";
 
 /// @title Abstract factory contract to create more GammaPool contracts.
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev If another GammaPoolFactory contract is created it is recommended to inherit from this contract
-abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
+abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable {
 
     error Forbidden();
-    error NotNewOwner();
     error ZeroProtocol();
     error ProtocolNotSet();
     error ProtocolExists();
@@ -17,16 +17,6 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
     error PoolExists();
     error DeployFailed();
     error ZeroAddress();
-
-    /// @dev Event emitted when ownership of GammaPoolFactory contract is transferred to a new address
-    /// @param previousOwner - previous address that owned factory contract
-    /// @param newOwner - new address that owns factory contract
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /// @dev Event emitted when change of ownership of GammaPoolFactory contract is started
-    /// @param currentOwner - current address that owns factory contract
-    /// @param newOwner - new address that will own factory contract
-    event OwnershipTransferStarted(address indexed currentOwner, address indexed newOwner);
 
     /// @dev See {IGammaPoolFactory-getPool}
     mapping(bytes32 => address) public override getPool; // all GS Pools addresses can be predetermined through key
@@ -49,11 +39,11 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
     /// @dev See {IGammaPoolFactory-feeToSetter}
     address public override feeToSetter;
 
-    /// @dev See {IGammaPoolFactory-owner}
-    address public override owner;
-
-    /// @dev Pending owner to implement transfer of ownership in two steps
-    address public pendingOwner;
+    /// @dev Initialize `owner` of factory contract
+    constructor(address _owner, address _feeTo, address _feeToSetter) TwoStepOwnable(_owner) {
+        feeTo = _feeTo;
+        feeToSetter = _feeToSetter;
+    }
 
     /// @dev Revert if sender is not the required address in parameter (e.g. sender not owner or feeToSetter)
     /// @param _address - address transaction sender must be in order to not revert
@@ -77,28 +67,6 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory {
         if(getPool[key] != address(0)) {
             revert PoolExists();
         }
-    }
-
-    /// @dev Starts ownership transfer to new account. Replaces the pending transfer if there is one. Can only be called by the current owner.
-    /// @param newOwner - new address that will have the owner privileges over the factory contract
-    function transferOwnership(address newOwner) external virtual {
-        isForbidden(owner); // only owner of the factory contract can call this function
-        isZeroAddress(newOwner); // not allow to transfer ownership to zero address (renounce ownership forever)
-        pendingOwner = newOwner;
-        emit OwnershipTransferStarted(owner, newOwner);
-    }
-
-    /// @notice The new owner accepts the ownership transfer.
-    /// @dev Transfers ownership of the contract to a new account (`newOwner`) and deletes any pending owner.
-    function acceptOwnership() external virtual {
-        address newOwner = msg.sender;
-        if(pendingOwner != newOwner) {
-            revert NotNewOwner();
-        }
-        address oldOwner = owner;
-        owner = newOwner;
-        delete pendingOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
     }
 
     /**
