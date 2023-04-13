@@ -18,13 +18,19 @@ contract AppStorage {
     /// @dev Mutex implementation to prevent a contract from calling itself, directly or indirectly.
     modifier lock() {
         _lock();
+
         _;
-        s.unlocked = 1;
+
+        _unlock();
     }
 
     function _lock() internal {
         if(s.unlocked != 1)
             revert Locked();
         s.unlocked = 0;
+    }
+
+    function _unlock() internal {
+        s.unlocked = 1;
     }
 }
