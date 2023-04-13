@@ -80,7 +80,7 @@ abstract contract ExternalBaseStrategy is BaseLongStrategy {
         IExternalCallee(to).externalCall(msg.sender, amounts, lpTokens, data);
 
         // Update loan collateral tokens after external call
-        tokensHeld = updateCollateral(_loan);
+        (tokensHeld,) = updateCollateral(_loan);
 
         // CFMM LP Tokens in pool must at least not decrease
         checkLPTokens(_cfmm, prevLpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply);

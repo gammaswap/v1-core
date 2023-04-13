@@ -11,14 +11,14 @@ contract TestLongStrategy2 is ILongStrategy {
         emit LoanUpdated(tokenId, tokensHeld, 11, 12, 13, 14, TX_TYPE.INCREASE_COLLATERAL);
     }
 
-    function _decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address) external override returns(uint128[] memory tokensHeld) {
+    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address) external override returns(uint128[] memory tokensHeld) {
         tokensHeld = new uint128[](2);
         tokensHeld[0] = uint128(amounts[0]);
         tokensHeld[1] = uint128(amounts[1]);
         emit LoanUpdated(tokenId, tokensHeld, 21, 22, 23, 24, TX_TYPE.DECREASE_COLLATERAL);
     }
 
-    function _borrowLiquidity(uint256 tokenId, uint256 lpTokens) external override returns(uint256 liquidityBorrowed, uint256[] memory amounts) {
+    function _borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external override returns(uint256 liquidityBorrowed, uint256[] memory amounts) {
         amounts = new uint256[](2);
         amounts[0] = lpTokens * 2;
         amounts[1] = lpTokens;
@@ -29,7 +29,7 @@ contract TestLongStrategy2 is ILongStrategy {
         emit LoanUpdated(tokenId, heldTokens, 31, 32, 33, 34, TX_TYPE.BORROW_LIQUIDITY);
     }
 
-    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees) external override returns(uint256 liquidityPaid, uint256[] memory amounts){
+    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external override returns(uint256 liquidityPaid, uint256[] memory amounts){
         liquidityPaid = tokenId;
         amounts = new uint256[](2);
         amounts[0] = 9;
@@ -40,7 +40,7 @@ contract TestLongStrategy2 is ILongStrategy {
         emit LoanUpdated(tokenId, heldTokens, uint128(liquidity), uint128(40 + fees.length), fees[0], uint96(fees[1]), TX_TYPE.REPAY_LIQUIDITY);
     }
 
-    function _rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external override returns(uint128[] memory tokensHeld){
+    function _rebalanceCollateral(uint256 tokenId, int256[] memory deltas, uint256[] calldata ratio) external override returns(uint128[] memory tokensHeld){
         tokensHeld = new uint128[](2);
         tokensHeld[0] = uint128(uint256(deltas[0]));
         tokensHeld[1] = uint128(uint256(deltas[1]));

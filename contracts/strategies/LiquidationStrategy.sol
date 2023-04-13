@@ -355,7 +355,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
         // Repay liquidity debt, increase lastCFMMTotalSupply and lastCFMMTotalInvariant
         repayTokens(_loan, addFees(calcTokensToRepay(loanLiquidity), fees));
-        tokensHeld = updateCollateral(_loan); // Update remaining collateral
+        (tokensHeld,) = updateCollateral(_loan); // Update remaining collateral
     }
 
     /// @notice Not used during liquidations

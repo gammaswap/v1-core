@@ -1353,7 +1353,7 @@ describe("LongStrategy", function () {
 
   describe("Borrow Liquidity", function () {
     it("Error Borrow Liquidity, > bal", async function () {
-      await expect(strategy._borrowLiquidity(0, 1)).to.be.revertedWith(
+      await expect(strategy._borrowLiquidity(0, 1, [])).to.be.revertedWith(
         "ExcessiveBorrowing"
       );
     });
@@ -1377,25 +1377,25 @@ describe("LongStrategy", function () {
       const addr3TokenId = res1.events[0].args.tokenId;
       const lpTokens = ONE;
 
-      await expect(strategy._borrowLiquidity(0, 0)).to.be.revertedWith(
+      await expect(strategy._borrowLiquidity(0, 0, [])).to.be.revertedWith(
         "LoanDoesNotExist"
       );
-      await expect(strategy._borrowLiquidity(0, 1)).to.be.revertedWith(
+      await expect(strategy._borrowLiquidity(0, 1, [])).to.be.revertedWith(
         "LoanDoesNotExist"
       );
       await expect(
-        strategy._borrowLiquidity(addr3TokenId, 1)
+        strategy._borrowLiquidity(addr3TokenId, 1, [])
       ).to.be.revertedWith("Forbidden");
       await expect(
-        strategy._borrowLiquidity(addr3TokenId, lpTokens)
+        strategy._borrowLiquidity(addr3TokenId, lpTokens, [])
       ).to.be.revertedWith("Forbidden");
 
       await expect(
-        strategy._borrowLiquidity(addr3TokenId.add(1), lpTokens)
+        strategy._borrowLiquidity(addr3TokenId.add(1), lpTokens, [])
       ).to.be.revertedWith("LoanDoesNotExist");
 
       await expect(
-        strategy._borrowLiquidity(addr3TokenId.sub(1), lpTokens)
+        strategy._borrowLiquidity(addr3TokenId.sub(1), lpTokens, [])
       ).to.be.revertedWith("LoanDoesNotExist");
     });
 
@@ -1434,7 +1434,7 @@ describe("LongStrategy", function () {
       await (await cfmm.burn(lpTokens, strategy.address)).wait();
 
       await expect(
-        strategy._borrowLiquidity(tokenId, lpTokens)
+        strategy._borrowLiquidity(tokenId, lpTokens, [])
       ).to.be.revertedWith("Margin");
     });
 
@@ -1473,10 +1473,10 @@ describe("LongStrategy", function () {
       await (await cfmm.burn(lpTokens, strategy.address)).wait();
 
       await expect(
-        strategy._borrowLiquidity(tokenId, lpTokens)
+        strategy._borrowLiquidity(tokenId, lpTokens, [])
       ).to.be.revertedWith("MinBorrow");
 
-      await strategy._borrowLiquidity(tokenId, lpTokens + 1);
+      await strategy._borrowLiquidity(tokenId, lpTokens + 1, []);
     });
 
     it("Borrow Liquidity success", async function () {
@@ -1511,7 +1511,7 @@ describe("LongStrategy", function () {
 
       await (await cfmm.burn(lpTokens, strategy.address)).wait();
       const res = await (
-        await strategy._borrowLiquidity(tokenId, lpTokens)
+        await strategy._borrowLiquidity(tokenId, lpTokens, [])
       ).wait();
 
       checkEventData(
@@ -1588,17 +1588,37 @@ describe("LongStrategy", function () {
 
       await (await cfmm.burn(lpTokens, strategy.address)).wait();
 
-      await strategy._borrowLiquidity(tokenId, lpTokens);
-
-      await expect(strategy._repayLiquidity(tokenId, 2, [])).to.be.revertedWith(
-        "MinBorrow"
-      );
+      await strategy._borrowLiquidity(tokenId, lpTokens, []);
 
       await expect(
-        strategy._repayLiquidity(tokenId, 999, [])
+        strategy._repayLiquidity(
+          tokenId,
+          2,
+          [],
+          0,
+          ethers.constants.AddressZero
+        )
       ).to.be.revertedWith("MinBorrow");
 
-      await (await strategy._repayLiquidity(tokenId, 1000, [])).wait();
+      await expect(
+        strategy._repayLiquidity(
+          tokenId,
+          999,
+          [],
+          0,
+          ethers.constants.AddressZero
+        )
+      ).to.be.revertedWith("MinBorrow");
+
+      await (
+        await strategy._repayLiquidity(
+          tokenId,
+          1000,
+          [],
+          0,
+          ethers.constants.AddressZero
+        )
+      ).wait();
     });
 
     it("Error Full Payment, MinBorrow", async function () {
@@ -1657,7 +1677,13 @@ describe("LongStrategy", function () {
       expect(res1b.lpTokens).to.equal(loanLPTokens);
 
       await expect(
-        strategy._repayLiquidity(tokenId, loanLiquidity.mul(2), [])
+        strategy._repayLiquidity(
+          tokenId,
+          loanLiquidity.mul(2),
+          [],
+          0,
+          ethers.constants.AddressZero
+        )
       ).to.be.revertedWith("0x11");
 
       await (await tokenA.transfer(strategy.address, amtA)).wait();
@@ -1665,7 +1691,13 @@ describe("LongStrategy", function () {
 
       await (await strategy._increaseCollateral(tokenId)).wait();
       await (
-        await strategy._repayLiquidity(tokenId, loanLiquidity.mul(2), [])
+        await strategy._repayLiquidity(
+          tokenId,
+          loanLiquidity.mul(2),
+          [],
+          0,
+          ethers.constants.AddressZero
+        )
       ).wait();
 
       const res2b = await strategy.getLoan(tokenId);
@@ -1736,7 +1768,13 @@ describe("LongStrategy", function () {
       expect(res1b.lpTokens).to.equal(loanLPTokens);
 
       const res = await (
-        await strategy._repayLiquidity(tokenId, loanLiquidity.div(2), [])
+        await strategy._repayLiquidity(
+          tokenId,
+          loanLiquidity.div(2),
+          [],
+          0,
+          ethers.constants.AddressZero
+        )
       ).wait();
 
       checkEventData(
@@ -1841,7 +1879,13 @@ describe("LongStrategy", function () {
       await (await strategy.setMinBorrow(0)).wait();
 
       const res = await (
-        await strategy._repayLiquidity(tokenId, loanLiquidity.mul(2), [])
+        await strategy._repayLiquidity(
+          tokenId,
+          loanLiquidity.mul(2),
+          [],
+          0,
+          ethers.constants.AddressZero
+        )
       ).wait();
 
       checkEventData(res.events[res.events.length - 2], tokenId, 0, 0, 0, 0, 0);
@@ -1989,7 +2033,13 @@ describe("LongStrategy", function () {
       await (await strategy.setMinBorrow(0)).wait();
 
       const res = await (
-        await strategy._repayLiquidity(tokenId, loanLiquidity.mul(2), [1000, 0])
+        await strategy._repayLiquidity(
+          tokenId,
+          loanLiquidity.mul(2),
+          [1000, 0],
+          0,
+          ethers.constants.AddressZero
+        )
       ).wait();
 
       const feeAmtA = amtA.mul(1000).div(10000);
@@ -2110,7 +2160,13 @@ describe("LongStrategy", function () {
       await (await strategy.setMinBorrow(0)).wait();
 
       const res = await (
-        await strategy._repayLiquidity(tokenId, loanLiquidity.mul(2), [0, 1000])
+        await strategy._repayLiquidity(
+          tokenId,
+          loanLiquidity.mul(2),
+          [0, 1000],
+          0,
+          ethers.constants.AddressZero
+        )
       ).wait();
 
       const feeAmtB = amtB.mul(1000).div(10000);
@@ -2226,7 +2282,9 @@ describe("LongStrategy", function () {
         await strategy._repayLiquidity(
           tokenId,
           loanLiquidity.mul(2),
-          [1000, 2000]
+          [1000, 2000],
+          0,
+          ethers.constants.AddressZero
         )
       ).wait();
 
@@ -2345,7 +2403,7 @@ describe("LongStrategy", function () {
       expect(res1b.lpTokens).to.equal(loanLPTokens);
 
       await expect(
-        strategy._rebalanceCollateral(tokenId, [10, 10])
+        strategy._rebalanceCollateral(tokenId, [10, 10], [])
       ).to.be.revertedWith("Margin");
     });
 
@@ -2409,7 +2467,7 @@ describe("LongStrategy", function () {
       const rebalAmt2 = ethers.constants.Zero.sub(ONE.mul(19));
 
       const res = await (
-        await strategy._rebalanceCollateral(tokenId, [rebalAmt1, rebalAmt2])
+        await strategy._rebalanceCollateral(tokenId, [rebalAmt1, rebalAmt2], [])
       ).wait();
 
       const expAmtA = amtA.add(rebalAmt1);

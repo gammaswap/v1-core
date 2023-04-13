@@ -84,7 +84,7 @@ abstract contract TestExternalBaseLongStrategy is ExternalBaseStrategy {
         _loan.liquidity = liquidity;
         _loan.initLiquidity = liquidity;
 
-        uint128[] memory tokensHeld = updateCollateral(_loan);
+        (uint128[] memory tokensHeld,) = updateCollateral(_loan);
         uint256 heldLiquidity = calcInvariant(s.cfmm, tokensHeld);
 
         checkMargin(heldLiquidity, liquidity);
@@ -113,5 +113,9 @@ abstract contract TestExternalBaseLongStrategy is ExternalBaseStrategy {
 
     function calcInvariant(address, uint128[] memory amounts) internal virtual override view returns(uint256) {
         return Math.sqrt(uint256(amounts[0]) * amounts[1]);
+    }
+
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint256 liquidity, uint256 collateralId) public virtual override view returns(int256[] memory deltas) {
+
     }
 }

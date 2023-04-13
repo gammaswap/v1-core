@@ -32,7 +32,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @param deltas - collateral amounts that will be swapped (> 0 buy, < 0 sell, 0 ignore)
     /// @return outAmts - collateral amounts that will be sent out of GammaPool (sold)
     /// @return inAmts - collateral amounts that will be received in GammaPool (bought)
-    function beforeSwapTokens(LibStorage.Loan storage _loan, int256[] calldata deltas) internal virtual returns(uint256[] memory outAmts, uint256[] memory inAmts);
+    function beforeSwapTokens(LibStorage.Loan storage _loan, int256[] memory deltas) internal virtual returns(uint256[] memory outAmts, uint256[] memory inAmts);
 
     /// @dev Calculate tokens liquidity invariant amount converts to in CFMM
     /// @param _loan - liquidity loan whose collateral will be traded
@@ -57,6 +57,13 @@ abstract contract BaseLongStrategy is BaseStrategy {
 
     /// @return ltvThreshold - max ltv ratio acceptable before a loan is eligible for liquidation
     function ltvThreshold() internal virtual view returns(uint16);
+
+    /// @dev Calculate quantities to trade to be able to close the `liquidity` amount
+    /// @param tokensHeld - tokens held as collateral for liquidity to pay
+    /// @param liquidity - amount of liquidity to pay
+    /// @param collateralId - index of tokensHeld array to rebalance to (e.g. the collateral of the chosen index will be completely used up in repayment)
+    /// @return deltas - amounts of collateral to trade to be able to repay `liquidity`
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint256 liquidity, uint256 collateralId) public virtual view returns(int256[] memory deltas);
 
     /// @dev Get `loan` from `tokenId` if it exists
     /// @param tokenId - liquidity loan whose collateral will be traded
@@ -99,7 +106,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @param _loan - loan whose collateral we are sending to recipient
     /// @param to - recipient of token `amounts`
     /// @param amounts - quantities of loan's collateral tokens being sent to recipient
-    function sendTokens(LibStorage.Loan storage _loan, address to, uint256[] memory amounts) internal virtual {
+    function sendTokens(LibStorage.Loan storage _loan, address to, uint128[] memory amounts) internal virtual {
         address[] memory tokens = s.tokens;
         for (uint256 i; i < tokens.length;) {
             if(amounts[i] > 0) {
@@ -365,32 +372,34 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @dev Update collateral amounts in loan (increased/decreased)
     /// @param _loan - address of ERC20 token being transferred
     /// @return tokensHeld - current CFMM LP token balance in GammaPool
-    function updateCollateral(LibStorage.Loan storage _loan) internal returns(uint128[] memory tokensHeld) {
+    function updateCollateral(LibStorage.Loan storage _loan) internal returns(uint128[] memory tokensHeld, uint256[] memory tokenChange) {
         address[] memory tokens = s.tokens; // GammaPool collateral tokens (saves gas)
         uint128[] memory tokenBalance = s.TOKEN_BALANCE; // Tracked collateral token balances in GammaPool (saves gas)
+        tokenChange = new uint256[](tokens.length);
         tokensHeld = _loan.tokensHeld; // Loan's collateral token amounts (saves gas)
         for (uint256 i; i < tokens.length;) {
             // Get i token's balance
-            uint256 currentBalance = GammaSwapLibrary.balanceOf(IERC20(tokens[i]), address(this));
-            if(currentBalance > tokenBalance[i]) { // If balance increased
-                uint128 balanceChange = uint128(currentBalance - tokenBalance[i]);
-                tokensHeld[i] = tokensHeld[i] + balanceChange;
-                tokenBalance[i] = tokenBalance[i] + balanceChange;
-            } else if(currentBalance < tokenBalance[i]) { // If balance decreased
-                uint128 balanceChange = uint128(tokenBalance[i] - currentBalance);
-                if(balanceChange > tokenBalance[i]) { // Withdrew more than expected tracked balance, must synchronize
+            uint128 balanceChange;
+            uint128 oldTokenBalance = tokenBalance[i];
+            uint128 newTokenBalance = uint128(GammaSwapLibrary.balanceOf(IERC20(tokens[i]), address(this)));
+            tokenBalance[i] = newTokenBalance;
+            if(newTokenBalance > oldTokenBalance) { // If balance increased
+                balanceChange = newTokenBalance - oldTokenBalance;
+                tokensHeld[i] += balanceChange;
+            } else if(newTokenBalance < oldTokenBalance) { // If balance decreased
+                balanceChange = oldTokenBalance - newTokenBalance;
+                if(balanceChange > oldTokenBalance) { // Withdrew more than expected tracked balance, must synchronize
                     revert NotEnoughBalance();
                 }
                 if(balanceChange > tokensHeld[i]) { // Withdrew more than available collateral
                     revert NotEnoughCollateral();
                 }
                 unchecked {
-                    tokensHeld[i] = tokensHeld[i] - balanceChange; // Update loan collateral
-                    tokenBalance[i] = tokenBalance[i] - balanceChange; // Update GammaPool collateral balance
+                    tokensHeld[i] -= balanceChange; // Update loan collateral
                 }
             }
             unchecked {
-                ++i;
+                tokenChange[i++] = balanceChange;
             }
         }
         _loan.tokensHeld = tokensHeld; // Update storage
