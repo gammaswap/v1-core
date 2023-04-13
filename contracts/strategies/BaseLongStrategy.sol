@@ -96,7 +96,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @dev Check if loan is over collateralized
     /// @param collateral - liquidity invariant collateral
     /// @param liquidity - liquidity invariant debt
-    /// @param limit - loan to value ratio limit in tenths of a percent (e.g. 800 => 80%)
+    /// @param limit - loan to value ratio limit in tenths of a percent (e.g. 800 => 8%)
     /// @return bool - true if loan is over collateralized, false otherwise
     function hasMargin(uint256 collateral, uint256 liquidity, uint256 limit) internal virtual pure returns(bool) {
         return collateral * limit / 1e4 >= liquidity;
