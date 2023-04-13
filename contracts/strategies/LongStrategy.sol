@@ -15,6 +15,62 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
 
     // Long Gamma
 
+    /// @dev Calculate quantities to trade to rebalance collateral to desired `ratio`
+    /// @param tokensHeld - loan collateral to rebalance
+    /// @param ratio - desired ratio of collateral
+    /// @return deltas - amount of collateral to trade to achieve desired `ratio`
+    function calcDeltasForRatio(uint128[] memory tokensHeld, uint256[] calldata ratio) public virtual view returns(int256[] memory deltas);
+
+    /// @dev Calculate pro rata collateral portion of total loan's collateral that corresponds to `liquidity` portion of `totalLiquidityDebt`
+    /// @param tokensHeld - loan total collateral available to pay loan
+    /// @param liquidity - liquidity that we'll pay using loan collateral
+    /// @param totalLiquidityDebt - total liquidity debt of loan
+    /// @param fees - fees to transfer during payment in case token has transfer fees
+    /// @return collateral - collateral portion of total collateral that will be used to pay `liquidity`
+    function proRataCollateral(uint128[] memory tokensHeld, uint256 liquidity, uint256 totalLiquidityDebt, uint256[] calldata fees) internal virtual view returns(uint128[] memory) {
+        uint256 tokenCount = tokensHeld.length;
+        for(uint256 i = 0; i < tokenCount;) {
+            tokensHeld[i] = uint128(Math.min(((tokensHeld[i] * liquidity * 10000 - tokensHeld[i] * liquidity * fees[i]) / (totalLiquidityDebt * 10000)), uint256(tokensHeld[i])));
+            unchecked {
+                i++;
+            }
+        }
+        return tokensHeld;
+    }
+
+    /// @dev Withdraw loan collateral
+    /// @param _loan - loan whose collateral will bee withdrawn
+    /// @param loanLiquidity - total liquidity debt of loan
+    /// @param amounts - amounts of collateral to withdraw
+    /// @param to - address that will receive collateral withdrawn
+    /// @return tokensHeld - remaining loan collateral after withdrawal
+    function withdrawCollateral(LibStorage.Loan storage _loan, uint256 loanLiquidity, uint128[] memory amounts, address to) internal virtual returns(uint128[] memory tokensHeld) {
+        // Withdraw collateral tokens from loan
+        sendTokens(_loan, to, amounts);
+
+        // Update loan collateral token amounts after withdrawal
+        (tokensHeld,) = updateCollateral(_loan);
+
+        // Revert if collateral invariant is below threshold after withdrawal
+        uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
+        checkMargin(collateral, loanLiquidity);
+    }
+
+    /// @dev Withdraw loan collateral
+    /// @param _loan - loan whose collateral will be rebalanced
+    /// @param deltas - collateral amounts being bought or sold (>0 buy, <0 sell), index matches tokensHeld[] index. Only n-1 tokens can be traded
+    /// @return tokensHeld - loan collateral after rebalancing
+    function rebalanceCollateral(LibStorage.Loan storage _loan, int256[] memory deltas) internal virtual returns(uint128[] memory tokensHeld) {
+        // Calculate amounts to swap from deltas and available loan collateral
+        (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas);
+
+        // Swap tokens
+        swapTokens(_loan, outAmts, inAmts);
+
+        // Update loan collateral tokens after swap
+        (tokensHeld,) = updateCollateral(_loan);
+    }
+
     /// @dev See {BaseLongStrategy-checkMargin}.
     function checkMargin(uint256 collateral, uint256 liquidity) internal virtual override view {
         if(!hasMargin(collateral, liquidity, ltvThreshold())) { // if collateral is below ltvThreshold revert transaction
@@ -29,7 +85,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         // Update loan collateral token amounts with tokens deposited in GammaPool
-        tokensHeld = updateCollateral(_loan);
+        (tokensHeld,) = updateCollateral(_loan);
 
         // Do not check for loan undercollateralization because adding collateral always improves loan health
 
@@ -39,22 +95,15 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     }
 
     /// @dev See {ILongStrategy-_decreaseCollateral}.
-    function _decreaseCollateral(uint256 tokenId, uint256[] calldata amounts, address to) external virtual override lock returns(uint128[] memory tokensHeld) {
+    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address to) external virtual override lock returns(uint128[] memory tokensHeld) {
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-
-        // Withdraw collateral tokens from loan
-        sendTokens(_loan, to, amounts);
-
-        // Update loan collateral token amounts after withdrawal
-        tokensHeld = updateCollateral(_loan);
 
         // Update liquidity debt with accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
 
-        // Revert if collateral invariant is below threshold after withdrawal
-        uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
-        checkMargin(collateral, loanLiquidity);
+        // Withdraw collateral tokens from loan
+        tokensHeld = withdrawCollateral(_loan, loanLiquidity, amounts, to);
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.DECREASE_COLLATERAL);
 
@@ -65,7 +114,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     }
 
     /// @dev See {ILongStrategy-_borrowLiquidity}.
-    function _borrowLiquidity(uint256 tokenId, uint256 lpTokens) external virtual override lock returns(uint256 liquidityBorrowed, uint256[] memory amounts) {
+    function _borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external virtual override lock returns(uint256 liquidityBorrowed, uint256[] memory amounts) {
         // Revert if borrowing all CFMM LP tokens in pool
         if(lpTokens >= s.LP_TOKEN_BALANCE) {
             revert ExcessiveBorrowing();
@@ -81,10 +130,14 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         amounts = withdrawFromCFMM(s.cfmm, address(this), lpTokens);
 
         // Add withdrawn tokens as part of loan collateral
-        uint128[] memory tokensHeld = updateCollateral(_loan);
+        (uint128[] memory tokensHeld,) = updateCollateral(_loan);
 
         // Add liquidity debt to total pool debt and start tracking loan
         (liquidityBorrowed, loanLiquidity) = openLoan(_loan, lpTokens);
+
+        if(ratio.length > 0) {
+            tokensHeld = rebalanceCollateral(_loan, calcDeltasForRatio(tokensHeld, ratio));
+        }
 
         // Check that loan is not undercollateralized
         uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
@@ -97,7 +150,9 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     }
 
     /// @dev See {ILongStrategy-_repayLiquidity}.
-    function _repayLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees) external virtual override lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
+    function _repayLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, uint256 collateralId, address to) external virtual override lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
+        require(payLiquidity > 0);
+
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
@@ -108,6 +163,13 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         uint256 liquidityToCalculate;
         (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minBorrow()) : (payLiquidity, payLiquidity);
 
+        uint128[] memory collateral;
+        if(collateralId > 0) {
+            // rebalance to close, get deltas, call rebalance
+            collateral = proRataCollateral(_loan.tokensHeld, liquidityToCalculate, loanLiquidity, fees);
+            rebalanceCollateral(_loan,calcDeltasToClose(collateral, liquidityToCalculate, collateralId - 1));
+        }
+
         // Calculate reserve tokens that liquidity repayment represents
         amounts = addFees(calcTokensToRepay(liquidityToCalculate), fees);
 
@@ -115,10 +177,22 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         repayTokens(_loan, amounts);
 
         // Update loan collateral after repayment
-        uint128[] memory tokensHeld = updateCollateral(_loan);
+        uint128[] memory tokensHeld;
+        (tokensHeld, amounts) = updateCollateral(_loan);
 
         // Subtract loan liquidity repaid from total liquidity debt in pool and loan
         (liquidityPaid, loanLiquidity) = payLoan(_loan, liquidityPaid, loanLiquidity);
+
+        if(collateralId > 0 && to != address(0)) {
+            // withdraw, check margin
+            for(uint256 i = 0; i < amounts.length;) {
+                collateral[i] -= uint128(amounts[i]);
+                unchecked {
+                    i++;
+                }
+            }
+            tokensHeld = withdrawCollateral(_loan, loanLiquidity, collateral, to);
+        }
 
         // Do not check for loan undercollateralization because repaying debt always improves pool debt health
 
@@ -129,21 +203,18 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     }
 
     /// @dev See {ILongStrategy-_rebalanceCollateral}.
-    function _rebalanceCollateral(uint256 tokenId, int256[] calldata deltas) external virtual override lock returns(uint128[] memory tokensHeld) {
+    function _rebalanceCollateral(uint256 tokenId, int256[] memory deltas, uint256[] calldata ratio) external virtual override lock returns(uint128[] memory tokensHeld) {
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         // Update liquidity debt to include accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
 
-        // Calculate amounts to swap from deltas and available loan collateral
-        (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas);
+        if(ratio.length > 0) {
+            deltas = calcDeltasForRatio(_loan.tokensHeld, ratio);
+        }
 
-        // Swap tokens
-        swapTokens(_loan, outAmts, inAmts);
-
-        // Update loan collateral tokens after swap
-        tokensHeld = updateCollateral(_loan);
+        tokensHeld = rebalanceCollateral(_loan, deltas);
 
         // Check that loan is not undercollateralized after swap
         uint256 collateral = calcInvariant(s.cfmm, tokensHeld);

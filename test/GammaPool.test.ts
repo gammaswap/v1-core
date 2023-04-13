@@ -640,7 +640,9 @@ describe("GammaPool", function () {
       expect(res1.events[0].args.rateIndex).to.eq(24);
       expect(res1.events[0].args.txType).to.eq(5);
 
-      const res2 = await (await gammaPool.borrowLiquidity(tokenId, 300)).wait();
+      const res2 = await (
+        await gammaPool.borrowLiquidity(tokenId, 300, [])
+      ).wait();
       expect(res2.events[0].args.tokenId).to.eq(tokenId);
       expect(res2.events[0].args.tokensHeld.length).to.eq(2);
       expect(res2.events[0].args.tokensHeld[0]).to.eq(600);
@@ -652,7 +654,13 @@ describe("GammaPool", function () {
       expect(res2.events[0].args.txType).to.eq(7);
 
       const res3 = await (
-        await gammaPool.repayLiquidity(tokenId, 400, [43, 44])
+        await gammaPool.repayLiquidity(
+          tokenId,
+          400,
+          [43, 44],
+          0,
+          ethers.constants.AddressZero
+        )
       ).wait();
       expect(res3.events[0].args.tokenId).to.eq(tokenId);
       expect(res3.events[0].args.tokensHeld.length).to.eq(2);
@@ -665,7 +673,7 @@ describe("GammaPool", function () {
       expect(res3.events[0].args.txType).to.eq(8);
 
       const res4 = await (
-        await gammaPool.rebalanceCollateral(tokenId, [500, 600])
+        await gammaPool.rebalanceCollateral(tokenId, [500, 600], [])
       ).wait();
       expect(res4.events[0].args.tokenId).to.eq(tokenId);
       expect(res4.events[0].args.tokensHeld.length).to.eq(2);

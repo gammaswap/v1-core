@@ -135,7 +135,7 @@ contract TestLongStrategy is LongStrategy {
         return Math.sqrt(num * 1e18);
     }
 
-    function beforeSwapTokens(LibStorage.Loan storage, int256[] calldata deltas) internal virtual override view returns(uint256[] memory outAmts, uint256[] memory inAmts){
+    function beforeSwapTokens(LibStorage.Loan storage, int256[] memory deltas) internal virtual override view returns(uint256[] memory outAmts, uint256[] memory inAmts){
         outAmts = new uint256[](2);
         inAmts = new uint256[](2);
         outAmts[0] =  deltas[0] > 0 ? 0 : uint256(-deltas[0]);
@@ -288,5 +288,14 @@ contract TestLongStrategy is LongStrategy {
     function testAddFees(uint256[] memory amounts, uint256[] calldata fees) public virtual {
         uint256[] memory amountsWithFees = addFees(amounts, fees);
         emit AmountsWithFees(amountsWithFees);
+    }
+
+    function calcDeltasForRatio(uint128[] memory tokensHeld, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+    }
+
+
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint256 liquidityPaid, uint256 collateralId) public virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
     }
 }
