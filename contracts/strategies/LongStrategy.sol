@@ -21,6 +21,31 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     /// @return deltas - amount of collateral to trade to achieve desired `ratio`
     function calcDeltasForRatio(uint128[] memory tokensHeld, uint256[] calldata ratio) public virtual view returns(int256[] memory deltas);
 
+    /// @dev Calculate remaining collateral after rebalancing. Used for calculating remaining partial collateral
+    /// @param collateral - collateral amounts before collateral changes
+    /// @param deltas - collateral changes
+    /// @return remaining - remaining collateral after collateral changes
+    function remainingCollateral(uint128[] memory collateral, int256[] memory deltas) internal virtual view returns(uint128[] memory) {
+        uint256 tokenCount = deltas.length;
+        for(uint256 i = 0; i < tokenCount;) {
+            int256 delta = deltas[i];
+            if(delta > 0) {
+                collateral[i] += uint128(uint256(delta));
+            } else if(delta < 0) {
+                uint128 _delta = uint128(uint256(-delta));
+                if(_delta > collateral[i]) { // in case rounding issue
+                    collateral[i] = 0;
+                } else {
+                    collateral[i] -= _delta;
+                }
+            }
+            unchecked {
+                i++;
+            }
+        }
+        return collateral;
+    }
+
     /// @dev Calculate pro rata collateral portion of total loan's collateral that corresponds to `liquidity` portion of `totalLiquidityDebt`
     /// @param tokensHeld - loan total collateral available to pay loan
     /// @param liquidity - liquidity that we'll pay using loan collateral
@@ -168,6 +193,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
             // rebalance to close, get deltas, call rebalance
             collateral = proRataCollateral(_loan.tokensHeld, liquidityToCalculate, loanLiquidity, fees);
             rebalanceCollateral(_loan,calcDeltasToClose(collateral, liquidityToCalculate, collateralId - 1));
+            updateIndex();
         }
 
         // Calculate reserve tokens that liquidity repayment represents
@@ -177,21 +203,14 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         repayTokens(_loan, amounts);
 
         // Update loan collateral after repayment
-        uint128[] memory tokensHeld;
-        (tokensHeld, amounts) = updateCollateral(_loan);
+        (uint128[] memory tokensHeld, int256[] memory deltas) = updateCollateral(_loan);
 
         // Subtract loan liquidity repaid from total liquidity debt in pool and loan
         (liquidityPaid, loanLiquidity) = payLoan(_loan, liquidityPaid, loanLiquidity);
 
         if(collateralId > 0 && to != address(0)) {
             // withdraw, check margin
-            for(uint256 i = 0; i < amounts.length;) {
-                collateral[i] -= uint128(amounts[i]);
-                unchecked {
-                    i++;
-                }
-            }
-            tokensHeld = withdrawCollateral(_loan, loanLiquidity, collateral, to);
+            tokensHeld = withdrawCollateral(_loan, loanLiquidity, remainingCollateral(collateral, deltas), to);
         }
 
         // Do not check for loan undercollateralization because repaying debt always improves pool debt health
