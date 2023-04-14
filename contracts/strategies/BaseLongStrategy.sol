@@ -372,10 +372,10 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @dev Update collateral amounts in loan (increased/decreased)
     /// @param _loan - address of ERC20 token being transferred
     /// @return tokensHeld - current CFMM LP token balance in GammaPool
-    function updateCollateral(LibStorage.Loan storage _loan) internal returns(uint128[] memory tokensHeld, uint256[] memory tokenChange) {
+    function updateCollateral(LibStorage.Loan storage _loan) internal returns(uint128[] memory tokensHeld, int256[] memory tokenChange) {
         address[] memory tokens = s.tokens; // GammaPool collateral tokens (saves gas)
         uint128[] memory tokenBalance = s.TOKEN_BALANCE; // Tracked collateral token balances in GammaPool (saves gas)
-        tokenChange = new uint256[](tokens.length);
+        tokenChange = new int256[](tokens.length);
         tokensHeld = _loan.tokensHeld; // Loan's collateral token amounts (saves gas)
         for (uint256 i; i < tokens.length;) {
             // Get i token's balance
@@ -386,6 +386,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
             if(newTokenBalance > oldTokenBalance) { // If balance increased
                 balanceChange = newTokenBalance - oldTokenBalance;
                 tokensHeld[i] += balanceChange;
+                tokenChange[i] = int256(uint256(balanceChange));
             } else if(newTokenBalance < oldTokenBalance) { // If balance decreased
                 balanceChange = oldTokenBalance - newTokenBalance;
                 if(balanceChange > oldTokenBalance) { // Withdrew more than expected tracked balance, must synchronize
@@ -397,9 +398,10 @@ abstract contract BaseLongStrategy is BaseStrategy {
                 unchecked {
                     tokensHeld[i] -= balanceChange; // Update loan collateral
                 }
+                tokenChange[i] = -int256(uint256(balanceChange));
             }
             unchecked {
-                tokenChange[i++] = balanceChange;
+                i++;
             }
         }
         _loan.tokensHeld = tokensHeld; // Update storage
