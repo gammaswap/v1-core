@@ -16,10 +16,6 @@ contract TestGammaPool is GammaPool {
         GammaPool(_protocolId, _factory, _longStrategy, _shortStrategy, _liquidationStrategy) {
     }
 
-    function getRebalanceDeltas(uint256) external pure returns(int256[] memory deltas) {
-        return (new int256[](2));
-    }
-
     function _getLastCFMMPrice() internal virtual override view returns(uint256) {
         return 1;
     }
