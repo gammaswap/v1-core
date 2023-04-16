@@ -20,7 +20,12 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     /// @param reserves - reserve token quantities in CFMM
     /// @param ratio - desired ratio of collateral
     /// @return deltas - amount of collateral to trade to achieve desired `ratio`
-    function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual view returns(int256[] memory deltas);
+    function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual view returns(int256[] memory deltas);
+
+    /// @dev See {ILongStrategy-calcDeltasForRatio}.
+    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external virtual override view returns(int256[] memory deltas) {
+        return _calcDeltasForRatio(tokensHeld, reserves, ratio);
+    }
 
     /// @dev Calculate remaining collateral after rebalancing. Used for calculating remaining partial collateral
     /// @param collateral - collateral amounts before collateral changes

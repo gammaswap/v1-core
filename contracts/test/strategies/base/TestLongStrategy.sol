@@ -294,7 +294,7 @@ contract TestLongStrategy is LongStrategy {
         return _calcDeltasForRatio(tokensHeld, reserves, ratio);
     }
 
-    function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
+    function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
     }
 
