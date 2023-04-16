@@ -685,6 +685,32 @@ describe("GammaPool", function () {
       expect(res4.events[0].args.rateIndex).to.eq(54);
       expect(res4.events[0].args.txType).to.eq(6);
     });
+
+    it("Calc Deltas for Ratio", async function () {
+      const deltas = await gammaPool.calcDeltasForRatio(
+        [10, 10],
+        [20, 20],
+        [30, 30]
+      );
+      expect(deltas.length).to.eq(3);
+      expect(deltas[0]).to.eq(100);
+      expect(deltas[1]).to.eq(-400);
+      expect(deltas[2]).to.eq(900);
+    });
+
+    it("Calc Deltas to Close", async function () {
+      const deltas = await gammaPool.calcDeltasToClose(
+        [11, 11],
+        [12, 12],
+        500,
+        600
+      );
+      expect(deltas.length).to.eq(4);
+      expect(deltas[0]).to.eq(121);
+      expect(deltas[1]).to.eq(-144);
+      expect(deltas[2]).to.eq(50000);
+      expect(deltas[3]).to.eq(120000);
+    });
   });
 
   // You can nest describe calls to create subsections.
