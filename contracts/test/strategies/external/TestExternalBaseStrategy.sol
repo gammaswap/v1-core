@@ -54,7 +54,7 @@ contract TestExternalBaseStrategy is TestExternalBaseLongStrategy {
     function beforeSwapTokens(LibStorage.Loan storage _loan, int256[] memory deltas) internal virtual override returns(uint256[] memory outAmts, uint256[] memory inAmts) {
     }
 
-    function calcTokensToRepay(uint256 liquidity) internal virtual override view returns(uint256[] memory amounts) {
+    function calcTokensToRepay(uint128[] memory reserves, uint256 liquidity) internal virtual override view returns(uint256[] memory amounts) {
     }
 
     function depositToCFMM(address cfmm, address to, uint256[] memory amounts) internal virtual override returns(uint256 lpTokens) {

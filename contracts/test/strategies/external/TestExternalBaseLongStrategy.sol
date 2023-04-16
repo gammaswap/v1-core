@@ -61,7 +61,7 @@ abstract contract TestExternalBaseLongStrategy is ExternalBaseStrategy {
 
     // deposit liquidity
     function updatePoolBalances() external virtual {
-        (s.CFMM_RESERVES[0], s.CFMM_RESERVES[1],) = TestCFMM(s.cfmm).getReserves();
+        s.CFMM_RESERVES = getReserves(s.cfmm);
         s.lastCFMMTotalSupply = TestCFMM(s.cfmm).totalSupply();
         s.lastCFMMInvariant = uint128(calcInvariant(s.cfmm, s.CFMM_RESERVES));
         s.LP_TOKEN_BALANCE = GammaSwapLibrary.balanceOf(IERC20(s.cfmm), address(this));
@@ -115,7 +115,12 @@ abstract contract TestExternalBaseLongStrategy is ExternalBaseStrategy {
         return Math.sqrt(uint256(amounts[0]) * amounts[1]);
     }
 
-    function calcDeltasToClose(uint128[] memory tokensHeld, uint256 liquidity, uint256 collateralId) public virtual override view returns(int256[] memory deltas) {
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) public virtual override view returns(int256[] memory deltas) {
 
+    }
+
+    function getReserves(address cfmm) internal virtual override view returns(uint128[] memory reserves) {
+        reserves = new uint128[](2);
+        (reserves[0], reserves[1],) = TestCFMM(cfmm).getReserves();
     }
 }

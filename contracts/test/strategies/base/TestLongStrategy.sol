@@ -125,7 +125,7 @@ contract TestLongStrategy is LongStrategy {
         TestCFMM(cfmm).mint(liquidity / 2, address(this));
     }
 
-    function calcTokensToRepay(uint256 liquidity) internal virtual override view returns(uint256[] memory amounts) {
+    function calcTokensToRepay(uint128[] memory reserves, uint256 liquidity) internal virtual override view returns(uint256[] memory amounts) {
         amounts = new uint256[](2);
         amounts[0] = liquidity;
         amounts[1] = liquidity * 2;
@@ -290,12 +290,17 @@ contract TestLongStrategy is LongStrategy {
         emit AmountsWithFees(amountsWithFees);
     }
 
-    function calcDeltasForRatio(uint128[] memory tokensHeld, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
+    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
     }
 
 
-    function calcDeltasToClose(uint128[] memory tokensHeld, uint256 liquidityPaid, uint256 collateralId) public virtual override view returns(int256[] memory deltas) {
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidityPaid, uint256 collateralId) public virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
+    }
+
+    function getReserves(address cfmm) internal virtual override view returns(uint128[] memory reserves) {
+        reserves = new uint128[](2);
+        (reserves[0], reserves[1],) = TestCFMM(cfmm).getReserves();
     }
 }

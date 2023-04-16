@@ -34,11 +34,6 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     /// @return payee - address reserve tokens will be sent to. Address holding CFMM's reserves might be different from CFMM's address
     function calcDepositAmounts(uint256[] calldata amountsDesired, uint256[] calldata amountsMin) internal virtual view returns (uint256[] memory reserves, address payee);
 
-    /// @dev The user requests desired amounts to deposit and sets minimum amounts since actual amounts are unknown at time of request
-    /// @param cfmm - address of GammaPool's CFMM
-    /// @return reserves - amounts that will be deposited in CFMM
-    function getReserves(address cfmm) internal virtual view returns(uint128[] memory);
-
     /// @dev See {IShortStrategy-totalAssets}.
     function totalAssets(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply,
         uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum) public virtual override view returns(uint256 lastLPBalance) {

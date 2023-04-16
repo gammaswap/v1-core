@@ -25,7 +25,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @dev Calculate token amounts the liquidity invariant amount converts to in the CFMM
     /// @param liquidity - liquidity invariant units from CFMM
     /// @return amounts - reserve token amounts in CFMM that liquidity invariant converted to
-    function calcTokensToRepay(uint256 liquidity) internal virtual view returns(uint256[] memory amounts);
+    function calcTokensToRepay(uint128[] memory reserves, uint256 liquidity) internal virtual view returns(uint256[] memory amounts);
 
     /// @dev Perform necessary transaction before repaying swapping tokens
     /// @param _loan - liquidity loan whose collateral will be swapped
@@ -60,10 +60,26 @@ abstract contract BaseLongStrategy is BaseStrategy {
 
     /// @dev Calculate quantities to trade to be able to close the `liquidity` amount
     /// @param tokensHeld - tokens held as collateral for liquidity to pay
+    /// @param reserves - reserve token quantities in CFMM
     /// @param liquidity - amount of liquidity to pay
     /// @param collateralId - index of tokensHeld array to rebalance to (e.g. the collateral of the chosen index will be completely used up in repayment)
     /// @return deltas - amounts of collateral to trade to be able to repay `liquidity`
-    function calcDeltasToClose(uint128[] memory tokensHeld, uint256 liquidity, uint256 collateralId) public virtual view returns(int256[] memory deltas);
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) public virtual view returns(int256[] memory deltas);
+
+    /// @dev Withdraw loan collateral
+    /// @param _loan - loan whose collateral will be rebalanced
+    /// @param deltas - collateral amounts being bought or sold (>0 buy, <0 sell), index matches tokensHeld[] index. Only n-1 tokens can be traded
+    /// @return tokensHeld - loan collateral after rebalancing
+    function rebalanceCollateral(LibStorage.Loan storage _loan, int256[] memory deltas) internal virtual returns(uint128[] memory tokensHeld) {
+        // Calculate amounts to swap from deltas and available loan collateral
+        (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas);
+
+        // Swap tokens
+        swapTokens(_loan, outAmts, inAmts);
+
+        // Update loan collateral tokens after swap
+        (tokensHeld,) = updateCollateral(_loan);
+    }
 
     /// @dev Get `loan` from `tokenId` if it exists
     /// @param tokenId - liquidity loan whose collateral will be traded

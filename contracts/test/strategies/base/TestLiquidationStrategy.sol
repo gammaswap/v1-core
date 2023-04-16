@@ -52,8 +52,7 @@ contract TestLiquidationStrategy is LiquidationStrategy {
         return 2252571;
     }
 
-    function calcDeltasToClose(uint128[] memory tokensHeld, uint256 liquidity, uint256 collateralId) public virtual override view returns(int256[] memory deltas) {
-
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) public virtual override view returns(int256[] memory deltas) {
     }
 
     function getStaticParams() external virtual view returns(address factory, address cfmm, address[] memory tokens, uint128[] memory tokenBalances) {
@@ -223,7 +222,7 @@ contract TestLiquidationStrategy is LiquidationStrategy {
     function beforeRepay(LibStorage.Loan storage, uint256[] memory) internal virtual override {
     }
 
-    function calcTokensToRepay(uint256) internal virtual override view returns(uint256[] memory) {
+    function calcTokensToRepay(uint128[] memory,uint256) internal virtual override view returns(uint256[] memory) {
         return new uint256[](2);
     }
 
@@ -238,4 +237,8 @@ contract TestLiquidationStrategy is LiquidationStrategy {
         return 0;
     }
 
+    function getReserves(address cfmm) internal virtual override view returns(uint128[] memory reserves) {
+        reserves = new uint128[](2);
+        (reserves[0], reserves[1],) = TestCFMM(cfmm).getReserves();
+    }
 }
