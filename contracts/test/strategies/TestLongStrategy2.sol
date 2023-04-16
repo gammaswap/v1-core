@@ -4,6 +4,22 @@ pragma solidity 0.8.17;
 import "../../interfaces/strategies/base/ILongStrategy.sol";
 
 contract TestLongStrategy2 is ILongStrategy {
+
+    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](3);
+        deltas[0] = int128(tokensHeld[0] * tokensHeld[1]);
+        deltas[1] = -int128(reserves[0] * reserves[1]);
+        deltas[2] = int256(ratio[0] * ratio[1]);
+    }
+
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) public virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](4);
+        deltas[0] = int128(tokensHeld[0] * tokensHeld[1]);
+        deltas[1] = -int128(reserves[0] * reserves[1]);
+        deltas[2] = int256(liquidity * 100);
+        deltas[3] = int256(collateralId * 200);
+    }
+
     function _increaseCollateral(uint256 tokenId) external override returns(uint128[] memory tokensHeld) {
         tokensHeld = new uint128[](2);
         tokensHeld[0] = 1;

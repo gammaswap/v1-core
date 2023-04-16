@@ -39,7 +39,7 @@ contract TestExternalLongStrategy is TestExternalBaseLongStrategy, ExternalLongS
     function beforeSwapTokens(LibStorage.Loan storage _loan, int256[] memory deltas) internal virtual override returns(uint256[] memory outAmts, uint256[] memory inAmts) {
     }
 
-    function calcTokensToRepay(uint256 liquidity) internal virtual override view returns(uint256[] memory amounts) {
+    function calcTokensToRepay(uint128[] memory reserves, uint256 liquidity) internal virtual override view returns(uint256[] memory amounts) {
     }
 
     function depositToCFMM(address cfmm, address to, uint256[] memory amounts) internal virtual override returns(uint256 lpTokens) {
@@ -57,4 +57,15 @@ contract TestExternalLongStrategy is TestExternalBaseLongStrategy, ExternalLongS
     function getCurrentCFMMPrice() internal virtual override view returns(uint256) {
         return 0;
     }
+
+    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 0;
+    }
+
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) external virtual override view returns(int256[] memory deltas) {
+        return _calcDeltasToClose(tokensHeld, reserves, liquidity, collateralId);
+    }
+
 }

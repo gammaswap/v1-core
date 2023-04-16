@@ -141,6 +141,11 @@ contract TestBaseStrategy is BaseStrategy {
         return _lastFeeIndex;
     }
 
+    function getReserves(address cfmm) internal virtual override view returns(uint128[] memory reserves) {
+        reserves = new uint128[](2);
+        (reserves[0], reserves[1],) = TestCFMM(cfmm).getReserves();
+    }
+
     function getCFMMData() public virtual view returns(uint256 lastCFMMFeeIndex, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) {
         lastCFMMFeeIndex = _lastCFMMFeeIndex;
         lastCFMMInvariant = s.lastCFMMInvariant;
@@ -176,7 +181,7 @@ contract TestBaseStrategy is BaseStrategy {
     }
 
     function updateReserves(address cfmm) internal virtual override {
-        (s.CFMM_RESERVES[0], s.CFMM_RESERVES[1],) = TestCFMM(cfmm).getReserves();
+        s.CFMM_RESERVES = getReserves(cfmm);
     }
 
     function setInvariant(uint256 _invariant) public virtual {

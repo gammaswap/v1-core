@@ -327,6 +327,18 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._batchLiquidations.selector, tokenIds)), (uint256, uint256, uint256[]));
     }
 
+    /***** Delta Calculations *****/
+
+    /// @dev See {IGammaPool-calcDeltasForRatio}
+    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external view returns(int256[] memory deltas) {
+        return ILongStrategy(longStrategy).calcDeltasForRatio(tokensHeld, reserves, ratio);
+    }
+
+    /// @dev See {IGammaPool-calcDeltasToClose}
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) external view returns(int256[] memory deltas) {
+        return ILongStrategy(longStrategy).calcDeltasToClose(tokensHeld, reserves, liquidity, collateralId);
+    }
+
     /***** SYNC POOL *****/
 
     /// @dev See {IGammaPool-sync}
