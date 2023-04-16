@@ -20,7 +20,27 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     /// @param reserves - reserve token quantities in CFMM
     /// @param ratio - desired ratio of collateral
     /// @return deltas - amount of collateral to trade to achieve desired `ratio`
-    function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual view returns(int256[] memory deltas);
+    function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual view returns(int256[] memory deltas);
+
+    /// @dev See {ILongStrategy-calcDeltasForRatio}.
+    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external virtual override view returns(int256[] memory deltas) {
+        return _calcDeltasForRatio(tokensHeld, reserves, ratio);
+    }
+
+    /// @dev Withdraw loan collateral
+    /// @param _loan - loan whose collateral will be rebalanced
+    /// @param deltas - collateral amounts being bought or sold (>0 buy, <0 sell), index matches tokensHeld[] index. Only n-1 tokens can be traded
+    /// @return tokensHeld - loan collateral after rebalancing
+    function rebalanceCollateral(LibStorage.Loan storage _loan, int256[] memory deltas) internal virtual returns(uint128[] memory tokensHeld) {
+        // Calculate amounts to swap from deltas and available loan collateral
+        (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas);
+
+        // Swap tokens
+        swapTokens(_loan, outAmts, inAmts);
+
+        // Update loan collateral tokens after swap
+        (tokensHeld,) = updateCollateral(_loan);
+    }
 
     /// @dev Calculate remaining collateral after rebalancing. Used for calculating remaining partial collateral
     /// @param collateral - collateral amounts before collateral changes

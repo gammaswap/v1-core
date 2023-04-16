@@ -66,21 +66,6 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @return deltas - amounts of collateral to trade to be able to repay `liquidity`
     function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual view returns(int256[] memory deltas);
 
-    /// @dev Withdraw loan collateral
-    /// @param _loan - loan whose collateral will be rebalanced
-    /// @param deltas - collateral amounts being bought or sold (>0 buy, <0 sell), index matches tokensHeld[] index. Only n-1 tokens can be traded
-    /// @return tokensHeld - loan collateral after rebalancing
-    function rebalanceCollateral(LibStorage.Loan storage _loan, int256[] memory deltas) internal virtual returns(uint128[] memory tokensHeld) {
-        // Calculate amounts to swap from deltas and available loan collateral
-        (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas);
-
-        // Swap tokens
-        swapTokens(_loan, outAmts, inAmts);
-
-        // Update loan collateral tokens after swap
-        (tokensHeld,) = updateCollateral(_loan);
-    }
-
     /// @dev Get `loan` from `tokenId` if it exists
     /// @param tokenId - liquidity loan whose collateral will be traded
     /// @return _loan - existing loan (id > 0)
