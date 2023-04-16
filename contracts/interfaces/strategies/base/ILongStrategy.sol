@@ -49,4 +49,19 @@ interface ILongStrategy is ILongStrategyEvents {
     /// @return loanLiquidityDebt - updated liquidity debt amount of loan
     /// @return poolLiquidityDebt - updated liquidity debt amount of pool
     function _updatePool(uint256 tokenId) external returns(uint256 loanLiquidityDebt, uint256 poolLiquidityDebt);
+
+    /// @dev Calculate quantities to trade to rebalance collateral to desired `ratio`
+    /// @param tokensHeld - loan collateral to rebalance
+    /// @param reserves - reserve token quantities in CFMM
+    /// @param ratio - desired ratio of collateral
+    /// @return deltas - amount of collateral to trade to achieve desired `ratio`
+    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external view returns(int256[] memory deltas);
+
+    /// @dev Calculate quantities to trade to be able to close the `liquidity` amount
+    /// @param tokensHeld - tokens held as collateral for liquidity to pay
+    /// @param reserves - reserve token quantities in CFMM
+    /// @param liquidity - amount of liquidity to pay
+    /// @param collateralId - index of tokensHeld array to rebalance to (e.g. the collateral of the chosen index will be completely used up in repayment)
+    /// @return deltas - amounts of collateral to trade to be able to repay `liquidity`
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) external view returns(int256[] memory deltas);
 }

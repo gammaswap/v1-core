@@ -20,7 +20,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     /// @param reserves - reserve token quantities in CFMM
     /// @param ratio - desired ratio of collateral
     /// @return deltas - amount of collateral to trade to achieve desired `ratio`
-    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual view returns(int256[] memory deltas);
+    function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual view returns(int256[] memory deltas);
 
     /// @dev Calculate remaining collateral after rebalancing. Used for calculating remaining partial collateral
     /// @param collateral - collateral amounts before collateral changes
@@ -148,7 +148,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
 
         if(ratio.length > 0) {
             //get current reserves without updating
-            tokensHeld = rebalanceCollateral(_loan, calcDeltasForRatio(tokensHeld, getReserves(s.cfmm), ratio));
+            tokensHeld = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, getReserves(s.cfmm), ratio));
         }
 
         // Check that loan is not undercollateralized
@@ -179,7 +179,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         if(collateralId > 0) {
             // rebalance to close, get deltas, call rebalance
             collateral = proRataCollateral(_loan.tokensHeld, liquidityToCalculate, loanLiquidity, fees);
-            rebalanceCollateral(_loan,calcDeltasToClose(collateral, s.CFMM_RESERVES, liquidityToCalculate, collateralId - 1));
+            rebalanceCollateral(_loan, _calcDeltasToClose(collateral, s.CFMM_RESERVES, liquidityToCalculate, collateralId - 1));
             updateIndex();
         }
 
@@ -217,7 +217,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         uint256 loanLiquidity = updateLoan(_loan);
 
         if(ratio.length > 0) {
-            deltas = calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio);
+            deltas = _calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio);
         }
 
         tokensHeld = rebalanceCollateral(_loan, deltas);

@@ -64,7 +64,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @param liquidity - amount of liquidity to pay
     /// @param collateralId - index of tokensHeld array to rebalance to (e.g. the collateral of the chosen index will be completely used up in repayment)
     /// @return deltas - amounts of collateral to trade to be able to repay `liquidity`
-    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) public virtual view returns(int256[] memory deltas);
+    function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual view returns(int256[] memory deltas);
 
     /// @dev Withdraw loan collateral
     /// @param _loan - loan whose collateral will be rebalanced

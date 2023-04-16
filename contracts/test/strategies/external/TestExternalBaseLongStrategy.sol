@@ -115,8 +115,10 @@ abstract contract TestExternalBaseLongStrategy is ExternalBaseStrategy {
         return Math.sqrt(uint256(amounts[0]) * amounts[1]);
     }
 
-    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) public virtual override view returns(int256[] memory deltas) {
-
+    function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 0;
     }
 
     function getReserves(address cfmm) internal virtual override view returns(uint128[] memory reserves) {
