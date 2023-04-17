@@ -31,7 +31,8 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     /// @param _loan - loan whose collateral will be rebalanced
     /// @param deltas - collateral amounts being bought or sold (>0 buy, <0 sell), index matches tokensHeld[] index. Only n-1 tokens can be traded
     /// @return tokensHeld - loan collateral after rebalancing
-    function rebalanceCollateral(LibStorage.Loan storage _loan, int256[] memory deltas, uint128[] memory reserves) internal virtual returns(uint128[] memory tokensHeld) {
+    /// @return tokenChange - change in token amounts
+    function rebalanceCollateral(LibStorage.Loan storage _loan, int256[] memory deltas, uint128[] memory reserves) internal virtual returns(uint128[] memory tokensHeld, int256[] memory tokenChange) {
         // Calculate amounts to swap from deltas and available loan collateral
         (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas, reserves);
 
@@ -39,7 +40,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         swapTokens(_loan, outAmts, inAmts);
 
         // Update loan collateral tokens after swap
-        (tokensHeld,) = updateCollateral(_loan);
+        (tokensHeld,tokenChange) = updateCollateral(_loan);
     }
 
     /// @dev Calculate remaining collateral after rebalancing. Used for calculating remaining partial collateral
@@ -75,8 +76,9 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     /// @return collateral - collateral portion of total collateral that will be used to pay `liquidity`
     function proRataCollateral(uint128[] memory tokensHeld, uint256 liquidity, uint256 totalLiquidityDebt, uint256[] calldata fees) internal virtual view returns(uint128[] memory) {
         uint256 tokenCount = tokensHeld.length;
+        bool skipFees = tokenCount != fees.length;
         for(uint256 i = 0; i < tokenCount;) {
-            tokensHeld[i] = uint128(Math.min(((tokensHeld[i] * liquidity * 10000 - tokensHeld[i] * liquidity * fees[i]) / (totalLiquidityDebt * 10000)), uint256(tokensHeld[i])));
+            tokensHeld[i] = uint128(Math.min(((tokensHeld[i] * liquidity * 10000 - (skipFees ? 0 : tokensHeld[i] * liquidity * fees[i])) / (totalLiquidityDebt * 10000)), uint256(tokensHeld[i])));
             unchecked {
                 i++;
             }
@@ -169,7 +171,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         if(ratio.length > 0) {
             //get current reserves without updating
             uint128[] memory _reserves = getReserves(s.cfmm);
-            tokensHeld = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);
+            (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);
         }
 
         // Check that loan is not undercollateralized
@@ -200,7 +202,8 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         if(collateralId > 0) {
             // rebalance to close, get deltas, call rebalance
             collateral = proRataCollateral(_loan.tokensHeld, liquidityToCalculate, loanLiquidity, fees);
-            rebalanceCollateral(_loan, _calcDeltasToClose(collateral, s.CFMM_RESERVES, liquidityToCalculate, collateralId - 1), s.CFMM_RESERVES);
+            (,int256[] memory deltas) = rebalanceCollateral(_loan, _calcDeltasToClose(collateral, s.CFMM_RESERVES, liquidityToCalculate, collateralId - 1), s.CFMM_RESERVES);
+            collateral = remainingCollateral(collateral,deltas);
             updateIndex();
         }
 
@@ -241,7 +244,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
             deltas = _calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio);
         }
 
-        tokensHeld = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
+        (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
 
         // Check that loan is not undercollateralized after swap
         uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
