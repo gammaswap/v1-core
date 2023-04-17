@@ -12,7 +12,7 @@ import "../../interfaces/periphery/ISendTokensCallback.sol";
 abstract contract ExternalLongStrategy is IExternalLongStrategy, ExternalBaseStrategy {
 
     /// @dev See {IExternalLongStrategy-_rebalanceExternally}.
-    function _rebalanceExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock returns(uint256 loanLiquidity, uint128[] memory tokensHeld) {
+    function _rebalanceExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock virtual returns(uint256 loanLiquidity, uint128[] memory tokensHeld) {
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
