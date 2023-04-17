@@ -229,7 +229,7 @@ contract TestLiquidationStrategy is LiquidationStrategy {
         return new uint256[](2);
     }
 
-    function beforeSwapTokens(LibStorage.Loan storage, int256[] memory) internal virtual override returns(uint256[] memory, uint256[] memory) {
+    function beforeSwapTokens(LibStorage.Loan storage, int256[] memory, uint128[] memory) internal virtual override returns(uint256[] memory, uint256[] memory) {
         return (new uint256[](2), new uint256[](2));
     }
 

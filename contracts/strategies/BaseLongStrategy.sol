@@ -30,9 +30,10 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @dev Perform necessary transaction before repaying swapping tokens
     /// @param _loan - liquidity loan whose collateral will be swapped
     /// @param deltas - collateral amounts that will be swapped (> 0 buy, < 0 sell, 0 ignore)
+    /// @param reserves - most up to date CFMM reserves
     /// @return outAmts - collateral amounts that will be sent out of GammaPool (sold)
     /// @return inAmts - collateral amounts that will be received in GammaPool (bought)
-    function beforeSwapTokens(LibStorage.Loan storage _loan, int256[] memory deltas) internal virtual returns(uint256[] memory outAmts, uint256[] memory inAmts);
+    function beforeSwapTokens(LibStorage.Loan storage _loan, int256[] memory deltas, uint128[] memory reserves) internal virtual returns(uint256[] memory outAmts, uint256[] memory inAmts);
 
     /// @dev Calculate tokens liquidity invariant amount converts to in CFMM
     /// @param _loan - liquidity loan whose collateral will be traded
