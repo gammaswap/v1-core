@@ -374,6 +374,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @dev Update collateral amounts in loan (increased/decreased)
     /// @param _loan - address of ERC20 token being transferred
     /// @return tokensHeld - current CFMM LP token balance in GammaPool
+    /// @return tokenChange - change in token amounts
     function updateCollateral(LibStorage.Loan storage _loan) internal returns(uint128[] memory tokensHeld, int256[] memory tokenChange) {
         address[] memory tokens = s.tokens; // GammaPool collateral tokens (saves gas)
         uint128[] memory tokenBalance = s.TOKEN_BALANCE; // Tracked collateral token balances in GammaPool (saves gas)
