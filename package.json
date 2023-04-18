@@ -5,7 +5,8 @@
   "homepage": "https://gammaswap.com",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "hardhat": "hardhat",
+    "test": "yarn hardhat test"
   },
   "engines": {
     "node": ">=16"
