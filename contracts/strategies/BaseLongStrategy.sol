@@ -110,9 +110,11 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @param amounts - quantities of loan's collateral tokens being sent to recipient
     function sendTokens(LibStorage.Loan storage _loan, address to, uint128[] memory amounts) internal virtual {
         address[] memory tokens = s.tokens;
+        uint128[] memory balance = s.TOKEN_BALANCE;
+        uint128[] memory tokensHeld = _loan.tokensHeld;
         for (uint256 i; i < tokens.length;) {
             if(amounts[i] > 0) {
-                sendToken(tokens[i], to, amounts[i], s.TOKEN_BALANCE[i], _loan.tokensHeld[i]);
+                sendToken(tokens[i], to, amounts[i], balance[i], tokensHeld[i]);
             }
             unchecked {
                 ++i;
@@ -349,7 +351,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
         for(uint256 i; i < amounts.length;) {
             amounts[i] += amounts[i] * fees[i] / 10000;
             unchecked {
-                i++;
+                ++i;
             }
         }
         return amounts;
@@ -404,7 +406,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
                 tokenChange[i] = -int256(uint256(balanceChange));
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         _loan.tokensHeld = tokensHeld; // Update storage

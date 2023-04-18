@@ -62,7 +62,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
                 }
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         return collateral;
@@ -80,7 +80,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         for(uint256 i = 0; i < tokenCount;) {
             tokensHeld[i] = uint128(Math.min(((tokensHeld[i] * liquidity * 10000 - (skipFees ? 0 : tokensHeld[i] * liquidity * fees[i])) / (totalLiquidityDebt * 10000)), uint256(tokensHeld[i])));
             unchecked {
-                i++;
+                ++i;
             }
         }
         return tokensHeld;
