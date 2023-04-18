@@ -202,7 +202,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         if(collateralId > 0) {
             // rebalance to close, get deltas, call rebalance
             collateral = proRataCollateral(_loan.tokensHeld, liquidityToCalculate, loanLiquidity, fees);
-            (,int256[] memory deltas) = rebalanceCollateral(_loan, _calcDeltasToClose(collateral, s.CFMM_RESERVES, liquidityToCalculate, collateralId - 1), s.CFMM_RESERVES);
+            (, int256[] memory deltas) = rebalanceCollateral(_loan, _calcDeltasToClose(collateral, s.CFMM_RESERVES, liquidityToCalculate, collateralId - 1), s.CFMM_RESERVES);
             collateral = remainingCollateral(collateral,deltas);
             updateIndex();
         }

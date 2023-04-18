@@ -31,7 +31,7 @@ contract TestExternalBaseStrategy is TestExternalBaseLongStrategy {
     }
 
     function checkLPTokens(address _cfmm, uint256 prevLpTokenBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) internal virtual override {
-        uint256 newLpTokenBalance = GammaSwapLibrary.balanceOf(IERC20(_cfmm), address(this));
+        uint256 newLpTokenBalance = GammaSwapLibrary.balanceOf(_cfmm, address(this));
         if(prevLpTokenBalance > newLpTokenBalance) {
             revert WrongLPTokenBalance();
         }

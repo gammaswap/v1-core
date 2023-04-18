@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/GammaSwapLibrary.sol";
 import "../interfaces/IGammaPool.sol";
 import "../interfaces/IGammaPoolFactory.sol";
@@ -80,7 +79,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
 
     /// @dev See {GammaPoolERC4626-_getLatestCFMMTotalSupply}
     function _getLatestCFMMTotalSupply() internal virtual override view returns(uint256 lastCFMMTotalSupply) {
-        return GammaSwapLibrary.totalSupply(IERC20(s.cfmm));
+        return GammaSwapLibrary.totalSupply(s.cfmm);
     }
 
     /// @dev See {IGammaPool-getLatestCFMMReserves}

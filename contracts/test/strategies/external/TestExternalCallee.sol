@@ -20,8 +20,8 @@ contract TestExternalCallee is IExternalCallee {
 
     function externalCall(address sender, uint128[] calldata amounts, uint256 lpTokens, bytes calldata data) external {
         SwapData memory decoded = abi.decode(data, (SwapData));
-        if(lpTokens > 0) GammaSwapLibrary.safeTransfer(IERC20(decoded.cfmm), decoded.strategy, lpTokens);
-        if(amounts.length > 0) GammaSwapLibrary.safeTransfer(IERC20(decoded.token0), decoded.strategy, amounts[0]);
-        if(amounts.length > 1) GammaSwapLibrary.safeTransfer(IERC20(decoded.token1), decoded.strategy, amounts[1]);
+        if(lpTokens > 0) GammaSwapLibrary.safeTransfer(decoded.cfmm, decoded.strategy, lpTokens);
+        if(amounts.length > 0) GammaSwapLibrary.safeTransfer(decoded.token0, decoded.strategy, amounts[0]);
+        if(amounts.length > 1) GammaSwapLibrary.safeTransfer(decoded.token1, decoded.strategy, amounts[1]);
     }
 }

@@ -109,7 +109,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         address cfmm = s.cfmm; // Saves gas
         updateReserves(cfmm); // Update CFMM_RESERVES with reserves in CFMM
         lastCFMMInvariant = calcInvariant(cfmm, s.CFMM_RESERVES); // Calculate current total invariant in CFMM
-        lastCFMMTotalSupply = GammaSwapLibrary.totalSupply(IERC20(cfmm)); // Get current total CFMM LP token supply
+        lastCFMMTotalSupply = GammaSwapLibrary.totalSupply(cfmm); // Get current total CFMM LP token supply
 
         // Get CFMM fee yield growth since last update by checking current invariant vs previous invariant discounting with change in total supply
         lastCFMMFeeIndex = calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, s.lastCFMMInvariant, s.lastCFMMTotalSupply);

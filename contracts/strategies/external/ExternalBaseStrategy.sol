@@ -37,7 +37,7 @@ abstract contract ExternalBaseStrategy is BaseLongStrategy {
         for(uint256 i; i < amounts.length;) {
             // Collateral sent is measured as max of LP token equivalent if requested proportionally at current CFMM pool price
             swappedCollateralAsLPTokens = Math.max(swappedCollateralAsLPTokens, amounts[i] * lastCFMMTotalSupply / s.CFMM_RESERVES[i]);
-            sendToken(IERC20(tokens[i]), to, amounts[i], s.TOKEN_BALANCE[i], type(uint128).max);
+            sendToken(tokens[i], to, amounts[i], s.TOKEN_BALANCE[i], type(uint128).max);
             unchecked {
                 ++i;
             }
@@ -50,7 +50,7 @@ abstract contract ExternalBaseStrategy is BaseLongStrategy {
     /// @param lpTokens - quantities of pool's collateral tokens being sent to recipient
     /// @return lpTokens - quantity of LP tokens sent
     function sendCFMMLPTokens(address _cfmm, address to, uint256 lpTokens) internal virtual returns(uint256){
-        sendToken(IERC20(_cfmm), to, lpTokens, s.LP_TOKEN_BALANCE, type(uint256).max);
+        sendToken(_cfmm, to, lpTokens, s.LP_TOKEN_BALANCE, type(uint256).max);
         return lpTokens;
     }
 
