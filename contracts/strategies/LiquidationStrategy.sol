@@ -145,7 +145,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
         {
             // Check deposited CFMM LP tokens
-            uint256 lpDeposit = GammaSwapLibrary.balanceOf(IERC20(s.cfmm), address(this)) - currLpBalance;
+            uint256 lpDeposit = GammaSwapLibrary.balanceOf(s.cfmm, address(this)) - currLpBalance;
 
             // Revert if no CFMM LP tokens deposited to pay this loan
             if(lpDeposit == 0) {
@@ -210,7 +210,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
             tokensHeld[i] = tokensHeld[i] - payAmt;
 
             // Refund collateral share of liquidated debt to liquidator
-            GammaSwapLibrary.safeTransfer(IERC20(tokens[i]), msg.sender, refund[i]);
+            GammaSwapLibrary.safeTransfer(tokens[i], msg.sender, refund[i]);
             unchecked {
                 ++i;
             }
@@ -247,7 +247,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
         // Convert excess liquidity deposited back to CFMM LP tokens
         uint256 lpRefund = convertInvariantToLP(excessInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
-        GammaSwapLibrary.safeTransfer(IERC20(s.cfmm), msg.sender, lpRefund); // Refund excess LP tokens
+        GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, lpRefund); // Refund excess LP tokens
 
         return(loanLiquidity, lpDeposit - lpRefund);
     }

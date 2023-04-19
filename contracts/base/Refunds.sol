@@ -24,7 +24,7 @@ abstract contract Refunds is IRefunds {
             unchecked {
                 excessBalance = newBalance - balance;
             }
-            GammaSwapLibrary.safeTransfer(IERC20(token), to, excessBalance);
+            GammaSwapLibrary.safeTransfer(token, to, excessBalance);
         }
     }
 
@@ -41,7 +41,7 @@ abstract contract Refunds is IRefunds {
         }
 
         // If not CFMM LP token or collateral token send entire amount
-        if (tokenBal > 0) GammaSwapLibrary.safeTransfer(IERC20(token), to, tokenBal);
+        if (tokenBal > 0) GammaSwapLibrary.safeTransfer(token, to, tokenBal);
     }
 
     /// @dev Check if ERC20 token is LP token of the CFMM the GammaPool is made for

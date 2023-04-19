@@ -69,7 +69,7 @@ contract TestLiquidationStrategy is LiquidationStrategy {
         address cfmm = s.cfmm;
         s.lastCFMMInvariant = uint128(TestCFMM2(cfmm).invariant());
         s.lastCFMMTotalSupply = TestCFMM2(cfmm).totalSupply();
-        s.LP_TOKEN_BALANCE = GammaSwapLibrary.balanceOf(IERC20(cfmm), address(this));
+        s.LP_TOKEN_BALANCE = GammaSwapLibrary.balanceOf(cfmm, address(this));
         s.LP_INVARIANT = uint128(convertLPToInvariant(s.LP_TOKEN_BALANCE, s.lastCFMMInvariant, s.lastCFMMTotalSupply));
     }
 
@@ -124,7 +124,7 @@ contract TestLiquidationStrategy is LiquidationStrategy {
     }
 
     function testPayBatchLoans(uint256 liquidity, uint256 lpTokenPrincipal) external virtual {
-        uint256 currBalance = GammaSwapLibrary.balanceOf(IERC20(s.cfmm), address(this));
+        uint256 currBalance = GammaSwapLibrary.balanceOf(s.cfmm, address(this));
         // uint256 lpDeposit = currBalance - s.LP_TOKEN_BALANCE;
         // payPoolDebt(liquidity, lpTokenPrincipal, s.lastCFMMInvariant, s.lastCFMMTotalSupply, currBalance, lpDeposit);
         payPoolDebt(liquidity, lpTokenPrincipal, s.lastCFMMInvariant, s.lastCFMMTotalSupply, currBalance);

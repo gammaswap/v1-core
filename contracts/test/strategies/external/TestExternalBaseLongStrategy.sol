@@ -64,7 +64,7 @@ abstract contract TestExternalBaseLongStrategy is ExternalBaseStrategy {
         s.CFMM_RESERVES = getReserves(s.cfmm);
         s.lastCFMMTotalSupply = TestCFMM(s.cfmm).totalSupply();
         s.lastCFMMInvariant = uint128(calcInvariant(s.cfmm, s.CFMM_RESERVES));
-        s.LP_TOKEN_BALANCE = GammaSwapLibrary.balanceOf(IERC20(s.cfmm), address(this));
+        s.LP_TOKEN_BALANCE = GammaSwapLibrary.balanceOf(s.cfmm, address(this));
         s.LP_INVARIANT = uint128(convertLPToInvariant(s.LP_TOKEN_BALANCE, s.lastCFMMInvariant, s.lastCFMMTotalSupply));
     }
 
