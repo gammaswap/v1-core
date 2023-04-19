@@ -186,16 +186,9 @@ abstract contract BaseLongStrategy is BaseStrategy {
         uint256 lpTokenBalance = GammaSwapLibrary.balanceOf(s.cfmm, address(this));
         s.LP_TOKEN_BALANCE = lpTokenBalance;
 
-        // Update lastCFMMInvariant and lastCFMMTotalSupply to account for borrowed amounts
-        // lastCFMMInvariant = lastCFMMInvariant - liquidityBorrowedExFee;
-        // lastCFMMTotalSupply = lastCFMMTotalSupply - lpTokens;
-
         // Update liquidity invariant from CFMM LP tokens deposited in GammaPool
         uint256 lpInvariant = convertLPToInvariant(lpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply);
         s.LP_INVARIANT = uint128(lpInvariant);
-
-        // s.lastCFMMInvariant = uint128(lastCFMMInvariant);
-        // s.lastCFMMTotalSupply = lastCFMMTotalSupply;
 
         // Add CFMM LP tokens borrowed (principal) plus origination fee to pool's total CFMM LP tokens borrowed including accrued interest
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST + lpTokensPlusOrigFee;
@@ -223,8 +216,6 @@ abstract contract BaseLongStrategy is BaseStrategy {
         // Total CFMM LP tokens in existence, updated at start of transaction that opens loan. Understated after loan repayment
         uint256 lastCFMMTotalSupply = s.lastCFMMTotalSupply;
 
-        //(uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 paidLiquidity, uint256 newLPBalance, uint256 lpTokenChange) = getLpTokenBalance();
-        // (uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 paidLiquidity, uint256 newLPBalance) = getLpTokenBalance();
         (uint256 paidLiquidity, uint256 newLPBalance) = getLpTokenBalance(lastCFMMInvariant, lastCFMMTotalSupply);
         // Take the lowest, if actually paid less liquidity than expected. Only way is there was a transfer fee.
         liquidityPaid = paidLiquidity < liquidity ? paidLiquidity : liquidity;
