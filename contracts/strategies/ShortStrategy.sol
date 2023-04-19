@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
 import "../interfaces/periphery/ISendTokensCallback.sol";
 import "./BaseStrategy.sol";
@@ -83,7 +82,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     /// @return shares - amount of GS LP tokens minted
     function depositAssetsNoPull(address to, bool isDepositReserves) internal virtual returns(uint256 shares) {
         // Unaccounted for CFMM LP tokens in GammaPool, presumably deposited by user requesting GS LP tokens
-        uint256 assets = GammaSwapLibrary.balanceOf(IERC20(s.cfmm), address(this)) - s.LP_TOKEN_BALANCE;
+        uint256 assets = GammaSwapLibrary.balanceOf(s.cfmm, address(this)) - s.LP_TOKEN_BALANCE;
 
         // Update interest rate and state variables before conversion
         updateIndex();
@@ -120,7 +119,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         deposits = new uint256[](tokens.length);
         for(uint256 i; i < tokens.length;) {
             // Get current reserve token balances in destination address
-            deposits[i] = GammaSwapLibrary.balanceOf(IERC20(tokens[i]), to);
+            deposits[i] = GammaSwapLibrary.balanceOf(tokens[i], to);
             unchecked {
                 ++i;
             }
@@ -130,7 +129,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         uint256 newBalance;
         for(uint256 i; i < tokens.length;) {
             if(amounts[i] > 0) {
-                newBalance = GammaSwapLibrary.balanceOf(IERC20(tokens[i]), to);
+                newBalance = GammaSwapLibrary.balanceOf(tokens[i], to);
                 // Check destination address received reserve tokens by comparing with previous balances
                 if(deposits[i] >= newBalance) {
                     revert WrongTokenBalance(tokens[i]);
@@ -206,7 +205,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         _mint(to, shares); // mint GS LP tokens to receiver (`to`)
 
         // Update CFMM LP token amount tracked by GammaPool and invariant in CFMM belonging to GammaPool
-        uint256 lpTokenBalance = GammaSwapLibrary.balanceOf(IERC20(s.cfmm), address(this));
+        uint256 lpTokenBalance = GammaSwapLibrary.balanceOf(s.cfmm, address(this));
         uint128 lpInvariant = uint128(convertLPToInvariant(lpTokenBalance, s.lastCFMMInvariant, s.lastCFMMTotalSupply));
         s.LP_TOKEN_BALANCE = lpTokenBalance;
         s.LP_INVARIANT = lpInvariant;
@@ -240,15 +239,15 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         uint128 lpInvariant;
         if(askForReserves) { // If withdrawing reserve tokens
             reserves = withdrawFromCFMM(cfmm, to, assets); // Changes lastCFMMTotalSupply and lastCFMMInvariant (less assets, less invariant)
-            lpTokenBalance = GammaSwapLibrary.balanceOf(IERC20(cfmm), address(this));
+            lpTokenBalance = GammaSwapLibrary.balanceOf(cfmm, address(this));
             uint256 lastCFMMInvariant = calcInvariant(cfmm, getReserves(cfmm));
-            uint256 lastCFMMTotalSupply = GammaSwapLibrary.totalSupply(IERC20(cfmm));
+            uint256 lastCFMMTotalSupply = GammaSwapLibrary.totalSupply(cfmm);
             lpInvariant = uint128(convertLPToInvariant(lpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply));
             s.lastCFMMInvariant = uint128(lastCFMMInvariant); // Less invariant
             s.lastCFMMTotalSupply = lastCFMMTotalSupply; // Less CFMM LP tokens in existence
         } else { // If withdrawing CFMM LP tokens
-            GammaSwapLibrary.safeTransfer(IERC20(cfmm), to, assets); // doesn't change lastCFMMTotalSupply or lastCFMMInvariant
-            lpTokenBalance = GammaSwapLibrary.balanceOf(IERC20(cfmm), address(this));
+            GammaSwapLibrary.safeTransfer(cfmm, to, assets); // doesn't change lastCFMMTotalSupply or lastCFMMInvariant
+            lpTokenBalance = GammaSwapLibrary.balanceOf(cfmm, address(this));
             lpInvariant = uint128(convertLPToInvariant(lpTokenBalance, s.lastCFMMInvariant, s.lastCFMMTotalSupply));
         }
         s.LP_INVARIANT = lpInvariant;

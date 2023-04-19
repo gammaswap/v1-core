@@ -110,9 +110,11 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @param amounts - quantities of loan's collateral tokens being sent to recipient
     function sendTokens(LibStorage.Loan storage _loan, address to, uint128[] memory amounts) internal virtual {
         address[] memory tokens = s.tokens;
+        uint128[] memory balance = s.TOKEN_BALANCE;
+        uint128[] memory tokensHeld = _loan.tokensHeld;
         for (uint256 i; i < tokens.length;) {
             if(amounts[i] > 0) {
-                sendToken(IERC20(tokens[i]), to, amounts[i], s.TOKEN_BALANCE[i], _loan.tokensHeld[i]);
+                sendToken(tokens[i], to, amounts[i], balance[i], tokensHeld[i]);
             }
             unchecked {
                 ++i;
@@ -181,19 +183,12 @@ abstract contract BaseLongStrategy is BaseStrategy {
         s.LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED + lpTokens; // Track total CFMM LP tokens borrowed from pool (principal)
 
         // Update CFMM LP tokens deposited in GammaPool, this could be higher than expected. Excess CFMM LP tokens accrue to GS LPs
-        uint256 lpTokenBalance = GammaSwapLibrary.balanceOf(IERC20(s.cfmm), address(this));
+        uint256 lpTokenBalance = GammaSwapLibrary.balanceOf(s.cfmm, address(this));
         s.LP_TOKEN_BALANCE = lpTokenBalance;
-
-        // Update lastCFMMInvariant and lastCFMMTotalSupply to account for borrowed amounts
-        // lastCFMMInvariant = lastCFMMInvariant - liquidityBorrowedExFee;
-        // lastCFMMTotalSupply = lastCFMMTotalSupply - lpTokens;
 
         // Update liquidity invariant from CFMM LP tokens deposited in GammaPool
         uint256 lpInvariant = convertLPToInvariant(lpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply);
         s.LP_INVARIANT = uint128(lpInvariant);
-
-        // s.lastCFMMInvariant = uint128(lastCFMMInvariant);
-        // s.lastCFMMTotalSupply = lastCFMMTotalSupply;
 
         // Add CFMM LP tokens borrowed (principal) plus origination fee to pool's total CFMM LP tokens borrowed including accrued interest
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST + lpTokensPlusOrigFee;
@@ -221,8 +216,6 @@ abstract contract BaseLongStrategy is BaseStrategy {
         // Total CFMM LP tokens in existence, updated at start of transaction that opens loan. Understated after loan repayment
         uint256 lastCFMMTotalSupply = s.lastCFMMTotalSupply;
 
-        //(uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 paidLiquidity, uint256 newLPBalance, uint256 lpTokenChange) = getLpTokenBalance();
-        // (uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 paidLiquidity, uint256 newLPBalance) = getLpTokenBalance();
         (uint256 paidLiquidity, uint256 newLPBalance) = getLpTokenBalance(lastCFMMInvariant, lastCFMMTotalSupply);
         // Take the lowest, if actually paid less liquidity than expected. Only way is there was a transfer fee.
         liquidityPaid = paidLiquidity < liquidity ? paidLiquidity : liquidity;
@@ -244,7 +237,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// return lpTokenChange - CFMM LP tokens deposited in GammaPool since last update, presumably to pay for this liquidity debt
     //function getLpTokenBalance() internal view virtual returns(uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 paidLiquidity, uint256 newLPBalance, uint256 lpTokenChange) {
         // So lp balance is supposed to be greater than before, no matter what since tokens were deposited into the CFMM
-        newLPBalance = GammaSwapLibrary.balanceOf(IERC20(s.cfmm), address(this));
+        newLPBalance = GammaSwapLibrary.balanceOf(s.cfmm, address(this));
         uint256 lpTokenBalance = s.LP_TOKEN_BALANCE;
         // The change will always be positive, might be greater than expected, which means you paid more. If it's less it will be a small difference because of a fee
         if(newLPBalance <= lpTokenBalance) {
@@ -349,7 +342,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
         for(uint256 i; i < amounts.length;) {
             amounts[i] += amounts[i] * fees[i] / 10000;
             unchecked {
-                i++;
+                ++i;
             }
         }
         return amounts;
@@ -361,7 +354,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @param amount - amount of `token` being transferred
     /// @param balance - amount of `token` in GammaPool
     /// @param collateral - amount of `token` collateral in loan
-    function sendToken(IERC20 token, address to, uint256 amount, uint256 balance, uint256 collateral) internal {
+    function sendToken(address token, address to, uint256 amount, uint256 balance, uint256 collateral) internal {
         if(amount > balance) { // Check enough in pool's accounted balance
             revert NotEnoughBalance();
         }
@@ -384,7 +377,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
             // Get i token's balance
             uint128 balanceChange;
             uint128 oldTokenBalance = tokenBalance[i];
-            uint128 newTokenBalance = uint128(GammaSwapLibrary.balanceOf(IERC20(tokens[i]), address(this)));
+            uint128 newTokenBalance = uint128(GammaSwapLibrary.balanceOf(tokens[i], address(this)));
             tokenBalance[i] = newTokenBalance;
             if(newTokenBalance > oldTokenBalance) { // If balance increased
                 balanceChange = newTokenBalance - oldTokenBalance;
@@ -404,7 +397,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
                 tokenChange[i] = -int256(uint256(balanceChange));
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         _loan.tokensHeld = tokensHeld; // Update storage

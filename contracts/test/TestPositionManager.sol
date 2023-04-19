@@ -46,10 +46,10 @@ contract TestPositionManager is IGammaPoolEvents, ISendTokensCallback {
     function send(address token, address sender, address to, uint256 amount) internal {
         if (sender == address(this)) {
             // send with tokens already in the contract
-            GammaSwapLibrary.safeTransfer(IERC20(token), to, amount);
+            GammaSwapLibrary.safeTransfer(token, to, amount);
         } else {
             // pull transfer
-            GammaSwapLibrary.safeTransferFrom(IERC20(token), sender, to, amount);
+            GammaSwapLibrary.safeTransferFrom(token, sender, to, amount);
         }
     }
 }
