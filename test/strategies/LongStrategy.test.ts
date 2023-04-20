@@ -2018,9 +2018,9 @@ describe("LongStrategy", function () {
         tokenId,
         10000,
         0,
-        loanLiquidity,
-        loanLPTokens,
-        ONE
+        0,
+        0,
+        0
       );
     });
 
