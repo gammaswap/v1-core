@@ -11,7 +11,7 @@ abstract contract AbstractRateModel {
     /// @param lpInvariant - invariant amount available to be borrowed from LP tokens deposited in GammaSwap
     /// @param borrowedInvariant - invariant amount borrowed from GammaSwap
     /// @return utilizationRate - borrowedInvariant / (lpInvariant + borrowedInvairant)
-    function calcUtilizationRate(uint256 lpInvariant, uint256 borrowedInvariant) internal virtual view returns(uint256) {
+    function calcUtilizationRate(uint256 lpInvariant, uint256 borrowedInvariant) internal virtual pure returns(uint256) {
         uint256 totalInvariant = lpInvariant + borrowedInvariant; // total invariant belonging to liquidity depositors in GammaSwap
         if(totalInvariant == 0) // avoid division by zero
             return 0;

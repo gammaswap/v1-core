@@ -352,8 +352,8 @@ describe("LongStrategy", function () {
       await (await strategy.setLoanLiquidity(tokenId, liquidity)).wait();
 
       await (await strategy.setBorrowRate(ONE.mul(2))).wait();
-      // time passes by
-      // mine 256 blocks
+      // // time passes by
+      // // mine 256 blocks
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
       await (await strategy.testUpdateLoan(tokenId)).wait();
@@ -1966,7 +1966,7 @@ describe("LongStrategy", function () {
       expect(res2b.lpTokens).to.equal(0);
     });
 
-    it("Full Payment with ratio", async function () {
+    it("Full Payment with rebalance", async function () {
       const ONE = BigNumber.from(10).pow(18);
 
       const res1 = await (await strategy.createLoan()).wait();
@@ -1999,6 +1999,8 @@ describe("LongStrategy", function () {
         )
       ).wait();
 
+      await strategy.setCfmmReserves([lastCFMMInvariant, lastCFMMInvariant]);
+
       await (await cfmm.mint(startLpTokens, strategy.address)).wait();
       await (await strategy.setMinBorrow(0)).wait();
 
@@ -2006,22 +2008,14 @@ describe("LongStrategy", function () {
       const res = await (
         await strategy._repayLiquidity(
           tokenId,
-          loanLiquidity.mul(2),
+          loanLiquidity,
           [],
-          1,
+          2,
           ethers.constants.AddressZero
         )
       ).wait();
 
-      checkEventData(
-        res.events[res.events.length - 2],
-        tokenId,
-        10000,
-        0,
-        0,
-        0,
-        0
-      );
+      checkEventData(res.events[res.events.length - 2], tokenId, 0, 0, 0, 0, 0);
     });
 
     it("Add Fees", async function () {

@@ -77,7 +77,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// Deleveraged CFMM Fee Index = 1 + [(cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1) - 1] * (cfmmInvariant0 / borrowedInvariant)
     ///
     /// Deleveraged CFMM Fee Index = [cfmmInvariant1 * cfmmTotalSupply0 + (borrowedInvariant - cfmmInvariant0) * cfmmTotalSupply1] / (borrowedInvariant * cfmmTotalSupply1)
-    function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply) internal virtual view returns(uint256) {
+    function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply) internal virtual pure returns(uint256) {
         if(lastCFMMInvariant > 0 && lastCFMMTotalSupply > 0 && prevCFMMInvariant > 0 && prevCFMMTotalSupply > 0) {
             uint256 prevInvariant = borrowedInvariant > prevCFMMInvariant ? borrowedInvariant : prevCFMMInvariant; // Deleverage CFMM Yield
             uint256 denominator = prevInvariant * lastCFMMTotalSupply;
@@ -124,7 +124,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param borrowedInvariant - liquidity invariant borrowed in the GammaPool
     /// @param blockDiff - change in blcoks since last update
     /// @return lastFeeIndex - (1 + fee yield) since last update
-    function updateFeeIndex(uint256 lastCFMMFeeIndex, uint256 borrowedInvariant, uint256 blockDiff) internal virtual returns(uint256 lastFeeIndex) {
+    function updateFeeIndex(uint256 lastCFMMFeeIndex, uint256 borrowedInvariant, uint256 blockDiff) internal virtual view returns(uint256 lastFeeIndex) {
         (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, borrowedInvariant);
         lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, blockDiff);
     }
