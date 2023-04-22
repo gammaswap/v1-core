@@ -192,7 +192,7 @@ contract TestLiquidationStrategy is LiquidationStrategy {
     }
 
     //BaseStrategy functions
-    function calcCFMMFeeIndex(uint256, uint256, uint256, uint256, uint256) internal override virtual pure returns(uint256) {
+    function calcCFMMFeeIndex(uint256, uint256, uint256, uint256, uint256) internal override virtual view returns(uint256) {
         return 0;
     }
 

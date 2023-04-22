@@ -352,8 +352,8 @@ describe("LongStrategy", function () {
       await (await strategy.setLoanLiquidity(tokenId, liquidity)).wait();
 
       await (await strategy.setBorrowRate(ONE.mul(2))).wait();
-      // // time passes by
-      // // mine 256 blocks
+      // time passes by
+      // mine 256 blocks
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
       await (await strategy.testUpdateLoan(tokenId)).wait();
