@@ -15,8 +15,8 @@ jobs:
           node-version: 16
           registry-url: https://npm.pkg.github.com/
           scope: '@gammaswap'
-      - run: npm install
-      - run: npx hardhat test
+      - run: yarn install
+      - run: yarn run test
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}

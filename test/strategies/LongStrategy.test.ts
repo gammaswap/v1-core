@@ -1551,6 +1551,52 @@ describe("LongStrategy", function () {
       //   lastCFMMTotalSupply.sub(lpTokens)
       // );
     });
+
+    it("Borrow Liquidity success with ratio", async function () {
+      const ONE = BigNumber.from(10).pow(18);
+      const startLiquidity = ONE.mul(800);
+      const startLpTokens = ONE.mul(400);
+      const lastCFMMInvariant = startLiquidity.mul(2);
+      const lastCFMMTotalSupply = startLpTokens.mul(2);
+      await (
+        await strategy.setLPTokenBalance(
+          startLiquidity,
+          startLpTokens,
+          lastCFMMInvariant,
+          lastCFMMTotalSupply
+        )
+      ).wait();
+
+      await (await cfmm.mint(startLpTokens, strategy.address)).wait();
+
+      const res1 = await (await strategy.createLoan()).wait();
+      const tokenId = res1.events[0].args.tokenId;
+
+      const lpTokens = ONE;
+
+      const amtA = ONE.mul(2);
+      const amtB = ONE.mul(4);
+
+      await tokenA.transfer(strategy.address, amtA);
+      await tokenB.transfer(strategy.address, amtB);
+
+      const expectedLiquidity = lpTokens.mul(2);
+
+      await (await cfmm.burn(lpTokens, strategy.address)).wait();
+      const res = await (
+        await strategy._borrowLiquidity(tokenId, lpTokens, [1, 1])
+      ).wait();
+
+      checkEventData(
+        res.events[res.events.length - 2],
+        tokenId,
+        amtA,
+        amtB.add(100),
+        expectedLiquidity,
+        lpTokens,
+        1
+      );
+    });
   });
 
   describe("Repay Liquidity", function () {
@@ -1918,6 +1964,58 @@ describe("LongStrategy", function () {
       expect(res2b.heldLiquidity).to.equal(0);
       expect(res2b.liquidity).to.equal(0);
       expect(res2b.lpTokens).to.equal(0);
+    });
+
+    it("Full Payment with rebalance", async function () {
+      const ONE = BigNumber.from(10).pow(18);
+
+      const res1 = await (await strategy.createLoan()).wait();
+      const tokenId = res1.events[0].args.tokenId;
+
+      const amtA = ONE.mul(20);
+      const amtB = ONE.mul(40);
+
+      await (await tokenA.transfer(strategy.address, amtA)).wait();
+      await (await tokenB.transfer(strategy.address, amtB)).wait();
+
+      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy.setBorrowRate(ONE)).wait();
+
+      const startLiquidity = ONE.mul(800);
+      const startLpTokens = ONE.mul(400);
+      const loanLiquidity = ONE.mul(20);
+      const loanLPTokens = ONE.mul(10);
+      const lastCFMMInvariant = startLiquidity.mul(2);
+      const lastCFMMTotalSupply = startLpTokens.mul(2);
+      await (
+        await strategy.setLPTokenLoanBalance(
+          tokenId,
+          startLiquidity,
+          startLpTokens,
+          loanLiquidity,
+          loanLPTokens,
+          lastCFMMInvariant,
+          lastCFMMTotalSupply
+        )
+      ).wait();
+
+      await strategy.setCfmmReserves([lastCFMMInvariant, lastCFMMInvariant]);
+
+      await (await cfmm.mint(startLpTokens, strategy.address)).wait();
+      await (await strategy.setMinBorrow(0)).wait();
+
+      // const beneficiary = "0x000000000000000000000000000000000000dEaD";
+      const res = await (
+        await strategy._repayLiquidity(
+          tokenId,
+          loanLiquidity,
+          [],
+          2,
+          ethers.constants.AddressZero
+        )
+      ).wait();
+
+      checkEventData(res.events[res.events.length - 2], tokenId, 0, 0, 0, 0, 0);
     });
 
     it("Add Fees", async function () {
@@ -2466,12 +2564,12 @@ describe("LongStrategy", function () {
       const rebalAmt1 = ONE.mul(10);
       const rebalAmt2 = ethers.constants.Zero.sub(ONE.mul(19));
 
-      const res = await (
+      let res = await (
         await strategy._rebalanceCollateral(tokenId, [rebalAmt1, rebalAmt2], [])
       ).wait();
 
-      const expAmtA = amtA.add(rebalAmt1);
-      const expAmtB = amtB.add(rebalAmt2);
+      let expAmtA = amtA.add(rebalAmt1);
+      let expAmtB = amtB.add(rebalAmt2);
 
       checkEventData(
         res.events[res.events.length - 2],
@@ -2503,6 +2601,27 @@ describe("LongStrategy", function () {
       expect(res1c.lpTokenBalance).to.equal(startLpTokens);
       expect(res1c.lpTokenBorrowedPlusInterest).to.equal(loanLPTokens);
       expect(res1c.lpTokenTotal).to.equal(startLpTokens.add(loanLPTokens));
+
+      // Rebalance collateral with ratio enabled
+      res = await (
+        await strategy._rebalanceCollateral(
+          tokenId,
+          [rebalAmt1, rebalAmt2],
+          [0, 1]
+        )
+      ).wait();
+      expAmtA = expAmtA.add(0);
+      expAmtB = expAmtB.add(100);
+
+      checkEventData(
+        res.events[res.events.length - 2],
+        tokenId,
+        expAmtA,
+        expAmtB,
+        loanLiquidity,
+        loanLPTokens,
+        ONE
+      );
     });
   });
 });

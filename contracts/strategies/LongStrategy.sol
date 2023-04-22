@@ -217,16 +217,17 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         (uint128[] memory tokensHeld, int256[] memory deltas) = updateCollateral(_loan);
 
         // Subtract loan liquidity repaid from total liquidity debt in pool and loan
-        (liquidityPaid, loanLiquidity) = payLoan(_loan, liquidityPaid, loanLiquidity);
+        uint256 remainingLiquidity;
+        (liquidityPaid, remainingLiquidity) = payLoan(_loan, liquidityPaid, loanLiquidity);
 
         if(collateralId > 0 && to != address(0)) {
             // withdraw, check margin
-            tokensHeld = withdrawCollateral(_loan, loanLiquidity, remainingCollateral(collateral, deltas), to);
+            tokensHeld = withdrawCollateral(_loan, remainingLiquidity, remainingCollateral(collateral, deltas), to);
         }
 
         // Do not check for loan undercollateralization because repaying debt always improves pool debt health
 
-        emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.REPAY_LIQUIDITY);
+        emit LoanUpdated(tokenId, tokensHeld, uint128(remainingLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.REPAY_LIQUIDITY);
 
         emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex,
             s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.REPAY_LIQUIDITY);

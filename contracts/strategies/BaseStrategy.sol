@@ -119,16 +119,6 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         s.lastCFMMTotalSupply = lastCFMMTotalSupply;
     }
 
-    /// @dev Calculate total interest rate (CFMM Fees + Borrow Rate) charged by GammaPool since last update
-    /// @param lastCFMMFeeIndex - last block GammaPool was updated
-    /// @param borrowedInvariant - liquidity invariant borrowed in the GammaPool
-    /// @param blockDiff - change in blcoks since last update
-    /// @return lastFeeIndex - (1 + fee yield) since last update
-    function updateFeeIndex(uint256 lastCFMMFeeIndex, uint256 borrowedInvariant, uint256 blockDiff) internal virtual returns(uint256 lastFeeIndex) {
-        (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, borrowedInvariant);
-        lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, blockDiff);
-    }
-
     /// @dev Accrue interest to borrowed invariant amount
     /// @param borrowedInvariant - liquidity invariant borrowed in the GammaPool
     /// @param lastFeeIndex - interest accrued to loans in GammaPool
@@ -192,7 +182,8 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         if(blockDiff > 0) {
             lastCFMMFeeIndex = s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18;
             s.lastCFMMFeeIndex = 1e18;
-            lastFeeIndex = updateFeeIndex(lastCFMMFeeIndex, borrowedInvariant, blockDiff);
+            (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, borrowedInvariant);
+            lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, blockDiff);
             (accFeeIndex, borrowedInvariant) = updateStore(lastFeeIndex, borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply);
             if(borrowedInvariant > 0) { // Only pay protocol fee if there are loans
                 mintToDevs(lastFeeIndex, lastCFMMFeeIndex);

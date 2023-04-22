@@ -130,7 +130,8 @@ contract TestBaseStrategy is BaseStrategy {
     }
 
     function testUpdateFeeIndex() public virtual {
-        _lastFeeIndex = uint80(updateFeeIndex(_lastCFMMFeeIndex, s.BORROWED_INVARIANT, block.number - s.LAST_BLOCK_NUMBER));
+        (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, s.BORROWED_INVARIANT);
+        _lastFeeIndex = uint80(calcFeeIndex(_lastCFMMFeeIndex, borrowRate, block.number - s.LAST_BLOCK_NUMBER));
     }
 
     function testUpdateStore() public virtual {

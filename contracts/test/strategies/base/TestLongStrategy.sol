@@ -204,6 +204,10 @@ contract TestLongStrategy is LongStrategy {
         _loan.lpTokens = lpTokens;
     }
 
+    function setCfmmReserves(uint128[] calldata reserves) public {
+        s.CFMM_RESERVES = reserves;
+    }
+
     function setLPTokenBalance(uint256 lpInvariant, uint256 lpTokenBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) public virtual {
         s.LP_TOKEN_BALANCE = lpTokenBalance;
         s.LP_INVARIANT = uint128(lpInvariant);
@@ -294,6 +298,8 @@ contract TestLongStrategy is LongStrategy {
 
     function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 100;
     }
 
     function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) external virtual override view returns(int256[] memory deltas) {
@@ -302,6 +308,8 @@ contract TestLongStrategy is LongStrategy {
 
     function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 0;
     }
 
     function getReserves(address cfmm) internal virtual override view returns(uint128[] memory reserves) {
