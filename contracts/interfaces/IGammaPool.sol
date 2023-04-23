@@ -37,6 +37,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
 
         /// @dev price at which loan was opened
         uint256 px;
+        /// @dev if true loan can be liquidated
+        bool canLiquidate;
 
         /// @dev ERC20 tokens of CFMM
         address[] tokens;
@@ -283,10 +285,15 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
 
 
     /// @dev Get list of loans mapped to tokenIds in array `tokenIds`
-    /// @param tokenIds - index from where to start getting tokenIds from array
+    /// @param tokenIds - list of loan tokenIds
     /// @param active - if true, return loans that have an outstanding liquidity debt
     /// @return _loans - list of loans created in GammaPool
     function getLoansById(uint256[] calldata tokenIds, bool active) external view returns(LoanData[] memory _loans);
+
+    /// @dev Check if can liquidate loan identified by `tokenId`
+    /// @param tokenId - unique id of loan, used to look up loan in GammaPool
+    /// @return canLiquidate - true if loan can be liquidated, false otherwise
+    function canLiquidate(uint256 tokenId) external view returns(bool);
 
     /// @return loanCount - total number of loans opened
     function getLoanCount() external view returns(uint256);
