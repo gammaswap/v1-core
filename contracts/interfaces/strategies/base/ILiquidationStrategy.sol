@@ -7,6 +7,15 @@ import "../events/ILiquidationStrategyEvents.sol";
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Only used to define PoolUpdated event to avoid redefining the event in all strategies
 interface ILiquidationStrategy is ILiquidationStrategyEvents {
+    /// @return loan to value threshold over which a loan is eligible for liquidation
+    function liquidationFee() external view returns(uint256);
+
+    /// @dev Check if can liquidate loan based on liquidity debt and collateral
+    /// @param liquidity - liquidity debt of loan
+    /// @param tokensHeld - array of token quantities collateralizing liquidity debt
+    /// @return canLiquidate - true if loan can be liquidated, false otherwise
+    function canLiquidate(uint256 liquidity, uint128[] calldata tokensHeld) external view returns(bool);
+
     /// @notice When calling this function and adding additional collateral it is assumed that you have sent the collateral first
     /// @dev Function to liquidate a loan using its own collateral or depositing additional tokens. Seeks full liquidation
     /// @param tokenId - tokenId of loan being liquidated

@@ -106,9 +106,14 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
 
     /// @dev See {BaseLongStrategy-checkMargin}.
     function checkMargin(uint256 collateral, uint256 liquidity) internal virtual override view {
-        if(!hasMargin(collateral, liquidity, ltvThreshold())) { // if collateral is below ltvThreshold revert transaction
+        if(!hasMargin(collateral, liquidity, _ltvThreshold())) { // if collateral is below ltvThreshold revert transaction
             revert Margin();
         }
+    }
+
+    /// @dev See {ILongStrategy-ltvThreshold}.
+    function ltvThreshold() external virtual override view returns(uint256) {
+        return _ltvThreshold();
     }
 
     /// @notice Assumes that collateral tokens were already deposited but not accounted for

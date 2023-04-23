@@ -5,6 +5,10 @@ import "../../interfaces/strategies/base/ILongStrategy.sol";
 
 contract TestLongStrategy2 is ILongStrategy {
 
+    function ltvThreshold() external virtual override view returns(uint256) {
+        return 8000;
+    }
+
     function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](3);
         deltas[0] = int128(tokensHeld[0] * tokensHeld[1]);

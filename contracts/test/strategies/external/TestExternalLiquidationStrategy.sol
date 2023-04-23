@@ -8,7 +8,7 @@ contract TestExternalLiquidationStrategy is TestExternalBaseLongStrategy, Extern
 
     using LibStorage for LibStorage.Storage;
 
-    uint16 public liqFeeThreshold = 9750;
+    uint16 public liqFee = 250;
 
     constructor(){
     }
@@ -29,13 +29,17 @@ contract TestExternalLiquidationStrategy is TestExternalBaseLongStrategy, Extern
     }
 
     function checkMargin2(uint256 collateral, uint256 liquidity) internal virtual view {
-        if(!hasMargin(collateral, liquidity, ltvThreshold())) { // Revert if loan has enough collateral
+        if(!hasMargin(collateral, liquidity, _ltvThreshold())) { // Revert if loan has enough collateral
             revert Margin();
         }
     }
 
-    function liquidationFeeThreshold() internal virtual override view returns(uint16) {
-        return liqFeeThreshold;
+    function _liquidationFee() internal virtual override view returns(uint16) {
+        return liqFee;
+    }
+
+    function liqFeeAdjustment() external view returns(uint16) {
+        return liquidationFeeAdjustment();
     }
 
     function beforeRepay(LibStorage.Loan storage _loan, uint256[] memory amounts) internal virtual override {

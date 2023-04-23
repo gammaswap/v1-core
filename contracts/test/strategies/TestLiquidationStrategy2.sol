@@ -5,6 +5,14 @@ import "../../interfaces/strategies/base/ILiquidationStrategy.sol";
 
 contract TestLiquidationStrategy2 is ILiquidationStrategy  {
 
+    function liquidationFee() external virtual override view returns(uint256) {
+        return 250;
+    }
+
+    function canLiquidate(uint256 liquidity, uint128[] calldata tokensHeld) external view returns(bool) {
+        return liquidity > tokensHeld.length;
+    }
+
     function _liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external override virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
         uint128[] memory tokensHeld = new uint128[](2);
         tokensHeld[0] = 1;

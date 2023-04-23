@@ -91,7 +91,7 @@ contract TestLongStrategy is LongStrategy {
         _loan.tokensHeld = heldAmounts;
     }
 
-    function ltvThreshold() internal virtual override view returns(uint16){
+    function _ltvThreshold() internal virtual override view returns(uint16){
         return 8000;
     }
 

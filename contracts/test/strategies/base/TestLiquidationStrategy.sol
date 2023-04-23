@@ -36,12 +36,16 @@ contract TestLiquidationStrategy is LiquidationStrategy {
         return 1e3;
     }
 
-    function ltvThreshold() internal virtual override pure returns(uint16) {
+    function _ltvThreshold() internal virtual override pure returns(uint16) {
         return 9500;
     }
 
-    function liquidationFeeThreshold() internal virtual override pure returns(uint16) {
-        return 9750;
+    function _liquidationFee() internal virtual override pure returns(uint16) {
+        return 250;
+    }
+
+    function getLiquidationFeeAdjustment() external virtual view returns(uint16) {
+        return liquidationFeeAdjustment();
     }
 
     function maxTotalApy() internal virtual override view returns(uint256) {

@@ -25,6 +25,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
         // 1x256 bits
         /// @dev Initial loan debt in liquidity invariant units. Only increase when more liquidity is borrowed, decreases when liquidity is paid
         uint128 initLiquidity; // 128 bits
+        /// @dev Loan debt in liquidity invariant units in last update
+        uint128 lastLiquidity; // 128 bits
         /// @dev Loan debt in liquidity invariant units, increases with every update according to how many blocks have passed
         uint128 liquidity; // 128 bits
 
@@ -35,6 +37,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
 
         /// @dev price at which loan was opened
         uint256 px;
+        /// @dev if true loan can be liquidated
+        bool canLiquidate;
 
         /// @dev ERC20 tokens of CFMM
         address[] tokens;
@@ -138,6 +142,10 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
         uint256 utilizationRate;
         /// @dev Current block number when requesting pool data
         uint48 currBlockNumber;
+        /// @dev LTV liquidation threshold
+        uint256 ltvThreshold;
+        /// @dev Liquidation fee
+        uint256 liquidationFee;
     }
 
     /// @dev Function to initialize state variables GammaPool, called usually from GammaPoolFactory contract right after GammaPool instantiation
@@ -271,8 +279,21 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
     /// @dev Get list of loans and their corresponding tokenIds created in GammaPool. Capped at s.tokenIds.length.
     /// @param start - index from where to start getting tokenIds from array
     /// @param end - end index of array wishing to get tokenIds. If end > s.tokenIds.length, end is s.tokenIds.length
+    /// @param active - if true, return loans that have an outstanding liquidity debt
     /// @return _loans - list of loans created in GammaPool
-    function getLoans(uint256 start, uint256 end) external view returns(LoanData[] memory _loans);
+    function getLoans(uint256 start, uint256 end, bool active) external view returns(LoanData[] memory _loans);
+
+
+    /// @dev Get list of loans mapped to tokenIds in array `tokenIds`
+    /// @param tokenIds - list of loan tokenIds
+    /// @param active - if true, return loans that have an outstanding liquidity debt
+    /// @return _loans - list of loans created in GammaPool
+    function getLoansById(uint256[] calldata tokenIds, bool active) external view returns(LoanData[] memory _loans);
+
+    /// @dev Check if can liquidate loan identified by `tokenId`
+    /// @param tokenId - unique id of loan, used to look up loan in GammaPool
+    /// @return canLiquidate - true if loan can be liquidated, false otherwise
+    function canLiquidate(uint256 tokenId) external view returns(bool);
 
     /// @return loanCount - total number of loans opened
     function getLoanCount() external view returns(uint256);
