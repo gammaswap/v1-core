@@ -124,12 +124,16 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.lastPrice = _getLastCFMMPrice();
     }
 
+    /// @dev Get interest rate changes per source, utilization rate, and borrowing and supply APR charged to users
+    /// @param lastBlockNumber - block number since last update
     function _getLastFeeIndex(uint256 lastBlockNumber) internal virtual view returns(uint256 lastCFMMFeeIndex, uint256 lastFeeIndex,
         uint256 borrowRate, uint256 utilizationRate, uint256 accFeeIndex) {
         (lastCFMMFeeIndex,lastFeeIndex,borrowRate,utilizationRate) = IShortStrategy(shortStrategy)
         .getLastFees(s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE, _getLatestCFMMInvariant(), _getLatestCFMMTotalSupply(),
             s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER);
         accFeeIndex = s.accFeeIndex * lastFeeIndex / 1e18;
+
+        /// CFMM Fee Index = 1 + CFMM Yield = (cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1)
     }
 
     /// @dev See {IGammaPool-getConstantPoolData}
