@@ -549,29 +549,29 @@ describe("GammaPool", function () {
       const res10 = await (await gammaPool.createLoan()).wait();
       const tokenId10 = res10.events[0].args.tokenId;
 
-      const _loans = await gammaPool.getLoans(1, 10);
+      const _loans = await gammaPool.getLoans(1, 10, false);
       expect(_loans.length).to.eq(10);
       expect(_loans[0].tokenId).to.eq(tokenId1);
       expect(_loans[3].tokenId).to.eq(tokenId4);
       expect(_loans[9].tokenId).to.eq(tokenId10);
 
-      const _loans1 = await gammaPool.getLoans(5, 6);
+      const _loans1 = await gammaPool.getLoans(5, 6, false);
       expect(_loans1.length).to.eq(2);
       checkLoan(_loans1[0], 6, tokenId5);
       checkLoan(_loans1[1], 7, tokenId6);
 
-      const _loans2 = await gammaPool.getLoans(7, 7);
+      const _loans2 = await gammaPool.getLoans(7, 7, false);
       expect(_loans2.length).to.eq(1);
       checkLoan(_loans2[0], 8, tokenId7);
 
-      const _loans3 = await gammaPool.getLoans(7, 100);
+      const _loans3 = await gammaPool.getLoans(7, 100, false);
       expect(_loans3.length).to.eq(4);
       checkLoan(_loans3[0], 8, tokenId7);
       checkLoan(_loans3[1], 9, tokenId8);
       checkLoan(_loans3[2], 10, tokenId9);
       checkLoan(_loans3[3], 11, tokenId10);
 
-      const _loans4 = await gammaPool.getLoans(0, 100);
+      const _loans4 = await gammaPool.getLoans(0, 100, false);
       expect(_loans4.length).to.eq(11);
       expect(_loans4[0].tokenId).to.eq(tokenId0);
       expect(_loans4[1].tokenId).to.eq(tokenId1);
@@ -585,7 +585,39 @@ describe("GammaPool", function () {
       expect(_loans4[9].tokenId).to.eq(tokenId9);
       expect(_loans4[10].tokenId).to.eq(tokenId10);
 
-      const _loans5 = await gammaPool.getLoans(0, 10);
+      const _loans4a = await gammaPool.getLoans(0, 100, true);
+      expect(_loans4a.length).to.eq(11);
+      expect(_loans4a[0].tokenId).to.eq(0);
+      expect(_loans4a[1].tokenId).to.eq(0);
+      expect(_loans4a[2].tokenId).to.eq(0);
+      expect(_loans4a[3].tokenId).to.eq(0);
+      expect(_loans4a[4].tokenId).to.eq(0);
+      expect(_loans4a[5].tokenId).to.eq(0);
+      expect(_loans4a[6].tokenId).to.eq(0);
+      expect(_loans4a[7].tokenId).to.eq(0);
+      expect(_loans4a[8].tokenId).to.eq(0);
+      expect(_loans4a[9].tokenId).to.eq(0);
+      expect(_loans4a[10].tokenId).to.eq(0);
+
+      const _loans4b = await gammaPool.getLoansById(
+        [tokenId2, tokenId6, tokenId8],
+        false
+      );
+      expect(_loans4b.length).to.eq(3);
+      expect(_loans4b[0].tokenId).to.eq(tokenId2);
+      expect(_loans4b[1].tokenId).to.eq(tokenId6);
+      expect(_loans4b[2].tokenId).to.eq(tokenId8);
+
+      const _loans4c = await gammaPool.getLoansById(
+        [tokenId2, tokenId6, tokenId8],
+        true
+      );
+      expect(_loans4c.length).to.eq(3);
+      expect(_loans4c[0].tokenId).to.eq(0);
+      expect(_loans4c[1].tokenId).to.eq(0);
+      expect(_loans4c[2].tokenId).to.eq(0);
+
+      const _loans5 = await gammaPool.getLoans(0, 10, false);
       expect(_loans5.length).to.eq(11);
       checkLoan(_loans5[0], 1, tokenId0);
       checkLoan(_loans5[1], 2, tokenId1);
@@ -599,20 +631,20 @@ describe("GammaPool", function () {
       checkLoan(_loans5[9], 10, tokenId9);
       checkLoan(_loans5[10], 11, tokenId10);
 
-      const _loans6 = await gammaPool.getLoans(10, 11);
+      const _loans6 = await gammaPool.getLoans(10, 11, false);
       expect(_loans6.length).to.eq(1);
       checkLoan(_loans6[0], 11, tokenId10);
 
-      const _loans7 = await gammaPool.getLoans(11, 11);
+      const _loans7 = await gammaPool.getLoans(11, 11, false);
       expect(_loans7.length).to.eq(0);
 
-      const _loans8 = await gammaPool.getLoans(11, 110);
+      const _loans8 = await gammaPool.getLoans(11, 110, false);
       expect(_loans8.length).to.eq(0);
 
-      const _loans9 = await gammaPool.getLoans(2, 1);
+      const _loans9 = await gammaPool.getLoans(2, 1, false);
       expect(_loans9.length).to.eq(0);
 
-      const _loans10 = await gammaPool.getLoans(8, 4);
+      const _loans10 = await gammaPool.getLoans(8, 4, false);
       expect(_loans10.length).to.eq(0);
     });
 
