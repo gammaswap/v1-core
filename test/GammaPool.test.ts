@@ -168,6 +168,10 @@ describe("GammaPool", function () {
       const res3 = await gammaPool.getPoolData();
       expect(res3.cfmm).to.equal(cfmm.address);
       expect(res3.protocolId).to.equal(PROTOCOL_ID);
+      expect(res3.ltvThreshold).to.equal(await longStrategy.ltvThreshold());
+      expect(res3.liquidationFee).to.equal(
+        await liquidationStrategy.liquidationFee()
+      );
       const _tokens = res3.tokens;
       expect(_tokens.length).to.equal(2);
       expect(_tokens[0]).to.equal(tokenA.address);
@@ -212,6 +216,8 @@ describe("GammaPool", function () {
       expect(res4.currBlockNumber).to.equal(latestBlock.number);
       expect(res4.cfmm).to.equal(cfmm.address);
       expect(res4.protocolId).to.equal(PROTOCOL_ID);
+      expect(res4.ltvThreshold).to.equal(res3.ltvThreshold);
+      expect(res4.liquidationFee).to.equal(res3.liquidationFee);
       const _toks = res4.tokens;
       expect(_toks.length).to.equal(2);
       expect(_toks[0]).to.equal(tokenA.address);
@@ -255,6 +261,8 @@ describe("GammaPool", function () {
       expect(res5.utilizationRate).to.equal(44);
       expect(res5.cfmm).to.equal(cfmm.address);
       expect(res5.protocolId).to.equal(PROTOCOL_ID);
+      expect(res5.ltvThreshold).to.equal(res3.ltvThreshold);
+      expect(res5.liquidationFee).to.equal(res3.liquidationFee);
       const _tokss = res5.tokens;
       expect(_tokss.length).to.equal(2);
       expect(_tokss[0]).to.equal(tokenA.address);

@@ -117,6 +117,10 @@ describe("LiquidationStrategy", function () {
   describe("Deployment", function () {
     it("checks init params", async function () {
       const res = await liquidationStrategy.getStaticParams();
+      expect(await liquidationStrategy.liquidationFee()).to.equal(250);
+      expect(await liquidationStrategy.getLiquidationFeeAdjustment()).to.equal(
+        9750
+      );
       expect(res.factory).to.equal(owner.address);
       expect(res.cfmm).to.equal(cfmm.address);
       expect(res.tokens.length).to.equal(2);

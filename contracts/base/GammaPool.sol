@@ -145,6 +145,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED;
         data.totalSupply = s.totalSupply;
         data.TOKEN_BALANCE = s.TOKEN_BALANCE;
+        data.ltvThreshold = ILongStrategy(longStrategy).ltvThreshold();
+        data.liquidationFee = ILiquidationStrategy(liquidationStrategy).liquidationFee();
         (data.tokens, data.symbols, data.names, data.decimals) = getTokensMetaData();
     }
 

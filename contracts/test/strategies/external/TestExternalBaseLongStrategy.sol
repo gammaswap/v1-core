@@ -31,7 +31,7 @@ abstract contract TestExternalBaseLongStrategy is ExternalBaseStrategy {
         return 2252571;
     }
 
-    function ltvThreshold() internal virtual override view returns(uint16) {
+    function _ltvThreshold() internal virtual override view returns(uint16) {
         return 8000;
     }
 

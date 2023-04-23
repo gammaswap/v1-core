@@ -57,7 +57,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
     function originationFee() internal virtual view returns(uint24);
 
     /// @return ltvThreshold - max ltv ratio acceptable before a loan is eligible for liquidation
-    function ltvThreshold() internal virtual view returns(uint16);
+    function _ltvThreshold() internal virtual view returns(uint16);
 
     /// @dev Calculate quantities to trade to be able to close the `liquidity` amount
     /// @param tokensHeld - tokens held as collateral for liquidity to pay

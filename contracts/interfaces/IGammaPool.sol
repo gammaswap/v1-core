@@ -138,6 +138,10 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
         uint256 utilizationRate;
         /// @dev Current block number when requesting pool data
         uint48 currBlockNumber;
+        /// @dev LTV liquidation threshold
+        uint256 ltvThreshold;
+        /// @dev Liquidation fee
+        uint256 liquidationFee;
     }
 
     /// @dev Function to initialize state variables GammaPool, called usually from GammaPoolFactory contract right after GammaPool instantiation

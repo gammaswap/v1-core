@@ -16,8 +16,18 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
     error HasMargin();
     error LoanNotExists();
 
-    /// @return - liquidationFeeThreshold - threshold used to measure the liquidation fee
-    function liquidationFeeThreshold() internal virtual view returns(uint16);
+    /// @dev See {LiquidationStrategy-liquidationFee}.
+    function liquidationFee() external override virtual view returns(uint256) {
+        return _liquidationFee();
+    }
+
+    /// @return - liquidationFee - threshold used to measure the liquidation fee
+    function _liquidationFee() internal virtual view returns(uint16);
+
+    /// @return - liquidationFeeAdjustment - threshold used to measure the liquidation fee
+    function liquidationFeeAdjustment() internal virtual view returns(uint16) {
+        return 1e4 - _liquidationFee();
+    }
 
     /// @dev See {LiquidationStrategy-_liquidate}.
     function _liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external override lock virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
@@ -123,7 +133,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
     }
 
     function adjustCollateralByLiqFee(uint256 collateral) internal virtual returns(uint256) {
-        return collateral * liquidationFeeThreshold() / 10000;
+        return collateral * liquidationFeeAdjustment() / 10000;
     }
 
     /// @dev Account for liquidity payments in the loan and pool
@@ -220,7 +230,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
     /// @dev See {BaseLongStrategy-checkMargin}.
     function checkMargin(uint256 collateral, uint256 liquidity) internal virtual override view {
-        if(hasMargin(collateral, liquidity, ltvThreshold())) { // Revert if loan has enough collateral
+        if(hasMargin(collateral, liquidity, _ltvThreshold())) { // Revert if loan has enough collateral
             revert HasMargin();
         }
     }
@@ -308,7 +318,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
             liquidity = liquidity * accFeeIndex / rateIndex; // Update loan's liquidity debt
             tokensHeld = _loan.tokensHeld; // Save gas
             uint256 collateral = calcInvariant(cfmm, tokensHeld);
-            if(hasMargin(collateral, liquidity, ltvThreshold())) { // Skip loans with enough collateral
+            if(hasMargin(collateral, liquidity, _ltvThreshold())) { // Skip loans with enough collateral
                 unchecked {
                     ++i;
                 }

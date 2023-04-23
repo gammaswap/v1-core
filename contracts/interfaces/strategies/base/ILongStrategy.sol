@@ -7,6 +7,9 @@ import "../events/ILongStrategyEvents.sol";
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used in strategies that borrow and repay liquidity loans
 interface ILongStrategy is ILongStrategyEvents {
+    /// @return loan to value threshold over which a loan is eligible for liquidation
+    function ltvThreshold() external view returns(uint256);
+
     /// @dev Deposit more collateral in loan identified by tokenId
     /// @param tokenId - unique id identifying loan
     /// @return tokensHeld - updated collateral token amounts backing loan
