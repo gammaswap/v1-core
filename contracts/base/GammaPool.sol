@@ -246,9 +246,14 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         (_loanData.tokens, _loanData.symbols, _loanData.names, _loanData.decimals) = getTokensMetaData();
         (,,,, uint256 accFeeIndex) = _getLastFeeIndex(s.LAST_BLOCK_NUMBER);
         _loanData.liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, accFeeIndex);
-        _loanData.canLiquidate = ILiquidationStrategy(liquidationStrategy).canLiquidate(_loanData.liquidity, _loanData.tokensHeld);
+        _loanData.canLiquidate = ILiquidationStrategy(liquidationStrategy).canLiquidate(_loanData.liquidity, _calcInvariant(_loanData.tokensHeld));
     }
 
+    /// @dev Update liquidity to current debt level
+    /// @param liquidity - loan's liquidity debt
+    /// @param rateIndex - accFeeIndex in last update of loan's liquidity debt
+    /// @param accFeeIndex - current accFeeIndex
+    /// @return updatedLiquidity - liquidity debt updated to current time
     function _updateLiquidity(uint256 liquidity, uint256 rateIndex, uint256 accFeeIndex) internal virtual view returns(uint128) {
         return rateIndex == 0 ? 0 : uint128(liquidity * accFeeIndex / rateIndex);
     }
@@ -295,7 +300,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
                     _loan.names = _names;
                     _loan.decimals = _decimals;
                     _loan.liquidity = _updateLiquidity(_loan.liquidity, _loan.rateIndex, accFeeIndex);
-                    _loan.canLiquidate = ILiquidationStrategy(liquidationStrategy).canLiquidate(_loan.liquidity, _loan.tokensHeld);
+                    _loan.canLiquidate = ILiquidationStrategy(liquidationStrategy).canLiquidate(_loan.liquidity, _calcInvariant(_loan.tokensHeld));
                     _loans[k] = _loan;
                     unchecked {
                         k++;
@@ -325,7 +330,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
                 _loan.names = _names;
                 _loan.decimals = _decimals;
                 _loan.liquidity = _updateLiquidity(_loan.liquidity, _loan.rateIndex, accFeeIndex);
-                _loan.canLiquidate = ILiquidationStrategy(liquidationStrategy).canLiquidate(_loan.liquidity, _loan.tokensHeld);
+                _loan.canLiquidate = ILiquidationStrategy(liquidationStrategy).canLiquidate(_loan.liquidity, _calcInvariant(_loan.tokensHeld));
                 _loans[k] = _loan;
                 unchecked {
                     k++;
@@ -342,8 +347,13 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         LibStorage.Loan memory _loan = s.loans[tokenId];
         (,,,, uint256 accFeeIndex) = _getLastFeeIndex(s.LAST_BLOCK_NUMBER);
         _loan.liquidity = _updateLiquidity(_loan.liquidity, _loan.rateIndex, accFeeIndex);
-        return ILiquidationStrategy(liquidationStrategy).canLiquidate(_loan.liquidity, _loan.tokensHeld);
+        return ILiquidationStrategy(liquidationStrategy).canLiquidate(_loan.liquidity, _calcInvariant(_loan.tokensHeld));
     }
+
+    /// @dev calculate liquidity invariant from collateral tokens
+    /// @param tokensHeld - loan's collateral tokens
+    /// @return collateralInvariant - invariant calculated from loan's collateral tokens
+    function _calcInvariant(uint128[] memory tokensHeld) internal virtual view returns(uint256);
 
     /// @dev See {IGammaPool-getLoanCount}
     function getLoanCount() external virtual override view returns(uint256) {

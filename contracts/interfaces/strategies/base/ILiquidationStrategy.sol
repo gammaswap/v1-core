@@ -12,9 +12,9 @@ interface ILiquidationStrategy is ILiquidationStrategyEvents {
 
     /// @dev Check if can liquidate loan based on liquidity debt and collateral
     /// @param liquidity - liquidity debt of loan
-    /// @param tokensHeld - array of token quantities collateralizing liquidity debt
+    /// @param collateral - liquidity invariant calculated from collateral tokens (`tokensHeld`)
     /// @return canLiquidate - true if loan can be liquidated, false otherwise
-    function canLiquidate(uint256 liquidity, uint128[] calldata tokensHeld) external view returns(bool);
+    function canLiquidate(uint256 liquidity, uint256 collateral) external view returns(bool);
 
     /// @notice When calling this function and adding additional collateral it is assumed that you have sent the collateral first
     /// @dev Function to liquidate a loan using its own collateral or depositing additional tokens. Seeks full liquidation
