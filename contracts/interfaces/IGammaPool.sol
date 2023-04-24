@@ -58,7 +58,7 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
         uint256 lastCFMMFeeIndex;
         /// @dev Percent accrual in CFMM invariant and GammaPool interest since last update
         uint256 lastFeeIndex;
-        /// @dev Borrow rate of LP tokens in GammaPool
+        /// @dev Borrow APR of LP tokens in GammaPool
         uint256 borrowRate;
         /// @dev Utilization rate of GammaPool
         uint256 utilizationRate;
@@ -68,6 +68,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
         uint256 currBlockNumber;
         /// @dev Last Price in CFMM
         uint256 lastPrice;
+        /// @dev Supply APR of LP tokens in GammaPool
+        uint256 supplyRate;
     }
 
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
@@ -146,6 +148,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
         uint256 ltvThreshold;
         /// @dev Liquidation fee
         uint256 liquidationFee;
+        /// @dev Supply APR of LP tokens in GammaPool
+        uint256 supplyRate;
     }
 
     /// @dev Function to initialize state variables GammaPool, called usually from GammaPoolFactory contract right after GammaPool instantiation
