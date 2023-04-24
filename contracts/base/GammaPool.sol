@@ -398,12 +398,12 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     /***** Delta Calculations *****/
 
     /// @dev See {IGammaPool-calcDeltasForRatio}
-    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external view returns(int256[] memory deltas) {
+    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external override virtual view returns(int256[] memory deltas) {
         return ILongStrategy(longStrategy).calcDeltasForRatio(tokensHeld, reserves, ratio);
     }
 
     /// @dev See {IGammaPool-calcDeltasToClose}
-    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) external view returns(int256[] memory deltas) {
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) external override virtual view returns(int256[] memory deltas) {
         return ILongStrategy(longStrategy).calcDeltasToClose(tokensHeld, reserves, liquidity, collateralId);
     }
 
