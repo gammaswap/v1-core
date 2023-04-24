@@ -236,8 +236,8 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
     }
 
     /// @dev See {ILiquidationStrategy-canLiquidate}.
-    function canLiquidate(uint256 liquidity, uint128[] calldata tokensHeld) external virtual override view returns(bool) {
-        return !hasMargin(calcInvariant(s.cfmm, tokensHeld), liquidity, _ltvThreshold());
+    function canLiquidate(uint256 liquidity, uint256 collateral) external virtual override view returns(bool) {
+        return !hasMargin(collateral, liquidity, _ltvThreshold());
     }
 
     /// @dev Refund liquidator with collateral from liquidated loan and return remaining loan collateral

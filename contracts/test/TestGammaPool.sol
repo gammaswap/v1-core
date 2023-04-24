@@ -20,6 +20,10 @@ contract TestGammaPool is GammaPool {
         return 1;
     }
 
+    function _calcInvariant(uint128[] memory tokensHeld) internal virtual override view returns(uint256) {
+        return tokensHeld[0] * 100;
+    }
+
     function syncTokens() external virtual {
         address[] memory _tokens = s.tokens;
         for(uint256 i; i < _tokens.length;) {
