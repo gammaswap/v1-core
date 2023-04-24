@@ -292,6 +292,7 @@ describe("GammaPool", function () {
       expect(res5.lastCFMMFeeIndex).to.equal(1);
       expect(res5.lastFeeIndex).to.equal(2);
       expect(res5.borrowRate).to.equal(3);
+      expect(res5.supplyRate).to.equal(0);
 
       expect(res5.LP_TOKEN_BALANCE).to.equal(0);
       expect(res5.LP_TOKEN_BORROWED_PLUS_INTEREST).to.equal(5);
@@ -304,6 +305,7 @@ describe("GammaPool", function () {
       expect(res6.lastCFMMFeeIndex).to.eq(res5.lastCFMMFeeIndex);
       expect(res6.lastFeeIndex).to.eq(res5.lastFeeIndex);
       expect(res6.borrowRate).to.eq(res5.borrowRate);
+      expect(res6.supplyRate).to.equal(res5.supplyRate);
       expect(res6.lastBlockNumber).to.eq(res5.LAST_BLOCK_NUMBER);
     });
 

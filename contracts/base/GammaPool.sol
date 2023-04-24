@@ -122,6 +122,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         (data.lastCFMMFeeIndex, data.lastFeeIndex, data.borrowRate, data.utilizationRate,
             data.accFeeIndex) = _getLastFeeIndex(data.lastBlockNumber);
         data.lastPrice = _getLastCFMMPrice();
+        data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
     }
 
     /// @dev Get interest rate changes per source, utilization rate, and borrowing and supply APR charged to users
@@ -132,8 +133,6 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         .getLastFees(s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE, _getLatestCFMMInvariant(), _getLatestCFMMTotalSupply(),
             s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER);
         accFeeIndex = s.accFeeIndex * lastFeeIndex / 1e18;
-
-        /// CFMM Fee Index = 1 + CFMM Yield = (cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1)
     }
 
     /// @dev See {IGammaPool-getConstantPoolData}
@@ -195,6 +194,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         (lastCFMMFeeIndex, data.lastFeeIndex, data.borrowRate, data.utilizationRate) = IShortStrategy(shortStrategy)
         .getLastFees(borrowedInvariant, data.LP_TOKEN_BALANCE, data.lastCFMMInvariant, data.lastCFMMTotalSupply,
             s.lastCFMMInvariant, s.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER);
+
+        data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
 
         data.lastCFMMFeeIndex = uint80(lastCFMMFeeIndex);
         (,data.LP_TOKEN_BORROWED_PLUS_INTEREST, borrowedInvariant) = IShortStrategy(shortStrategy)
