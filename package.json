@@ -1,6 +1,6 @@
 {
   "name": "@gammaswap/v1-core",
-  "version": "0.4.17",
+  "version": "0.4.18",
   "description": "Core smart contracts for the GammaSwapV1 protocol",
   "homepage": "https://gammaswap.com",
   "main": "index.js",
@@ -20,7 +20,9 @@
   },
   "files": [
     "artifacts",
-    "contracts"
+    "contracts",
+    "typechain",
+    "typechain-types"
   ],
   "keywords": [
     "gammaswap",
