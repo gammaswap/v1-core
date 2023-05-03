@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 
-describe.only("LogDerivativeRateModel", function () {
+describe("LogDerivativeRateModel", function () {
   let RateModel: any;
   let rateModel: any;
   let baseRate: any;

@@ -56,8 +56,8 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @return blocksPerYear - blocks created per year by network
     function blocksPerYear() internal virtual view returns(uint256);
 
-    /// @return rateParamsStore - address of rate parameters store for this GammaPool
-    function rateParamsStore() public override virtual view returns(address) {
+    /// @dev See {AbstractRateModel-_rateParamsStore}
+    function _rateParamsStore() internal override virtual view returns(address) {
         return s.factory;
     }
 

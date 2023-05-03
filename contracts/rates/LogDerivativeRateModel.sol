@@ -14,10 +14,10 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
 
     /// @dev Error thrown when fixed borrow rate > ceiling borrow rate
     error BaseRateGtMaxAPY();
-    /// @dev Error thrown when fixed borrow rate >= 100%
-    error BaseRateGteOne();
-    /// @dev Error thrown when Factor >= 10
-    error FactorGte10();
+    /// @dev Error thrown when fixed borrow rate >= 100% or is zero
+    error BaseRate();
+    /// @dev Error thrown when Factor >= 10 or is zero
+    error Factor();
 
     struct ModelRateParams {
         uint64 baseRate;
@@ -36,15 +36,7 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
 
     /// @dev Initializes the contract by setting `baseRate`, `factor`, and `maxApy`. the fixed borrow rate (baseRate) cannot be greater than  the borrow rate ceiling (maxApy)
     constructor(uint64 _baseRate, uint80 _factor, uint80 _maxApy) {
-        if(_baseRate > _maxApy ) {
-            revert BaseRateGtMaxAPY(); // revert if fixed borrow rate is greater than maximum allowed borrow rate
-        }
-        if(_baseRate >= 1e18) {
-            revert BaseRateGteOne(); // revert if base rate is greater than or equal to 1
-        }
-        if(_factor >= 1e19) {
-            revert FactorGte10(); // revert if factor is greater than or equal to 10
-        }
+        _validateParameters(_baseRate, _factor, _maxApy);
         baseRate = _baseRate;
         factor = _factor;
         maxApy = _maxApy;
@@ -59,11 +51,11 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
         }
         uint256 utilizationRateSquare = utilizationRate**2; // since utilizationRate is a fraction, this lowers its value in a non linear way
         uint256 denominator = 1e36 - utilizationRateSquare + 1; // add 1 so that it never becomes 0
-        (uint64 _baseRate, uint80 _factor, uint80 _maxApy) = _getRateParams();
+        (uint64 _baseRate, uint80 _factor, uint80 _maxApy) = getRateParams();
         borrowRate = Math.min(_baseRate + _factor * utilizationRateSquare / denominator, _maxApy); // division by an ever non linear decreasing denominator creates an exponential looking curve as util. rate increases
     }
 
-    function _getRateParams() internal virtual view returns(uint64, uint80, uint80) {
+    function getRateParams() public virtual view returns(uint64, uint80, uint80) {
         IRateParamsStore.RateParams memory rateParams = IRateParamsStore(rateParamsStore()).getRateParams(address(this));
         if(!rateParams.active) {
             return (baseRate, factor, maxApy);
@@ -74,14 +66,19 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
 
     function validateParameters(bytes calldata _data) external override(AbstractRateModel,IRateModel) virtual view returns(bool) {
         ModelRateParams memory params = abi.decode(_data, (ModelRateParams));
-        if(params.baseRate > params.maxApy ) {
+        _validateParameters(params.baseRate, params.factor, params.maxApy);
+        return true;
+    }
+
+    function _validateParameters(uint64 _baseRate, uint80 _factor, uint80 _maxApy) internal virtual view returns(bool) {
+        if(_baseRate > _maxApy ) {
             revert BaseRateGtMaxAPY(); // revert if fixed borrow rate is greater than maximum allowed borrow rate
         }
-        if(params.baseRate >= 1e18) {
-            revert BaseRateGteOne(); // revert if base rate is greater than or equal to 1
+        if(_baseRate >= 1e18 || _baseRate == 0) {
+            revert BaseRate(); // revert if base rate is greater than or equal to 100% or is zero
         }
-        if(params.factor >= 1e19) {
-            revert FactorGte10(); // revert if factor is greater than or equal to 10
+        if(_factor >= 1e19 || _factor == 0) {
+            revert Factor(); // revert if factor is greater than or equal to 10 or is zero
         }
         return true;
     }
