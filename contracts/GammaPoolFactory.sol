@@ -3,13 +3,14 @@ pragma solidity 0.8.17;
 
 import "./interfaces/IGammaPool.sol";
 import "./base/AbstractGammaPoolFactory.sol";
+import "./rates/storage/AbstractRateParamsStore.sol";
 import "./libraries/AddressCalculator.sol";
 import "./libraries/GammaSwapLibrary.sol";
 
 /// @title Factory contract to create more GammaPool contracts.
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Creates new GammaPool instances as minimal proxy contracts (EIP-1167) to implementation contracts identified by a protocol id
-contract GammaPoolFactory is AbstractGammaPoolFactory {
+contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore {
 
     struct Fee {
         uint16 protocol;
@@ -195,4 +196,8 @@ contract GammaPoolFactory is AbstractGammaPoolFactory {
         }
     }
 
+    /// @dev See {AbstractRateParamsStore.-_rateParamsStoreOwner};
+    function _rateParamsStoreOwner() internal override virtual view returns(address) {
+        return owner;
+    }
 }
