@@ -201,7 +201,7 @@ describe("ExternalBaseStrategy", function () {
           [0, amount1.add(1)],
           poolBalances.lastCFMMTotalSupply
         )
-      ).to.be.revertedWith("NotEnoughBalance");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughBalance");
 
       await expect(
         strategy.testSendAndCalcCollateralLPTokens(
@@ -209,7 +209,7 @@ describe("ExternalBaseStrategy", function () {
           [amount0.add(1), 0],
           poolBalances.lastCFMMTotalSupply
         )
-      ).to.be.revertedWith("NotEnoughBalance");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughBalance");
 
       await expect(
         strategy.testSendAndCalcCollateralLPTokens(
@@ -217,7 +217,7 @@ describe("ExternalBaseStrategy", function () {
           [amount0, amount1.add(1)],
           poolBalances.lastCFMMTotalSupply
         )
-      ).to.be.revertedWith("NotEnoughBalance");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughBalance");
 
       await expect(
         strategy.testSendAndCalcCollateralLPTokens(
@@ -225,7 +225,7 @@ describe("ExternalBaseStrategy", function () {
           [amount0.add(1), amount1],
           poolBalances.lastCFMMTotalSupply
         )
-      ).to.be.revertedWith("NotEnoughBalance");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughBalance");
 
       await expect(
         strategy.testSendAndCalcCollateralLPTokens(
@@ -233,7 +233,7 @@ describe("ExternalBaseStrategy", function () {
           [amount0.add(1), amount1.add(1)],
           poolBalances.lastCFMMTotalSupply
         )
-      ).to.be.revertedWith("NotEnoughBalance");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughBalance");
     });
 
     it("Send & Calc Collateral Tokens, tokenA", async function () {
@@ -554,7 +554,7 @@ describe("ExternalBaseStrategy", function () {
       const amount = ONE.mul(100).add(1);
       await expect(
         strategy.testSendCFMMLPTokens(cfmm.address, addr1.address, amount)
-      ).to.be.revertedWith("NotEnoughBalance");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughBalance");
     });
 
     it("Send CFMM LP Tokens", async function () {
@@ -604,7 +604,7 @@ describe("ExternalBaseStrategy", function () {
           addr1.address,
           data
         )
-      ).to.be.revertedWith("non-contract");
+      ).to.be.revertedWithoutReason();
     });
 
     it("Error External swap WrongLPTokenBalance", async function () {
@@ -626,7 +626,7 @@ describe("ExternalBaseStrategy", function () {
           calleeEmpty.address,
           data
         )
-      ).to.be.revertedWith("WrongLPTokenBalance");
+      ).to.be.revertedWithCustomError(strategy, "WrongLPTokenBalance");
     });
 
     it("External swap function no change", async function () {
@@ -963,7 +963,7 @@ describe("ExternalBaseStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWith("NotEnoughBalance");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughBalance");
 
       const amounts1 = [amount0, amount1.add(1)];
       await expect(
@@ -975,7 +975,7 @@ describe("ExternalBaseStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWith("NotEnoughBalance");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughBalance");
     });
 
     it("Error External swap function rebalance amounts, NotEnoughCollateral", async function () {
@@ -1019,7 +1019,7 @@ describe("ExternalBaseStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWith("NotEnoughCollateral");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughCollateral");
 
       const swapData1 = {
         strategy: strategy.address,
@@ -1046,7 +1046,7 @@ describe("ExternalBaseStrategy", function () {
           callee2.address,
           data1
         )
-      ).to.be.revertedWith("NotEnoughCollateral");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughCollateral");
     });
 
     it("External swap function rebalance amounts, one loan", async function () {

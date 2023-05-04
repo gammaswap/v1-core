@@ -8,4 +8,16 @@ typechain
 cache
 artifacts
 
+#foundry files
+cache_forge
+out
+
+#IDE
 .idea
+.vscode
+
+#access tokens
+.npmrc
+
+#debug
+yarn-error.log

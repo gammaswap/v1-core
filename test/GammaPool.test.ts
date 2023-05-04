@@ -882,20 +882,18 @@ describe("GammaPool", function () {
         gasLimit: ethers.utils.hexlify("0x100000"),
         gasPrice: await ethers.provider.getGasPrice(),
       };
-      await expect(owner.sendTransaction(tx)).to.be.revertedWith(
-        "Transaction reverted"
-      );
+      await expect(owner.sendTransaction(tx)).to.be.revertedWithoutReason();
     });
 
     it("Clear Restricted Tokens, Fail", async function () {
       for (let i = 0; i < tokens.length; i++) {
         await expect(
           gammaPool.clearToken(tokens[i], owner.address, 0)
-        ).to.be.revertedWith("RestrictedToken");
+        ).to.be.revertedWithCustomError(gammaPool, "RestrictedToken");
       }
       await expect(
         gammaPool.clearToken(cfmm.address, owner.address, 0)
-      ).to.be.revertedWith("RestrictedToken");
+      ).to.be.revertedWithCustomError(gammaPool, "RestrictedToken");
     });
 
     it("Clear Restricted Tokens, Success", async function () {
@@ -932,7 +930,7 @@ describe("GammaPool", function () {
 
       await expect(
         gammaPool.clearToken(tokenC.address, owner.address, 101)
-      ).to.be.revertedWith("NotEnoughTokens");
+      ).to.be.revertedWithCustomError(gammaPool, "NotEnoughTokens");
     });
 
     it("Skimming nothing off the top", async function () {

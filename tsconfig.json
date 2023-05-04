@@ -4,6 +4,7 @@
     "module": "commonjs",
     "strict": true,
     "esModuleInterop": true,
+    "useUnknownInCatchVariables": true,
     "outDir": "dist",
     "declaration": true
   },

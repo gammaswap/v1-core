@@ -356,9 +356,9 @@ describe("BaseStrategy", function () {
       );
       expect(await strategy.totalSupply()).to.equal(100);
 
-      await expect(strategy.testMint(owner.address, 0)).to.be.revertedWith(
-        "ZeroAmount"
-      );
+      await expect(
+        strategy.testMint(owner.address, 0)
+      ).to.be.revertedWithCustomError(strategy, "ZeroAmount");
       expect(await strategy.totalSupply()).to.equal(100);
     });
 
@@ -370,14 +370,14 @@ describe("BaseStrategy", function () {
 
       await expect(
         strategy.testBurn(ethers.constants.AddressZero, 10)
-      ).to.be.revertedWith("ZeroAddress");
+      ).to.be.revertedWithCustomError(strategy, "ZeroAddress");
 
-      await expect(strategy.testBurn(owner.address, 101)).to.be.revertedWith(
-        "ExcessiveBurn"
-      );
-      await expect(strategy.testBurn(addr1.address, 1)).to.be.revertedWith(
-        "ExcessiveBurn"
-      );
+      await expect(
+        strategy.testBurn(owner.address, 101)
+      ).to.be.revertedWithCustomError(strategy, "ExcessiveBurn");
+      await expect(
+        strategy.testBurn(addr1.address, 1)
+      ).to.be.revertedWithCustomError(strategy, "ExcessiveBurn");
       expect(await strategy.totalSupply()).to.equal(100);
 
       await (await strategy.testBurn(owner.address, 10)).wait();

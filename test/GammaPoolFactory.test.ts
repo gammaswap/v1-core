@@ -92,18 +92,6 @@ describe("GammaPoolFactory", function () {
     );
     return { createPoolParams: createPoolParams, data: data };
   }
-
-  async function checkPoolDetails(details: any, tokenA: any, tokenB: any) {
-    expect(details.tokens[0]).to.equal(tokenA.address);
-    expect(details.tokens[1]).to.equal(tokenB.address);
-    expect(details.symbols[0]).to.equal(await tokenA.symbol());
-    expect(details.symbols[1]).to.equal(await tokenB.symbol());
-    expect(details.names[0]).to.equal(await tokenA.name());
-    expect(details.names[1]).to.equal(await tokenB.name());
-    expect(details.decimals[0]).to.equal(await tokenA.decimals());
-    expect(details.decimals[1]).to.equal(await tokenB.decimals());
-  }
-
   // You can nest describe calls to create subsections.
   describe("Deployment", function () {
     it("Should set the right initial fields", async function () {
@@ -143,13 +131,13 @@ describe("GammaPoolFactory", function () {
       );
 
       await (await factory.addProtocol(protocol.address)).wait();
-      await expect(factory.addProtocol(protocol.address)).to.be.revertedWith(
-        "ProtocolExists"
-      );
+      await expect(
+        factory.addProtocol(protocol.address)
+      ).to.be.revertedWithCustomError(factory, "ProtocolExists");
 
       await expect(
         factory.addProtocol(protocolZero.address)
-      ).to.be.revertedWith("ZeroProtocol");
+      ).to.be.revertedWithCustomError(factory, "ZeroProtocol");
 
       await expect(
         factory.connect(addr1).addProtocol(addr2.address)
@@ -244,7 +232,7 @@ describe("GammaPoolFactory", function () {
           createPoolParams.tokens,
           data
         )
-      ).to.be.revertedWith("ProtocolNotSet");
+      ).to.be.revertedWithCustomError(factory, "ProtocolNotSet");
       await factory.addProtocol(protocol.address);
 
       await expect(
@@ -269,7 +257,7 @@ describe("GammaPoolFactory", function () {
           createPoolParams.tokens,
           data
         )
-      ).to.be.revertedWith("PoolExists");
+      ).to.be.revertedWithCustomError(factory, "PoolExists");
 
       await factory.setIsProtocolRestricted(1, true);
 
@@ -295,7 +283,7 @@ describe("GammaPoolFactory", function () {
             createPoolParams2.tokens,
             data2
           )
-      ).to.be.revertedWith("ProtocolRestricted");
+      ).to.be.revertedWithCustomError(factory, "ProtocolRestricted");
 
       await factory.setIsProtocolRestricted(1, false);
 
@@ -315,7 +303,7 @@ describe("GammaPoolFactory", function () {
           createPoolParams2.tokens,
           data2
         )
-      ).to.be.revertedWith("PoolExists");
+      ).to.be.revertedWithCustomError(factory, "PoolExists");
     });
 
     it("Query Pools", async function () {
@@ -418,9 +406,9 @@ describe("GammaPoolFactory", function () {
       expect(await factory.fee()).to.equal(10000);
       const _feeToSetter = await factory.feeToSetter();
       expect(_feeToSetter).to.equal(owner.address);
-      await expect(factory.connect(addr1).setFee(1, 2, 3)).to.be.revertedWith(
-        "Forbidden"
-      );
+      await expect(
+        factory.connect(addr1).setFee(1, 2, 3)
+      ).to.be.revertedWithCustomError(factory, "Forbidden");
       const feeTo = await factory.feeTo();
       const res = await (await factory.connect(owner).setFee(1, 2, 3)).wait();
       expect(await factory.fee()).to.equal(1);
@@ -448,7 +436,7 @@ describe("GammaPoolFactory", function () {
       expect(_feeToSetter).to.equal(owner.address);
       await expect(
         factory.connect(addr1).setFeeTo(addr2.address)
-      ).to.be.revertedWith("Forbidden");
+      ).to.be.revertedWithCustomError(factory, "Forbidden");
       const res = await (
         await factory.connect(owner).setFeeTo(addr2.address)
       ).wait();
@@ -539,7 +527,7 @@ describe("GammaPoolFactory", function () {
       ).to.be.revertedWith("Forbidden");
       await expect(
         factory.connect(owner).setFeeToSetter(ethers.constants.AddressZero)
-      ).to.be.revertedWith("ZeroAddress");
+      ).to.be.revertedWithCustomError(factory, "ZeroAddress");
 
       await factory.connect(owner).setFeeToSetter(addr1.address);
       expect(await factory.feeToSetter()).to.equal(addr1.address);
@@ -553,13 +541,13 @@ describe("GammaPoolFactory", function () {
 
       await expect(
         factory.connect(addr1).setFeeTo(ethers.constants.AddressZero)
-      ).to.be.revertedWith("Forbidden");
+      ).to.be.revertedWithCustomError(factory, "Forbidden");
 
       await expect(
         factory
           .connect(addr1)
           .setPoolFee(addr4.address, addr2.address, 20000, 30000, 40000, false)
-      ).to.be.revertedWith("Forbidden");
+      ).to.be.revertedWithCustomError(factory, "Forbidden");
 
       await factory.connect(addr2).setFeeTo(ethers.constants.AddressZero);
       expect(await factory.feeTo()).to.equal(ethers.constants.AddressZero);
