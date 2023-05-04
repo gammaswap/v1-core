@@ -7,6 +7,10 @@ import "../libraries/AddressCalculator.sol";
 import "./strategies/base/TestShortStrategy.sol";
 
 contract TestPositionManager is IGammaPoolEvents, ISendTokensCallback {
+    error ZeroAmount();
+    error ZeroShares();
+    error WrongTokenBalance(address token);
+
     event Transfer(address indexed from, address indexed to, uint256 value);
 
     event DepositReserve(address indexed pool, uint256 reservesLen, uint256[] reserves, uint256 shares);

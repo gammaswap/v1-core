@@ -56,6 +56,11 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @return blocksPerYear - blocks created per year by network
     function blocksPerYear() internal virtual view returns(uint256);
 
+    /// @dev See {AbstractRateModel-_rateParamsStore}
+    function _rateParamsStore() internal override virtual view returns(address) {
+        return s.factory;
+    }
+
     /// @dev Update CFMM_RESERVES with reserve quantities in CFMM
     /// @param cfmm - address of CFMM
     function updateReserves(address cfmm) internal virtual {

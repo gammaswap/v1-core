@@ -340,7 +340,7 @@ describe("ShortStrategyERC4626", function () {
           strategy.address,
           allowance.add(1)
         )
-      ).to.be.revertedWith("ExcessiveSpend");
+      ).to.be.revertedWithCustomError(strategy, "ExcessiveSpend");
 
       await (
         await strategy._spendAllowance(
@@ -413,12 +413,12 @@ describe("ShortStrategyERC4626", function () {
 
         await expect(
           strategy._deposit(ethers.constants.Zero, owner.address)
-        ).to.be.revertedWith("ZeroShares");
+        ).to.be.revertedWithCustomError(strategy, "ZeroShares");
 
         const assets = shares.div(2);
         await expect(
           strategy._deposit(assets, owner.address)
-        ).to.be.revertedWith("STF_Fail");
+        ).to.be.revertedWithCustomError(strategy, "STF_Fail");
       });
 
       it("< Min Shares Deposit", async function () {
@@ -451,7 +451,7 @@ describe("ShortStrategyERC4626", function () {
 
         await expect(
           strategy._deposit(minShares, owner.address)
-        ).to.be.revertedWith("0x11");
+        ).to.be.revertedWithPanic();
       });
 
       it("= Min Shares Deposit", async function () {
@@ -484,7 +484,7 @@ describe("ShortStrategyERC4626", function () {
 
         await expect(
           strategy._deposit(minShares, owner.address)
-        ).to.be.revertedWith("ZeroAmount");
+        ).to.be.revertedWithCustomError(strategy, "ZeroAmount");
       });
 
       it("First Deposit Assets/LP Tokens", async function () {
@@ -700,12 +700,12 @@ describe("ShortStrategyERC4626", function () {
 
         await expect(
           strategy._mint(ethers.constants.Zero, owner.address)
-        ).to.be.revertedWith("ZeroAssets");
+        ).to.be.revertedWithCustomError(strategy, "ZeroAssets");
 
         const shares = lpTokens.div(2);
-        await expect(strategy._mint(shares, owner.address)).to.be.revertedWith(
-          "STF_Fail"
-        );
+        await expect(
+          strategy._mint(shares, owner.address)
+        ).to.be.revertedWithCustomError(strategy, "STF_Fail");
       });
 
       it("< Min Shares Mint Shares", async function () {
@@ -738,7 +738,7 @@ describe("ShortStrategyERC4626", function () {
 
         await expect(
           strategy._mint(minShares, owner.address)
-        ).to.be.revertedWith("0x11");
+        ).to.be.revertedWithPanic();
       });
 
       it("= Min Shares Mint Shares", async function () {
@@ -771,7 +771,7 @@ describe("ShortStrategyERC4626", function () {
 
         await expect(
           strategy._mint(minShares, owner.address)
-        ).to.be.revertedWith("ZeroAmount");
+        ).to.be.revertedWithCustomError(strategy, "ZeroAmount");
       });
 
       it("First Mint Shares", async function () {
@@ -1012,7 +1012,7 @@ describe("ShortStrategyERC4626", function () {
             assets,
             shares
           )
-        ).to.be.revertedWith("ExcessiveSpend");
+        ).to.be.revertedWithCustomError(strategy, "ExcessiveSpend");
       });
 
       it("Withdraw Assets", async function () {
@@ -1089,7 +1089,7 @@ describe("ShortStrategyERC4626", function () {
 
         await expect(
           strategy._withdraw(assets.add(1), addr1.address, owner.address)
-        ).to.be.revertedWith("ExcessiveWithdrawal");
+        ).to.be.revertedWithCustomError(strategy, "ExcessiveWithdrawal");
 
         await expect(
           strategy._withdraw(
@@ -1097,7 +1097,7 @@ describe("ShortStrategyERC4626", function () {
             addr1.address,
             owner.address
           )
-        ).to.be.revertedWith("ZeroShares");
+        ).to.be.revertedWithCustomError(strategy, "ZeroShares");
       });
 
       it("ERC4626 Withdraw", async function () {
@@ -1142,11 +1142,11 @@ describe("ShortStrategyERC4626", function () {
 
         await expect(
           strategy._redeem(assets.add(1), addr1.address, owner.address)
-        ).to.be.revertedWith("ExcessiveWithdrawal");
+        ).to.be.revertedWithCustomError(strategy, "ExcessiveWithdrawal");
 
         await expect(
           strategy._redeem(ethers.constants.Zero, addr1.address, owner.address)
-        ).to.be.revertedWith("ZeroAssets");
+        ).to.be.revertedWithCustomError(strategy, "ZeroAssets");
       });
 
       it("ERC4626 Redeem", async function () {

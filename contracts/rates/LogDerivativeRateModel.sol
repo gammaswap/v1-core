@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
+import "../interfaces/rates/storage/IRateParamsStore.sol";
 import "../interfaces/rates/ILogDerivativeRateModel.sol";
 import "../libraries/Math.sol";
 import "./AbstractRateModel.sol";
@@ -13,6 +14,16 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
 
     /// @dev Error thrown when fixed borrow rate > ceiling borrow rate
     error BaseRateGtMaxAPY();
+    /// @dev Error thrown when fixed borrow rate >= 100% or is zero
+    error BaseRate();
+    /// @dev Error thrown when Factor >= 10 or is zero
+    error Factor();
+
+    struct ModelRateParams {
+        uint64 baseRate;
+        uint80 factor;
+        uint80 maxApy;
+    }
 
     /// @dev See {ILogDerivativeRateModel-baseRate}.
     uint64 immutable public override baseRate;
@@ -25,9 +36,7 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
 
     /// @dev Initializes the contract by setting `baseRate`, `factor`, and `maxApy`. the fixed borrow rate (baseRate) cannot be greater than  the borrow rate ceiling (maxApy)
     constructor(uint64 _baseRate, uint80 _factor, uint80 _maxApy) {
-        if(_baseRate > _maxApy ) {
-            revert BaseRateGtMaxAPY(); // revert if fixed borrow rate is greater than maximum allowed borrow rate
-        }
+        _validateParameters(_baseRate, _factor, _maxApy);
         baseRate = _baseRate;
         factor = _factor;
         maxApy = _maxApy;
@@ -42,6 +51,35 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
         }
         uint256 utilizationRateSquare = utilizationRate**2; // since utilizationRate is a fraction, this lowers its value in a non linear way
         uint256 denominator = 1e36 - utilizationRateSquare + 1; // add 1 so that it never becomes 0
-        borrowRate = Math.min(baseRate + factor * utilizationRateSquare / denominator, maxApy); // division by an ever non linear decreasing denominator creates an exponential looking curve as util. rate increases
+        (uint64 _baseRate, uint80 _factor, uint80 _maxApy) = getRateParams();
+        borrowRate = Math.min(_baseRate + _factor * utilizationRateSquare / denominator, _maxApy); // division by an ever non linear decreasing denominator creates an exponential looking curve as util. rate increases
+    }
+
+    function getRateParams() public override virtual view returns(uint64, uint80, uint80) {
+        IRateParamsStore.RateParams memory rateParams = IRateParamsStore(rateParamsStore()).getRateParams(address(this));
+        if(!rateParams.active) {
+            return (baseRate, factor, maxApy);
+        }
+        ModelRateParams memory params = abi.decode(rateParams.data, (ModelRateParams));
+        return (params.baseRate, params.factor, params.maxApy);
+    }
+
+    function validateParameters(bytes calldata _data) external override(AbstractRateModel,IRateModel) virtual view returns(bool) {
+        ModelRateParams memory params = abi.decode(_data, (ModelRateParams));
+        _validateParameters(params.baseRate, params.factor, params.maxApy);
+        return true;
+    }
+
+    function _validateParameters(uint64 _baseRate, uint80 _factor, uint80 _maxApy) internal virtual view returns(bool) {
+        if(_baseRate > _maxApy ) {
+            revert BaseRateGtMaxAPY(); // revert if fixed borrow rate is greater than maximum allowed borrow rate
+        }
+        if(_baseRate > 1e18 || _baseRate == 0) {
+            revert BaseRate(); // revert if base rate is greater than 100% or is zero
+        }
+        if(_factor > 1e19 || _factor == 0) {
+            revert Factor(); // revert if factor is greater than 10 or is zero
+        }
+        return true;
     }
 }

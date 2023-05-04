@@ -6,10 +6,12 @@ const PROTOCOL_ID = 1;
 describe("GammaPoolFactory", function () {
   let TestERC20: any;
   let TestAddressCalculator: any;
+  let TestRateModel: any;
   let GammaPool: any;
   let GammaPoolFactory: any;
   let factory: any;
   let addressCalculator: any;
+  let rateModel: any;
   let protocol: any;
   let protocolZero: any;
   let tokenA: any;
@@ -30,6 +32,7 @@ describe("GammaPoolFactory", function () {
   beforeEach(async function () {
     // Get the ContractFactory and Signers here.
     TestERC20 = await ethers.getContractFactory("TestERC20");
+    TestRateModel = await ethers.getContractFactory("TestRateModel");
     GammaPool = await ethers.getContractFactory("TestGammaPool");
     GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
     TestAddressCalculator = await ethers.getContractFactory(
@@ -46,6 +49,8 @@ describe("GammaPoolFactory", function () {
     tokenC = await TestERC20.deploy("Test Token C", "TOKC");
     tokenD = await TestERC20.deploy("Test Token D", "TOKD");
     factory = await GammaPoolFactory.deploy(owner.address);
+
+    rateModel = await TestRateModel.deploy(owner.address);
 
     protocol = await GammaPool.deploy(
       PROTOCOL_ID,
@@ -64,8 +69,6 @@ describe("GammaPoolFactory", function () {
       addr2.address,
       addr5.address
     );
-
-    // address _longStrategy, address _shortStrategy, uint24 _protocol
 
     // We can interact with the contract by calling `hardhatToken.method()`
     await tokenA.deployed();
@@ -92,18 +95,6 @@ describe("GammaPoolFactory", function () {
     );
     return { createPoolParams: createPoolParams, data: data };
   }
-
-  async function checkPoolDetails(details: any, tokenA: any, tokenB: any) {
-    expect(details.tokens[0]).to.equal(tokenA.address);
-    expect(details.tokens[1]).to.equal(tokenB.address);
-    expect(details.symbols[0]).to.equal(await tokenA.symbol());
-    expect(details.symbols[1]).to.equal(await tokenB.symbol());
-    expect(details.names[0]).to.equal(await tokenA.name());
-    expect(details.names[1]).to.equal(await tokenB.name());
-    expect(details.decimals[0]).to.equal(await tokenA.decimals());
-    expect(details.decimals[1]).to.equal(await tokenB.decimals());
-  }
-
   // You can nest describe calls to create subsections.
   describe("Deployment", function () {
     it("Should set the right initial fields", async function () {
@@ -143,13 +134,13 @@ describe("GammaPoolFactory", function () {
       );
 
       await (await factory.addProtocol(protocol.address)).wait();
-      await expect(factory.addProtocol(protocol.address)).to.be.revertedWith(
-        "ProtocolExists"
-      );
+      await expect(
+        factory.addProtocol(protocol.address)
+      ).to.be.revertedWithCustomError(factory, "ProtocolExists");
 
       await expect(
         factory.addProtocol(protocolZero.address)
-      ).to.be.revertedWith("ZeroProtocol");
+      ).to.be.revertedWithCustomError(factory, "ZeroProtocol");
 
       await expect(
         factory.connect(addr1).addProtocol(addr2.address)
@@ -244,7 +235,7 @@ describe("GammaPoolFactory", function () {
           createPoolParams.tokens,
           data
         )
-      ).to.be.revertedWith("ProtocolNotSet");
+      ).to.be.revertedWithCustomError(factory, "ProtocolNotSet");
       await factory.addProtocol(protocol.address);
 
       await expect(
@@ -269,7 +260,7 @@ describe("GammaPoolFactory", function () {
           createPoolParams.tokens,
           data
         )
-      ).to.be.revertedWith("PoolExists");
+      ).to.be.revertedWithCustomError(factory, "PoolExists");
 
       await factory.setIsProtocolRestricted(1, true);
 
@@ -295,7 +286,7 @@ describe("GammaPoolFactory", function () {
             createPoolParams2.tokens,
             data2
           )
-      ).to.be.revertedWith("ProtocolRestricted");
+      ).to.be.revertedWithCustomError(factory, "ProtocolRestricted");
 
       await factory.setIsProtocolRestricted(1, false);
 
@@ -315,7 +306,7 @@ describe("GammaPoolFactory", function () {
           createPoolParams2.tokens,
           data2
         )
-      ).to.be.revertedWith("PoolExists");
+      ).to.be.revertedWithCustomError(factory, "PoolExists");
     });
 
     it("Query Pools", async function () {
@@ -418,9 +409,9 @@ describe("GammaPoolFactory", function () {
       expect(await factory.fee()).to.equal(10000);
       const _feeToSetter = await factory.feeToSetter();
       expect(_feeToSetter).to.equal(owner.address);
-      await expect(factory.connect(addr1).setFee(1, 2, 3)).to.be.revertedWith(
-        "Forbidden"
-      );
+      await expect(
+        factory.connect(addr1).setFee(1, 2, 3)
+      ).to.be.revertedWithCustomError(factory, "Forbidden");
       const feeTo = await factory.feeTo();
       const res = await (await factory.connect(owner).setFee(1, 2, 3)).wait();
       expect(await factory.fee()).to.equal(1);
@@ -448,7 +439,7 @@ describe("GammaPoolFactory", function () {
       expect(_feeToSetter).to.equal(owner.address);
       await expect(
         factory.connect(addr1).setFeeTo(addr2.address)
-      ).to.be.revertedWith("Forbidden");
+      ).to.be.revertedWithCustomError(factory, "Forbidden");
       const res = await (
         await factory.connect(owner).setFeeTo(addr2.address)
       ).wait();
@@ -539,7 +530,7 @@ describe("GammaPoolFactory", function () {
       ).to.be.revertedWith("Forbidden");
       await expect(
         factory.connect(owner).setFeeToSetter(ethers.constants.AddressZero)
-      ).to.be.revertedWith("ZeroAddress");
+      ).to.be.revertedWithCustomError(factory, "ZeroAddress");
 
       await factory.connect(owner).setFeeToSetter(addr1.address);
       expect(await factory.feeToSetter()).to.equal(addr1.address);
@@ -553,13 +544,13 @@ describe("GammaPoolFactory", function () {
 
       await expect(
         factory.connect(addr1).setFeeTo(ethers.constants.AddressZero)
-      ).to.be.revertedWith("Forbidden");
+      ).to.be.revertedWithCustomError(factory, "Forbidden");
 
       await expect(
         factory
           .connect(addr1)
           .setPoolFee(addr4.address, addr2.address, 20000, 30000, 40000, false)
-      ).to.be.revertedWith("Forbidden");
+      ).to.be.revertedWithCustomError(factory, "Forbidden");
 
       await factory.connect(addr2).setFeeTo(ethers.constants.AddressZero);
       expect(await factory.feeTo()).to.equal(ethers.constants.AddressZero);
@@ -576,6 +567,42 @@ describe("GammaPoolFactory", function () {
       expect(poolFee._origMinFee).to.equal(30000);
       expect(poolFee._origMaxFee).to.equal(40000);
       expect(poolFee._isSet).to.equal(true);
+    });
+
+    it("Set Rate for Pool Forbidden", async function () {
+      const data = ethers.utils.defaultAbiCoder.encode([], []);
+      await expect(
+        factory.connect(addr1).setRateParams(addr1.address, data, false)
+      ).to.be.revertedWith("FORBIDDEN");
+
+      await expect(
+        factory.setRateParams(addr1.address, data, false)
+      ).to.be.revertedWithoutReason();
+
+      await expect(
+        factory.setRateParams(protocol.address, data, false)
+      ).to.be.revertedWith("VALIDATE");
+
+      const data1 = ethers.utils.defaultAbiCoder.encode(["uint256"], [1]);
+      await (
+        await factory.setRateParams(rateModel.address, data1, false)
+      ).wait();
+
+      const resp = await factory.getRateParams(rateModel.address);
+      expect(resp.data).to.be.eq(data1);
+      expect(resp.active).to.be.eq(false);
+
+      await (
+        await factory.setRateParams(rateModel.address, data1, true)
+      ).wait();
+
+      const resp1 = await factory.getRateParams(rateModel.address);
+      expect(resp1.data).to.be.eq(data1);
+      expect(resp1.active).to.be.eq(true);
+
+      expect(await factory.rateParamsStoreOwner()).to.be.equal(
+        await factory.owner()
+      );
     });
   });
 

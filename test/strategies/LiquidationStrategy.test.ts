@@ -157,9 +157,9 @@ describe("LiquidationStrategy", function () {
 
     it("checks Borrowing", async function () {
       const lpTokens = ONE.mul(2);
-      await expect(liquidationStrategy.createLoan(lpTokens)).to.revertedWith(
-        "Margin"
-      );
+      await expect(
+        liquidationStrategy.createLoan(lpTokens)
+      ).to.revertedWithCustomError(liquidationStrategy, "Margin");
 
       const stratBalance = await cfmm.balanceOf(liquidationStrategy.address);
       const cfmmTotalInvariant = await cfmm.invariant();
@@ -288,11 +288,11 @@ describe("LiquidationStrategy", function () {
     it("Can Liquidate", async function () {
       await expect(
         liquidationStrategy.testCanLiquidate(10001, 9500)
-      ).to.be.revertedWith("HasMargin");
+      ).to.be.revertedWithCustomError(liquidationStrategy, "HasMargin");
 
       await expect(
         liquidationStrategy.testCanLiquidate(10000, 9500)
-      ).to.be.revertedWith("HasMargin");
+      ).to.be.revertedWithCustomError(liquidationStrategy, "HasMargin");
 
       await liquidationStrategy.testCanLiquidate(9999, 9500);
     });
@@ -877,7 +877,7 @@ describe("LiquidationStrategy", function () {
 
       await expect(
         liquidationStrategy._liquidateWithLP(tokenIds[0])
-      ).to.be.revertedWith("HasMargin");
+      ).to.be.revertedWithCustomError(liquidationStrategy, "HasMargin");
     });
 
     it("error, loan does not exist", async function () {
@@ -894,7 +894,7 @@ describe("LiquidationStrategy", function () {
 
       await expect(
         liquidationStrategy._liquidateWithLP(BigNumber.from(tokenIds[0]).add(1))
-      ).to.be.revertedWith("DoesNotExist");
+      ).to.be.revertedWithCustomError(liquidationStrategy, "LoanDoesNotExist");
     });
 
     it("returns error NoLiquidityProvided", async function () {
@@ -913,7 +913,10 @@ describe("LiquidationStrategy", function () {
 
       await expect(
         liquidationStrategy._liquidateWithLP(tokenIds[0])
-      ).to.be.revertedWith("NoLiquidityProvided");
+      ).to.be.revertedWithCustomError(
+        liquidationStrategy,
+        "NoLiquidityProvided"
+      );
     });
 
     it("partial liquidation, no write down", async function () {
@@ -1869,7 +1872,7 @@ describe("LiquidationStrategy", function () {
 
       await expect(
         liquidationStrategy._batchLiquidations(tokenIds)
-      ).to.be.revertedWith("NoLiquidityDebt");
+      ).to.be.revertedWithCustomError(liquidationStrategy, "NoLiquidityDebt");
     });
 
     it("returns error NoLiquidityProvided", async function () {
@@ -1888,7 +1891,10 @@ describe("LiquidationStrategy", function () {
 
       await expect(
         liquidationStrategy._batchLiquidations(tokenIds)
-      ).to.be.revertedWith("NoLiquidityProvided");
+      ).to.be.revertedWithCustomError(
+        liquidationStrategy,
+        "NoLiquidityProvided"
+      );
     });
 
     it("liquidation, no write down", async function () {
@@ -2503,16 +2509,16 @@ describe("LiquidationStrategy", function () {
       // function _liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external override lock virtual returns(uint256[] memory refund)
       await expect(
         liquidationStrategy._liquidate(tokenIds[0], [], [])
-      ).to.be.revertedWith("HasMargin");
+      ).to.be.revertedWithCustomError(liquidationStrategy, "HasMargin");
       await expect(
         liquidationStrategy._liquidate(tokenIds[0], [1, 0], [])
-      ).to.be.revertedWith("HasMargin");
+      ).to.be.revertedWithCustomError(liquidationStrategy, "HasMargin");
       await expect(
         liquidationStrategy._liquidate(tokenIds[0], [], [])
-      ).to.be.revertedWith("HasMargin");
+      ).to.be.revertedWithCustomError(liquidationStrategy, "HasMargin");
       await expect(
         liquidationStrategy._liquidate(tokenIds[0], [1, 0], [])
-      ).to.be.revertedWith("HasMargin");
+      ).to.be.revertedWithCustomError(liquidationStrategy, "HasMargin");
     });
 
     it("error, loan does not exist", async function () {
@@ -2533,7 +2539,7 @@ describe("LiquidationStrategy", function () {
           [1, 0],
           []
         )
-      ).to.be.revertedWith("DoesNotExist");
+      ).to.be.revertedWithCustomError(liquidationStrategy, "LoanDoesNotExist");
     });
   });
 });

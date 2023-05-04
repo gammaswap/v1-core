@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
+import "./IRateModel.sol";
+
 /// @title Interface of Rate Model that calculates borrow rate according to a linear kinked rate model
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice Interface for Linear Kinked rate model contract
 /// @dev Inheritors of this interface has to also inherit AbstractRateModel
-interface ILinearKinkedRateModel {
+interface ILinearKinkedRateModel is IRateModel {
     /// @notice Base rate of Linear Kinked Rate model. This percentage is fixed and same amount is charged to every borrower
     /// @dev Base rate is expected to be of 18 decimals but of size uint64, therefore max value is approximately 1,844%
     /// @return baseRate - fixed rate that will be charged to liquidity borrowers

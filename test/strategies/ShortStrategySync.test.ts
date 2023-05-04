@@ -79,7 +79,10 @@ describe("ShortStrategySync", function () {
       const cfmmBalance1 = await cfmm.balanceOf(strategy.address);
       expect(cfmmBalance1).gt(0);
 
-      await expect(strategy._sync()).to.be.revertedWith("ZeroShares");
+      await expect(strategy._sync()).to.be.revertedWithCustomError(
+        strategy,
+        "ZeroShares"
+      );
     });
 
     it("Syncing already synced", async function () {

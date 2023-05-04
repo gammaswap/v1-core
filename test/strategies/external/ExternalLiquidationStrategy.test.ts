@@ -1020,7 +1020,7 @@ describe("ExternalLiquidationStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWith("LoanDoesNotExist");
+      ).to.be.revertedWithCustomError(strategy, "LoanDoesNotExist");
       await expect(
         strategy._liquidateExternally(
           tokenId.sub(1),
@@ -1029,7 +1029,7 @@ describe("ExternalLiquidationStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWith("LoanDoesNotExist");
+      ).to.be.revertedWithCustomError(strategy, "LoanDoesNotExist");
     });
 
     it("Has margin", async function () {
@@ -1079,7 +1079,7 @@ describe("ExternalLiquidationStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWith("HasMargin");
+      ).to.be.revertedWithCustomError(strategy, "HasMargin");
     });
 
     it("No lp tokens deposited", async function () {
@@ -1129,7 +1129,7 @@ describe("ExternalLiquidationStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWith("NoLiquidityProvided");
+      ).to.be.revertedWithCustomError(strategy, "NoLiquidityProvided");
     });
 
     it("Deposit LP tokens, withdrew tokenA, NotEnoughCollateral", async function () {
@@ -1181,7 +1181,7 @@ describe("ExternalLiquidationStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWith("NotEnoughCollateral");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughCollateral");
     });
 
     it("Deposit LP tokens, withdrew tokenB, NotEnoughCollateral", async function () {
@@ -1233,7 +1233,7 @@ describe("ExternalLiquidationStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWith("NotEnoughCollateral");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughCollateral");
     });
 
     it("Deposit LP tokens, withdrew both tokens, no liquidity provided", async function () {
@@ -1285,7 +1285,7 @@ describe("ExternalLiquidationStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWith("NoLiquidityProvided");
+      ).to.be.revertedWithCustomError(strategy, "NoLiquidityProvided");
     });
 
     it("Deposit LP tokens, withdrew both tokens, negative LP token change", async function () {
@@ -1337,7 +1337,7 @@ describe("ExternalLiquidationStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWith("0x11");
+      ).to.be.revertedWithPanic();
     });
   });
 });

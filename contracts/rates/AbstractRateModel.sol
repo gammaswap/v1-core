@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
+import "../interfaces/rates/IRateModel.sol";
+
 /// @title Abstract contract to calculate the utilization rate of the GammaPool.
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice All rate models inherit this contract since all rate models depend on utilization rate
 /// @dev All strategies inherit a rate model in its base and therefore all strategies inherit this contract.
-abstract contract AbstractRateModel {
+abstract contract AbstractRateModel is IRateModel {
     /// @notice Calculates the utilization rate of the pool. How much borrowed out of how much liquidity is in the AMM through GammaSwap
     /// @dev The utilization rate always has 18 decimal places, even if the reserve tokens do not. Everything is adjusted to 18 decimal points
     /// @param lpInvariant - invariant amount available to be borrowed from LP tokens deposited in GammaSwap
@@ -26,4 +28,19 @@ abstract contract AbstractRateModel {
     /// @return borrowRate - rate that will be charged to liquidity borrowers
     /// @return utilizationRate - utilization rate used to calculate the borrow rate
     function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant) internal virtual view returns(uint256, uint256);
+
+    /// @dev See {IRateModel-validateParameters}
+    function validateParameters(bytes calldata _data) external override virtual view returns(bool) {
+        return false;
+    }
+
+    /// @dev See {IRateModel-rateParamsStore}
+    function rateParamsStore() public override virtual view returns(address) {
+        return _rateParamsStore();
+    }
+
+    /// @dev Return contract holding rate parameters
+    function _rateParamsStore() internal virtual view returns(address) {
+        return address(0);
+    }
 }
