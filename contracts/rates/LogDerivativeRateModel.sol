@@ -55,7 +55,7 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
         borrowRate = Math.min(_baseRate + _factor * utilizationRateSquare / denominator, _maxApy); // division by an ever non linear decreasing denominator creates an exponential looking curve as util. rate increases
     }
 
-    function getRateParams() public virtual view returns(uint64, uint80, uint80) {
+    function getRateParams() public override virtual view returns(uint64, uint80, uint80) {
         IRateParamsStore.RateParams memory rateParams = IRateParamsStore(rateParamsStore()).getRateParams(address(this));
         if(!rateParams.active) {
             return (baseRate, factor, maxApy);
@@ -74,11 +74,11 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
         if(_baseRate > _maxApy ) {
             revert BaseRateGtMaxAPY(); // revert if fixed borrow rate is greater than maximum allowed borrow rate
         }
-        if(_baseRate >= 1e18 || _baseRate == 0) {
-            revert BaseRate(); // revert if base rate is greater than or equal to 100% or is zero
+        if(_baseRate > 1e18 || _baseRate == 0) {
+            revert BaseRate(); // revert if base rate is greater than 100% or is zero
         }
-        if(_factor >= 1e19 || _factor == 0) {
-            revert Factor(); // revert if factor is greater than or equal to 10 or is zero
+        if(_factor > 1e19 || _factor == 0) {
+            revert Factor(); // revert if factor is greater than 10 or is zero
         }
         return true;
     }

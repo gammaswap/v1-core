@@ -200,4 +200,9 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore {
     function _rateParamsStoreOwner() internal override virtual view returns(address) {
         return owner;
     }
+
+    /// @dev Return rate params store owner
+    function rateParamsStoreOwner() external virtual view returns(address) {
+        return _rateParamsStoreOwner();
+    }
 }

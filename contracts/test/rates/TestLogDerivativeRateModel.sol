@@ -7,6 +7,7 @@ import "../../rates/storage/AbstractRateParamsStore.sol";
 contract TestLogDerivativeRateModel is LogDerivativeRateModel, AbstractRateParamsStore {
 
     address public owner;
+    address private paramsStore;
 
     constructor(uint64 _baseRate, uint80 _factor, uint80 _maxApy)
         LogDerivativeRateModel(_baseRate, _factor, _maxApy){
@@ -21,7 +22,11 @@ contract TestLogDerivativeRateModel is LogDerivativeRateModel, AbstractRateParam
         return owner;
     }
 
+    function setRateParamsStore(address _paramsStore) public virtual {
+        paramsStore = _paramsStore;
+    }
+
     function rateParamsStore() public override(AbstractRateModel, IRateModel) virtual view returns(address) {
-        return address(this);
+        return paramsStore;
     }
 }

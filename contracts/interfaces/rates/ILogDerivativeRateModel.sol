@@ -22,4 +22,10 @@ interface ILogDerivativeRateModel is IRateModel {
     /// @dev The maximum borrow rate is expected to be of 18 decimals but of size uint80, therefore max possible borrow rate is approximately 120,892,500%
     /// @return maxApy - the maximum borrow rate charged to liquidity borrowers
     function maxApy() external view returns(uint80);
+
+    /// @dev Get interest rate model parameters
+    /// @return baseRate - baseRate parameter of model
+    /// @return factor - factor parameter of model
+    /// @return maxApy - maxApy parameter of model
+    function getRateParams() external view returns(uint64, uint80, uint80);
 }

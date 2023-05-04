@@ -6,10 +6,12 @@ const PROTOCOL_ID = 1;
 describe("GammaPoolFactory", function () {
   let TestERC20: any;
   let TestAddressCalculator: any;
+  let TestRateModel: any;
   let GammaPool: any;
   let GammaPoolFactory: any;
   let factory: any;
   let addressCalculator: any;
+  let rateModel: any;
   let protocol: any;
   let protocolZero: any;
   let tokenA: any;
@@ -30,6 +32,7 @@ describe("GammaPoolFactory", function () {
   beforeEach(async function () {
     // Get the ContractFactory and Signers here.
     TestERC20 = await ethers.getContractFactory("TestERC20");
+    TestRateModel = await ethers.getContractFactory("TestRateModel");
     GammaPool = await ethers.getContractFactory("TestGammaPool");
     GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
     TestAddressCalculator = await ethers.getContractFactory(
@@ -46,6 +49,8 @@ describe("GammaPoolFactory", function () {
     tokenC = await TestERC20.deploy("Test Token C", "TOKC");
     tokenD = await TestERC20.deploy("Test Token D", "TOKD");
     factory = await GammaPoolFactory.deploy(owner.address);
+
+    rateModel = await TestRateModel.deploy(owner.address);
 
     protocol = await GammaPool.deploy(
       PROTOCOL_ID,
@@ -64,8 +69,6 @@ describe("GammaPoolFactory", function () {
       addr2.address,
       addr5.address
     );
-
-    // address _longStrategy, address _shortStrategy, uint24 _protocol
 
     // We can interact with the contract by calling `hardhatToken.method()`
     await tokenA.deployed();
@@ -564,6 +567,42 @@ describe("GammaPoolFactory", function () {
       expect(poolFee._origMinFee).to.equal(30000);
       expect(poolFee._origMaxFee).to.equal(40000);
       expect(poolFee._isSet).to.equal(true);
+    });
+
+    it("Set Rate for Pool Forbidden", async function () {
+      const data = ethers.utils.defaultAbiCoder.encode([], []);
+      await expect(
+        factory.connect(addr1).setRateParams(addr1.address, data, false)
+      ).to.be.revertedWith("FORBIDDEN");
+
+      await expect(
+        factory.setRateParams(addr1.address, data, false)
+      ).to.be.revertedWithoutReason();
+
+      await expect(
+        factory.setRateParams(protocol.address, data, false)
+      ).to.be.revertedWith("VALIDATE");
+
+      const data1 = ethers.utils.defaultAbiCoder.encode(["uint256"], [1]);
+      await (
+        await factory.setRateParams(rateModel.address, data1, false)
+      ).wait();
+
+      const resp = await factory.getRateParams(rateModel.address);
+      expect(resp.data).to.be.eq(data1);
+      expect(resp.active).to.be.eq(false);
+
+      await (
+        await factory.setRateParams(rateModel.address, data1, true)
+      ).wait();
+
+      const resp1 = await factory.getRateParams(rateModel.address);
+      expect(resp1.data).to.be.eq(data1);
+      expect(resp1.active).to.be.eq(true);
+
+      expect(await factory.rateParamsStoreOwner()).to.be.equal(
+        await factory.owner()
+      );
     });
   });
 

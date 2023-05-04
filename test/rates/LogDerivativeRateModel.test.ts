@@ -5,10 +5,13 @@ import { BigNumber } from "ethers";
 
 describe("LogDerivativeRateModel", function () {
   let RateModel: any;
+  let TestRateParamsStore: any;
   let rateModel: any;
+  let rateParamsStore: any;
   let baseRate: any;
   let factor: any;
   let maxApy: any;
+  let owner: any;
   let ONE: any;
 
   // `beforeEach` will run before each test, re-deploying the contract every
@@ -16,6 +19,11 @@ describe("LogDerivativeRateModel", function () {
   beforeEach(async function () {
     // Get the ContractFactory and Signers here.
     RateModel = await ethers.getContractFactory("TestLogDerivativeRateModel");
+    TestRateParamsStore = await ethers.getContractFactory(
+      "TestRateParamsStore"
+    );
+
+    [owner] = await ethers.getSigners();
 
     ONE = BigNumber.from(10).pow(18);
     baseRate = ONE.div(100);
@@ -23,6 +31,8 @@ describe("LogDerivativeRateModel", function () {
     maxApy = ONE.mul(75).div(100);
 
     rateModel = await RateModel.deploy(baseRate, factor, maxApy);
+    rateParamsStore = await TestRateParamsStore.deploy(owner.address);
+    await (await rateModel.setRateParamsStore(rateParamsStore.address)).wait();
   });
 
   function calcBorrowRate(
