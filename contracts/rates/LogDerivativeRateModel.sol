@@ -48,24 +48,25 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
 
     /// @notice formula is as follows: max{ baseRate + factor * (utilRate^2)/(1 - utilRate^2), maxApy }
     /// @dev See {AbstractRateModel-calcBorrowRate}.
-    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore) internal virtual override view returns(uint256 borrowRate, uint256 utilizationRate) {
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) internal virtual override view returns(uint256 borrowRate, uint256 utilizationRate) {
         utilizationRate = calcUtilizationRate(lpInvariant, borrowedInvariant);
         if(utilizationRate == 0) { // if utilization rate is zero, the borrow rate is zero
             return (0, 0);
         }
         uint256 utilizationRateSquare = utilizationRate**2; // since utilizationRate is a fraction, this lowers its value in a non linear way
         uint256 denominator = 1e36 - utilizationRateSquare + 1; // add 1 so that it never becomes 0
-        (uint64 _baseRate, uint80 _factor, uint80 _maxApy) = getRateModelParams(paramsStore);
+        (uint64 _baseRate, uint80 _factor, uint80 _maxApy) = getRateModelParams(paramsStore, pool);
         borrowRate = Math.min(_baseRate + _factor * utilizationRateSquare / denominator, _maxApy); // division by an ever non linear decreasing denominator creates an exponential looking curve as util. rate increases
     }
 
     /// @dev Get parameters for itnerest rate model
     /// @param paramsStore - address of contract storing overriding rate parameters
+    /// @param pool - address to get rate parameters for
     /// @return baseRate - minimum rate charged to all loans
     /// @return factor - number that determines convexity of interest rate model
     /// @return maxApy - maximum interest rate charged
-    function getRateModelParams(address paramsStore) public override virtual view returns(uint64, uint80, uint80) {
-        IRateParamsStore.RateParams memory rateParams = IRateParamsStore(paramsStore).getRateParams(address(this));
+    function getRateModelParams(address paramsStore, address pool) public override virtual view returns(uint64, uint80, uint80) {
+        IRateParamsStore.RateParams memory rateParams = IRateParamsStore(paramsStore).getRateParams(pool);
         if(!rateParams.active) {
             return (baseRate, factor, maxApy);
         }
