@@ -3,11 +3,12 @@ pragma solidity >=0.8.0;
 
 import "./IGammaPoolEvents.sol";
 import "./strategies/events/IGammaPoolERC20Events.sol";
+import "./rates/IRateModel.sol";
 
 /// @title Interface for GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Interface used to clear tokens from the GammaPool
-interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events {
+interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @dev Struct containing Loan data plus tokenId
     struct LoanData {
         /// @dev Loan counter, used to generate unique tokenId which indentifies the loan in the GammaPool

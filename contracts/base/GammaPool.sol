@@ -65,6 +65,16 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         return shortStrategy;
     }
 
+    /// @dev See {IRateModel-validateParameters}
+    function validateParameters(bytes calldata _data) external view returns(bool) {
+        return IRateModel(longStrategy).validateParameters(_data);
+    }
+
+    /// @dev See {IRateModel-rateParamsStore}
+    function rateParamsStore() external view returns(address) {
+        return s.factory;
+    }
+
     /***** CFMM Data *****/
 
     /// @dev See {GammaPoolERC4626-_getLatestCFMMReserves}
