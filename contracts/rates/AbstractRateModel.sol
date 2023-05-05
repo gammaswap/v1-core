@@ -25,9 +25,10 @@ abstract contract AbstractRateModel is IRateModel {
     /// @dev The borrow rate is expected to always have 18 decimal places
     /// @param lpInvariant - invariant amount available to be borrowed from LP tokens deposited in GammaSwap
     /// @param borrowedInvariant - invariant amount borrowed from GammaSwap
+    /// @param paramsStore - address of rate params store, to get overriding parameter values
     /// @return borrowRate - rate that will be charged to liquidity borrowers
     /// @return utilizationRate - utilization rate used to calculate the borrow rate
-    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant) internal virtual view returns(uint256, uint256);
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore) internal virtual view returns(uint256, uint256);
 
     /// @dev See {IRateModel-rateParamsStore}
     function rateParamsStore() public override virtual view returns(address) {

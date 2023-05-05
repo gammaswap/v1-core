@@ -65,7 +65,7 @@ contract RateParamsStoreTest is Test {
         TestParams memory params = TestParams({ num1: _num1, num2: _num2, num3: _num3 });
         paramsStore.setRateParams(address(rateModel), abi.encode(params), active);
 
-        (uint256 baseRate, uint256 factor, uint256 maxApy) = rateModel.getRateParams();
+        (uint256 baseRate, uint256 factor, uint256 maxApy) = rateModel.getRateModelParams(address(paramsStore));
         if(active) {
             assertEq(baseRate, _num1);
             assertEq(factor, _num2);
@@ -81,14 +81,14 @@ contract RateParamsStoreTest is Test {
         TestParams memory params = TestParams({ num1: 10, num2: 20, num3: 40 });
         paramsStore.setRateParams(address(rateModel), abi.encode(params), false);
 
-        (uint256 baseRate, uint256 factor, uint256 maxApy) = rateModel.getRateParams();
+        (uint256 baseRate, uint256 factor, uint256 maxApy) = rateModel.getRateModelParams(address(paramsStore));
         assertEq(baseRate, 1);
         assertEq(factor, 2);
         assertEq(maxApy, 3);
 
         paramsStore.setRateParams(address(rateModel), abi.encode(params), true);
 
-        (baseRate, factor, maxApy) = rateModel.getRateParams();
+        (baseRate, factor, maxApy) = rateModel.getRateModelParams(address(paramsStore));
         assertEq(baseRate, 10);
         assertEq(factor, 20);
         assertEq(maxApy, 40);

@@ -134,7 +134,7 @@ contract TestBaseStrategy is BaseStrategy {
     }
 
     function testUpdateFeeIndex() public virtual {
-        (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, s.BORROWED_INVARIANT);
+        (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, s.BORROWED_INVARIANT, s.factory);
         _lastFeeIndex = uint80(calcFeeIndex(_lastCFMMFeeIndex, borrowRate, block.number - s.LAST_BLOCK_NUMBER));
     }
 
@@ -173,7 +173,7 @@ contract TestBaseStrategy is BaseStrategy {
         return s.balanceOf[account];
     }
 
-    function calcBorrowRate(uint256, uint256) internal virtual override view returns(uint256, uint256) {
+    function calcBorrowRate(uint256, uint256, address) internal virtual override view returns(uint256, uint256) {
         return (borrowRate, 0);
     }
 

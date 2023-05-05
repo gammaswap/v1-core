@@ -24,8 +24,9 @@ interface ILogDerivativeRateModel is IRateModel {
     function maxApy() external view returns(uint80);
 
     /// @dev Get interest rate model parameters
+    /// @param paramsStore - address storing rate params
     /// @return baseRate - baseRate parameter of model
     /// @return factor - factor parameter of model
     /// @return maxApy - maxApy parameter of model
-    function getRateParams() external view returns(uint64, uint80, uint80);
+    function getRateModelParams(address paramsStore) external view returns(uint64, uint80, uint80);
 }

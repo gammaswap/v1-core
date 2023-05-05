@@ -130,7 +130,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     function _getLastFeeIndex(uint256 lastBlockNumber) internal virtual view returns(uint256 lastCFMMFeeIndex, uint256 lastFeeIndex,
         uint256 borrowRate, uint256 utilizationRate, uint256 accFeeIndex) {
         (lastCFMMFeeIndex,lastFeeIndex,borrowRate,utilizationRate) = IShortStrategy(shortStrategy)
-        .getLastFees(s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE, _getLatestCFMMInvariant(), _getLatestCFMMTotalSupply(),
+        .getLastFees(s.factory, s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE, _getLatestCFMMInvariant(), _getLatestCFMMTotalSupply(),
             s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER);
         accFeeIndex = s.accFeeIndex * lastFeeIndex / 1e18;
     }
@@ -192,7 +192,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
 
         uint256 lastCFMMFeeIndex;
         (lastCFMMFeeIndex, data.lastFeeIndex, data.borrowRate, data.utilizationRate) = IShortStrategy(shortStrategy)
-        .getLastFees(borrowedInvariant, data.LP_TOKEN_BALANCE, data.lastCFMMInvariant, data.lastCFMMTotalSupply,
+        .getLastFees(s.factory, borrowedInvariant, data.LP_TOKEN_BALANCE, data.lastCFMMInvariant, data.lastCFMMTotalSupply,
             s.lastCFMMInvariant, s.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER);
 
         data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
