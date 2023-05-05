@@ -43,6 +43,10 @@ abstract contract TestExternalBaseLongStrategy is ExternalBaseStrategy {
         return 10;
     }
 
+    function validateParameters(bytes calldata _data) external override view returns(bool) {
+        return false;
+    }
+
     function externalSwapFee() internal view override virtual returns(uint256) {
         return swapFee;
     }

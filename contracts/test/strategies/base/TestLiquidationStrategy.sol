@@ -248,4 +248,8 @@ contract TestLiquidationStrategy is LiquidationStrategy {
         reserves = new uint128[](2);
         (reserves[0], reserves[1],) = TestCFMM(cfmm).getReserves();
     }
+
+    function validateParameters(bytes calldata _data) external override view returns(bool) {
+        return false;
+    }
 }

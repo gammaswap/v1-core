@@ -35,6 +35,10 @@ contract TestBaseStrategy is BaseStrategy {
         return 2252571;
     }
 
+    function validateParameters(bytes calldata _data) external override view returns(bool) {
+        return false;
+    }
+
     function getParameters() public virtual view returns(address factory, address cfmm, address[] memory tokens, uint16 protocolId) {
         factory = _factory;
         cfmm = s.cfmm;
