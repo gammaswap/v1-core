@@ -10,11 +10,13 @@ describe("ShortStrategy", function () {
   let TestCFMM: any;
   let TestStrategy: any;
   let TestPositionManager: any;
+  let TestRateParamsStore: any;
   let tokenA: any;
   let tokenB: any;
   let cfmm: any;
   let strategy: any;
   let posManager: any;
+  let paramsStore: any;
   let owner: any;
   let addr1: any;
 
@@ -25,6 +27,9 @@ describe("ShortStrategy", function () {
     TestERC20 = await ethers.getContractFactory("TestERC20");
     TestCFMM = await ethers.getContractFactory("TestCFMM");
     TestStrategy = await ethers.getContractFactory("TestShortStrategy");
+    TestRateParamsStore = await ethers.getContractFactory(
+      "TestRateParamsStore"
+    );
     TestPositionManager = await ethers.getContractFactory(
       "TestPositionManager"
     );
@@ -40,6 +45,7 @@ describe("ShortStrategy", function () {
       "TCFMM"
     );
 
+    paramsStore = await TestRateParamsStore.deploy(owner.address);
     strategy = await TestStrategy.deploy();
     await (
       await strategy.initialize(
@@ -759,6 +765,7 @@ describe("ShortStrategy", function () {
 
         const params0 = await strategy.getTotalAssetsParams();
         const totalAssets0 = await strategy.totalAssets(
+          paramsStore.address,
           params0.borrowedInvariant,
           params0.lpBalance,
           cfmmInvariant0,
@@ -775,6 +782,7 @@ describe("ShortStrategy", function () {
 
         const params1 = await strategy.getTotalAssetsParams();
         const totalAssets1 = await strategy.totalAssets(
+          paramsStore.address,
           params1.borrowedInvariant,
           params1.lpBalance,
           cfmmInvariant1,
@@ -874,6 +882,7 @@ describe("ShortStrategy", function () {
         const cfmmInvariant1 = await cfmm.invariant();
 
         const currTotalAssets = await strategy.totalAssets(
+          paramsStore.address,
           params1.borrowedInvariant,
           params1.lpBalance,
           cfmmInvariant1,
@@ -1274,6 +1283,7 @@ describe("ShortStrategy", function () {
         const cfmmInvariant1 = await cfmm.invariant();
 
         const currTotalAssets = await strategy.totalAssets(
+          paramsStore.address,
           params1.borrowedInvariant,
           params1.lpBalance,
           cfmmInvariant1,

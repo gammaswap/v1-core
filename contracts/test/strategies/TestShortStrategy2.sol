@@ -46,11 +46,11 @@ contract TestShortStrategy2 is IShortStrategy{
         cfmmInvariant = 100;
     }
 
-    function totalAssets(uint256, uint256, uint256, uint256, uint256, uint256, uint256) external override pure returns(uint256) {
+    function totalAssets(address, uint256, uint256, uint256, uint256, uint256, uint256, uint256) external override pure returns(uint256) {
         return 1000*(10**18);
     }
 
-    function getLastFees(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum)
+    function getLastFees(address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum)
         external override view returns(uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate, uint256 utilizationRate) {
         return (1,2,3,44);
     }

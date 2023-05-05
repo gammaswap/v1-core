@@ -7,10 +7,12 @@ describe("ShortStrategyERC4626", function () {
   let TestERC20: any;
   let TestCFMM: any;
   let TestStrategy: any;
+  let TestRateParamsStore: any;
   let tokenA: any;
   let tokenB: any;
   let cfmm: any;
   let strategy: any;
+  let paramsStore: any;
   let owner: any;
   let addr1: any;
 
@@ -21,6 +23,9 @@ describe("ShortStrategyERC4626", function () {
     TestERC20 = await ethers.getContractFactory("TestERC20");
     TestCFMM = await ethers.getContractFactory("TestCFMM");
     TestStrategy = await ethers.getContractFactory("TestShortStrategyERC4626");
+    TestRateParamsStore = await ethers.getContractFactory(
+      "TestRateParamsStore"
+    );
     [owner, addr1] = await ethers.getSigners();
 
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
@@ -33,6 +38,7 @@ describe("ShortStrategyERC4626", function () {
       "TCFMM"
     );
 
+    paramsStore = await TestRateParamsStore.deploy(owner.address);
     strategy = await TestStrategy.deploy();
     await (
       await strategy.initialize(
@@ -669,6 +675,7 @@ describe("ShortStrategyERC4626", function () {
         const cfmmTotalSupply1 = await cfmm.totalSupply();
         const cfmmInvariant1 = await cfmm.invariant();
         const currTotalAssets = await strategy.totalAssets(
+          paramsStore.address,
           params1.borrowedInvariant,
           params1.lpBalance,
           cfmmInvariant1,
@@ -931,6 +938,7 @@ describe("ShortStrategyERC4626", function () {
         const cfmmTotalSupply1 = await cfmm.totalSupply();
         const cfmmInvariant1 = await cfmm.invariant();
         const currTotalAssets = await strategy.totalAssets(
+          paramsStore.address,
           params1.borrowedInvariant,
           params1.lpBalance,
           cfmmInvariant1,
@@ -971,6 +979,7 @@ describe("ShortStrategyERC4626", function () {
         const cfmmTotalSupply2 = await cfmm.totalSupply();
         const cfmmInvariant2 = await cfmm.invariant();
         const currTotalAssets2 = await strategy.totalAssets(
+          paramsStore.address,
           params2.borrowedInvariant,
           params2.lpBalance,
           cfmmInvariant2,
@@ -1196,6 +1205,7 @@ describe("ShortStrategyERC4626", function () {
       const cfmmInvariant = await cfmm.invariant();
       const cfmmTotalSupply = await cfmm.totalSupply();
       const currTotalAssets = await strategy.totalAssets(
+        paramsStore.address,
         params.borrowedInvariant,
         params.lpBalance,
         cfmmInvariant,
@@ -1219,6 +1229,7 @@ describe("ShortStrategyERC4626", function () {
       const cfmmInvariant1 = await cfmm.invariant();
       const cfmmTotalSupply1 = await cfmm.totalSupply();
       const currTotalAssets1 = await strategy.totalAssets(
+        paramsStore.address,
         params1.borrowedInvariant,
         params1.lpBalance,
         cfmmInvariant1,
@@ -1266,6 +1277,7 @@ describe("ShortStrategyERC4626", function () {
       const cfmmInvariant1 = await cfmm.invariant();
       const cfmmTotalSupply1 = await cfmm.totalSupply();
       const currTotalAssets = await strategy.totalAssets(
+        paramsStore.address,
         params.borrowedInvariant,
         params.lpBalance,
         cfmmInvariant1,

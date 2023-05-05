@@ -187,7 +187,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         if(blockDiff > 0) {
             lastCFMMFeeIndex = s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18;
             s.lastCFMMFeeIndex = 1e18;
-            (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, borrowedInvariant);
+            (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, borrowedInvariant, s.factory);
             lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, blockDiff);
             (accFeeIndex, borrowedInvariant) = updateStore(lastFeeIndex, borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply);
             if(borrowedInvariant > 0) { // Only pay protocol fee if there are loans
