@@ -19,9 +19,13 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
     /// @dev Error thrown when Factor >= 10 or is zero
     error Factor();
 
+    /// @dev struct containing model rate parameters, used in validation
     struct ModelRateParams {
+        /// @dev baseRate - minimum rate charged to all loans
         uint64 baseRate;
+        /// @dev factor - number that determines convexity of interest rate model
         uint80 factor;
+        /// @dev maxApy - maximum interest rate charged
         uint80 maxApy;
     }
 
@@ -55,6 +59,10 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
         borrowRate = Math.min(_baseRate + _factor * utilizationRateSquare / denominator, _maxApy); // division by an ever non linear decreasing denominator creates an exponential looking curve as util. rate increases
     }
 
+    /// @dev Get parameters for itnerest rate model
+    /// @return baseRate - minimum rate charged to all loans
+    /// @return factor - number that determines convexity of interest rate model
+    /// @return maxApy - maximum interest rate charged
     function getRateParams() public override virtual view returns(uint64, uint80, uint80) {
         IRateParamsStore.RateParams memory rateParams = IRateParamsStore(rateParamsStore()).getRateParams(address(this));
         if(!rateParams.active) {
@@ -64,12 +72,18 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
         return (params.baseRate, params.factor, params.maxApy);
     }
 
-    function validateParameters(bytes calldata _data) external override(AbstractRateModel,IRateModel) virtual view returns(bool) {
+    /// @dev See {IRateModel-validateParameters}.
+    function validateParameters(bytes calldata _data) external override virtual view returns(bool) {
         ModelRateParams memory params = abi.decode(_data, (ModelRateParams));
         _validateParameters(params.baseRate, params.factor, params.maxApy);
         return true;
     }
 
+    /// @dev Validate interest rate model parameters
+    /// @param _baseRate - minimum rate charged to all loans
+    /// @param _factor - number that determines convexity of interest rate model
+    /// @param _maxApy - maximum interest rate charged
+    /// @return bool - return true if model passed validation or error if it failed
     function _validateParameters(uint64 _baseRate, uint80 _factor, uint80 _maxApy) internal virtual view returns(bool) {
         if(_baseRate > _maxApy ) {
             revert BaseRateGtMaxAPY(); // revert if fixed borrow rate is greater than maximum allowed borrow rate

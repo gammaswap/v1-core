@@ -52,4 +52,9 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
             borrowRate = baseRate + slope1 + variableRate;
         }
     }
+
+    /// @dev See {IRateModel-validateParameters}.
+    function validateParameters(bytes calldata _data) external override view returns(bool) {
+        return true;
+    }
 }

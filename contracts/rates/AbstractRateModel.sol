@@ -29,18 +29,11 @@ abstract contract AbstractRateModel is IRateModel {
     /// @return utilizationRate - utilization rate used to calculate the borrow rate
     function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant) internal virtual view returns(uint256, uint256);
 
-    /// @dev See {IRateModel-validateParameters}
-    function validateParameters(bytes calldata _data) external override virtual view returns(bool) {
-        return false;
-    }
-
     /// @dev See {IRateModel-rateParamsStore}
     function rateParamsStore() public override virtual view returns(address) {
         return _rateParamsStore();
     }
 
     /// @dev Return contract holding rate parameters
-    function _rateParamsStore() internal virtual view returns(address) {
-        return address(0);
-    }
+    function _rateParamsStore() internal virtual view returns(address);
 }

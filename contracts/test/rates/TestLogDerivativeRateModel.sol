@@ -26,7 +26,7 @@ contract TestLogDerivativeRateModel is LogDerivativeRateModel, AbstractRateParam
         paramsStore = _paramsStore;
     }
 
-    function rateParamsStore() public override(AbstractRateModel, IRateModel) virtual view returns(address) {
+    function _rateParamsStore() internal override virtual view returns(address) {
         return paramsStore;
     }
 }

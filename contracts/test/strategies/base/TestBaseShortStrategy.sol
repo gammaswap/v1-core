@@ -25,6 +25,10 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         return 2252571;
     }
 
+    function validateParameters(bytes calldata _data) external override view returns(bool) {
+        return false;
+    }
+
     function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal override virtual {
     }
 
