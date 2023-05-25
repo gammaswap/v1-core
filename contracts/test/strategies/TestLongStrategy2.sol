@@ -24,14 +24,14 @@ contract TestLongStrategy2 is ILongStrategy {
         deltas[3] = int256(collateralId * 200);
     }
 
-    function _increaseCollateral(uint256 tokenId) external override returns(uint128[] memory tokensHeld) {
+    function _increaseCollateral(uint256 tokenId, uint256[] calldata ratio) external override returns(uint128[] memory tokensHeld) {
         tokensHeld = new uint128[](2);
         tokensHeld[0] = 1;
         tokensHeld[1] = 2;
         emit LoanUpdated(tokenId, tokensHeld, 11, 12, 13, 14, TX_TYPE.INCREASE_COLLATERAL);
     }
 
-    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address) external override returns(uint128[] memory tokensHeld) {
+    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address, uint256[] calldata ratio) external override returns(uint128[] memory tokensHeld) {
         tokensHeld = new uint128[](2);
         tokensHeld[0] = uint128(amounts[0]);
         tokensHeld[1] = uint128(amounts[1]);

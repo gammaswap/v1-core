@@ -371,13 +371,13 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     }
 
     /// @dev See {IGammaPool-increaseCollateral}
-    function increaseCollateral(uint256 tokenId) external virtual override returns(uint128[] memory tokensHeld) {
-        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._increaseCollateral.selector, tokenId)), (uint128[]));
+    function increaseCollateral(uint256 tokenId, uint256[] calldata ratio) external virtual override returns(uint128[] memory tokensHeld) {
+        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._increaseCollateral.selector, tokenId, ratio)), (uint128[]));
     }
 
     /// @dev See {IGammaPool-decreaseCollateral}
-    function decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address to) external virtual override returns(uint128[] memory tokensHeld) {
-        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._decreaseCollateral.selector, tokenId, amounts, to)), (uint128[]));
+    function decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address to, uint256[] calldata ratio) external virtual override returns(uint128[] memory tokensHeld) {
+        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._decreaseCollateral.selector, tokenId, amounts, to, ratio)), (uint128[]));
     }
 
     /// @dev See {IGammaPool-borrowLiquidity}
