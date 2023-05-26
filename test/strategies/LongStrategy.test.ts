@@ -486,7 +486,9 @@ describe("LongStrategy", function () {
 
       await checkBalancesAndLiquidity(tokenId, amtA, amtB, 0, 0, 0, 0, 0, 0);
 
-      const res1 = await (await strategy._increaseCollateral(tokenId)).wait();
+      const res1 = await (
+        await strategy._increaseCollateral(tokenId, [])
+      ).wait();
       checkEventData(res1.events[0], tokenId, amtA, amtB, 0, 0, ONE);
 
       await checkBalancesAndLiquidity(
@@ -515,7 +517,9 @@ describe("LongStrategy", function () {
         0
       );
 
-      const res2 = await (await strategy._increaseCollateral(tokenId)).wait();
+      const res2 = await (
+        await strategy._increaseCollateral(tokenId, [])
+      ).wait();
       checkEventData(res2.events[0], tokenId, amtA.mul(4), amtB, 0, 0, ONE);
 
       await checkBalancesAndLiquidity(
@@ -545,7 +549,9 @@ describe("LongStrategy", function () {
         0
       );
 
-      const res3 = await (await strategy._increaseCollateral(tokenId)).wait();
+      const res3 = await (
+        await strategy._increaseCollateral(tokenId, [])
+      ).wait();
       checkEventData(
         res3.events[0],
         tokenId,
@@ -583,7 +589,9 @@ describe("LongStrategy", function () {
       const ownerBalA = await tokenA.balanceOf(owner.address);
       const ownerBalB = await tokenB.balanceOf(owner.address);
 
-      const res1 = await (await strategy._increaseCollateral(tokenId)).wait();
+      const res1 = await (
+        await strategy._increaseCollateral(tokenId, [])
+      ).wait();
       checkEventData(res1.events[0], tokenId, amtA, amtB, 0, 0, ONE);
 
       await checkStrategyTokenBalances(amtA, amtB);
@@ -594,7 +602,8 @@ describe("LongStrategy", function () {
         await strategy._decreaseCollateral(
           tokenId,
           [amtA.div(2), amtB.div(2)],
-          owner.address
+          owner.address,
+          []
         )
       ).wait();
 
@@ -623,7 +632,8 @@ describe("LongStrategy", function () {
         strategy._decreaseCollateral(
           tokenId,
           [amtA.div(2).add(1), amtB.div(2)],
-          owner.address
+          owner.address,
+          []
         )
       ).to.be.revertedWithCustomError(strategy, "NotEnoughBalance");
 
@@ -633,13 +643,14 @@ describe("LongStrategy", function () {
       await tokenA.transfer(strategy.address, amtA);
       await tokenB.transfer(strategy.address, amtB);
 
-      await (await strategy._increaseCollateral(tokenId2)).wait();
+      await (await strategy._increaseCollateral(tokenId2, [])).wait();
 
       await expect(
         strategy._decreaseCollateral(
           tokenId,
           [amtA.div(2).add(1), amtB.div(2)],
-          owner.address
+          owner.address,
+          []
         )
       ).to.be.revertedWithCustomError(strategy, "NotEnoughCollateral");
 
@@ -647,7 +658,8 @@ describe("LongStrategy", function () {
         strategy._decreaseCollateral(
           tokenId,
           [amtA.div(2), amtB.div(2).add(1)],
-          owner.address
+          owner.address,
+          []
         )
       ).to.be.revertedWithCustomError(strategy, "NotEnoughCollateral");
 
@@ -658,7 +670,8 @@ describe("LongStrategy", function () {
         await strategy._decreaseCollateral(
           tokenId,
           [amtA.div(4), amtB.div(4)],
-          addr1.address
+          addr1.address,
+          []
         )
       ).wait();
 
@@ -685,7 +698,8 @@ describe("LongStrategy", function () {
         await strategy._decreaseCollateral(
           tokenId2,
           [amtA, amtB],
-          owner.address
+          owner.address,
+          []
         )
       ).wait();
 
@@ -714,15 +728,15 @@ describe("LongStrategy", function () {
       await (await strategy.setLiquidity(tokenId, ONE.mul(80))).wait();
 
       await expect(
-        strategy._decreaseCollateral(tokenId, [1, 0], owner.address)
+        strategy._decreaseCollateral(tokenId, [1, 0], owner.address, [])
       ).to.be.revertedWithCustomError(strategy, "Margin");
 
       await expect(
-        strategy._decreaseCollateral(tokenId, [0, 1], owner.address)
+        strategy._decreaseCollateral(tokenId, [0, 1], owner.address, [])
       ).to.be.revertedWithCustomError(strategy, "Margin");
 
       const res4 = await (
-        await strategy._decreaseCollateral(tokenId, [0, 0], addr1.address)
+        await strategy._decreaseCollateral(tokenId, [0, 0], addr1.address, [])
       ).wait();
 
       checkEventData(
@@ -752,7 +766,8 @@ describe("LongStrategy", function () {
         await strategy._decreaseCollateral(
           tokenId,
           [amtA.div(8), amtB.div(8)],
-          addr1.address
+          addr1.address,
+          []
         )
       ).wait();
 
@@ -783,7 +798,8 @@ describe("LongStrategy", function () {
         await strategy._decreaseCollateral(
           tokenId,
           [amtA.div(8), amtB.div(8)],
-          addr1.address
+          addr1.address,
+          []
         )
       ).wait();
 
@@ -825,7 +841,9 @@ describe("LongStrategy", function () {
       const ownerBalA = await tokenA.balanceOf(owner.address);
       const ownerBalB = await tokenB.balanceOf(owner.address);
 
-      const res1 = await (await strategy._increaseCollateral(tokenId)).wait();
+      const res1 = await (
+        await strategy._increaseCollateral(tokenId, [])
+      ).wait();
 
       checkEventData(res1.events[0], tokenId, amtA, amtB, 0, 0, ONE);
 
@@ -837,7 +855,8 @@ describe("LongStrategy", function () {
         await strategy._decreaseCollateral(
           tokenId,
           [amtA.div(2), amtB.div(2)],
-          owner.address
+          owner.address,
+          []
         )
       ).wait();
 
@@ -1681,7 +1700,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
       await (await strategy.setBorrowRate(ONE)).wait();
 
       const startLiquidity = ONE.mul(800);
@@ -1737,7 +1756,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
       await (
         await strategy._repayLiquidity(
           tokenId,
@@ -1772,7 +1791,7 @@ describe("LongStrategy", function () {
       await tokenA.transfer(strategy.address, amtA);
       await tokenB.transfer(strategy.address, amtB);
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
       await (await strategy.setBorrowRate(ONE)).wait();
 
       const startLiquidity = ONE.mul(800);
@@ -1881,7 +1900,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
       await (await strategy.setBorrowRate(ONE)).wait();
 
       const startLiquidity = ONE.mul(800);
@@ -1980,7 +1999,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
       await (await strategy.setBorrowRate(ONE)).wait();
 
       const startLiquidity = ONE.mul(800);
@@ -2082,7 +2101,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
       await (await strategy.setBorrowRate(ONE)).wait();
 
       const startLiquidity = ONE.mul(800);
@@ -2128,7 +2147,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
 
       await (await strategy.setMinBorrow(0)).wait();
 
@@ -2209,7 +2228,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
       await (await strategy.setBorrowRate(ONE)).wait();
 
       const startLiquidity = ONE.mul(800);
@@ -2255,7 +2274,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
 
       await (await strategy.setMinBorrow(0)).wait();
 
@@ -2328,7 +2347,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
       await (await strategy.setBorrowRate(ONE)).wait();
 
       const startLiquidity = ONE.mul(800);
@@ -2374,7 +2393,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
 
       await (await strategy.setMinBorrow(0)).wait();
 
@@ -2458,7 +2477,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
       await (await strategy.setBorrowRate(ONE)).wait();
 
       const startLiquidity = ONE.mul(800);
@@ -2519,7 +2538,7 @@ describe("LongStrategy", function () {
       await (await tokenA.transfer(strategy.address, amtA)).wait();
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
-      await (await strategy._increaseCollateral(tokenId)).wait();
+      await (await strategy._increaseCollateral(tokenId, [])).wait();
       await (await strategy.setBorrowRate(ONE)).wait();
 
       const startLiquidity = ONE.mul(800);
