@@ -12,7 +12,7 @@ contract TestLongStrategy is LongStrategy {
 
     event LoanCreated(address indexed caller, uint256 tokenId);
     event AmountsWithFees(uint256[] amounts);
-    uint80 public borrowRate = 1;
+    uint80 public borrowRate = 1e18;
     uint24 public origFee = 0;
     uint16 public protocolId;
     uint256 private _minBorrow = 1e3;

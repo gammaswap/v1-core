@@ -125,9 +125,20 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         // Update loan collateral token amounts with tokens deposited in GammaPool
         (tokensHeld,) = updateCollateral(_loan);
 
-        // Do not check for loan undercollateralization because adding collateral always improves loan health
+        // Update liquidity debt to include accrued interest since last update
+        uint256 loanLiquidity = updateLoan(_loan);
 
-        emit LoanUpdated(tokenId, tokensHeld, _loan.liquidity, _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.INCREASE_COLLATERAL);
+        if(ratio.length > 0) {
+            (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
+            // Check that loan is not undercollateralized after swap
+            checkMargin(calcInvariant(s.cfmm, tokensHeld), loanLiquidity);
+        }
+        // If not rebalanced, do not check for undercollateralization because adding collateral always improves loan health
+
+        emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.INCREASE_COLLATERAL);
+
+        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex,
+            s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.INCREASE_COLLATERAL);
 
         return tokensHeld;
     }
@@ -253,8 +264,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
 
         // Check that loan is not undercollateralized after swap
-        uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
-        checkMargin(collateral, loanLiquidity);
+        checkMargin(calcInvariant(s.cfmm, tokensHeld), loanLiquidity);
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.REBALANCE_COLLATERAL);
 

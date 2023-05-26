@@ -397,7 +397,7 @@ describe("LongStrategy", function () {
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
       const _data = await strategy.getPoolData();
-      expect(_data.accFeeIndex).to.equal(ONE);
+      expect(_data.accFeeIndex).to.gt(ONE);
 
       const resp = await (await strategy._updatePool(0)).wait();
       const _data1 = await strategy.getPoolData();
@@ -442,7 +442,7 @@ describe("LongStrategy", function () {
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
       const _data = await strategy.getPoolData();
-      expect(_data.accFeeIndex).to.equal(ONE);
+      expect(_data.accFeeIndex).to.gt(ONE);
 
       const resp = await (await strategy._updatePool(tokenId)).wait();
 
@@ -1542,7 +1542,7 @@ describe("LongStrategy", function () {
         amtB,
         expectedLiquidity,
         lpTokens,
-        1
+        ONE
       );
 
       checkPoolEventData(
@@ -1615,7 +1615,7 @@ describe("LongStrategy", function () {
         amtB.add(100),
         expectedLiquidity,
         lpTokens,
-        1
+        ONE
       );
     });
   });
