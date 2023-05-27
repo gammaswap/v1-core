@@ -31,7 +31,7 @@ contract TestLongStrategy2 is ILongStrategy {
         emit LoanUpdated(tokenId, tokensHeld, 11, 12, 13, 14, TX_TYPE.INCREASE_COLLATERAL);
     }
 
-    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address, uint256[] calldata ratio) external override returns(uint128[] memory tokensHeld) {
+    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address, uint256 collateral) external override returns(uint128[] memory tokensHeld) {
         tokensHeld = new uint128[](2);
         tokensHeld[0] = uint128(amounts[0]);
         tokensHeld[1] = uint128(amounts[1]);

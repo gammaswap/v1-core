@@ -603,7 +603,7 @@ describe("LongStrategy", function () {
           tokenId,
           [amtA.div(2), amtB.div(2)],
           owner.address,
-          []
+          0
         )
       ).wait();
 
@@ -633,7 +633,7 @@ describe("LongStrategy", function () {
           tokenId,
           [amtA.div(2).add(1), amtB.div(2)],
           owner.address,
-          []
+          0
         )
       ).to.be.revertedWithCustomError(strategy, "NotEnoughBalance");
 
@@ -650,7 +650,7 @@ describe("LongStrategy", function () {
           tokenId,
           [amtA.div(2).add(1), amtB.div(2)],
           owner.address,
-          []
+          0
         )
       ).to.be.revertedWithCustomError(strategy, "NotEnoughCollateral");
 
@@ -659,7 +659,7 @@ describe("LongStrategy", function () {
           tokenId,
           [amtA.div(2), amtB.div(2).add(1)],
           owner.address,
-          []
+          0
         )
       ).to.be.revertedWithCustomError(strategy, "NotEnoughCollateral");
 
@@ -671,7 +671,7 @@ describe("LongStrategy", function () {
           tokenId,
           [amtA.div(4), amtB.div(4)],
           addr1.address,
-          []
+          0
         )
       ).wait();
 
@@ -699,7 +699,7 @@ describe("LongStrategy", function () {
           tokenId2,
           [amtA, amtB],
           owner.address,
-          []
+          0
         )
       ).wait();
 
@@ -728,15 +728,15 @@ describe("LongStrategy", function () {
       await (await strategy.setLiquidity(tokenId, ONE.mul(80))).wait();
 
       await expect(
-        strategy._decreaseCollateral(tokenId, [1, 0], owner.address, [])
+        strategy._decreaseCollateral(tokenId, [1, 0], owner.address, 0)
       ).to.be.revertedWithCustomError(strategy, "Margin");
 
       await expect(
-        strategy._decreaseCollateral(tokenId, [0, 1], owner.address, [])
+        strategy._decreaseCollateral(tokenId, [0, 1], owner.address, 0)
       ).to.be.revertedWithCustomError(strategy, "Margin");
 
       const res4 = await (
-        await strategy._decreaseCollateral(tokenId, [0, 0], addr1.address, [])
+        await strategy._decreaseCollateral(tokenId, [0, 0], addr1.address, 0)
       ).wait();
 
       checkEventData(
@@ -767,7 +767,7 @@ describe("LongStrategy", function () {
           tokenId,
           [amtA.div(8), amtB.div(8)],
           addr1.address,
-          []
+          0
         )
       ).wait();
 
@@ -799,7 +799,7 @@ describe("LongStrategy", function () {
           tokenId,
           [amtA.div(8), amtB.div(8)],
           addr1.address,
-          []
+          0
         )
       ).wait();
 
@@ -856,7 +856,7 @@ describe("LongStrategy", function () {
           tokenId,
           [amtA.div(2), amtB.div(2)],
           owner.address,
-          []
+          0
         )
       ).wait();
 

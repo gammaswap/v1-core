@@ -144,7 +144,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     }
 
     /// @dev See {ILongStrategy-_decreaseCollateral}.
-    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address to, uint256[] calldata ratio) external virtual override lock returns(uint128[] memory tokensHeld) {
+    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address to, uint256 collateralLiquidity) external virtual override lock returns(uint128[] memory tokensHeld) {
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
