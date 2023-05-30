@@ -676,7 +676,7 @@ describe("GammaPool", function () {
           tokenId,
           [100, 200],
           addr1.address,
-          0
+          []
         )
       ).wait();
       expect(res1.events[0].args.tokenId).to.eq(tokenId);

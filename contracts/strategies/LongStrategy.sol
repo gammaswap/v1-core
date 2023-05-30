@@ -27,6 +27,41 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         return _calcDeltasForRatio(tokensHeld, reserves, ratio);
     }
 
+    /// @dev Calculate quantities to trade to rebalance collateral so that after withdrawing `amounts` we achieve desired `ratio`
+    /// @param amounts - amounts that will be withdrawn from collateral
+    /// @param tokensHeld - loan collateral to rebalance
+    /// @param reserves - reserve token quantities in CFMM
+    /// @param ratio - desired ratio of collateral after withdrawing `amounts`
+    /// @return deltas - amount of collateral to trade to achieve desired `ratio`
+    function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual view returns(int256[] memory deltas);
+
+    /// @dev See {ILongStrategy-calcDeltasForWithdrawal}.
+    function calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external virtual override view returns(int256[] memory deltas) {
+        return _calcDeltasForWithdrawal(amounts, tokensHeld, reserves, ratio);
+    }
+
+    function checkCollateral(uint128[] memory amounts, uint128[] memory tokensHeld) internal virtual view returns(bool hasShortAmounts, uint128[] memory shortAmounts){
+        uint256 len = tokensHeld.length;
+        shortAmounts = new uint128[](len);
+        hasShortAmounts = false;
+        for(uint256 i = 0; i < len;) {
+            if(amounts[i] > tokensHeld[i]) {
+                hasShortAmounts = true;
+                shortAmounts[i] = amounts[i];
+            }
+        unchecked {
+            i++;
+        }
+        }
+    }
+
+    function _getReserves(address dest) internal virtual view returns(uint128[] memory) {
+        if(dest == s.cfmm) {
+            return getReserves(s.cfmm);
+        }
+        return s.CFMM_RESERVES;
+    }
+
     /// @dev Withdraw loan collateral
     /// @param _loan - loan whose collateral will be rebalanced
     /// @param deltas - collateral amounts being bought or sold (>0 buy, <0 sell), index matches tokensHeld[] index. Only n-1 tokens can be traded
@@ -144,15 +179,36 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     }
 
     /// @dev See {ILongStrategy-_decreaseCollateral}.
-    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address to, uint256 collateralLiquidity) external virtual override lock returns(uint128[] memory tokensHeld) {
+    function _decreaseCollateral(uint256 tokenId, uint128[] memory amounts, address to, uint256[] calldata ratio) external virtual override lock returns(uint128[] memory tokensHeld) {
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         // Update liquidity debt with accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
 
-        // Withdraw collateral tokens from loan
-        tokensHeld = withdrawCollateral(_loan, loanLiquidity, amounts, to);
+        if(ratio.length > 0) {
+            tokensHeld = _loan.tokensHeld;
+            (bool hasShortAmounts, uint128[] memory shortAmounts) = checkCollateral(amounts, tokensHeld);
+
+            if(!hasShortAmounts) {
+                // Withdraw collateral tokens from loan
+                tokensHeld = withdrawCollateral(_loan, loanLiquidity, amounts, to);
+
+                // rebalance to ratio
+                uint128[] memory _reserves = _getReserves(to);
+                (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);
+
+                // Check that loan is not undercollateralized after swap
+                checkMargin(calcInvariant(s.cfmm, tokensHeld), loanLiquidity);
+            } else {
+                // rebalance to match ratio after withdrawal
+                rebalanceCollateral(_loan, _calcDeltasForWithdrawal(shortAmounts, tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
+                // Withdraw collateral tokens from loan
+                tokensHeld = withdrawCollateral(_loan, loanLiquidity, amounts, to);
+            }
+        } else {
+            tokensHeld = withdrawCollateral(_loan, loanLiquidity, amounts, to);
+        }
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.DECREASE_COLLATERAL);
 
@@ -191,8 +247,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         }
 
         // Check that loan is not undercollateralized
-        uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
-        checkMargin(collateral, loanLiquidity);
+        checkMargin(calcInvariant(s.cfmm, tokensHeld), loanLiquidity);
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.BORROW_LIQUIDITY);
 

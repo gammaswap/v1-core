@@ -312,6 +312,16 @@ contract TestLongStrategy is LongStrategy {
         deltas[1] = 0;
     }
 
+    function calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
+        return _calcDeltasForWithdrawal(amounts, tokensHeld, reserves, ratio);
+    }
+
+    function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 100;
+    }
+
     function getReserves(address cfmm) internal virtual override view returns(uint128[] memory reserves) {
         reserves = new uint128[](2);
         (reserves[0], reserves[1],) = TestCFMM(cfmm).getReserves();
