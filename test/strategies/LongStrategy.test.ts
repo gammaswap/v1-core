@@ -471,6 +471,61 @@ describe("LongStrategy", function () {
   });
 
   describe("Collateral Management", function () {
+    it("Check Get Reserves", async function () {
+      await (await strategy.setCfmmReserves([100, 200])).wait();
+      const reserves = await cfmm.getReserves();
+      const res0 = await strategy.testGetReserves(cfmm.address);
+      expect(res0[0]).to.eq(reserves[0]);
+      expect(res0[1]).to.eq(reserves[1]);
+      const res1 = await strategy.testGetReserves(addr1.address);
+      expect(res1[0]).to.eq(100);
+      expect(res1[1]).to.eq(200);
+    });
+
+    it("Check Collateral", async function () {
+      const res0 = await strategy.testCheckCollateral([100, 100], [100, 100]);
+      expect(res0.hasShortAmounts).to.eq(false);
+      expect(res0.shortAmounts.length).to.eq(2);
+      expect(res0.shortAmounts[0]).to.eq(0);
+      expect(res0.shortAmounts[1]).to.eq(0);
+
+      const res1 = await strategy.testCheckCollateral([101, 100], [100, 100]);
+      expect(res1.hasShortAmounts).to.eq(true);
+      expect(res1.shortAmounts.length).to.eq(2);
+      expect(res1.shortAmounts[0]).to.eq(101);
+      expect(res1.shortAmounts[1]).to.eq(0);
+
+      const res2 = await strategy.testCheckCollateral([100, 101], [100, 100]);
+      expect(res2.hasShortAmounts).to.eq(true);
+      expect(res2.shortAmounts.length).to.eq(2);
+      expect(res2.shortAmounts[0]).to.eq(0);
+      expect(res2.shortAmounts[1]).to.eq(101);
+
+      const res3 = await strategy.testCheckCollateral([101, 101], [100, 100]);
+      expect(res3.hasShortAmounts).to.eq(true);
+      expect(res3.shortAmounts.length).to.eq(2);
+      expect(res3.shortAmounts[0]).to.eq(101);
+      expect(res3.shortAmounts[1]).to.eq(101);
+
+      const res4 = await strategy.testCheckCollateral([99, 99], [100, 100]);
+      expect(res4.hasShortAmounts).to.eq(false);
+      expect(res4.shortAmounts.length).to.eq(2);
+      expect(res4.shortAmounts[0]).to.eq(0);
+      expect(res4.shortAmounts[1]).to.eq(0);
+
+      const res5 = await strategy.testCheckCollateral([101, 99], [100, 100]);
+      expect(res5.hasShortAmounts).to.eq(true);
+      expect(res5.shortAmounts.length).to.eq(2);
+      expect(res5.shortAmounts[0]).to.eq(101);
+      expect(res5.shortAmounts[1]).to.eq(0);
+
+      const res6 = await strategy.testCheckCollateral([99, 101], [100, 100]);
+      expect(res6.hasShortAmounts).to.eq(true);
+      expect(res6.shortAmounts.length).to.eq(2);
+      expect(res6.shortAmounts[0]).to.eq(0);
+      expect(res6.shortAmounts[1]).to.eq(101);
+    });
+
     it("Increase Collateral", async function () {
       const res = await (await strategy.createLoan()).wait();
       const tokenId = res.events[0].args.tokenId;

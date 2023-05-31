@@ -62,6 +62,14 @@ contract TestLongStrategy is LongStrategy {
         return s.TOKEN_BALANCE;
     }
 
+    function testCheckCollateral(uint128[] memory amounts, uint128[] memory tokensHeld) external virtual view returns(bool hasShortAmounts, uint128[] memory shortAmounts) {
+        return checkCollateral(amounts, tokensHeld);
+    }
+
+    function testGetReserves(address to) external virtual view returns(uint128[] memory) {
+        return _getReserves(to);
+    }
+
     // **** LONG GAMMA **** //
     function createLoan() external virtual returns(uint256 tokenId) {
         tokenId = s.createLoan(s.tokens.length);

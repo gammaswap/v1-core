@@ -40,23 +40,31 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         return _calcDeltasForWithdrawal(amounts, tokensHeld, reserves, ratio);
     }
 
+    /// @dev Used while withdrawing collateral of an existing loan to see if we need to re balance or not the loan's collateral to be able to withdraw the requested amounts
+    /// @param amounts - collateral quantities requested to withdraw and therefore checked against existing collateral in the loan.
+    /// @param tokensHeld - collateral quantities in loan
+    /// @return hasShortAmounts - if true, we don't have enough collateral to withdraw for at least on token of the CFMM
+    /// @return shortAmounts - amount requested to withdraw for which there isn't enough collateral to withdraw
     function checkCollateral(uint128[] memory amounts, uint128[] memory tokensHeld) internal virtual view returns(bool hasShortAmounts, uint128[] memory shortAmounts){
         uint256 len = tokensHeld.length;
         shortAmounts = new uint128[](len);
         hasShortAmounts = false;
         for(uint256 i = 0; i < len;) {
-            if(amounts[i] > tokensHeld[i]) {
-                hasShortAmounts = true;
-                shortAmounts[i] = amounts[i];
+            if(amounts[i] > tokensHeld[i]) { // if amount requested is higher than existing collateral
+                hasShortAmounts = true; // we don't have enough collateral of at least one token to withdraw
+                shortAmounts[i] = amounts[i]; // amount we are requesting to withdraw for which there isn't enough collateral
             }
-        unchecked {
-            i++;
-        }
+            unchecked {
+                i++;
+            }
         }
     }
 
-    function _getReserves(address dest) internal virtual view returns(uint128[] memory) {
-        if(dest == s.cfmm) {
+    /// @dev Ask for reserve quantities from CFMM if address that will receive withdrawn quantities is CFMM
+    /// @param to - address that will receive withdrawn collateral quantities
+    /// @return reserves - CFMM reserve quantities
+    function _getReserves(address to) internal virtual view returns(uint128[] memory) {
+        if(to == s.cfmm) {
             return getReserves(s.cfmm);
         }
         return s.CFMM_RESERVES;
