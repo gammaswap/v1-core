@@ -265,7 +265,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     /// @dev See {ILongStrategy-_updatePool}
     function _updatePool(uint256 tokenId) external virtual override lock returns(uint256 loanLiquidityDebt, uint256 poolLiquidityDebt) {
         if(tokenId > 0) {
-            // Get loan for tokenId, revert if not loan creator
+            // Get loan for tokenId, revert if loan does not exist
             LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
 
             // Update pool and loan liquidity debt to include accrued interest since last update
