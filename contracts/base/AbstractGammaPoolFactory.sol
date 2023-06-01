@@ -48,25 +48,19 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     /// @dev Revert if sender is not the required address in parameter (e.g. sender not owner or feeToSetter)
     /// @param _address - address transaction sender must be in order to not revert
     function isForbidden(address _address) internal virtual view {
-        if(msg.sender != _address) {
-            revert Forbidden();
-        }
+        if(msg.sender != _address) revert Forbidden();
     }
 
     /// @dev Revert if address parameter is zero address. This is used transaction that are changing an address state variable
     /// @param _address - address that must not be zero
     function isZeroAddress(address _address) internal virtual view {
-        if(_address == address(0)) {
-            revert ZeroAddress();
-        }
+        if(_address == address(0)) revert ZeroAddress();
     }
 
     /// @dev Revert if key already maps to a GammaPool. This is used to avoid duplicating GammaPool instances
     /// @param key - unique key used to identify GammaPool instance (e.g. salt)
     function hasPool(bytes32 key) internal virtual view {
-        if(getPool[key] != address(0)) {
-            revert PoolExists();
-        }
+        if(getPool[key] != address(0)) revert PoolExists();
     }
 
     /**
@@ -90,8 +84,6 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
             mstore(0x20, or(shl(0x78, implementation), 0x5af43d82803e903d91602b57fd5bf3))
             instance := create2(0, 0x09, 0x37, salt)
         }
-        if(instance == address(0)) {
-            revert DeployFailed(); // revert if failed to instantiate GammaPool
-        }
+        if(instance == address(0)) revert DeployFailed(); // revert if failed to instantiate GammaPool
     }
 }

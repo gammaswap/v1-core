@@ -34,6 +34,8 @@ abstract contract ExternalBaseStrategy is BaseLongStrategy {
     /// @return swappedCollateralAsLPTokens - quantities of pool's collateral tokens being sent to recipient in terms of CFMM LP tokens
     function sendAndCalcCollateralLPTokens(address to, uint128[] calldata amounts, uint256 lastCFMMTotalSupply) internal virtual returns(uint256 swappedCollateralAsLPTokens){
         address[] memory tokens = s.tokens;
+        if(tokens.length != amounts.length) revert InvalidAmountsLength();
+
         for(uint256 i; i < amounts.length;) {
             // Collateral sent is measured as max of LP token equivalent if requested proportionally at current CFMM pool price
             swappedCollateralAsLPTokens = Math.max(swappedCollateralAsLPTokens, amounts[i] * lastCFMMTotalSupply / s.CFMM_RESERVES[i]);

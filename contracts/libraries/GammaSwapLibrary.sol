@@ -76,9 +76,7 @@ library GammaSwapLibrary {
     function safeTransfer(address _token, address _to, uint256 _amount) internal {
         (bool success, bytes memory data) = _token.call(abi.encodeWithSelector(IERC20(_token).transfer.selector, _to, _amount));
 
-        if(!(success && (data.length == 0 || abi.decode(data, (bool))))) {
-            revert ST_Fail();
-        }
+        if(!(success && (data.length == 0 || abi.decode(data, (bool))))) revert ST_Fail();
     }
 
     /// @dev Moves `amount` of ERC20 token `_token` from `_from` to `_to` using the allowance mechanism. `_amount` is then deducted from the caller's allowance.
@@ -89,9 +87,7 @@ library GammaSwapLibrary {
     function safeTransferFrom(address _token, address _from, address _to, uint256 _amount) internal {
         (bool success, bytes memory data) = _token.call(abi.encodeWithSelector(IERC20(_token).transferFrom.selector, _from, _to, _amount));
 
-        if(!(success && (data.length == 0 || abi.decode(data, (bool))))) {
-            revert STF_Fail();
-        }
+        if(!(success && (data.length == 0 || abi.decode(data, (bool))))) revert STF_Fail();
     }
 
     /// @dev Safe approve any ERC20 token to be spent by another address (`_spender`), only used internally
@@ -101,9 +97,7 @@ library GammaSwapLibrary {
     function safeApprove(address _token, address _spender, uint256 _amount) internal {
         (bool success, bytes memory data) = _token.call(abi.encodeWithSelector(IERC20(_token).approve.selector, _spender, _amount));
 
-        if(!(success && (data.length == 0 || abi.decode(data, (bool))))) {
-            revert SA_Fail();
-        }
+        if(!(success && (data.length == 0 || abi.decode(data, (bool))))) revert SA_Fail();
     }
 
     /// @dev Safe transfer any ERC20 token, only used internally
@@ -112,9 +106,7 @@ library GammaSwapLibrary {
     function safeTransferETH(address _to, uint256 _amount) internal {
         (bool success, ) = _to.call{value: _amount}("");
 
-        if(!success) {
-            revert STE_Fail();
-        }
+        if(!success) revert STE_Fail();
     }
 
     /// @dev Check if `account` is a smart contract's address and it has been instantiated (has code)

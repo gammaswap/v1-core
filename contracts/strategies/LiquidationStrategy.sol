@@ -15,6 +15,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
     error NoLiquidityDebt();
     error HasMargin();
     error LoanNotExists();
+    error InvalidTokenIdsLength();
 
     /// @dev See {LiquidationStrategy-liquidationFee}.
     function liquidationFee() external override virtual view returns(uint256) {
@@ -39,6 +40,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
 
         if(deltas.length > 0) { // Done here because if pool charges trading fee, it increases the CFMM invariant
+            if(deltas.length != _loan.tokensHeld.length) revert InvalidDeltasLength();
             (uint256[] memory outAmts, uint256[] memory inAmts) = beforeSwapTokens(_loan, deltas, getReserves(cfmm));
             swapTokens(_loan, outAmts, inAmts); // Re-balance collateral
         }
@@ -89,15 +91,15 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
     /// @dev See {LiquidationStrategy-_batchLiquidations}.
     function _batchLiquidations(uint256[] calldata tokenIds) external override lock virtual returns(uint256 totalLoanLiquidity, uint256 totalCollateral, uint256[] memory refund) {
+        if(tokenIds.length == 0) revert InvalidTokenIdsLength(); // Revert if no loan tokenIds are passed
+
         // Sum up liquidity, collateral, and LP token principal from loans that can be liquidated
         uint256 lpTokenPrincipalPaid;
         uint128[] memory tokensHeld;
         uint256[] memory _tokenIds;
         (totalLoanLiquidity, totalCollateral, lpTokenPrincipalPaid, tokensHeld, _tokenIds) = sumLiquidity(tokenIds);
 
-        if(totalLoanLiquidity == 0) { // Revert if no loans to liquidate
-            revert NoLiquidityDebt();
-        }
+        if(totalLoanLiquidity == 0) revert NoLiquidityDebt(); // Revert if no loans to liquidate
 
         uint256 writeDownAmt;
         // Write down bad debt if any
@@ -158,9 +160,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
             uint256 lpDeposit = GammaSwapLibrary.balanceOf(s.cfmm, address(this)) - currLpBalance;
 
             // Revert if no CFMM LP tokens deposited to pay this loan
-            if(lpDeposit == 0) {
-                revert NoLiquidityProvided();
-            }
+            if(lpDeposit == 0) revert NoLiquidityProvided();
 
             // Get liquidity being paid from deposited CFMM LP tokens and refund excess CFMM LP tokens
             (payLiquidity, lpDeposit) = refundOverPayment(loanLiquidity, lpDeposit, lastCFMMTotalSupply, lastCFMMInvariant);
@@ -170,9 +170,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
         }
 
         // Check if must be full liquidation
-        if(isFullPayment && payLiquidity < loanLiquidity) {
-            revert NotFullLiquidation();
-        }
+        if(isFullPayment && payLiquidity < loanLiquidity) revert NotFullLiquidation();
 
         // Refund collateral to liquidator and get remaining collateral and refunded amounts
         uint256[] memory refund;
@@ -184,18 +182,6 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
                 // Account for loan's liquidity paid and get CFMM LP token principal paid and remaining loan liquidity
                 (lpTokenPrincipalPaid, loanLiquidity) = payLoanLiquidity(payLiquidity, loanLiquidity, _loan);
-
-                // Account for pool's liquidity debt paid.
-                // If isFullPayment is true then loan was paid with its collateral tokens (`_liquidate` function was called)
-                // Therefore CFMM LP tokens were minted during liquidation, thus lastCFMMInvariant & lastCFMMTotalSupply increased => send lpDeposit to payPoolDebt
-                // If isFullPayment is false then loan was paid with CFMM LP tokens (`_liquidateWithLP` function was called)
-                // Therefore no CFMM LP tokens were minted during liquidation, thus lastCFMMTotalSupply & lastCFMMInvariant did not change => don't send lpDeposit
-                // payPoolDebt(payLiquidity, lpTokenPrincipalPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, isFullPayment ? currLpBalance - s.LP_TOKEN_BALANCE : 0);
-            } else {
-                // Liquidation was a batch liquidation
-                // Account for pool's liquidity debt paid.
-                // Batch liquidations are paid with CFMM LP tokens, therefore no need to pass lpDeposit (i.e. pass 0)
-                // payPoolDebt(payLiquidity, lpTokenPrincipalPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, 0);
             }
             payPoolDebt(payLiquidity, lpTokenPrincipalPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance);
         }
@@ -230,9 +216,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
 
     /// @dev See {BaseLongStrategy-checkMargin}.
     function checkMargin(uint256 collateral, uint256 liquidity) internal virtual override view {
-        if(hasMargin(collateral, liquidity, _ltvThreshold())) { // Revert if loan has enough collateral
-            revert HasMargin();
-        }
+        if(hasMargin(collateral, liquidity, _ltvThreshold())) revert HasMargin(); // Revert if loan has enough collateral
     }
 
     /// @dev See {ILiquidationStrategy-canLiquidate}.
@@ -250,9 +234,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLongStrategy 
     function refundOverPayment(uint256 loanLiquidity, uint256 lpDeposit, uint256 lastCFMMTotalSupply, uint256 lastCFMMInvariant) internal virtual returns(uint256, uint256) {
         // convert CFMM LP deposit to liquidity invariant
         uint256 payLiquidity = convertLPToInvariant(lpDeposit, lastCFMMInvariant, lastCFMMTotalSupply);
-        if(payLiquidity <= loanLiquidity) { // Paying partially or full
-            return(payLiquidity, lpDeposit);
-        }
+        if(payLiquidity <= loanLiquidity) return(payLiquidity, lpDeposit); // Paying partially or full
 
         // Overpayment
         uint256 excessInvariant;

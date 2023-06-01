@@ -4,6 +4,9 @@ pragma solidity >=0.8.0;
 import "../../interfaces/rates/IRateModel.sol";
 import "../../interfaces/rates/storage/IRateParamsStore.sol";
 
+/// @title Contract to implement common functions from IRateParamsStore
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
+/// @dev Abstract contract meant to be inherited by every Rate Parameter store contract
 abstract contract AbstractRateParamsStore is IRateParamsStore {
 
     /// @dev rate information by GammaPool
@@ -20,13 +23,16 @@ abstract contract AbstractRateParamsStore is IRateParamsStore {
         emit RateParamsUpdate(_pool, data, active);
     }
 
-    function _validateParameters(address _pool, bytes calldata data) internal virtual view returns(bool) {
-        try IRateModel(_pool).validateParameters(data) {
-            return true;
+    /// @dev validate the rate model parameters that we'll store for the pool
+    /// @param _rateModel - address of rate model
+    /// @param _data - rate model parameters in bytes
+    /// @return validated - true if parameters are validated by the rate model
+    function _validateParameters(address _rateModel, bytes calldata _data) internal virtual view returns(bool validated) {
+        try IRateModel(_rateModel).validateParameters(_data) returns (bool _validated){
+            validated = _validated;
         } catch {
-            return false;
+            validated = false;
         }
-        return true;
     }
 
     /// @dev See {IRateParamsStore-getRateParams}

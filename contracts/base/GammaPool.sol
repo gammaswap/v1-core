@@ -44,9 +44,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
 
     /// @dev See {IGammaPool-initialize}
     function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals, bytes calldata) external virtual override {
-        if(msg.sender != factory) // only factory is allowed to initialize
-            revert Forbidden();
-
+        if(msg.sender != factory) revert Forbidden(); // only factory is allowed to initialize
         s.initialize(factory, _cfmm, _tokens, _decimals);
     }
 
