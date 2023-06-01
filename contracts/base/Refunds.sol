@@ -31,14 +31,10 @@ abstract contract Refunds is IRefunds {
     /// @dev See {ITransfers-clearToken}
     function clearToken(address token, address to, uint256 minAmt) external override {
         // Can't clear CFMM LP tokens or collateral tokens
-        if(isCFMMToken(token) || isCollateralToken(token)) {
-            revert RestrictedToken();
-        }
+        if(isCFMMToken(token) || isCollateralToken(token)) revert RestrictedToken();
 
         uint256 tokenBal = IERC20(token).balanceOf(address(this));
-        if(tokenBal < minAmt) { // Only clear if past threshold
-            revert NotEnoughTokens();
-        }
+        if(tokenBal < minAmt) revert NotEnoughTokens(); // Only clear if past threshold
 
         // If not CFMM LP token or collateral token send entire amount
         if (tokenBal > 0) GammaSwapLibrary.safeTransfer(token, to, tokenBal);

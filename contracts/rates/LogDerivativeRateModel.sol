@@ -87,15 +87,9 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
     /// @param _maxApy - maximum interest rate charged
     /// @return bool - return true if model passed validation or error if it failed
     function _validateParameters(uint64 _baseRate, uint80 _factor, uint80 _maxApy) internal virtual view returns(bool) {
-        if(_baseRate > _maxApy ) {
-            revert BaseRateGtMaxAPY(); // revert if fixed borrow rate is greater than maximum allowed borrow rate
-        }
-        if(_baseRate > 1e18 || _baseRate == 0) {
-            revert BaseRate(); // revert if base rate is greater than 100% or is zero
-        }
-        if(_factor > 1e19 || _factor == 0) {
-            revert Factor(); // revert if factor is greater than 10 or is zero
-        }
+        if(_baseRate > _maxApy ) revert BaseRateGtMaxAPY(); // revert if fixed borrow rate is greater than maximum allowed borrow rate
+        if(_baseRate > 1e18 || _baseRate == 0) revert BaseRate(); // revert if base rate is greater than 100% or is zero
+        if(_factor > 1e19 || _factor == 0) revert Factor(); // revert if factor is greater than 10 or is zero
         return true;
     }
 }

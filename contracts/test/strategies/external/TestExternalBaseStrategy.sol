@@ -32,9 +32,7 @@ contract TestExternalBaseStrategy is TestExternalBaseLongStrategy {
 
     function checkLPTokens(address _cfmm, uint256 prevLpTokenBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) internal virtual override {
         uint256 newLpTokenBalance = GammaSwapLibrary.balanceOf(_cfmm, address(this));
-        if(prevLpTokenBalance > newLpTokenBalance) {
-            revert WrongLPTokenBalance();
-        }
+        if(prevLpTokenBalance > newLpTokenBalance) revert WrongLPTokenBalance();
 
         // Update CFMM LP Tokens in pool and the invariant it represents
         s.LP_TOKEN_BALANCE = newLpTokenBalance;
@@ -42,9 +40,7 @@ contract TestExternalBaseStrategy is TestExternalBaseLongStrategy {
     }
 
     function checkMargin(uint256 collateral, uint256 liquidity) internal virtual override view {
-        if(!hasMargin(collateral, liquidity, _ltvThreshold())) { // if collateral is below ltvThreshold revert transaction
-            revert Margin();
-        }
+        if(!hasMargin(collateral, liquidity, _ltvThreshold())) revert Margin(); // if collateral is below ltvThreshold revert transaction
     }
 
     // **** Not used **** //

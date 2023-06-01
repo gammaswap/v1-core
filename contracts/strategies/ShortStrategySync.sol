@@ -12,9 +12,7 @@ abstract contract ShortStrategySync is ShortStrategyERC4626 {
     /// @dev See {IShortStrategy-_sync}.
     function _sync() external virtual override lock {
         // Do not sync if no first deposit yet
-        if(s.totalSupply == 0) {
-            revert ZeroShares();
-        }
+        if(s.totalSupply == 0) revert ZeroShares();
 
         // Update interest rate and state variables before conversion
         updateIndex();

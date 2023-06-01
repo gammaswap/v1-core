@@ -13,6 +13,8 @@ abstract contract BaseLongStrategy is BaseStrategy {
     error Margin();
     error MinBorrow();
     error LoanDoesNotExist();
+    error InvalidDeltasLength();
+    error InvalidAmountsLength();
 
     /// @dev Minimum number of liquidity borrowed to avoid rounding issues. Assumes invariant >= CFMM LP Token. Default should be 1e3
     function minBorrow() internal view virtual returns(uint256);
@@ -82,9 +84,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
         _loan = _getExistingLoan(tokenId);
 
         // Revert if msg.sender is not the creator of this loan
-        if(tokenId != uint256(keccak256(abi.encode(msg.sender, address(this), _loan.id)))) {
-            revert Forbidden();
-        }
+        if(tokenId != uint256(keccak256(abi.encode(msg.sender, address(this), _loan.id)))) revert Forbidden();
     }
 
     /// @dev Check if loan is undercollateralized
@@ -166,9 +166,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
         uint256 liquidityBorrowedExFee = convertLPToInvariant(lpTokens, lastCFMMInvariant, lastCFMMTotalSupply);
 
         // Can't borrow less than minimum liquidity to avoid rounding issues
-        if (liquidityBorrowedExFee < minBorrow()) {
-            revert MinBorrow();
-        }
+        if (liquidityBorrowedExFee < minBorrow()) revert MinBorrow();
 
         // Calculate add loan origination fee to LP token debt
         uint256 lpTokensPlusOrigFee = lpTokens + lpTokens * originationFee() / 10000;
@@ -233,26 +231,16 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @return paidLiquidity - amount of liquidity invariant paid calculated from `lpTokenChange`
     /// @return newLPBalance - current CFMM LP token balance in GammaPool
     function getLpTokenBalance(uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) internal view virtual returns(uint256 paidLiquidity, uint256 newLPBalance) {
-    // function getLpTokenBalance() internal view virtual returns(uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 paidLiquidity, uint256 newLPBalance) {
-    /// return lpTokenChange - CFMM LP tokens deposited in GammaPool since last update, presumably to pay for this liquidity debt
-    //function getLpTokenBalance() internal view virtual returns(uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 paidLiquidity, uint256 newLPBalance, uint256 lpTokenChange) {
         // So lp balance is supposed to be greater than before, no matter what since tokens were deposited into the CFMM
         newLPBalance = GammaSwapLibrary.balanceOf(s.cfmm, address(this));
         uint256 lpTokenBalance = s.LP_TOKEN_BALANCE;
         // The change will always be positive, might be greater than expected, which means you paid more. If it's less it will be a small difference because of a fee
-        if(newLPBalance <= lpTokenBalance) {
-            revert NotEnoughLPDeposit();
-        }
-        // lpTokenChange = newLPBalance - lpTokenBalance;
+        if(newLPBalance <= lpTokenBalance) revert NotEnoughLPDeposit();
 
         // Liquidity invariant in CFMM, updated at start of transaction that opens loan. Understated after loan repayment
-        // lastCFMMInvariant = s.lastCFMMInvariant;
-
         // Total CFMM LP tokens in existence, updated at start of transaction that opens loan. Understated after loan repayment
-        // lastCFMMTotalSupply = s.lastCFMMTotalSupply;
-
         // Irrelevant that lastCFMMInvariant and lastCFMMTotalSupply are outdated because their conversion rate did not change
-        // paidLiquidity = convertLPToInvariant(lpTokenChange, lastCFMMInvariant, lastCFMMTotalSupply);
+        // Hence the original lastCFMMTotalSupply and lastCFMMInvariant is still useful for conversions
         paidLiquidity = convertLPToInvariant(newLPBalance - lpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply);
     }
 
@@ -263,17 +251,14 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @param lastCFMMTotalSupply - total LP tokens outstanding from CFMM during last GammaPool state update
     /// @param newLPBalance - current CFMM LP token balance in GammaPool
     function payPoolDebt(uint256 liquidity, uint256 lpTokenPrincipal, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 newLPBalance) internal virtual {
-    /// param lpTokenPaid - CFMM LP tokens deposited in GammaPool since last update, presumably to pay for this liquidity debt
-    //function payPoolDebt(uint256 liquidity, uint256 lpTokenPrincipal, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 newLPBalance, uint256 lpTokenPaid) internal virtual {
         uint256 borrowedInvariant = s.BORROWED_INVARIANT; // saves gas
         uint256 lpTokenBorrowedPlusInterest = s.LP_TOKEN_BORROWED_PLUS_INTEREST; // saves gas
 
         // Calculate CFMM LP tokens that were intended to be repaid
         uint256 _lpTokenPaid = convertInvariantToLP(liquidity, lastCFMMTotalSupply, lastCFMMInvariant);
 
-        // Update lastCFMMInvariant and lastCFMMTotalSupply to account for actual repaid amounts (can be greater than what was intended to be repaid)
-        //lastCFMMInvariant = lastCFMMInvariant + convertLPToInvariant(lpTokenPaid, lastCFMMInvariant, lastCFMMTotalSupply);
-        //lastCFMMTotalSupply = lastCFMMTotalSupply + lpTokenPaid; // Total supply went up by actual repaid amounts in CFMM LP tokens
+        // Not need to update lastCFMMInvariant and lastCFMMTotalSupply to account for actual repaid amounts which can be greater than what was intended to be repaid
+        // That is because they're only used for conversions and repayment does not update their conversion rate.
 
         // Won't overflow because liquidity paid <= loan's liquidity debt and borrowedInvariant = sum(liquidity debt of all loans)
         borrowedInvariant = borrowedInvariant - liquidity;
@@ -285,8 +270,6 @@ abstract contract BaseLongStrategy is BaseStrategy {
         // Update liquidity invariant from CFMM LP tokens deposited in GammaPool
         uint256 lpInvariant = convertLPToInvariant(newLPBalance, lastCFMMInvariant, lastCFMMTotalSupply);
         s.LP_INVARIANT = uint128(lpInvariant);
-        // s.lastCFMMInvariant = uint128(lastCFMMInvariant);
-        // s.lastCFMMTotalSupply = lastCFMMTotalSupply;
 
         // Won't overflow because _lpTokenPaid is derived from lpTokenBorrowedPlusInterest
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = lpTokenBorrowedPlusInterest - _lpTokenPaid;
@@ -319,9 +302,7 @@ abstract contract BaseLongStrategy is BaseStrategy {
         remainingLiquidity = loanLiquidity - liquidity;
 
         // Can't be less than min liquidity to avoid rounding issues
-        if (remainingLiquidity > 0 && remainingLiquidity < minBorrow()) {
-            revert MinBorrow();
-        }
+        if (remainingLiquidity > 0 && remainingLiquidity < minBorrow()) revert MinBorrow();
 
         _loan.liquidity = uint128(remainingLiquidity);
 
@@ -355,12 +336,8 @@ abstract contract BaseLongStrategy is BaseStrategy {
     /// @param balance - amount of `token` in GammaPool
     /// @param collateral - amount of `token` collateral in loan
     function sendToken(address token, address to, uint256 amount, uint256 balance, uint256 collateral) internal {
-        if(amount > balance) { // Check enough in pool's accounted balance
-            revert NotEnoughBalance();
-        }
-        if(amount > collateral) { // Check enough collateral in loan
-            revert NotEnoughCollateral();
-        }
+        if(amount > balance) revert NotEnoughBalance(); // Check enough in pool's accounted balance
+        if(amount > collateral) revert NotEnoughCollateral(); // Check enough collateral in loan
         GammaSwapLibrary.safeTransfer(token, to, amount); // Send token amount
     }
 
@@ -385,12 +362,8 @@ abstract contract BaseLongStrategy is BaseStrategy {
                 tokenChange[i] = int256(uint256(balanceChange));
             } else if(newTokenBalance < oldTokenBalance) { // If balance decreased
                 balanceChange = oldTokenBalance - newTokenBalance;
-                if(balanceChange > oldTokenBalance) { // Withdrew more than expected tracked balance, must synchronize
-                    revert NotEnoughBalance();
-                }
-                if(balanceChange > tokensHeld[i]) { // Withdrew more than available collateral
-                    revert NotEnoughCollateral();
-                }
+                if(balanceChange > oldTokenBalance) revert NotEnoughBalance(); // Withdrew more than expected tracked balance, must synchronize
+                if(balanceChange > tokensHeld[i]) revert NotEnoughCollateral(); // Withdrew more than available collateral
                 unchecked {
                     tokensHeld[i] -= balanceChange; // Update loan collateral
                 }

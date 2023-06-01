@@ -29,9 +29,7 @@ contract TestExternalLiquidationStrategy is TestExternalBaseLongStrategy, Extern
     }
 
     function checkMargin2(uint256 collateral, uint256 liquidity) internal virtual view {
-        if(!hasMargin(collateral, liquidity, _ltvThreshold())) { // Revert if loan has enough collateral
-            revert Margin();
-        }
+        if(!hasMargin(collateral, liquidity, _ltvThreshold())) revert Margin(); // Revert if loan has enough collateral
     }
 
     function _liquidationFee() internal virtual override view returns(uint16) {

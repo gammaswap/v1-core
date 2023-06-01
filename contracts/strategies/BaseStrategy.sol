@@ -222,9 +222,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param account - recipient address
     /// @param amount - amount of GS LP tokens to mint
     function _mint(address account, uint256 amount) internal virtual {
-        if(amount == 0) {
-            revert ZeroAmount();
-        }
+        if(amount == 0) revert ZeroAmount();
         s.totalSupply += amount;
         s.balanceOf[account] += amount;
         emit Transfer(address(0), account, amount);
@@ -234,13 +232,11 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param account - address that owns GS LP tokens to burn
     /// @param amount - amount of GS LP tokens to burn
     function _burn(address account, uint256 amount) internal virtual {
-        if(account == address(0)) {
-            revert ZeroAddress();
-        }
+        if(account == address(0)) revert ZeroAddress();
+
         uint256 accountBalance = s.balanceOf[account];
-        if(amount > accountBalance) {
-            revert ExcessiveBurn();
-        }
+        if(amount > accountBalance) revert ExcessiveBurn();
+
         unchecked {
             s.balanceOf[account] = accountBalance - amount;
         }
