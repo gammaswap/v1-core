@@ -42,19 +42,19 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         return _calcDeltasForWithdrawal(amounts, tokensHeld, reserves, ratio);
     }
 
-    /// @dev Used while withdrawing collateral of an existing loan to see if we need to re balance or not the loan's collateral to be able to withdraw the requested amounts
+    /// @dev Get the amounts that do not have enough collateral to withdraw from the loan's collateral
     /// @param amounts - collateral quantities requested to withdraw and therefore checked against existing collateral in the loan.
     /// @param tokensHeld - collateral quantities in loan
-    /// @return hasShortAmounts - if true, we don't have enough collateral to withdraw for at least on token of the CFMM
-    /// @return shortAmounts - amount requested to withdraw for which there isn't enough collateral to withdraw
-    function checkCollateral(uint128[] memory amounts, uint128[] memory tokensHeld) internal virtual view returns(bool hasShortAmounts, uint128[] memory shortAmounts){
+    /// @return hasUnfundedAmounts - if true, we don't have enough collateral to withdraw for at least on token of the CFMM
+    /// @return unfundedAmounts - amount requested to withdraw for which there isn't enough collateral to withdraw
+    function getUnfundedAmounts(uint128[] memory amounts, uint128[] memory tokensHeld) internal virtual view returns(bool hasUnfundedAmounts, uint128[] memory unfundedAmounts){
         uint256 len = tokensHeld.length;
-        shortAmounts = new uint128[](len);
-        hasShortAmounts = false;
+        unfundedAmounts = new uint128[](len);
+        hasUnfundedAmounts = false;
         for(uint256 i = 0; i < len;) {
             if(amounts[i] > tokensHeld[i]) { // if amount requested is higher than existing collateral
-                hasShortAmounts = true; // we don't have enough collateral of at least one token to withdraw
-                shortAmounts[i] = amounts[i]; // amount we are requesting to withdraw for which there isn't enough collateral
+                hasUnfundedAmounts = true; // we don't have enough collateral of at least one token to withdraw
+                unfundedAmounts[i] = amounts[i]; // amount we are requesting to withdraw for which there isn't enough collateral
             }
             unchecked {
                 i++;
@@ -198,9 +198,9 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
 
         if(ratio.length > 0) {
             tokensHeld = _loan.tokensHeld;
-            (bool hasShortAmounts, uint128[] memory shortAmounts) = checkCollateral(amounts, tokensHeld);
+            (bool hasUnfundedAmounts, uint128[] memory unfundedAmounts) = getUnfundedAmounts(amounts, tokensHeld);
 
-            if(!hasShortAmounts) {
+            if(!hasUnfundedAmounts) {
                 // Withdraw collateral tokens from loan
                 tokensHeld = withdrawCollateral(_loan, loanLiquidity, amounts, to);
 
@@ -212,7 +212,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
                 checkMargin(calcInvariant(s.cfmm, tokensHeld), loanLiquidity);
             } else {
                 // rebalance to match ratio after withdrawal
-                rebalanceCollateral(_loan, _calcDeltasForWithdrawal(shortAmounts, tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
+                rebalanceCollateral(_loan, _calcDeltasForWithdrawal(unfundedAmounts, tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
                 // Withdraw collateral tokens from loan
                 tokensHeld = withdrawCollateral(_loan, loanLiquidity, amounts, to);
             }
