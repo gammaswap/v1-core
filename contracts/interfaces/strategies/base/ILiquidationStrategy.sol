@@ -7,7 +7,7 @@ import "../events/ILiquidationStrategyEvents.sol";
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Only used to define PoolUpdated event to avoid redefining the event in all strategies
 interface ILiquidationStrategy is ILiquidationStrategyEvents {
-    /// @return loan to value threshold over which a loan is eligible for liquidation
+    /// @return minimum liquidation fee charged during liquidation of a loan
     function liquidationFee() external view returns(uint256);
 
     /// @dev Check if can liquidate loan based on liquidity debt and collateral

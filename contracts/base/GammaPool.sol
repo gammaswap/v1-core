@@ -34,12 +34,12 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     address immutable public override liquidationStrategy;
 
     /// @dev Initializes the contract by setting `protocolId`, `factory`, `longStrategy`, `shortStrategy`, and `liquidationStrategy`.
-    constructor(uint16 _protocolId, address _factory,  address _longStrategy, address _shortStrategy, address _liquidationStrategy) {
-        protocolId = _protocolId;
-        factory = _factory;
-        longStrategy = _longStrategy;
-        shortStrategy = _shortStrategy;
-        liquidationStrategy = _liquidationStrategy;
+    constructor(uint16 protocolId_, address factory_,  address longStrategy_, address shortStrategy_, address liquidationStrategy_) {
+        protocolId = protocolId_;
+        factory = factory_;
+        longStrategy = longStrategy_;
+        shortStrategy = shortStrategy_;
+        liquidationStrategy = liquidationStrategy_;
     }
 
     /// @dev See {IGammaPool-initialize}
@@ -139,7 +139,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         uint256 borrowRate, uint256 utilizationRate, uint256 accFeeIndex) {
         (lastCFMMFeeIndex,lastFeeIndex,borrowRate,utilizationRate) = IShortStrategy(shortStrategy)
         .getLastFees(s.factory, s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE, _getLatestCFMMInvariant(), _getLatestCFMMTotalSupply(),
-            s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER, address(this));
+            s.lastCFMMInvariant, s.lastCFMMTotalSupply, lastBlockNumber, address(this));
         accFeeIndex = s.accFeeIndex * lastFeeIndex / 1e18;
     }
 

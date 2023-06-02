@@ -7,7 +7,7 @@ import "./rates/IRateModel.sol";
 
 /// @title Interface for GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
-/// @dev Interface used to clear tokens from the GammaPool
+/// @dev Interface used for GammaPool implementations
 interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @dev Struct containing Loan data plus tokenId
     struct LoanData {

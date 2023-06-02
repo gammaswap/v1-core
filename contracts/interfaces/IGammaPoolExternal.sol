@@ -3,7 +3,17 @@ pragma solidity >=0.8.0;
 
 import "./IGammaPool.sol";
 
+/// @title Interface for GammaPoolExternal
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
+/// @dev Interface used for GammaPool implementations that have flash loan functionality
 interface IGammaPoolExternal is IGammaPool {
+
+    /// @dev External Long Strategy implementation contract for this GammaPool
+    function externalLongStrategy() external view returns(address);
+
+    /// @dev External Liquidation Strategy implementation contract for this GammaPool
+    function externalLiquidationStrategy() external view returns(address);
+
     /// @dev Flash loan pool's collateral and/or lp tokens to external address. Rebalanced loan collateral is acceptable in  repayment of flash loan
     /// @param tokenId - unique id identifying loan
     /// @param amounts - collateral amounts being flash loaned
