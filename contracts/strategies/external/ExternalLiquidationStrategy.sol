@@ -51,4 +51,9 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, B
     /// @dev See {ExternalBaseStrategy-checkLPTokens}.
     function checkLPTokens(address _cfmm, uint256 prevLpTokenBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) internal virtual override {
     }
+
+    /// @dev See {IExternalLiquidationStrategy-canLiquidate}.
+    function canLiquidate(uint256 liquidity, uint256 collateral) external virtual override view returns(bool) {
+        return !hasMargin(collateral, liquidity, _ltvThreshold());
+    }
 }
