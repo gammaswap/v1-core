@@ -12,6 +12,8 @@ import "./BaseLongStrategy.sol";
 abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
 
     error ExcessiveBorrowing();
+    error InvalidRatioLength();
+    error ZeroRepayLiquidity();
 
     // Long Gamma
 
@@ -136,6 +138,8 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     /// @param to - address that will receive collateral withdrawn
     /// @return tokensHeld - remaining loan collateral after withdrawal
     function withdrawCollateral(LibStorage.Loan storage _loan, uint256 loanLiquidity, uint128[] memory amounts, address to) internal virtual returns(uint128[] memory tokensHeld) {
+        if(amounts.length != _loan.tokensHeld.length) revert InvalidAmountsLength();
+
         // Withdraw collateral tokens from loan
         sendTokens(_loan, to, amounts);
 
@@ -149,9 +153,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
 
     /// @dev See {BaseLongStrategy-checkMargin}.
     function checkMargin(uint256 collateral, uint256 liquidity) internal virtual override view {
-        if(!hasMargin(collateral, liquidity, _ltvThreshold())) { // if collateral is below ltvThreshold revert transaction
-            revert Margin();
-        }
+        if(!hasMargin(collateral, liquidity, _ltvThreshold())) revert Margin(); // revert if collateral below ltvThreshold
     }
 
     /// @dev See {ILongStrategy-ltvThreshold}.
@@ -229,9 +231,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     /// @dev See {ILongStrategy-_borrowLiquidity}.
     function _borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external virtual override lock returns(uint256 liquidityBorrowed, uint256[] memory amounts) {
         // Revert if borrowing all CFMM LP tokens in pool
-        if(lpTokens >= s.LP_TOKEN_BALANCE) {
-            revert ExcessiveBorrowing();
-        }
+        if(lpTokens >= s.LP_TOKEN_BALANCE) revert ExcessiveBorrowing();
 
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
@@ -249,6 +249,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         (liquidityBorrowed, loanLiquidity) = openLoan(_loan, lpTokens);
 
         if(ratio.length > 0) {
+            if(ratio.length != tokensHeld.length) revert InvalidRatioLength();
             //get current reserves without updating
             uint128[] memory _reserves = getReserves(s.cfmm);
             (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);
@@ -265,7 +266,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
 
     /// @dev See {ILongStrategy-_repayLiquidity}.
     function _repayLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, uint256 collateralId, address to) external virtual override lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
-        require(payLiquidity > 0);
+        if(payLiquidity == 0) revert ZeroRepayLiquidity();
 
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
@@ -320,9 +321,13 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         // Update liquidity debt to include accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
 
+        tokensHeld = _loan.tokensHeld;
         if(ratio.length > 0) {
-            deltas = _calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio);
+            if(ratio.length != tokensHeld.length) revert InvalidRatioLength();
+            deltas = _calcDeltasForRatio(tokensHeld, s.CFMM_RESERVES, ratio);
         }
+
+        if(deltas.length != tokensHeld.length) revert InvalidDeltasLength();
 
         (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
 
@@ -338,7 +343,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     /// @dev See {ILongStrategy-_updatePool}
     function _updatePool(uint256 tokenId) external virtual override lock returns(uint256 loanLiquidityDebt, uint256 poolLiquidityDebt) {
         if(tokenId > 0) {
-            // Get loan for tokenId, revert if not loan creator
+            // Get loan for tokenId, revert if loan does not exist
             LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
 
             // Update pool and loan liquidity debt to include accrued interest since last update

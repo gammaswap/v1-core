@@ -91,9 +91,7 @@ contract TestLiquidationStrategy is LiquidationStrategy {
     }
 
     function checkMargin2(uint256 collateral, uint256 liquidity, uint256 limit) internal virtual pure {
-        if(!hasMargin(collateral, liquidity, limit)) {
-            revert Margin();
-        }
+        if(!hasMargin(collateral, liquidity, limit)) revert Margin();
     }
 
     // **** LONG GAMMA **** //

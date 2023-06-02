@@ -45,27 +45,20 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore {
     /// @param _protocolId - id of implementation contract being checked
     /// @param _address - address that has permission to bypass restricted protocol setting
     function isRestricted(uint16 _protocolId, address _address) internal virtual view {
-        if(isProtocolRestricted[_protocolId] == true && msg.sender != _address) {
-            revert ProtocolRestricted();
-        }
+        if(isProtocolRestricted[_protocolId] == true && msg.sender != _address) revert ProtocolRestricted();
     }
 
     /// @dev Revert if there is no implementation contract set for this _protocolId
     /// @param _protocolId - id of implementation contract being checked
     function isProtocolNotSet(uint16 _protocolId) internal virtual view {
-        if(getProtocol[_protocolId] == address(0)) {
-            revert ProtocolNotSet();
-        }
+        if(getProtocol[_protocolId] == address(0)) revert ProtocolNotSet();
     }
 
     /// @dev See {IGammaPoolFactory-addProtocol}
     function addProtocol(address implementation) external virtual override onlyOwner {
-        if(IGammaPool(implementation).protocolId() == 0) {
-            revert ZeroProtocol();// implementation contract cannot have zero as protocolId
-        }
-        if(getProtocol[IGammaPool(implementation).protocolId()] != address(0)) {
-            revert ProtocolExists();// there cannot already exist an implementation for this protocolId
-        }
+        if(IGammaPool(implementation).protocolId() == 0) revert ZeroProtocol();// implementation protocolId is zero
+        if(getProtocol[IGammaPool(implementation).protocolId()] != address(0)) revert ProtocolExists(); // protocolId already set
+
         getProtocol[IGammaPool(implementation).protocolId()] = implementation; // store implementation
     }
 

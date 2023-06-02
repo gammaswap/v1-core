@@ -15,6 +15,8 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     error ZeroAssets();
     error ExcessiveWithdrawal();
     error ExcessiveSpend();
+    error InvalidAmountsDesiredLength();
+    error InvalidAmountsMinLength();
 
     /// @dev Error thrown when wrong amount of ERC20 token is deposited in GammaPool
     /// @param token - address of ERC20 token that caused the error
@@ -86,9 +88,8 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
 
         // Convert CFMM LP tokens (`assets`) to GS LP tokens (`shares`)
         shares = convertToShares(assets);
-        if(shares == 0) { // revert if request is for 0 GS LP tokens
-            revert ZeroShares();
-        }
+        // revert if request is for 0 GS LP tokens
+        if(shares == 0) revert ZeroShares();
 
         // To prevent rounding errors, lock min shares in first deposit
         if(s.totalSupply == 0) {
@@ -128,9 +129,8 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
             if(amounts[i] > 0) {
                 newBalance = GammaSwapLibrary.balanceOf(tokens[i], to);
                 // Check destination address received reserve tokens by comparing with previous balances
-                if(deposits[i] >= newBalance) {
-                    revert WrongTokenBalance(tokens[i]);
-                }
+                if(deposits[i] >= newBalance) revert WrongTokenBalance(tokens[i]);
+
                 unchecked {
                     deposits[i] = newBalance - deposits[i];
                 }
@@ -145,6 +145,12 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
 
     /// @dev See {IShortStrategy-_depositReserves}.
     function _depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external virtual override lock returns(uint256[] memory reserves, uint256 shares) {
+        {
+            uint256 tokenLen = s.tokens.length;
+            if(amountsDesired.length != tokenLen) revert InvalidAmountsDesiredLength();
+            if(amountsMin.length != tokenLen) revert InvalidAmountsMinLength();
+        }
+
         address payee; // address that will receive reserve tokens from depositor
 
         // Calculate amounts of reserve tokens to send and address to send them to
@@ -177,14 +183,11 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
 
         // Convert GS LP tokens (`shares`) to CFMM LP tokens (`assets`)
         assets = convertToAssets(shares);
-        if(assets == 0) { // revert if request is for 0 CFMM LP tokens
-            revert ZeroAssets();
-        }
+        // revert if request is for 0 CFMM LP tokens
+        if(assets == 0) revert ZeroAssets();
 
         // Revert if not enough CFMM LP tokens in GammaPool
-        if(assets > s.LP_TOKEN_BALANCE) {
-            revert ExcessiveWithdrawal();
-        }
+        if(assets > s.LP_TOKEN_BALANCE) revert ExcessiveWithdrawal();
 
         // Send CFMM LP tokens or reserve tokens to receiver (`to`) and burn corresponding GS LP tokens from GammaPool address
         reserves = withdrawAssets(address(this), to, address(this), assets, shares, askForReserves);
@@ -262,9 +265,9 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     function spendAllowance(address owner, address spender, uint256 amount) internal virtual {
         uint256 allowed = s.allowance[owner][spender]; // Saves gas for limited approvals.
         if (allowed != type(uint256).max) { // If limited spending
-            if(allowed < amount) { // Not allowed to spend that much
-                revert ExcessiveSpend();
-            }
+            // Not allowed to spend that much
+            if(allowed < amount) revert ExcessiveSpend();
+
             unchecked {
                 s.allowance[owner][spender] = allowed - amount;
             }

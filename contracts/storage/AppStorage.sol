@@ -23,8 +23,7 @@ contract AppStorage {
     }
 
     function _lock() internal {
-        if(s.unlocked != 1)
-            revert Locked();
+        if(s.unlocked != 1) revert Locked();
         s.unlocked = 0;
     }
 

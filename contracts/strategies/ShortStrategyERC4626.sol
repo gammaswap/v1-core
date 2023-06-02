@@ -18,9 +18,7 @@ abstract contract ShortStrategyERC4626 is ShortStrategy {
         shares = convertToShares(assets);
 
         // Revert if redeeming 0 GS LP tokens
-        if(shares == 0) {
-            revert ZeroShares();
-        }
+        if(shares == 0) revert ZeroShares();
 
         // Transfer CFMM LP tokens (`assets`) from msg.sender to GammaPool and mint GS LP tokens (`shares`) to receiver (`to`)
         depositAssetsFrom(msg.sender, to, assets, shares);
@@ -35,9 +33,7 @@ abstract contract ShortStrategyERC4626 is ShortStrategy {
         assets = convertToAssets(shares);
 
         // Revert if withdrawing 0 CFMM LP tokens
-        if(assets == 0) {
-            revert ZeroAssets();
-        }
+        if(assets == 0) revert ZeroAssets();
 
         // Transfer CFMM LP tokens (`assets`) from msg.sender to GammaPool and mint GS LP tokens (`shares`) to receiver (`to`)
         depositAssetsFrom(msg.sender, to, assets, shares);
@@ -49,17 +45,13 @@ abstract contract ShortStrategyERC4626 is ShortStrategy {
         updateIndex();
 
         // Revert if not enough CFMM LP tokens to withdraw
-        if(assets > s.LP_TOKEN_BALANCE) {
-            revert ExcessiveWithdrawal();
-        }
+        if(assets > s.LP_TOKEN_BALANCE) revert ExcessiveWithdrawal();
 
         // Convert CFMM LP tokens to GS LP tokens
         shares = convertToShares(assets);
 
         // Revert if redeeming 0 GS LP tokens
-        if(shares == 0) {
-            revert ZeroShares();
-        }
+        if(shares == 0) revert ZeroShares();
 
         // Send CFMM LP tokens to receiver (`to`) and burn corresponding GS LP tokens from msg.sender
         withdrawAssets(msg.sender, to, from, assets, shares, false);
@@ -72,14 +64,10 @@ abstract contract ShortStrategyERC4626 is ShortStrategy {
 
         // Convert GS LP tokens to CFMM LP tokens
         assets = convertToAssets(shares);
-        if(assets == 0) { // revert if withdrawing 0 CFMM LP tokens
-            revert ZeroAssets();
-        }
+        if(assets == 0) revert ZeroAssets(); // revert if withdrawing 0 CFMM LP tokens
 
         // Revert if not enough CFMM LP tokens to withdraw
-        if(assets > s.LP_TOKEN_BALANCE) {
-            revert ExcessiveWithdrawal();
-        }
+        if(assets > s.LP_TOKEN_BALANCE) revert ExcessiveWithdrawal();
 
         // Send CFMM LP tokens to receiver (`to`) and burn corresponding GS LP tokens from msg.sender
         withdrawAssets(msg.sender, to, from, assets, shares, false);

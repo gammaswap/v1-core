@@ -9,9 +9,7 @@ contract TestExternalLongStrategy is TestExternalBaseLongStrategy, ExternalLongS
     }
 
     function checkMargin(uint256 collateral, uint256 liquidity) internal virtual override view {
-        if(!hasMargin(collateral, liquidity, _ltvThreshold())) { // if collateral is below ltvThreshold revert transaction
-            revert Margin();
-        }
+        if(!hasMargin(collateral, liquidity, _ltvThreshold())) revert Margin(); // if collateral is below ltvThreshold revert transaction
     }
 
     function _borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external virtual override returns(uint256 liquidityBorrowed, uint256[] memory amounts) {

@@ -47,9 +47,8 @@ abstract contract GammaPoolERC20 is IGammaPoolERC20Events, AppStorage {
     /// @param amount - amount of GS LP tokens being sent
     function _transfer(address from, address to, uint256 amount) internal virtual {
         uint256 currentBalance = s.balanceOf[from];
-        if(currentBalance < amount) {
-            revert ERC20Transfer(); // insufficient balance
-        }
+        if(currentBalance < amount) revert ERC20Transfer(); // insufficient balance
+
         unchecked{
             s.balanceOf[from] = currentBalance - amount;
         }
@@ -84,9 +83,8 @@ abstract contract GammaPoolERC20 is IGammaPoolERC20Events, AppStorage {
     function transferFrom(address from, address to, uint256 amount) external virtual returns (bool) {
         uint256 currentAllowance = s.allowance[from][msg.sender];
         if (currentAllowance != type(uint256).max) { // is allowance set to max uint256, then never decrease allowance
-            if(currentAllowance < amount) { // revert if trying to send more than allowance
-                revert ERC20Allowance();
-            }
+            if(currentAllowance < amount) revert ERC20Allowance(); // revert if trying to send more than allowance
+
             unchecked {
                 s.allowance[from][msg.sender] = currentAllowance - amount;
             }

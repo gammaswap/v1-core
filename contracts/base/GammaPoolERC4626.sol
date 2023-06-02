@@ -86,9 +86,8 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
         uint256 _totalAssets = totalAssets(); // Calculates total CFMM LP tokens, including accrued interest, using state variables
 
         if(supply == 0 || _totalAssets == 0) {
-            if(assets <= MIN_SHARES) {
-                revert MinShares();
-            }
+            if(assets <= MIN_SHARES) revert MinShares();
+
             unchecked {
                 return assets - MIN_SHARES;
             }
@@ -105,9 +104,8 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
         }
         uint256 supply = totalSupply(); // Total amount of GS LP tokens issued
         if(supply == 0) {
-            if(shares <= MIN_SHARES) {
-                revert MinShares();
-            }
+            if(shares <= MIN_SHARES) revert MinShares();
+
             unchecked {
                 return shares - MIN_SHARES;
             }

@@ -111,8 +111,7 @@ library LibStorage {
     /// @param _tokens - tokens of CFMM this GammaPool is for
     /// @param _decimals -decimals of the tokens of the CFMM the GammaPool is for, indices must match tokens array
     function initialize(Storage storage self, address _factory, address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) internal {
-        if(self.factory != address(0)) // cannot initialize twice
-            revert Initialized();
+        if(self.factory != address(0)) revert Initialized();// cannot initialize twice
 
         self.factory = _factory;
         self.cfmm = _cfmm;

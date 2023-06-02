@@ -26,6 +26,7 @@ abstract contract AbstractRateParamsStore is IRateParamsStore {
     /// @dev validate the rate model parameters that we'll store for the pool
     /// @param _rateModel - address of rate model
     /// @param _data - rate model parameters in bytes
+    /// @return validated - true if parameters are validated by the rate model
     function _validateParameters(address _rateModel, bytes calldata _data) internal virtual view returns(bool validated) {
         try IRateModel(_rateModel).validateParameters(_data) returns (bool _validated){
             validated = _validated;

@@ -27,9 +27,8 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
 
     /// @dev Initializes the contract by setting `_baseRate`, `_optimalUtilRate`, `_slope1`, and `_slope2`. the target rate (`_optimalUtilRate`) cannot be greater than 1e18
     constructor(uint64 _baseRate, uint64 _optimalUtilRate, uint64 _slope1, uint64 _slope2) {
-        if(!(_optimalUtilRate > 0 && _optimalUtilRate < 1e18)){
-            revert OptimalUtilRate();
-        }
+        if(!(_optimalUtilRate > 0 && _optimalUtilRate < 1e18)) revert OptimalUtilRate();
+
         baseRate = _baseRate;
         optimalUtilRate = _optimalUtilRate;
         slope1 = _slope1;
