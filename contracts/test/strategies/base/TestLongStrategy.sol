@@ -12,7 +12,7 @@ contract TestLongStrategy is LongStrategy {
 
     event LoanCreated(address indexed caller, uint256 tokenId);
     event AmountsWithFees(uint256[] amounts);
-    uint80 public borrowRate = 1;
+    uint80 public borrowRate = 1e18;
     uint24 public origFee = 0;
     uint16 public protocolId;
     uint256 private _minBorrow = 1e3;
@@ -60,6 +60,14 @@ contract TestLongStrategy is LongStrategy {
 
     function tokenBalances() public virtual view returns(uint128[] memory) {
         return s.TOKEN_BALANCE;
+    }
+
+    function testGetUnfundedAmounts(uint128[] memory amounts, uint128[] memory tokensHeld) external virtual view returns(bool hasUnfundedAmounts, uint128[] memory unfundedAmounts) {
+        return getUnfundedAmounts(amounts, tokensHeld);
+    }
+
+    function testGetReserves(address to) external virtual view returns(uint128[] memory) {
+        return _getReserves(to);
     }
 
     // **** LONG GAMMA **** //
@@ -310,6 +318,16 @@ contract TestLongStrategy is LongStrategy {
         deltas = new int256[](2);
         deltas[0] = 0;
         deltas[1] = 0;
+    }
+
+    function calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
+        return _calcDeltasForWithdrawal(amounts, tokensHeld, reserves, ratio);
+    }
+
+    function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 100;
     }
 
     function getReserves(address cfmm) internal virtual override view returns(uint128[] memory reserves) {

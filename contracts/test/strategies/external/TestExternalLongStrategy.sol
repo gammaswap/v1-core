@@ -15,10 +15,10 @@ contract TestExternalLongStrategy is TestExternalBaseLongStrategy, ExternalLongS
     function _borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external virtual override returns(uint256 liquidityBorrowed, uint256[] memory amounts) {
     }
 
-    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address to) external virtual override returns(uint128[] memory tokensHeld) {
+    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address to, uint256[] calldata ratio) external virtual override returns(uint128[] memory tokensHeld) {
     }
 
-    function _increaseCollateral(uint256 tokenId) external virtual override returns(uint128[] memory tokensHeld) {
+    function _increaseCollateral(uint256 tokenId, uint256[] calldata ratio) external virtual override returns(uint128[] memory tokensHeld) {
     }
 
     function _rebalanceCollateral(uint256 tokenId, int256[] memory deltas, uint256[] calldata ratio) external virtual override returns(uint128[] memory tokensHeld) {
@@ -70,4 +70,13 @@ contract TestExternalLongStrategy is TestExternalBaseLongStrategy, ExternalLongS
         return _calcDeltasToClose(tokensHeld, reserves, liquidity, collateralId);
     }
 
+    function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 0;
+    }
+
+    function calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external virtual override view returns(int256[] memory deltas) {
+        return _calcDeltasForWithdrawal(amounts, tokensHeld, reserves, ratio);
+    }
 }

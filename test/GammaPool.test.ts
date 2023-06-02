@@ -658,7 +658,9 @@ describe("GammaPool", function () {
       );
       const tokenId = ethers.BigNumber.from(ethers.utils.keccak256(data));
 
-      const res0 = await (await gammaPool.increaseCollateral(tokenId)).wait();
+      const res0 = await (
+        await gammaPool.increaseCollateral(tokenId, [])
+      ).wait();
       expect(res0.events[0].args.tokenId).to.eq(tokenId);
       expect(res0.events[0].args.tokensHeld.length).to.eq(2);
       expect(res0.events[0].args.tokensHeld[0]).to.eq(1);
@@ -670,7 +672,12 @@ describe("GammaPool", function () {
       expect(res0.events[0].args.txType).to.eq(4);
 
       const res1 = await (
-        await gammaPool.decreaseCollateral(tokenId, [100, 200], addr1.address)
+        await gammaPool.decreaseCollateral(
+          tokenId,
+          [100, 200],
+          addr1.address,
+          []
+        )
       ).wait();
       expect(res1.events[0].args.tokenId).to.eq(tokenId);
       expect(res1.events[0].args.tokensHeld.length).to.eq(2);

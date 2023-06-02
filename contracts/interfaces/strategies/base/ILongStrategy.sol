@@ -12,15 +12,17 @@ interface ILongStrategy is ILongStrategyEvents {
 
     /// @dev Deposit more collateral in loan identified by tokenId
     /// @param tokenId - unique id identifying loan
+    /// @param ratio - ratio to rebalance collateral after increasing collateral
     /// @return tokensHeld - updated collateral token amounts backing loan
-    function _increaseCollateral(uint256 tokenId) external returns(uint128[] memory tokensHeld);
+    function _increaseCollateral(uint256 tokenId, uint256[] calldata ratio) external returns(uint128[] memory tokensHeld);
 
     /// @dev Withdraw collateral from loan identified by tokenId
     /// @param tokenId - unique id identifying loan
     /// @param amounts - amounts of collateral tokens requested to withdraw
     /// @param to - destination address of receiver of collateral withdrawn
+    /// @param ratio - ratio to rebalance collateral after withdrawing collateral
     /// @return tokensHeld - updated collateral token amounts backing loan
-    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address to) external returns(uint128[] memory tokensHeld);
+    function _decreaseCollateral(uint256 tokenId, uint128[] memory amounts, address to, uint256[] calldata ratio) external returns(uint128[] memory tokensHeld);
 
     /// @dev Borrow liquidity from the CFMM and add it to the debt and collateral of loan identified by tokenId
     /// @param tokenId - unique id identifying loan
@@ -67,4 +69,12 @@ interface ILongStrategy is ILongStrategyEvents {
     /// @param collateralId - index of tokensHeld array to rebalance to (e.g. the collateral of the chosen index will be completely used up in repayment)
     /// @return deltas - amounts of collateral to trade to be able to repay `liquidity`
     function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) external view returns(int256[] memory deltas);
+
+    /// @dev Calculate quantities to trade to rebalance collateral so that after withdrawing `amounts` we achieve desired `ratio`
+    /// @param amounts - amounts that will be withdrawn from collateral
+    /// @param tokensHeld - loan collateral to rebalance
+    /// @param reserves - reserve token quantities in CFMM
+    /// @param ratio - desired ratio of collateral after withdrawing `amounts`
+    /// @return deltas - amount of collateral to trade to achieve desired `ratio`
+    function calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external view returns(int256[] memory deltas);
 }

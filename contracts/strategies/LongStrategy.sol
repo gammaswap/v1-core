@@ -29,6 +29,49 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         return _calcDeltasForRatio(tokensHeld, reserves, ratio);
     }
 
+    /// @dev Calculate quantities to trade to rebalance collateral so that after withdrawing `amounts` we achieve desired `ratio`
+    /// @param amounts - amounts that will be withdrawn from collateral
+    /// @param tokensHeld - loan collateral to rebalance
+    /// @param reserves - reserve token quantities in CFMM
+    /// @param ratio - desired ratio of collateral after withdrawing `amounts`
+    /// @return deltas - amount of collateral to trade to achieve desired `ratio`
+    function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual view returns(int256[] memory deltas);
+
+    /// @dev See {ILongStrategy-calcDeltasForWithdrawal}.
+    function calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external virtual override view returns(int256[] memory deltas) {
+        return _calcDeltasForWithdrawal(amounts, tokensHeld, reserves, ratio);
+    }
+
+    /// @dev Get the amounts that do not have enough collateral to withdraw from the loan's collateral
+    /// @param amounts - collateral quantities requested to withdraw and therefore checked against existing collateral in the loan.
+    /// @param tokensHeld - collateral quantities in loan
+    /// @return hasUnfundedAmounts - if true, we don't have enough collateral to withdraw for at least on token of the CFMM
+    /// @return unfundedAmounts - amount requested to withdraw for which there isn't enough collateral to withdraw
+    function getUnfundedAmounts(uint128[] memory amounts, uint128[] memory tokensHeld) internal virtual view returns(bool hasUnfundedAmounts, uint128[] memory unfundedAmounts){
+        uint256 len = tokensHeld.length;
+        unfundedAmounts = new uint128[](len);
+        hasUnfundedAmounts = false;
+        for(uint256 i = 0; i < len;) {
+            if(amounts[i] > tokensHeld[i]) { // if amount requested is higher than existing collateral
+                hasUnfundedAmounts = true; // we don't have enough collateral of at least one token to withdraw
+                unfundedAmounts[i] = amounts[i]; // amount we are requesting to withdraw for which there isn't enough collateral
+            }
+            unchecked {
+                i++;
+            }
+        }
+    }
+
+    /// @dev Ask for reserve quantities from CFMM if address that will receive withdrawn quantities is CFMM
+    /// @param to - address that will receive withdrawn collateral quantities
+    /// @return reserves - CFMM reserve quantities
+    function _getReserves(address to) internal virtual view returns(uint128[] memory) {
+        if(to == s.cfmm) {
+            return getReserves(s.cfmm);
+        }
+        return s.CFMM_RESERVES;
+    }
+
     /// @dev Withdraw loan collateral
     /// @param _loan - loan whose collateral will be rebalanced
     /// @param deltas - collateral amounts being bought or sold (>0 buy, <0 sell), index matches tokensHeld[] index. Only n-1 tokens can be traded
@@ -120,30 +163,62 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
 
     /// @notice Assumes that collateral tokens were already deposited but not accounted for
     /// @dev See {ILongStrategy-_increaseCollateral}.
-    function _increaseCollateral(uint256 tokenId) external virtual override lock returns(uint128[] memory tokensHeld) {
+    function _increaseCollateral(uint256 tokenId, uint256[] calldata ratio) external virtual override lock returns(uint128[] memory tokensHeld) {
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         // Update loan collateral token amounts with tokens deposited in GammaPool
         (tokensHeld,) = updateCollateral(_loan);
 
-        // Do not check for loan undercollateralization because adding collateral always improves loan health
+        // Update liquidity debt to include accrued interest since last update
+        uint256 loanLiquidity = updateLoan(_loan);
 
-        emit LoanUpdated(tokenId, tokensHeld, _loan.liquidity, _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.INCREASE_COLLATERAL);
+        if(ratio.length > 0) {
+            (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
+            // Check that loan is not undercollateralized after swap
+            checkMargin(calcInvariant(s.cfmm, tokensHeld), loanLiquidity);
+        }
+        // If not rebalanced, do not check for undercollateralization because adding collateral always improves loan health
+
+        emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.INCREASE_COLLATERAL);
+
+        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex,
+            s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.INCREASE_COLLATERAL);
 
         return tokensHeld;
     }
 
     /// @dev See {ILongStrategy-_decreaseCollateral}.
-    function _decreaseCollateral(uint256 tokenId, uint128[] calldata amounts, address to) external virtual override lock returns(uint128[] memory tokensHeld) {
+    function _decreaseCollateral(uint256 tokenId, uint128[] memory amounts, address to, uint256[] calldata ratio) external virtual override lock returns(uint128[] memory tokensHeld) {
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         // Update liquidity debt with accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
 
-        // Withdraw collateral tokens from loan
-        tokensHeld = withdrawCollateral(_loan, loanLiquidity, amounts, to);
+        if(ratio.length > 0) {
+            tokensHeld = _loan.tokensHeld;
+            (bool hasUnfundedAmounts, uint128[] memory unfundedAmounts) = getUnfundedAmounts(amounts, tokensHeld);
+
+            if(!hasUnfundedAmounts) {
+                // Withdraw collateral tokens from loan
+                tokensHeld = withdrawCollateral(_loan, loanLiquidity, amounts, to);
+
+                // rebalance to ratio
+                uint128[] memory _reserves = _getReserves(to);
+                (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);
+
+                // Check that loan is not undercollateralized after swap
+                checkMargin(calcInvariant(s.cfmm, tokensHeld), loanLiquidity);
+            } else {
+                // rebalance to match ratio after withdrawal
+                rebalanceCollateral(_loan, _calcDeltasForWithdrawal(unfundedAmounts, tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
+                // Withdraw collateral tokens from loan
+                tokensHeld = withdrawCollateral(_loan, loanLiquidity, amounts, to);
+            }
+        } else {
+            tokensHeld = withdrawCollateral(_loan, loanLiquidity, amounts, to);
+        }
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.DECREASE_COLLATERAL);
 
@@ -181,8 +256,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         }
 
         // Check that loan is not undercollateralized
-        uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
-        checkMargin(collateral, loanLiquidity);
+        checkMargin(calcInvariant(s.cfmm, tokensHeld), loanLiquidity);
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.BORROW_LIQUIDITY);
 
@@ -258,8 +332,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
 
         // Check that loan is not undercollateralized after swap
-        uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
-        checkMargin(collateral, loanLiquidity);
+        checkMargin(calcInvariant(s.cfmm, tokensHeld), loanLiquidity);
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.REBALANCE_COLLATERAL);
 
