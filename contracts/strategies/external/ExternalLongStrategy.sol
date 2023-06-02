@@ -3,13 +3,16 @@ pragma solidity >=0.8.4;
 
 import "../../interfaces/strategies/external/IExternalLongStrategy.sol";
 import "./ExternalBaseStrategy.sol";
-import "../LongStrategy.sol";
-import "../../interfaces/periphery/ISendTokensCallback.sol";
 
 /// @title External Long Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used to rebalance loan collateral with an external swap (flash loan)
 abstract contract ExternalLongStrategy is IExternalLongStrategy, ExternalBaseStrategy {
+
+    /// @dev See {IExternalLongStrategy-ltvThreshold}.
+    function ltvThreshold() external virtual override view returns(uint256) {
+        return _ltvThreshold();
+    }
 
     /// @dev See {IExternalLongStrategy-_rebalanceExternally}.
     function _rebalanceExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock virtual returns(uint256 loanLiquidity, uint128[] memory tokensHeld) {
@@ -51,5 +54,10 @@ abstract contract ExternalLongStrategy is IExternalLongStrategy, ExternalBaseStr
         // Update CFMM LP Tokens in pool and the invariant it represents
         s.LP_TOKEN_BALANCE = newLpTokenBalance;
         s.LP_INVARIANT = uint128(convertLPToInvariant(newLpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply));
+    }
+
+    /// @dev See {BaseLongStrategy-checkMargin}.
+    function checkMargin(uint256 collateral, uint256 liquidity) internal virtual override view {
+        if(!hasMargin(collateral, liquidity, _ltvThreshold())) revert Margin(); // revert if collateral below ltvThreshold
     }
 }
