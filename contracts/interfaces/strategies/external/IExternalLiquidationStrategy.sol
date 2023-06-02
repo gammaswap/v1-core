@@ -11,6 +11,12 @@ interface IExternalLiquidationStrategy is ILiquidationStrategyEvents, IExternalS
     /// @return minimum liquidation fee charged to a loan
     function liquidationFee() external view returns(uint256);
 
+    /// @dev Check if can liquidate loan based on liquidity debt and collateral
+    /// @param liquidity - liquidity debt of loan
+    /// @param collateral - liquidity invariant calculated from collateral tokens (`tokensHeld`)
+    /// @return canLiquidate - true if loan can be liquidated, false otherwise
+    function canLiquidate(uint256 liquidity, uint256 collateral) external view returns(bool);
+
     /// @notice The entire pool's collateral is available in the flash loan. Flash loan must result in a net CFMM LP token deposit that repays loan's liquidity debt
     /// @dev Function to liquidate a loan using using a flash loan of collateral tokens from the pool and/or CFMM LP tokens. Seeks full liquidation
     /// @param tokenId - tokenId of loan being liquidated
