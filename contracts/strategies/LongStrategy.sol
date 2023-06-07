@@ -272,14 +272,14 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     /// @param _loan - loan to update liquidity debt
     /// @param payLiquidity - amount of liquidity to pay
     /// @return loanLiquidity - updated liquidity debt of loan, including debt write down
-    function updateLoanForRepay(LibStorage.Loan storage _loan, uint256 payLiquidity)internal virtual returns(uint256 loanLiquidity){
+    function updatePayableLoan(LibStorage.Loan storage _loan, uint256 payLiquidity)internal virtual returns(uint256 loanLiquidity){
         loanLiquidity = updateLoan(_loan);
         uint256 collateral = calcInvariant(s.cfmm, _loan.tokensHeld);
         uint256 _minBorrow = minBorrow();
         collateral = collateral > _minBorrow ? collateral - _minBorrow : 0;
         if(loanLiquidity > collateral) { // collateral must cover liquidity debt by minBorrow amount
-            if(payLiquidity < loanLiquidity) revert BadDebt(); // only write down if paying in full
-            (,loanLiquidity) = writeDown(collateral, loanLiquidity);
+            if(payLiquidity < loanLiquidity && collateral > 0) revert BadDebt(); // only write down if paying in full
+            (,loanLiquidity) = writeDown(collateral, loanLiquidity); // also write down if collateral is 0
             _loan.liquidity = uint128(loanLiquidity);
         }
         return loanLiquidity;
@@ -293,7 +293,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         // Update liquidity debt to include accrued interest since last update
-        uint256 loanLiquidity = updateLoanForRepay(_loan, payLiquidity);
+        uint256 loanLiquidity = updatePayableLoan(_loan, payLiquidity);
 
         // Cap liquidity repayment at total liquidity debt
         uint256 liquidityToCalculate;

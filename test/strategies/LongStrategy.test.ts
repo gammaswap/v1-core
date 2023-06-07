@@ -468,6 +468,231 @@ describe("LongStrategy", function () {
       expect(resp.events[1].args.txType).to.eq(15);
       expect(_data1.accFeeIndex).to.gt(_data.accFeeIndex);
     });
+
+    it("Update Loan Liquidity for Repay, write down to 0", async function () {
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      await (await strategy.testUpdateIndex()).wait();
+
+      // updateLoanLiquidity
+      const res = await (await strategy.createLoan()).wait();
+      expect(res.events[0].args.caller).to.equal(owner.address);
+      const tokenId = res.events[0].args.tokenId;
+
+      const ONE = BigNumber.from(10).pow(18);
+      const loan = await strategy.getLoan(tokenId);
+      expect(loan.id).to.equal(1);
+      expect(loan.poolId).to.equal(strategy.address);
+      expect(loan.tokensHeld.length).to.equal(2);
+      expect(loan.tokensHeld[0]).to.equal(0);
+      expect(loan.tokensHeld[1]).to.equal(0);
+      expect(loan.liquidity).to.equal(0);
+      expect(loan.lpTokens).to.equal(0);
+      const accFeeIndex = await strategy.getAccFeeIndex();
+      expect(loan.rateIndex).to.equal(accFeeIndex);
+
+      const liquidity = ONE.mul(100);
+
+      await await strategy.setLPTokenLoanBalance(
+        tokenId,
+        liquidity, // lpInvariant
+        liquidity, // lpTokenBalance
+        liquidity.mul(2), // borrowedInvariant
+        liquidity.mul(2), // lpTokens borrowed plus interest (accrued interest is 0)
+        liquidity.mul(3), // lastCFMMInvariant
+        liquidity.mul(3) // lastCFMMTotalSupply
+      );
+      await (await strategy.setBorrowRate(ONE.mul(2))).wait();
+      await (await strategy.setLoanLiquidity(tokenId, liquidity)).wait();
+      const loan1 = await strategy.getLoan(tokenId);
+      expect(loan1.liquidity).to.eq(liquidity);
+      expect(loan1.liquidity).gt(0);
+
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      await (await strategy.testUpdatePayableLoan(tokenId, liquidity)).wait();
+
+      const loan2 = await strategy.getLoan(tokenId);
+      expect(loan2.liquidity).to.eq(0);
+    });
+
+    it("Update Loan Liquidity for Repay, write down to collateral", async function () {
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      await (await strategy.testUpdateIndex()).wait();
+
+      // updateLoanLiquidity
+      const res = await (await strategy.createLoan()).wait();
+      expect(res.events[0].args.caller).to.equal(owner.address);
+      const tokenId = res.events[0].args.tokenId;
+
+      const ONE = BigNumber.from(10).pow(18);
+      const loan = await strategy.getLoan(tokenId);
+      expect(loan.id).to.equal(1);
+      expect(loan.poolId).to.equal(strategy.address);
+      expect(loan.tokensHeld.length).to.equal(2);
+      expect(loan.tokensHeld[0]).to.equal(0);
+      expect(loan.tokensHeld[1]).to.equal(0);
+      expect(loan.liquidity).to.equal(0);
+      expect(loan.lpTokens).to.equal(0);
+      const accFeeIndex = await strategy.getAccFeeIndex();
+      expect(loan.rateIndex).to.equal(accFeeIndex);
+
+      const liquidity = ONE.mul(100);
+
+      await await strategy.setLPTokenLoanBalance(
+        tokenId,
+        liquidity, // lpInvariant
+        liquidity, // lpTokenBalance
+        liquidity.mul(2), // borrowedInvariant
+        liquidity.mul(2), // lpTokens borrowed plus interest (accrued interest is 0)
+        liquidity.mul(3), // lastCFMMInvariant
+        liquidity.mul(3) // lastCFMMTotalSupply
+      );
+      await (await strategy.setBorrowRate(ONE.mul(2))).wait();
+      await (await strategy.setLoanLiquidity(tokenId, liquidity)).wait();
+      await (
+        await strategy.setHeldAmounts(tokenId, [
+          liquidity.div(2),
+          liquidity.div(2),
+        ])
+      ).wait();
+      const loan1 = await strategy.getLoan(tokenId);
+      expect(loan1.tokensHeld[0]).to.equal(liquidity.div(2));
+      expect(loan1.tokensHeld[1]).to.equal(liquidity.div(2));
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      await (
+        await strategy.testUpdatePayableLoan(tokenId, liquidity.mul(2))
+      ).wait();
+
+      const loan2 = await strategy.getLoan(tokenId);
+      expect(loan2.liquidity).to.lt(loan1.liquidity);
+      expect(loan2.liquidity).to.eq(liquidity.div(2).sub(1000)); // 1000 is minBorrow
+    });
+
+    it("Update Loan Liquidity for Repay, write down error BadDebt", async function () {
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      await (await strategy.testUpdateIndex()).wait();
+
+      // updateLoanLiquidity
+      const res = await (await strategy.createLoan()).wait();
+      expect(res.events[0].args.caller).to.equal(owner.address);
+      const tokenId = res.events[0].args.tokenId;
+
+      const ONE = BigNumber.from(10).pow(18);
+      const loan = await strategy.getLoan(tokenId);
+      expect(loan.id).to.equal(1);
+      expect(loan.poolId).to.equal(strategy.address);
+      expect(loan.tokensHeld.length).to.equal(2);
+      expect(loan.tokensHeld[0]).to.equal(0);
+      expect(loan.tokensHeld[1]).to.equal(0);
+      expect(loan.liquidity).to.equal(0);
+      expect(loan.lpTokens).to.equal(0);
+      const accFeeIndex = await strategy.getAccFeeIndex();
+      expect(loan.rateIndex).to.equal(accFeeIndex);
+
+      const liquidity = ONE.mul(100);
+
+      await await strategy.setLPTokenLoanBalance(
+        tokenId,
+        liquidity, // lpInvariant
+        liquidity, // lpTokenBalance
+        liquidity.mul(2), // borrowedInvariant
+        liquidity.mul(2), // lpTokens borrowed plus interest (accrued interest is 0)
+        liquidity.mul(3), // lastCFMMInvariant
+        liquidity.mul(3) // lastCFMMTotalSupply
+      );
+      await (await strategy.setBorrowRate(ONE.mul(2))).wait();
+      await (await strategy.setLoanLiquidity(tokenId, liquidity)).wait();
+      await (
+        await strategy.setHeldAmounts(tokenId, [
+          liquidity.div(2),
+          liquidity.div(2),
+        ])
+      ).wait();
+      const loan1 = await strategy.getLoan(tokenId);
+      expect(loan1.tokensHeld[0]).to.equal(liquidity.div(2));
+      expect(loan1.tokensHeld[1]).to.equal(liquidity.div(2));
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      await expect(
+        strategy.testUpdatePayableLoan(tokenId, liquidity)
+      ).to.be.revertedWithCustomError(strategy, "BadDebt");
+    });
+
+    it("Update Loan Liquidity for Repay, no write down", async function () {
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      await (await strategy.testUpdateIndex()).wait();
+
+      // updateLoanLiquidity
+      const res = await (await strategy.createLoan()).wait();
+      expect(res.events[0].args.caller).to.equal(owner.address);
+      const tokenId = res.events[0].args.tokenId;
+
+      const ONE = BigNumber.from(10).pow(18);
+      const loan = await strategy.getLoan(tokenId);
+      expect(loan.id).to.equal(1);
+      expect(loan.poolId).to.equal(strategy.address);
+      expect(loan.tokensHeld.length).to.equal(2);
+      expect(loan.tokensHeld[0]).to.equal(0);
+      expect(loan.tokensHeld[1]).to.equal(0);
+      expect(loan.liquidity).to.equal(0);
+      expect(loan.lpTokens).to.equal(0);
+      const accFeeIndex = await strategy.getAccFeeIndex();
+      expect(loan.rateIndex).to.equal(accFeeIndex);
+
+      const liquidity = ONE.mul(100);
+
+      await await strategy.setLPTokenLoanBalance(
+        tokenId,
+        liquidity, // lpInvariant
+        liquidity, // lpTokenBalance
+        liquidity.mul(2), // borrowedInvariant
+        liquidity.mul(2), // lpTokens borrowed plus interest (accrued interest is 0)
+        liquidity.mul(3), // lastCFMMInvariant
+        liquidity.mul(3) // lastCFMMTotalSupply
+      );
+      await (await strategy.setBorrowRate(ONE.mul(2))).wait();
+      await (await strategy.setLoanLiquidity(tokenId, liquidity)).wait();
+      const collateralTokenQty = liquidity.mul(2);
+      await (
+        await strategy.setHeldAmounts(tokenId, [
+          collateralTokenQty,
+          collateralTokenQty,
+        ])
+      ).wait();
+      const loan1 = await strategy.getLoan(tokenId);
+      expect(loan1.tokensHeld[0]).to.equal(collateralTokenQty);
+      expect(loan1.tokensHeld[1]).to.equal(collateralTokenQty);
+      // time passes by
+      // mine 256 blocks
+      await ethers.provider.send("hardhat_mine", ["0x100"]);
+
+      await (
+        await strategy.testUpdatePayableLoan(tokenId, liquidity.mul(2))
+      ).wait();
+
+      const loan2 = await strategy.getLoan(tokenId);
+      expect(loan2.liquidity).gt(loan1.liquidity);
+      expect(loan2.liquidity).lt(collateralTokenQty.sub(1000)); // 1000 is minBorrow
+    });
   });
 
   describe("Collateral Management", function () {
@@ -483,25 +708,37 @@ describe("LongStrategy", function () {
     });
 
     it("Get Unfunded Amounts to Withdraw", async function () {
-      const res0 = await strategy.testGetUnfundedAmounts([100, 100], [100, 100]);
+      const res0 = await strategy.testGetUnfundedAmounts(
+        [100, 100],
+        [100, 100]
+      );
       expect(res0.hasUnfundedAmounts).to.eq(false);
       expect(res0.unfundedAmounts.length).to.eq(2);
       expect(res0.unfundedAmounts[0]).to.eq(0);
       expect(res0.unfundedAmounts[1]).to.eq(0);
 
-      const res1 = await strategy.testGetUnfundedAmounts([101, 100], [100, 100]);
+      const res1 = await strategy.testGetUnfundedAmounts(
+        [101, 100],
+        [100, 100]
+      );
       expect(res1.hasUnfundedAmounts).to.eq(true);
       expect(res1.unfundedAmounts.length).to.eq(2);
       expect(res1.unfundedAmounts[0]).to.eq(101);
       expect(res1.unfundedAmounts[1]).to.eq(0);
 
-      const res2 = await strategy.testGetUnfundedAmounts([100, 101], [100, 100]);
+      const res2 = await strategy.testGetUnfundedAmounts(
+        [100, 101],
+        [100, 100]
+      );
       expect(res2.hasUnfundedAmounts).to.eq(true);
       expect(res2.unfundedAmounts.length).to.eq(2);
       expect(res2.unfundedAmounts[0]).to.eq(0);
       expect(res2.unfundedAmounts[1]).to.eq(101);
 
-      const res3 = await strategy.testGetUnfundedAmounts([101, 101], [100, 100]);
+      const res3 = await strategy.testGetUnfundedAmounts(
+        [101, 101],
+        [100, 100]
+      );
       expect(res3.hasUnfundedAmounts).to.eq(true);
       expect(res3.unfundedAmounts.length).to.eq(2);
       expect(res3.unfundedAmounts[0]).to.eq(101);
