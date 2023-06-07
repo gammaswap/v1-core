@@ -376,4 +376,33 @@ abstract contract BaseLongStrategy is BaseStrategy {
         _loan.tokensHeld = tokensHeld; // Update storage
         s.TOKEN_BALANCE = tokenBalance; // Update storage
     }
+
+    /// @dev Write down bad debt if any
+    /// @param collateralAsLiquidity - loan collateral as liquidity invariant units
+    /// @param loanLiquidity - most updated loan liquidity debt
+    /// @return writeDownAmt - liquidity debt amount written down
+    /// @return adjLoanLiquidity - loan liquidity debt after write down
+    function writeDown(uint256 collateralAsLiquidity, uint256 loanLiquidity) internal virtual returns(uint256, uint256) {
+        if(collateralAsLiquidity >= loanLiquidity) {
+            return(0,loanLiquidity); // Enough collateral to cover liquidity debt
+        }
+
+        // Not enough collateral to cover liquidity loan
+        uint256 writeDownAmt;
+        unchecked{
+            writeDownAmt = loanLiquidity - collateralAsLiquidity; // Liquidity shortfall
+        }
+
+        // Write down pool liquidity debt
+        uint256 borrowedInvariant = s.BORROWED_INVARIANT; // Save gas
+
+        // Shouldn't overflow because borrowedInvariant = sum(loanLiquidity of all loans)
+        assert(borrowedInvariant >= writeDownAmt);
+        borrowedInvariant = borrowedInvariant - writeDownAmt;
+        s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(borrowedInvariant, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
+        s.BORROWED_INVARIANT = uint128(borrowedInvariant);
+
+        // Loan's liquidity debt is written down to its available collateral liquidity debt
+        return(writeDownAmt,collateralAsLiquidity);
+    }
 }

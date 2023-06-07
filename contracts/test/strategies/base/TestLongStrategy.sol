@@ -338,4 +338,9 @@ contract TestLongStrategy is LongStrategy {
     function validateParameters(bytes calldata _data) external override view returns(bool) {
         return false;
     }
+
+    function testUpdatePayableLoan(uint256 tokenId, uint256 payLiquidity) external virtual {
+        LibStorage.Loan storage _loan = _getLoan(tokenId);
+        updatePayableLoan(_loan, payLiquidity);
+    }
 }
