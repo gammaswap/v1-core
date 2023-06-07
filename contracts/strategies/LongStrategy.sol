@@ -14,6 +14,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
     error ExcessiveBorrowing();
     error InvalidRatioLength();
     error ZeroRepayLiquidity();
+    error BadDebt();
 
     // Long Gamma
 
@@ -264,6 +265,26 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
             s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.BORROW_LIQUIDITY);
     }
 
+    /// @dev Update loan with latest accrued interest and write down debt if there is bad debt
+    /// @notice if there is bad debt only accept repayment in full
+    /// @notice unlikely to happen but done to avoid a situation where liquidity > 0 but collateral = 0
+    /// @notice in such a situation a liquidator would not have any incentive to liquidate and write down the debt
+    /// @param _loan - loan to update liquidity debt
+    /// @param payLiquidity - amount of liquidity to pay
+    /// @return loanLiquidity - updated liquidity debt of loan, including debt write down
+    function updateLoanForRepay(LibStorage.Loan storage _loan, uint256 payLiquidity)internal virtual returns(uint256 loanLiquidity){
+        loanLiquidity = updateLoan(_loan);
+        uint256 collateral = calcInvariant(s.cfmm, _loan.tokensHeld);
+        uint256 _minBorrow = minBorrow();
+        collateral = collateral > _minBorrow ? collateral - _minBorrow : 0;
+        if(loanLiquidity > collateral) { // collateral must cover liquidity debt by minBorrow amount
+            if(payLiquidity < loanLiquidity) revert BadDebt(); // only write down if paying in full
+            (,loanLiquidity) = writeDown(collateral, loanLiquidity);
+            _loan.liquidity = uint128(loanLiquidity);
+        }
+        return loanLiquidity;
+    }
+
     /// @dev See {ILongStrategy-_repayLiquidity}.
     function _repayLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, uint256 collateralId, address to) external virtual override lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
         if(payLiquidity == 0) revert ZeroRepayLiquidity();
@@ -272,7 +293,7 @@ abstract contract LongStrategy is ILongStrategy, BaseLongStrategy {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         // Update liquidity debt to include accrued interest since last update
-        uint256 loanLiquidity = updateLoan(_loan);
+        uint256 loanLiquidity = updateLoanForRepay(_loan, payLiquidity);
 
         // Cap liquidity repayment at total liquidity debt
         uint256 liquidityToCalculate;
