@@ -9,7 +9,7 @@ import "./IGammaPool.sol";
 interface IGammaPoolExternal is IGammaPool {
 
     /// @dev External Long Strategy implementation contract for this GammaPool
-    function externalLongStrategy() external view returns(address);
+    function externalRebalanceStrategy() external view returns(address);
 
     /// @dev External Liquidation Strategy implementation contract for this GammaPool
     function externalLiquidationStrategy() external view returns(address);

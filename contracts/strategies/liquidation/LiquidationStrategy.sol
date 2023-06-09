@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../interfaces/strategies/base/ILiquidationStrategy.sol";
-import "./BaseLiquidationStrategy.sol";
+import "../../interfaces/strategies/base/ILiquidationStrategy.sol";
+import "../BaseLiquidationStrategy.sol";
 
 /// @title Liquidation Strategy abstract contract implementation of ILiquidationStrategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
@@ -12,6 +12,7 @@ abstract contract LiquidationStrategy is ILiquidationStrategy, BaseLiquidationSt
 
     error NoLiquidityDebt();
     error InvalidTokenIdsLength();
+    error InvalidDeltasLength();
 
     /// @dev See {LiquidationStrategy-liquidationFee}.
     function liquidationFee() external override virtual view returns(uint256) {

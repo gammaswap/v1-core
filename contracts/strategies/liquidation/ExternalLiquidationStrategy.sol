@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../../interfaces/strategies/external/IExternalLiquidationStrategy.sol";
-import "./ExternalBaseStrategy.sol";
+import "../../interfaces/strategies/liquidation/IExternalLiquidationStrategy.sol";
 import "../BaseLiquidationStrategy.sol";
+import "../rebalance/ExternalBaseStrategy.sol";
 
 /// @title External Liquidation Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)

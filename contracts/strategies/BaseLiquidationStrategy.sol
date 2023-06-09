@@ -2,12 +2,12 @@
 pragma solidity >=0.8.4;
 
 import "../interfaces/strategies/base/ILiquidationStrategy.sol";
-import "./BaseLongStrategy.sol";
+import "./lending/BaseRepayStrategy.sol";
 
 /// @title Base Liquidation Strategy abstract contract
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Only defines common functions that would be used by all concrete contracts that implement a liquidation strategy
-abstract contract BaseLiquidationStrategy is BaseLongStrategy {
+abstract contract BaseLiquidationStrategy is BaseRepayStrategy {
 
     error NoLiquidityProvided();
     error NotFullLiquidation();
@@ -114,9 +114,9 @@ abstract contract BaseLiquidationStrategy is BaseLongStrategy {
 
             // Refund collateral share of liquidated debt to liquidator
             GammaSwapLibrary.safeTransfer(tokens[i], msg.sender, refund[i]);
-            unchecked {
-                ++i;
-            }
+        unchecked {
+            ++i;
+        }
         }
         return(tokensHeld, refund);
     }
@@ -162,10 +162,5 @@ abstract contract BaseLiquidationStrategy is BaseLongStrategy {
         // Repay liquidity debt, increase lastCFMMTotalSupply and lastCFMMTotalInvariant
         repayTokens(_loan, addFees(calcTokensToRepay(s.CFMM_RESERVES, loanLiquidity), fees));
         (tokensHeld,) = updateCollateral(_loan); // Update remaining collateral
-    }
-
-    /// @notice Not used during liquidations
-    function getCurrentCFMMPrice() internal virtual override view returns(uint256) {
-        return 0;
     }
 }

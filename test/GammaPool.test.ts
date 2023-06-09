@@ -6,7 +6,9 @@ const PROTOCOL_ID = 1;
 describe("GammaPool", function () {
   let TestERC20: any;
   let TestAddressCalculator: any;
-  let TestLongStrategy: any;
+  let TestBorrowStrategy: any;
+  let TestRepayStrategy: any;
+  let TestRebalanceStrategy: any;
   let TestShortStrategy: any;
   let TestLiquidationStrategy: any;
   let GammaPool: any;
@@ -21,7 +23,9 @@ describe("GammaPool", function () {
   let addr1: any;
   let addr2: any;
   let addr3: any;
-  let longStrategy: any;
+  let borrowStrategy: any;
+  let repayStrategy: any;
+  let rebalanceStrategy: any;
   let shortStrategy: any;
   let liquidationStrategy: any;
   let gammaPool: any;
@@ -41,7 +45,11 @@ describe("GammaPool", function () {
       "TestGammaPoolFactory"
     );
 
-    TestLongStrategy = await ethers.getContractFactory("TestLongStrategy2");
+    TestBorrowStrategy = await ethers.getContractFactory("TestBorrowStrategy2");
+    TestRepayStrategy = await ethers.getContractFactory("TestRepayStrategy2");
+    TestRebalanceStrategy = await ethers.getContractFactory(
+      "TestRebalanceStrategy2"
+    );
     TestShortStrategy = await ethers.getContractFactory("TestShortStrategy2");
     TestLiquidationStrategy = await ethers.getContractFactory(
       "TestLiquidationStrategy2"
@@ -57,7 +65,9 @@ describe("GammaPool", function () {
     tokenB = await TestERC20.deploy("Test Token B", "TOKB");
     tokenC = await TestERC20.deploy("Test Token C", "TOKC");
     cfmm = await TestERC20.deploy("Test CFMM", "CFMM");
-    longStrategy = await TestLongStrategy.deploy();
+    borrowStrategy = await TestBorrowStrategy.deploy();
+    repayStrategy = await TestRepayStrategy.deploy();
+    rebalanceStrategy = await TestRebalanceStrategy.deploy();
     shortStrategy = await TestShortStrategy.deploy();
     liquidationStrategy = await TestLiquidationStrategy.deploy();
     addressCalculator = await TestAddressCalculator.deploy();
@@ -73,7 +83,9 @@ describe("GammaPool", function () {
     implementation = await GammaPool.deploy(
       PROTOCOL_ID,
       factory.address,
-      longStrategy.address,
+      borrowStrategy.address,
+      repayStrategy.address,
+      rebalanceStrategy.address,
       shortStrategy.address,
       liquidationStrategy.address
     );
@@ -133,7 +145,11 @@ describe("GammaPool", function () {
       expect(tokens[1]).to.equal(tokenB.address);
 
       expect(await gammaPool.factory()).to.equal(factory.address);
-      expect(await gammaPool.longStrategy()).to.equal(longStrategy.address);
+      expect(await gammaPool.borrowStrategy()).to.equal(borrowStrategy.address);
+      expect(await gammaPool.repayStrategy()).to.equal(repayStrategy.address);
+      expect(await gammaPool.rebalanceStrategy()).to.equal(
+        rebalanceStrategy.address
+      );
       expect(await gammaPool.shortStrategy()).to.equal(shortStrategy.address);
       expect(await gammaPool.liquidationStrategy()).to.equal(
         liquidationStrategy.address
@@ -168,7 +184,7 @@ describe("GammaPool", function () {
       const res3 = await gammaPool.getPoolData();
       expect(res3.cfmm).to.equal(cfmm.address);
       expect(res3.protocolId).to.equal(PROTOCOL_ID);
-      expect(res3.ltvThreshold).to.equal(await longStrategy.ltvThreshold());
+      expect(res3.ltvThreshold).to.equal(await borrowStrategy.ltvThreshold());
       expect(res3.liquidationFee).to.equal(
         await liquidationStrategy.liquidationFee()
       );
@@ -182,7 +198,9 @@ describe("GammaPool", function () {
       expect(_decimals[1]).to.equal(await tokenB.decimals());
 
       expect(res3.factory).to.equal(factory.address);
-      expect(res3.longStrategy).to.equal(longStrategy.address);
+      expect(res3.borrowStrategy).to.equal(borrowStrategy.address);
+      expect(res3.repayStrategy).to.equal(repayStrategy.address);
+      expect(res3.rebalanceStrategy).to.equal(rebalanceStrategy.address);
       expect(res3.shortStrategy).to.equal(shortStrategy.address);
       expect(res3.liquidationStrategy).to.equal(liquidationStrategy.address);
       const _tokenBalances = res3.TOKEN_BALANCE;
@@ -228,7 +246,9 @@ describe("GammaPool", function () {
       expect(_decs[1]).to.equal(await tokenB.decimals());
 
       expect(res4.factory).to.equal(factory.address);
-      expect(res4.longStrategy).to.equal(longStrategy.address);
+      expect(res4.borrowStrategy).to.equal(borrowStrategy.address);
+      expect(res4.repayStrategy).to.equal(repayStrategy.address);
+      expect(res4.rebalanceStrategy).to.equal(rebalanceStrategy.address);
       expect(res4.shortStrategy).to.equal(shortStrategy.address);
       expect(res4.liquidationStrategy).to.equal(liquidationStrategy.address);
       const _tokBalances = res4.TOKEN_BALANCE;
@@ -273,7 +293,9 @@ describe("GammaPool", function () {
       expect(_decss[1]).to.equal(await tokenB.decimals());
 
       expect(res5.factory).to.equal(factory.address);
-      expect(res5.longStrategy).to.equal(longStrategy.address);
+      expect(res5.borrowStrategy).to.equal(borrowStrategy.address);
+      expect(res5.repayStrategy).to.equal(repayStrategy.address);
+      expect(res5.rebalanceStrategy).to.equal(rebalanceStrategy.address);
       expect(res5.shortStrategy).to.equal(shortStrategy.address);
       expect(res5.liquidationStrategy).to.equal(liquidationStrategy.address);
       const _toksBalances = res5.TOKEN_BALANCE;
@@ -733,32 +755,6 @@ describe("GammaPool", function () {
       expect(res4.events[0].args.lpTokens).to.eq(53);
       expect(res4.events[0].args.rateIndex).to.eq(54);
       expect(res4.events[0].args.txType).to.eq(6);
-    });
-
-    it("Calc Deltas for Ratio", async function () {
-      const deltas = await gammaPool.calcDeltasForRatio(
-        [10, 10],
-        [20, 20],
-        [30, 30]
-      );
-      expect(deltas.length).to.eq(3);
-      expect(deltas[0]).to.eq(100);
-      expect(deltas[1]).to.eq(-400);
-      expect(deltas[2]).to.eq(900);
-    });
-
-    it("Calc Deltas to Close", async function () {
-      const deltas = await gammaPool.calcDeltasToClose(
-        [11, 11],
-        [12, 12],
-        500,
-        600
-      );
-      expect(deltas.length).to.eq(4);
-      expect(deltas[0]).to.eq(121);
-      expect(deltas[1]).to.eq(-144);
-      expect(deltas[2]).to.eq(50000);
-      expect(deltas[3]).to.eq(120000);
     });
   });
 

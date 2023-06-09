@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "../../TestCFMM.sol";
-import "../../../strategies/external/ExternalBaseStrategy.sol";
+import "../../../strategies/rebalance/ExternalBaseStrategy.sol";
 
-abstract contract TestExternalBaseLongStrategy is ExternalBaseStrategy {
+abstract contract TestExternalBaseRebalanceStrategy is ExternalBaseStrategy {
 
     using LibStorage for LibStorage.Storage;
 
@@ -117,12 +117,6 @@ abstract contract TestExternalBaseLongStrategy is ExternalBaseStrategy {
 
     function calcInvariant(address, uint128[] memory amounts) internal virtual override view returns(uint256) {
         return Math.sqrt(uint256(amounts[0]) * amounts[1]);
-    }
-
-    function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual override view returns(int256[] memory deltas) {
-        deltas = new int256[](2);
-        deltas[0] = 0;
-        deltas[1] = 0;
     }
 
     function getReserves(address cfmm) internal virtual override view returns(uint128[] memory reserves) {

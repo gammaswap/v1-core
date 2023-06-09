@@ -79,8 +79,12 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         address poolId;
         /// @dev Protocol id of the implementation contract for this GammaPool
         uint16 protocolId;
-        /// @dev Long Strategy implementation contract for this GammaPool
-        address longStrategy;
+        /// @dev Borrow Strategy implementation contract for this GammaPool
+        address borrowStrategy;
+        /// @dev Repay Strategy implementation contract for this GammaPool
+        address repayStrategy;
+        /// @dev Rebalance Strategy implementation contract for this GammaPool
+        address rebalanceStrategy;
         /// @dev Short Strategy implementation contract for this GammaPool
         address shortStrategy;
         /// @dev Liquidation Strategy implementation contract for this GammaPool
@@ -173,7 +177,13 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     function factory() external view returns(address);
 
     /// @dev Long Strategy implementation contract for this GammaPool
-    function longStrategy() external view returns(address);
+    function borrowStrategy() external view returns(address);
+
+    /// @dev Long Strategy implementation contract for this GammaPool
+    function repayStrategy() external view returns(address);
+
+    /// @dev Long Strategy implementation contract for this GammaPool
+    function rebalanceStrategy() external view returns(address);
 
     /// @dev Short Strategy implementation contract for this GammaPool
     function shortStrategy() external view returns(address);
@@ -378,21 +388,4 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
 
     /// @dev Synchronize LP_TOKEN_BALANCE with actual CFMM LP tokens deposited in GammaPool
     function sync() external;
-
-    // Delta Calculations
-
-    /// @dev Calculate quantities to trade to rebalance collateral to desired `ratio`
-    /// @param tokensHeld - loan collateral to rebalance
-    /// @param reserves - reserve token quantities in CFMM
-    /// @param ratio - desired ratio of collateral
-    /// @return deltas - amount of collateral to trade to achieve desired `ratio`
-    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external view returns(int256[] memory deltas);
-
-    /// @dev Calculate quantities to trade to be able to close the `liquidity` amount
-    /// @param tokensHeld - tokens held as collateral for liquidity to pay
-    /// @param reserves - reserve token quantities in CFMM
-    /// @param liquidity - amount of liquidity to pay
-    /// @param collateralId - index of tokensHeld array to rebalance to (e.g. the collateral of the chosen index will be completely used up in repayment)
-    /// @return deltas - amounts of collateral to trade to be able to repay `liquidity`
-    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) external view returns(int256[] memory deltas);
 }
