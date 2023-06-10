@@ -4,10 +4,10 @@ pragma solidity >=0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../BaseLongStrategy.sol";
 
-/// @title Long Strategy abstract contract implementation of ILongStrategy
+/// @title Abstract base contract for Borrow Strategy implementation
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
-/// @notice All external functions are locked to avoid reentrancy
-/// @dev Only defines common functions that would be used by all concrete contracts that borrow and repay liquidity
+/// @notice All functions here are internal, external functions implemented in BaseLongStrategy as part of ILongStrategy implementation
+/// @dev Only defines common functions that would be used by all contracts that borrow liquidity
 abstract contract BaseBorrowStrategy is BaseLongStrategy {
     /// @dev Calculate loan price every time more liquidity is borrowed
     /// @param newLiquidity - new added liquidity debt to loan

@@ -3,9 +3,9 @@ pragma solidity >=0.8.0;
 
 import "../base/ILongStrategy.sol";
 
-/// @title Interface for Long Strategy
+/// @title Interface for Repay Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
-/// @dev Used in strategies that borrow and repay liquidity loans
+/// @dev Used in strategies that repay liquidity loans
 interface IRepayStrategy is ILongStrategy {
 
     /// @dev Repay liquidity debt of loan identified by tokenId, debt is repaid using available collateral in loan

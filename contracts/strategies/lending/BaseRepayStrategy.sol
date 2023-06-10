@@ -4,10 +4,10 @@ pragma solidity >=0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../BaseLongStrategy.sol";
 
-/// @title Long Strategy abstract contract implementation of ILongStrategy
+/// @title Abstract base contract for Repay Strategy implementation
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
-/// @notice All external functions are locked to avoid reentrancy
-/// @dev Only defines common functions that would be used by all concrete contracts that borrow and repay liquidity
+/// @notice All functions here are internal, external functions implemented in BaseLongStrategy as part of ILongStrategy implementation
+/// @dev Only defines common functions that would be used by all contracts that repay liquidity
 abstract contract BaseRepayStrategy is BaseLongStrategy {
     /// @dev Account for paid liquidity debt
     /// @param _loan - loan whose debt was paid

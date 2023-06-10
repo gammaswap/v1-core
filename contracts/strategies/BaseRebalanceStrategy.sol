@@ -3,10 +3,10 @@ pragma solidity >=0.8.4;
 
 import "./BaseLongStrategy.sol";
 
-/// @title Base Long Strategy abstract contract
+/// @title Base Rebalance Strategy abstract contract
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
-/// @notice Common functions used by all strategy implementations that need access to loans
-/// @dev This contract inherits from BaseStrategy and should normally be inherited by LongStrategy and LiquidationStrategy
+/// @notice Common internal functions used by all strategy implementations that need rebalance loan collateral
+/// @dev This contract inherits from BaseLongStrategy and should be inherited by strategies that need to rebalance collateral
 abstract contract BaseRebalanceStrategy is BaseLongStrategy {
 
     error InvalidDeltasLength();

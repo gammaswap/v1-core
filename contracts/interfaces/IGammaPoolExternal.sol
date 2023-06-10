@@ -8,7 +8,7 @@ import "./IGammaPool.sol";
 /// @dev Interface used for GammaPool implementations that have flash loan functionality
 interface IGammaPoolExternal is IGammaPool {
 
-    /// @dev External Long Strategy implementation contract for this GammaPool
+    /// @dev External Rebalance Strategy implementation contract for this GammaPool
     function externalRebalanceStrategy() external view returns(address);
 
     /// @dev External Liquidation Strategy implementation contract for this GammaPool

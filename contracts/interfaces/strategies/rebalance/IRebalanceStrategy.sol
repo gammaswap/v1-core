@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 import "../base/ILongStrategy.sol";
 
-/// @title Interface for Rebalancing Strategy
+/// @title Interface for Rebalance Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used in strategies that rebalance collateral from liquidity loans
 interface IRebalanceStrategy is ILongStrategy {

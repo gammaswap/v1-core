@@ -178,13 +178,13 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @dev factory - address of factory contract that instantiated this GammaPool
     function factory() external view returns(address);
 
-    /// @dev Long Strategy implementation contract for this GammaPool
+    /// @dev Borrow Strategy implementation contract for this GammaPool
     function borrowStrategy() external view returns(address);
 
-    /// @dev Long Strategy implementation contract for this GammaPool
+    /// @dev Repay Strategy implementation contract for this GammaPool
     function repayStrategy() external view returns(address);
 
-    /// @dev Long Strategy implementation contract for this GammaPool
+    /// @dev Rebalance Strategy implementation contract for this GammaPool
     function rebalanceStrategy() external view returns(address);
 
     /// @dev Short Strategy implementation contract for this GammaPool

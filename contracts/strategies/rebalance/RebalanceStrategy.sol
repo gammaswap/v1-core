@@ -5,10 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/strategies/rebalance/IRebalanceStrategy.sol";
 import "../BaseRebalanceStrategy.sol";
 
-/// @title Long Strategy abstract contract implementation of ILongStrategy
+/// @title Rebalance Strategy abstract contract
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
-/// @notice All external functions are locked to avoid reentrancy
-/// @dev Only defines common functions that would be used by all concrete contracts that borrow and repay liquidity
+/// @notice Calculates trade quantities necessary to trade in the CFMM to achieve a desired collateral ratio
+/// @notice Rebalances collateral ratio of a loan to achieve a desired delta
+/// @dev All external functions are locked to avoid reentrancy
+/// @dev Defines external functions for concrete contract implementations to allow external accounts to rebalance collateral
+/// @dev Inherits from BaseRebalanceStrategy all logic necessary to rebalance collateral by trading in the CFMM
 abstract contract RebalanceStrategy is IRebalanceStrategy, BaseRebalanceStrategy {
 
     /// @dev See {ILongStrategy-calcDeltasForRatio}.

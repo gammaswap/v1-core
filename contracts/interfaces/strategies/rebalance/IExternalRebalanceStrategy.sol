@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import "../base/ILongStrategy.sol";
 import "../events/IExternalStrategyEvents.sol";
 
-/// @title Interface for Long Strategy
+/// @title Interface for External Rebalance Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used to rebalance loan's collateral using a flash loan.
 interface IExternalRebalanceStrategy is ILongStrategy, IExternalStrategyEvents {

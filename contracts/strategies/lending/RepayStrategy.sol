@@ -6,10 +6,11 @@ import "../../interfaces/strategies/lending/IRepayStrategy.sol";
 import "./BaseRepayStrategy.sol";
 import "../BaseRebalanceStrategy.sol";
 
-/// @title Long Strategy abstract contract implementation of ILongStrategy
+/// @title Repay Strategy abstract contract implementation of IRepayStrategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice All external functions are locked to avoid reentrancy
-/// @dev Only defines common functions that would be used by all concrete contracts that borrow and repay liquidity
+/// @dev Defines external functions for concrete contract implementations to allow external accounts to repay liquidity loans
+/// @dev Inherits BaseRebalanceStrategy because RepayStrategy needs to rebalance collateral to repay a loan
 abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy, BaseRebalanceStrategy {
 
     error ZeroRepayLiquidity();

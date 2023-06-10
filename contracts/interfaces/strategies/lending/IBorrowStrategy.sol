@@ -3,9 +3,9 @@ pragma solidity >=0.8.0;
 
 import "../base/ILongStrategy.sol";
 
-/// @title Interface for Long Strategy
+/// @title Interface for Borrow Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
-/// @dev Used in strategies that borrow and repay liquidity loans
+/// @dev Used in strategies that borrow liquidity
 interface IBorrowStrategy is ILongStrategy {
     /// @dev Deposit more collateral in loan identified by tokenId
     /// @param tokenId - unique id identifying loan

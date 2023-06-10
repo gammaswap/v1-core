@@ -6,10 +6,11 @@ import "../../interfaces/strategies/lending/IBorrowStrategy.sol";
 import "./BaseBorrowStrategy.sol";
 import "../BaseRebalanceStrategy.sol";
 
-/// @title Long Strategy abstract contract implementation of ILongStrategy
+/// @title Borrow Strategy abstract contract implementation of IBorrowStrategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice All external functions are locked to avoid reentrancy
-/// @dev Only defines common functions that would be used by all concrete contracts that borrow and repay liquidity
+/// @dev Defines external functions for concrete contract implementations to allow external accounts to borrow liquidity
+/// @dev Inherits BaseRebalanceStrategy because BorrowStrategy needs to rebalance collateral to achieve a desires delta
 abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseRebalanceStrategy {
 
     error ExcessiveBorrowing();
