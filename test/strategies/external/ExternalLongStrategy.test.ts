@@ -22,7 +22,9 @@ describe("ExternalLongStrategy", function () {
     // Get the ContractFactory and Signers here.
     TestERC20 = await ethers.getContractFactory("TestERC20");
     TestCFMM = await ethers.getContractFactory("TestCFMM");
-    TestStrategy = await ethers.getContractFactory("TestExternalLongStrategy");
+    TestStrategy = await ethers.getContractFactory(
+      "TestExternalRebalanceStrategy"
+    );
     TestCallee2 = await ethers.getContractFactory("TestExternalCallee2");
     [owner] = await ethers.getSigners();
 
@@ -194,7 +196,7 @@ describe("ExternalLongStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWithCustomError(strategy,"LoanDoesNotExist");
+      ).to.be.revertedWithCustomError(strategy, "LoanDoesNotExist");
     });
 
     it("External swap function Don't transfer tokens", async function () {
@@ -1279,7 +1281,7 @@ describe("ExternalLongStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWithCustomError(strategy,"Margin");
+      ).to.be.revertedWithCustomError(strategy, "Margin");
     });
 
     it("External swap function rebalance amounts, two loans, withdraw tokenB", async function () {
@@ -1329,7 +1331,7 @@ describe("ExternalLongStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWithCustomError(strategy,"Margin");
+      ).to.be.revertedWithCustomError(strategy, "Margin");
     });
 
     it("External swap function rebalance amounts, two loans, withdraw both tokens", async function () {
@@ -1379,7 +1381,7 @@ describe("ExternalLongStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWithCustomError(strategy,"Margin");
+      ).to.be.revertedWithCustomError(strategy, "Margin");
     });
 
     it("External swap function rebalance amounts, two loans, deposit tokenA, withdraw tokenB", async function () {
@@ -1431,7 +1433,7 @@ describe("ExternalLongStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWithCustomError(strategy,"Margin");
+      ).to.be.revertedWithCustomError(strategy, "Margin");
     });
 
     it("External swap function rebalance amounts, two loans, withdraw tokenA, deposit tokenB", async function () {

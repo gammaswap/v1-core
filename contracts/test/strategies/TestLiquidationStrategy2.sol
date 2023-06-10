@@ -2,8 +2,10 @@
 pragma solidity 0.8.17;
 
 import "../../interfaces/strategies/base/ILiquidationStrategy.sol";
+import "../../interfaces/strategies/liquidation/ISingleLiquidationStrategy.sol";
+import "../../interfaces/strategies/liquidation/IBatchLiquidationStrategy.sol";
 
-contract TestLiquidationStrategy2 is ILiquidationStrategy  {
+contract TestLiquidationStrategy2 is ILiquidationStrategy, ISingleLiquidationStrategy, IBatchLiquidationStrategy  {
 
     function liquidationFee() external virtual override view returns(uint256) {
         return 250;

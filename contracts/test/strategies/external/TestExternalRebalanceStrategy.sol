@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "../../../strategies/external/ExternalLongStrategy.sol";
-import "./TestExternalBaseLongStrategy.sol";
+import "./TestExternalBaseRebalanceStrategy.sol";
+import "../../../strategies/rebalance/ExternalRebalanceStrategy.sol";
 
-contract TestExternalLongStrategy is TestExternalBaseLongStrategy, ExternalLongStrategy {
+contract TestExternalRebalanceStrategy is TestExternalBaseRebalanceStrategy, ExternalRebalanceStrategy {
     constructor(){
     }
 
@@ -28,15 +28,5 @@ contract TestExternalLongStrategy is TestExternalBaseLongStrategy, ExternalLongS
     }
 
     function withdrawFromCFMM(address cfmm, address to, uint256 lpTokens) internal virtual override returns(uint256[] memory amounts) {
-    }
-
-    function getCurrentCFMMPrice() internal virtual override view returns(uint256) {
-        return 0;
-    }
-
-    function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual view returns(int256[] memory deltas) {
-        deltas = new int256[](2);
-        deltas[0] = 0;
-        deltas[1] = 0;
     }
 }

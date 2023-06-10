@@ -2,7 +2,7 @@
 pragma solidity 0.8.17;
 
 import "../../../libraries/Math.sol";
-import "../../../strategies/BaseStrategy.sol";
+import "../../../strategies/base/BaseStrategy.sol";
 import "../../TestCFMM.sol";
 
 contract TestBaseStrategy is BaseStrategy {

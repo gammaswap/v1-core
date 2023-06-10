@@ -4,8 +4,13 @@ pragma solidity >=0.8.4;
 import "../libraries/GammaSwapLibrary.sol";
 import "../interfaces/IGammaPool.sol";
 import "../interfaces/IGammaPoolFactory.sol";
+import "../interfaces/strategies/lending/IBorrowStrategy.sol";
+import "../interfaces/strategies/lending/IRepayStrategy.sol";
+import "../interfaces/strategies/rebalance/IRebalanceStrategy.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/ILiquidationStrategy.sol";
+import "../interfaces/strategies/liquidation/ISingleLiquidationStrategy.sol";
+import "../interfaces/strategies/liquidation/IBatchLiquidationStrategy.sol";
 import "./GammaPoolERC4626.sol";
 import "./Refunds.sol";
 
@@ -24,22 +29,36 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     /// @dev See {IGammaPool-factory}
     address immutable public override factory;
 
-    /// @dev See {IGammaPool-longStrategy}
-    address immutable public override longStrategy;
+    /// @dev See {IGammaPool-borrowStrategy}
+    address immutable public override borrowStrategy;
+
+    /// @dev See {IGammaPool-repayStrategy}
+    address immutable public override repayStrategy;
+
+    /// @dev See {IGammaPool-rebalanceStrategy}
+    address immutable public override rebalanceStrategy;
 
     /// @dev See {IGammaPool-shortStrategy}
     address immutable public override shortStrategy;
 
-    /// @dev See {IGammaPool-liquidationStrategy}
-    address immutable public override liquidationStrategy;
+    /// @dev See {IGammaPool-singleLiquidationStrategy}
+    address immutable public override singleLiquidationStrategy;
 
-    /// @dev Initializes the contract by setting `protocolId`, `factory`, `longStrategy`, `shortStrategy`, and `liquidationStrategy`.
-    constructor(uint16 protocolId_, address factory_,  address longStrategy_, address shortStrategy_, address liquidationStrategy_) {
+    /// @dev See {IGammaPool-batchLiquidationStrategy}
+    address immutable public override batchLiquidationStrategy;
+
+    /// @dev Initializes the contract by setting `protocolId`, `factory`, `borrowStrategy`, `repayStrategy`, `rebalanceStrategy`,
+    /// `shortStrategy`, `singleLiquidationStrategy`, and `batchLiquidationStrategy`.
+    constructor(uint16 protocolId_, address factory_,  address borrowStrategy_, address repayStrategy_, address rebalanceStrategy_,
+        address shortStrategy_, address singleLiquidationStrategy_, address batchLiquidationStrategy_) {
         protocolId = protocolId_;
         factory = factory_;
-        longStrategy = longStrategy_;
+        borrowStrategy = borrowStrategy_;
+        repayStrategy = repayStrategy_;
+        rebalanceStrategy = rebalanceStrategy_;
         shortStrategy = shortStrategy_;
-        liquidationStrategy = liquidationStrategy_;
+        singleLiquidationStrategy = singleLiquidationStrategy_;
+        batchLiquidationStrategy = batchLiquidationStrategy_;
     }
 
     /// @dev See {IGammaPool-initialize}
@@ -65,7 +84,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
 
     /// @dev See {IRateModel-validateParameters}
     function validateParameters(bytes calldata _data) external view returns(bool) {
-        return IRateModel(longStrategy).validateParameters(_data);
+        return IRateModel(borrowStrategy).validateParameters(_data);
     }
 
     /// @dev See {IRateModel-rateParamsStore}
@@ -147,9 +166,12 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     function getConstantPoolData() public virtual override view returns(PoolData memory data) {
         data.poolId = address(this);
         data.protocolId = protocolId;
-        data.longStrategy = longStrategy;
+        data.borrowStrategy = borrowStrategy;
+        data.repayStrategy = repayStrategy;
+        data.rebalanceStrategy = rebalanceStrategy;
         data.shortStrategy = shortStrategy;
-        data.liquidationStrategy = liquidationStrategy;
+        data.singleLiquidationStrategy = singleLiquidationStrategy;
+        data.batchLiquidationStrategy = batchLiquidationStrategy;
         data.cfmm = s.cfmm;
         data.currBlockNumber = uint48(block.number);
         data.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
@@ -158,8 +180,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED;
         data.totalSupply = s.totalSupply;
         data.TOKEN_BALANCE = s.TOKEN_BALANCE;
-        data.ltvThreshold = ILongStrategy(longStrategy).ltvThreshold();
-        data.liquidationFee = ILiquidationStrategy(liquidationStrategy).liquidationFee();
+        data.ltvThreshold = ILongStrategy(borrowStrategy).ltvThreshold();
+        data.liquidationFee = ILiquidationStrategy(singleLiquidationStrategy).liquidationFee();
         (data.tokens, data.symbols, data.names, data.decimals) = getTokensMetaData();
     }
 
@@ -254,7 +276,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         (_loanData.tokens, _loanData.symbols, _loanData.names, _loanData.decimals) = getTokensMetaData();
         (,,,, uint256 accFeeIndex) = _getLastFeeIndex(s.LAST_BLOCK_NUMBER);
         _loanData.liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, accFeeIndex);
-        _loanData.canLiquidate = ILiquidationStrategy(liquidationStrategy).canLiquidate(_loanData.liquidity, _calcInvariant(_loanData.tokensHeld));
+        _loanData.canLiquidate = ILiquidationStrategy(singleLiquidationStrategy).canLiquidate(_loanData.liquidity, _calcInvariant(_loanData.tokensHeld));
     }
 
     /// @dev Update liquidity to current debt level
@@ -308,7 +330,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
                     _loan.names = _names;
                     _loan.decimals = _decimals;
                     _loan.liquidity = _updateLiquidity(_loan.liquidity, _loan.rateIndex, accFeeIndex);
-                    _loan.canLiquidate = ILiquidationStrategy(liquidationStrategy).canLiquidate(_loan.liquidity, _calcInvariant(_loan.tokensHeld));
+                    _loan.canLiquidate = ILiquidationStrategy(singleLiquidationStrategy).canLiquidate(_loan.liquidity, _calcInvariant(_loan.tokensHeld));
                     _loans[k] = _loan;
                     unchecked {
                         k++;
@@ -338,7 +360,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
                 _loan.names = _names;
                 _loan.decimals = _decimals;
                 _loan.liquidity = _updateLiquidity(_loan.liquidity, _loan.rateIndex, accFeeIndex);
-                _loan.canLiquidate = ILiquidationStrategy(liquidationStrategy).canLiquidate(_loan.liquidity, _calcInvariant(_loan.tokensHeld));
+                _loan.canLiquidate = ILiquidationStrategy(singleLiquidationStrategy).canLiquidate(_loan.liquidity, _calcInvariant(_loan.tokensHeld));
                 _loans[k] = _loan;
                 unchecked {
                     k++;
@@ -355,7 +377,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         LibStorage.Loan memory _loan = s.loans[tokenId];
         (,,,, uint256 accFeeIndex) = _getLastFeeIndex(s.LAST_BLOCK_NUMBER);
         _loan.liquidity = _updateLiquidity(_loan.liquidity, _loan.rateIndex, accFeeIndex);
-        return ILiquidationStrategy(liquidationStrategy).canLiquidate(_loan.liquidity, _calcInvariant(_loan.tokensHeld));
+        return ILiquidationStrategy(singleLiquidationStrategy).canLiquidate(_loan.liquidity, _calcInvariant(_loan.tokensHeld));
     }
 
     /// @dev calculate liquidity invariant from collateral tokens
@@ -370,59 +392,47 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
 
     /// @dev See {IGammaPool-increaseCollateral}
     function increaseCollateral(uint256 tokenId, uint256[] calldata ratio) external virtual override returns(uint128[] memory tokensHeld) {
-        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._increaseCollateral.selector, tokenId, ratio)), (uint128[]));
+        return abi.decode(callStrategy(borrowStrategy, abi.encodeWithSelector(IBorrowStrategy._increaseCollateral.selector, tokenId, ratio)), (uint128[]));
     }
 
     /// @dev See {IGammaPool-decreaseCollateral}
     function decreaseCollateral(uint256 tokenId, uint128[] memory amounts, address to, uint256[] calldata ratio) external virtual override returns(uint128[] memory tokensHeld) {
-        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._decreaseCollateral.selector, tokenId, amounts, to, ratio)), (uint128[]));
+        return abi.decode(callStrategy(borrowStrategy, abi.encodeWithSelector(IBorrowStrategy._decreaseCollateral.selector, tokenId, amounts, to, ratio)), (uint128[]));
     }
 
     /// @dev See {IGammaPool-borrowLiquidity}
     function borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external virtual override returns(uint256 liquidityBorrowed, uint256[] memory amounts) {
-        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._borrowLiquidity.selector, tokenId, lpTokens, ratio)), (uint256, uint256[]));
+        return abi.decode(callStrategy(borrowStrategy, abi.encodeWithSelector(IBorrowStrategy._borrowLiquidity.selector, tokenId, lpTokens, ratio)), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-repayLiquidity}
     function repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external virtual override returns(uint256 liquidityPaid, uint256[] memory amounts) {
-        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._repayLiquidity.selector, tokenId, liquidity, fees, collateralId, to)), (uint256, uint256[]));
+        return abi.decode(callStrategy(repayStrategy, abi.encodeWithSelector(IRepayStrategy._repayLiquidity.selector, tokenId, liquidity, fees, collateralId, to)), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-rebalanceCollateral}
     function rebalanceCollateral(uint256 tokenId, int256[] memory deltas, uint256[] calldata ratio) external virtual override returns(uint128[] memory tokensHeld) {
-        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._rebalanceCollateral.selector, tokenId, deltas, ratio)), (uint128[]));
+        return abi.decode(callStrategy(rebalanceStrategy, abi.encodeWithSelector(IRebalanceStrategy._rebalanceCollateral.selector, tokenId, deltas, ratio)), (uint128[]));
     }
 
     /// @dev See {IGammaPool-updatePool}
     function updatePool(uint256 tokenId) external virtual override returns(uint256 loanLiquidityDebt, uint256 poolLiquidityDebt) {
-        return abi.decode(callStrategy(longStrategy, abi.encodeWithSelector(ILongStrategy._updatePool.selector, tokenId)), (uint256, uint256));
+        return abi.decode(callStrategy(rebalanceStrategy, abi.encodeWithSelector(IRebalanceStrategy._updatePool.selector, tokenId)), (uint256, uint256));
     }
 
     /// @dev See {IGammaPool-liquidate}
     function liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external virtual override returns(uint256 loanLiquidity, uint256[] memory refund) {
-        return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._liquidate.selector, tokenId, deltas, fees)), (uint256, uint256[]));
+        return abi.decode(callStrategy(singleLiquidationStrategy, abi.encodeWithSelector(ISingleLiquidationStrategy._liquidate.selector, tokenId, deltas, fees)), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-liquidateWithLP}
     function liquidateWithLP(uint256 tokenId) external virtual override returns(uint256 loanLiquidity, uint256[] memory refund) {
-        return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._liquidateWithLP.selector, tokenId)), (uint256, uint256[]));
+        return abi.decode(callStrategy(singleLiquidationStrategy, abi.encodeWithSelector(ISingleLiquidationStrategy._liquidateWithLP.selector, tokenId)), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-batchLiquidations}
     function batchLiquidations(uint256[] calldata tokenIds) external virtual override returns(uint256 totalLoanLiquidity, uint256 totalCollateral, uint256[] memory refund) {
-        return abi.decode(callStrategy(liquidationStrategy, abi.encodeWithSelector(ILiquidationStrategy._batchLiquidations.selector, tokenIds)), (uint256, uint256, uint256[]));
-    }
-
-    /***** Delta Calculations *****/
-
-    /// @dev See {IGammaPool-calcDeltasForRatio}
-    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) external override virtual view returns(int256[] memory deltas) {
-        return ILongStrategy(longStrategy).calcDeltasForRatio(tokensHeld, reserves, ratio);
-    }
-
-    /// @dev See {IGammaPool-calcDeltasToClose}
-    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) external override virtual view returns(int256[] memory deltas) {
-        return ILongStrategy(longStrategy).calcDeltasToClose(tokensHeld, reserves, liquidity, collateralId);
+        return abi.decode(callStrategy(batchLiquidationStrategy, abi.encodeWithSelector(IBatchLiquidationStrategy._batchLiquidations.selector, tokenIds)), (uint256, uint256, uint256[]));
     }
 
     /***** SYNC POOL *****/

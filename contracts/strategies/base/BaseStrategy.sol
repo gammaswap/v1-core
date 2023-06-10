@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../interfaces/IGammaPoolFactory.sol";
-import "../storage/AppStorage.sol";
-import "../libraries/GammaSwapLibrary.sol";
-import "../libraries/Math.sol";
-import "../rates/AbstractRateModel.sol";
+import "../../interfaces/IGammaPoolFactory.sol";
+import "../../storage/AppStorage.sol";
+import "../../libraries/GammaSwapLibrary.sol";
+import "../../libraries/Math.sol";
+import "../../rates/AbstractRateModel.sol";
 
 /// @title Base Strategy abstract contract
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.17;
 
-import "./TestExternalBaseLongStrategy.sol";
+import "./TestExternalBaseRebalanceStrategy.sol";
 
-contract TestExternalBaseStrategy is TestExternalBaseLongStrategy {
+contract TestExternalBaseStrategy is TestExternalBaseRebalanceStrategy {
 
     event SwapCollateral(uint256 collateral);
     event ExternalSwapFunc(uint256 liquiditySwapped, uint128[] tokensHeld);
@@ -63,9 +63,5 @@ contract TestExternalBaseStrategy is TestExternalBaseLongStrategy {
     }
 
     function withdrawFromCFMM(address cfmm, address to, uint256 lpTokens) internal virtual override returns(uint256[] memory amounts) {
-    }
-
-    function getCurrentCFMMPrice() internal virtual override view returns(uint256) {
-        return 0;
     }
 }

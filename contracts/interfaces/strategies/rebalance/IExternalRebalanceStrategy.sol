@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import "../events/ILongStrategyEvents.sol";
+import "../base/ILongStrategy.sol";
 import "../events/IExternalStrategyEvents.sol";
 
-/// @title Interface for Long Strategy
+/// @title Interface for External Rebalance Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used to rebalance loan's collateral using a flash loan.
-interface IExternalLongStrategy is ILongStrategyEvents, IExternalStrategyEvents {
-    /// @return loan to value threshold over which a loan is eligible for liquidation
-    function ltvThreshold() external view returns(uint256);
-
+interface IExternalRebalanceStrategy is ILongStrategy, IExternalStrategyEvents {
     /// @dev Flash loan pool's collateral and/or lp tokens to external address. Rebalanced loan collateral is acceptable in  repayment of flash loan
     /// @param tokenId - unique id identifying loan
     /// @param amounts - collateral amounts being flash loaned

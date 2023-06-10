@@ -1,19 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../../interfaces/strategies/external/IExternalLiquidationStrategy.sol";
-import "./ExternalBaseStrategy.sol";
-import "../BaseLiquidationStrategy.sol";
+import "../../interfaces/strategies/liquidation/IExternalLiquidationStrategy.sol";
+import "../base/BaseLiquidationStrategy.sol";
+import "../base/BaseExternalStrategy.sol";
 
 /// @title External Liquidation Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used to liquidate loans with an external swap (flash loan)
-abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, BaseLiquidationStrategy, ExternalBaseStrategy {
-
-    /// @dev See {IExternalLiquidationStrategy-liquidationFee}.
-    function liquidationFee() external override virtual view returns(uint256) {
-        return _liquidationFee();
-    }
+abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, BaseLiquidationStrategy, BaseExternalStrategy {
 
     /// @dev See {IExternalLiquidationStrategy-_liquidateExternally}.
     function _liquidateExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock virtual returns(uint256 loanLiquidity, uint256[] memory refund) {
@@ -50,10 +45,5 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, B
 
     /// @dev See {ExternalBaseStrategy-checkLPTokens}.
     function checkLPTokens(address _cfmm, uint256 prevLpTokenBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) internal virtual override {
-    }
-
-    /// @dev See {IExternalLiquidationStrategy-canLiquidate}.
-    function canLiquidate(uint256 liquidity, uint256 collateral) external virtual override view returns(bool) {
-        return !hasMargin(collateral, liquidity, _ltvThreshold());
     }
 }

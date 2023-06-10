@@ -21,7 +21,11 @@ describe("GammaPoolERC4626", function () {
   let addr2: any;
   let addr3: any;
   let addr4: any;
-  let longStrategy: any;
+  let addr5: any;
+  let addr6: any;
+  let borrowStrategy: any;
+  let repayStrategy: any;
+  let rebalanceStrategy: any;
   let shortStrategy: any;
   let liquidationStrategy: any;
   let gammaPool: any;
@@ -38,7 +42,8 @@ describe("GammaPoolERC4626", function () {
     );
 
     GammaPool = await ethers.getContractFactory("TestGammaPool");
-    [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, addr4, addr5, addr6] =
+      await ethers.getSigners();
 
     TestShortStrategy = await ethers.getContractFactory("TestERC20Strategy");
 
@@ -53,14 +58,19 @@ describe("GammaPoolERC4626", function () {
       tokenB.address,
     ]);
 
-    longStrategy = addr1;
+    borrowStrategy = addr1;
+    repayStrategy = addr5;
+    rebalanceStrategy = addr6;
     liquidationStrategy = addr4;
 
     implementation = await GammaPool.deploy(
       PROTOCOL_ID,
       factory.address,
-      longStrategy.address,
+      borrowStrategy.address,
+      repayStrategy.address,
+      rebalanceStrategy.address,
       shortStrategy.address,
+      liquidationStrategy.address,
       liquidationStrategy.address
     );
 

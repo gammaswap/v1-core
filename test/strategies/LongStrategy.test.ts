@@ -253,7 +253,6 @@ describe("LongStrategy", function () {
     }
 
     it("Update Loan Liquidity", async function () {
-      // updateLoanLiquidity
       const res = await (await strategy.createLoan()).wait();
       expect(res.events[0].args.caller).to.equal(owner.address);
       const tokenId = res.events[0].args.tokenId;

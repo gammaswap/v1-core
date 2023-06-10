@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.17;
 
-import "./TestLongStrategy.sol";
-import "../../../strategies/LiquidationStrategy.sol";
 import "../../TestCFMM2.sol";
+import "../../../strategies/liquidation/SingleLiquidationStrategy.sol";
+import "../../../strategies/liquidation/BatchLiquidationStrategy.sol";
+import "../../../strategies/base/BaseBorrowStrategy.sol";
 
-contract TestLiquidationStrategy is LiquidationStrategy {
+contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationStrategy, BaseBorrowStrategy {
     using LibStorage for LibStorage.Storage;
     event LoanCreated(address indexed caller, uint256 tokenId);
     event Refund(uint128[] tokensHeld, uint256[] tokenIds);
@@ -54,12 +55,6 @@ contract TestLiquidationStrategy is LiquidationStrategy {
 
     function blocksPerYear() internal virtual override pure returns(uint256) {
         return 2252571;
-    }
-
-    function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual override view returns(int256[] memory deltas) {
-        deltas = new int256[](2);
-        deltas[0] = 0;
-        deltas[1] = 0;
     }
 
     function getStaticParams() external virtual view returns(address factory, address cfmm, address[] memory tokens, uint128[] memory tokenBalances) {
@@ -249,5 +244,9 @@ contract TestLiquidationStrategy is LiquidationStrategy {
 
     function validateParameters(bytes calldata _data) external override view returns(bool) {
         return false;
+    }
+
+    function getCurrentCFMMPrice() internal virtual override view returns(uint256) {
+        return 0;
     }
 }

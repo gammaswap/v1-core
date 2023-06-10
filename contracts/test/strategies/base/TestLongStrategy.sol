@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.17;
 
-import "../../../strategies/LongStrategy.sol";
 import "../../../libraries/Math.sol";
 import "../../TestCFMM.sol";
 import "../../TestERC20.sol";
+import "../../../strategies/lending/RepayStrategy.sol";
+import "../../../strategies/lending/BorrowStrategy.sol";
+import "../../../strategies/rebalance/RebalanceStrategy.sol";
 
-contract TestLongStrategy is LongStrategy {
+contract TestLongStrategy is RepayStrategy, BorrowStrategy, RebalanceStrategy {
 
     using LibStorage for LibStorage.Storage;
 

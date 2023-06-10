@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "../../../strategies/external/ExternalLiquidationStrategy.sol";
+import "../../../strategies/liquidation/ExternalLiquidationStrategy.sol";
+import "../../../strategies/base/BaseBorrowStrategy.sol";
 import "./TestExternalBaseStrategy.sol";
 
-contract TestExternalLiquidationStrategy is TestExternalBaseLongStrategy, ExternalLiquidationStrategy {
+contract TestExternalLiquidationStrategy is TestExternalBaseRebalanceStrategy, ExternalLiquidationStrategy, BaseBorrowStrategy {
 
     using LibStorage for LibStorage.Storage;
 
@@ -59,5 +60,9 @@ contract TestExternalLiquidationStrategy is TestExternalBaseLongStrategy, Extern
     }
 
     function withdrawFromCFMM(address cfmm, address to, uint256 lpTokens) internal virtual override returns(uint256[] memory amounts) {
+    }
+
+    function getCurrentCFMMPrice() internal virtual override view returns(uint256) {
+        return 0;
     }
 }
