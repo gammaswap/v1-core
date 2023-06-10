@@ -3,7 +3,7 @@ pragma solidity >=0.8.4;
 
 import "../interfaces/strategies/base/IShortStrategy.sol";
 import "../interfaces/periphery/ISendTokensCallback.sol";
-import "./BaseStrategy.sol";
+import "./base/BaseStrategy.sol";
 
 /// @title Short Strategy abstract contract implementation of IShortStrategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)

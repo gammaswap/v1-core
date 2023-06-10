@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import "../../TestCFMM2.sol";
 import "../../../strategies/liquidation/SingleLiquidationStrategy.sol";
 import "../../../strategies/liquidation/BatchLiquidationStrategy.sol";
-import "../../../strategies/lending/BaseBorrowStrategy.sol";
+import "../../../strategies/base/BaseBorrowStrategy.sol";
 
 contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationStrategy, BaseBorrowStrategy {
     using LibStorage for LibStorage.Storage;

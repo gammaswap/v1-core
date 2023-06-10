@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "./ExternalBaseStrategy.sol";
 import "../../interfaces/strategies/rebalance/IExternalRebalanceStrategy.sol";
+import "../base/BaseExternalStrategy.sol";
 
 /// @title External Long Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used to rebalance loan collateral with an external swap (flash loan)
-abstract contract ExternalRebalanceStrategy is IExternalRebalanceStrategy, ExternalBaseStrategy {
+abstract contract ExternalRebalanceStrategy is IExternalRebalanceStrategy, BaseExternalStrategy {
 
     /// @dev See {BaseLongStrategy-checkMargin}.
     function checkMargin(uint256 collateral, uint256 liquidity) internal override virtual view {

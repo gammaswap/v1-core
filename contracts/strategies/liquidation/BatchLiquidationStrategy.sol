@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../BaseLiquidationStrategy.sol";
 import "../../interfaces/strategies/liquidation/IBatchLiquidationStrategy.sol";
+import "../base/BaseLiquidationStrategy.sol";
 
-/// @title Liquidation Strategy abstract contract implementation of ILiquidationStrategy
+/// @title Batch Liquidation Strategy abstract contract implementation of IBatchLiquidationStrategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice All external functions are locked to avoid reentrancy
-/// @dev Only defines common functions that would be used by all concrete contracts that liquidate loans
+/// @dev Defines function to liquidate loans in batch
 abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiquidationStrategy {
 
     /// @dev See {LiquidationStrategy-_batchLiquidations}.

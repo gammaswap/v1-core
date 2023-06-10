@@ -3,8 +3,8 @@ pragma solidity >=0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/strategies/lending/IBorrowStrategy.sol";
-import "./BaseBorrowStrategy.sol";
-import "../BaseRebalanceStrategy.sol";
+import "../base/BaseRebalanceStrategy.sol";
+import "../base/BaseBorrowStrategy.sol";
 
 /// @title Borrow Strategy abstract contract implementation of IBorrowStrategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)

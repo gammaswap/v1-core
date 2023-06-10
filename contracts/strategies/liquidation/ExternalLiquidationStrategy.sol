@@ -2,13 +2,13 @@
 pragma solidity >=0.8.4;
 
 import "../../interfaces/strategies/liquidation/IExternalLiquidationStrategy.sol";
-import "../BaseLiquidationStrategy.sol";
-import "../rebalance/ExternalBaseStrategy.sol";
+import "../base/BaseLiquidationStrategy.sol";
+import "../base/BaseExternalStrategy.sol";
 
 /// @title External Liquidation Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used to liquidate loans with an external swap (flash loan)
-abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, BaseLiquidationStrategy, ExternalBaseStrategy {
+abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, BaseLiquidationStrategy, BaseExternalStrategy {
 
     /// @dev See {IExternalLiquidationStrategy-_liquidateExternally}.
     function _liquidateExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock virtual returns(uint256 loanLiquidity, uint256[] memory refund) {

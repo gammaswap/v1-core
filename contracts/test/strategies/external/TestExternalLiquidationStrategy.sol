@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "./TestExternalBaseStrategy.sol";
 import "../../../strategies/liquidation/ExternalLiquidationStrategy.sol";
-import "../../../strategies/lending/BaseBorrowStrategy.sol";
+import "../../../strategies/base/BaseBorrowStrategy.sol";
+import "./TestExternalBaseStrategy.sol";
 
 contract TestExternalLiquidationStrategy is TestExternalBaseRebalanceStrategy, ExternalLiquidationStrategy, BaseBorrowStrategy {
 

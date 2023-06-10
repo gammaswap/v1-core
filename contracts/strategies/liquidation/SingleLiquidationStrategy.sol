@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../BaseLiquidationStrategy.sol";
 import "../../interfaces/strategies/liquidation/ISingleLiquidationStrategy.sol";
+import "../base/BaseLiquidationStrategy.sol";
 
 /// @title Liquidation Strategy abstract contract implementation of ILiquidationStrategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../interfaces/strategies/base/ILiquidationStrategy.sol";
-import "./lending/BaseRepayStrategy.sol";
+import "../../interfaces/strategies/base/ILiquidationStrategy.sol";
+import "./BaseRepayStrategy.sol";
 
 /// @title Base Liquidation Strategy abstract contract
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)

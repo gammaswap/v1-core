@@ -3,8 +3,8 @@ pragma solidity >=0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/strategies/lending/IRepayStrategy.sol";
-import "./BaseRepayStrategy.sol";
-import "../BaseRebalanceStrategy.sol";
+import "../base/BaseRebalanceStrategy.sol";
+import "../base/BaseRepayStrategy.sol";
 
 /// @title Repay Strategy abstract contract implementation of IRepayStrategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)

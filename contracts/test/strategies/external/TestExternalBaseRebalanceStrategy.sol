@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import "../../../strategies/base/BaseExternalStrategy.sol";
 import "../../TestCFMM.sol";
-import "../../../strategies/rebalance/ExternalBaseStrategy.sol";
 
-abstract contract TestExternalBaseRebalanceStrategy is ExternalBaseStrategy {
+abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
 
     using LibStorage for LibStorage.Storage;
 

@@ -3,7 +3,7 @@ pragma solidity >=0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/strategies/rebalance/IRebalanceStrategy.sol";
-import "../BaseRebalanceStrategy.sol";
+import "../base/BaseRebalanceStrategy.sol";
 
 /// @title Rebalance Strategy abstract contract
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
