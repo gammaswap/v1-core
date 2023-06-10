@@ -17,10 +17,12 @@ abstract contract GammaPoolExternal is GammaPool, IGammaPoolExternal{
     /// @dev See {IGammaPool-externalLiquidationStrategy}
     address immutable public override externalLiquidationStrategy;
 
-    /// @dev Initializes the contract by setting `protocolId`, `factory`, `borrowStrategy`, `repayStrategy`, `rebalanceStrategy`, `shortStrategy`, `liquidationStrategy`, `externalRebalanceStrategy`, and `externalLiquidationStrategy`.
+    /// @dev Initializes the contract by setting `protocolId`, `factory`, `borrowStrategy`, `repayStrategy`, `rebalanceStrategy`,
+    ///`shortStrategy`, `singleLiquidationStrategy`, `batchLiquidationStrategy`, `externalRebalanceStrategy`, and `externalLiquidationStrategy`.
     constructor(uint16 protocolId_, address factory_,  address borrowStrategy_, address repayStrategy_, address rebalanceStrategy_,
-        address shortStrategy_, address liquidationStrategy_, address externalRebalanceStrategy_, address externalLiquidationStrategy_)
-        GammaPool(protocolId_, factory_, borrowStrategy_, repayStrategy_, rebalanceStrategy_, shortStrategy_, liquidationStrategy_) {
+        address shortStrategy_, address singleLiquidationStrategy_, address batchLiquidationStrategy_, address externalRebalanceStrategy_,
+        address externalLiquidationStrategy_) GammaPool(protocolId_, factory_, borrowStrategy_, repayStrategy_, rebalanceStrategy_,
+        shortStrategy_, singleLiquidationStrategy_, batchLiquidationStrategy_) {
         externalRebalanceStrategy = externalRebalanceStrategy_;
         externalLiquidationStrategy = externalLiquidationStrategy_;
     }

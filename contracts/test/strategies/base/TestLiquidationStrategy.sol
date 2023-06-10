@@ -2,10 +2,11 @@
 pragma solidity 0.8.17;
 
 import "../../TestCFMM2.sol";
-import "../../../strategies/liquidation/LiquidationStrategy.sol";
+import "../../../strategies/liquidation/SingleLiquidationStrategy.sol";
+import "../../../strategies/liquidation/BatchLiquidationStrategy.sol";
 import "../../../strategies/lending/BaseBorrowStrategy.sol";
 
-contract TestLiquidationStrategy is LiquidationStrategy, BaseBorrowStrategy {
+contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationStrategy, BaseBorrowStrategy {
     using LibStorage for LibStorage.Storage;
     event LoanCreated(address indexed caller, uint256 tokenId);
     event Refund(uint128[] tokensHeld, uint256[] tokenIds);

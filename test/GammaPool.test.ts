@@ -28,6 +28,7 @@ describe("GammaPool", function () {
   let rebalanceStrategy: any;
   let shortStrategy: any;
   let liquidationStrategy: any;
+  let batchLiquidationStrategy: any;
   let gammaPool: any;
   let implementation: any;
   let tokens: any;
@@ -70,6 +71,7 @@ describe("GammaPool", function () {
     rebalanceStrategy = await TestRebalanceStrategy.deploy();
     shortStrategy = await TestShortStrategy.deploy();
     liquidationStrategy = await TestLiquidationStrategy.deploy();
+    batchLiquidationStrategy = await TestLiquidationStrategy.deploy();
     addressCalculator = await TestAddressCalculator.deploy();
 
     tokens = [tokenA.address, tokenB.address];
@@ -87,7 +89,8 @@ describe("GammaPool", function () {
       repayStrategy.address,
       rebalanceStrategy.address,
       shortStrategy.address,
-      liquidationStrategy.address
+      liquidationStrategy.address,
+      batchLiquidationStrategy.address
     );
 
     await (await factory.addProtocol(implementation.address)).wait();
@@ -151,8 +154,11 @@ describe("GammaPool", function () {
         rebalanceStrategy.address
       );
       expect(await gammaPool.shortStrategy()).to.equal(shortStrategy.address);
-      expect(await gammaPool.liquidationStrategy()).to.equal(
+      expect(await gammaPool.singleLiquidationStrategy()).to.equal(
         liquidationStrategy.address
+      );
+      expect(await gammaPool.batchLiquidationStrategy()).to.equal(
+        batchLiquidationStrategy.address
       );
 
       const res = await gammaPool.getPoolBalances();
@@ -202,7 +208,12 @@ describe("GammaPool", function () {
       expect(res3.repayStrategy).to.equal(repayStrategy.address);
       expect(res3.rebalanceStrategy).to.equal(rebalanceStrategy.address);
       expect(res3.shortStrategy).to.equal(shortStrategy.address);
-      expect(res3.liquidationStrategy).to.equal(liquidationStrategy.address);
+      expect(res3.singleLiquidationStrategy).to.equal(
+        liquidationStrategy.address
+      );
+      expect(res3.batchLiquidationStrategy).to.equal(
+        batchLiquidationStrategy.address
+      );
       const _tokenBalances = res3.TOKEN_BALANCE;
       expect(_tokenBalances.length).to.equal(2);
       expect(_tokenBalances[0]).to.equal(0);
@@ -250,7 +261,12 @@ describe("GammaPool", function () {
       expect(res4.repayStrategy).to.equal(repayStrategy.address);
       expect(res4.rebalanceStrategy).to.equal(rebalanceStrategy.address);
       expect(res4.shortStrategy).to.equal(shortStrategy.address);
-      expect(res4.liquidationStrategy).to.equal(liquidationStrategy.address);
+      expect(res4.singleLiquidationStrategy).to.equal(
+        liquidationStrategy.address
+      );
+      expect(res4.batchLiquidationStrategy).to.equal(
+        batchLiquidationStrategy.address
+      );
       const _tokBalances = res4.TOKEN_BALANCE;
       expect(_tokBalances.length).to.equal(2);
       expect(_tokBalances[0]).to.equal(0);
@@ -297,7 +313,12 @@ describe("GammaPool", function () {
       expect(res5.repayStrategy).to.equal(repayStrategy.address);
       expect(res5.rebalanceStrategy).to.equal(rebalanceStrategy.address);
       expect(res5.shortStrategy).to.equal(shortStrategy.address);
-      expect(res5.liquidationStrategy).to.equal(liquidationStrategy.address);
+      expect(res5.singleLiquidationStrategy).to.equal(
+        liquidationStrategy.address
+      );
+      expect(res5.batchLiquidationStrategy).to.equal(
+        batchLiquidationStrategy.address
+      );
       const _toksBalances = res5.TOKEN_BALANCE;
       expect(_toksBalances.length).to.equal(2);
       expect(_toksBalances[0]).to.equal(0);

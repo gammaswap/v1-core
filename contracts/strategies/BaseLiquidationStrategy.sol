@@ -7,10 +7,13 @@ import "./lending/BaseRepayStrategy.sol";
 /// @title Base Liquidation Strategy abstract contract
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Only defines common functions that would be used by all concrete contracts that implement a liquidation strategy
-abstract contract BaseLiquidationStrategy is BaseRepayStrategy {
+abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStrategy {
 
+    error NoLiquidityDebt();
     error NoLiquidityProvided();
     error NotFullLiquidation();
+    error InvalidTokenIdsLength();
+    error InvalidDeltasLength();
     error HasMargin();
 
     /// @return - liquidationFee - threshold used to measure the liquidation fee
@@ -19,6 +22,16 @@ abstract contract BaseLiquidationStrategy is BaseRepayStrategy {
     /// @return - liquidationFeeAdjustment - threshold used to measure the liquidation fee
     function liquidationFeeAdjustment() internal virtual view returns(uint16) {
         return 1e4 - _liquidationFee();
+    }
+
+    /// @dev See {LiquidationStrategy-liquidationFee}.
+    function liquidationFee() external override virtual view returns(uint256) {
+        return _liquidationFee();
+    }
+
+    /// @dev See {ILiquidationStrategy-canLiquidate}.
+    function canLiquidate(uint256 liquidity, uint256 collateral) external virtual override view returns(bool) {
+        return !hasMargin(collateral, liquidity, _ltvThreshold());
     }
 
     /// @dev Update loan liquidity and check if can liquidate

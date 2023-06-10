@@ -72,6 +72,7 @@ describe("GammaPoolFactory", function () {
       addr9.address,
       addr10.address,
       addr2.address,
+      addr5.address,
       addr5.address
     );
 
@@ -84,6 +85,7 @@ describe("GammaPoolFactory", function () {
       addr9.address,
       addr10.address,
       addr2.address,
+      addr5.address,
       addr5.address
     );
 

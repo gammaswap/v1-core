@@ -87,8 +87,10 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         address rebalanceStrategy;
         /// @dev Short Strategy implementation contract for this GammaPool
         address shortStrategy;
-        /// @dev Liquidation Strategy implementation contract for this GammaPool
-        address liquidationStrategy;
+        /// @dev Single Liquidation Strategy implementation contract for this GammaPool
+        address singleLiquidationStrategy;
+        /// @dev Batch Liquidation Strategy implementation contract for this GammaPool
+        address batchLiquidationStrategy;
 
         /// @dev factory - address of factory contract that instantiated this GammaPool
         address factory;
@@ -188,8 +190,11 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @dev Short Strategy implementation contract for this GammaPool
     function shortStrategy() external view returns(address);
 
-    /// @dev Liquidation Strategy implementation contract for this GammaPool
-    function liquidationStrategy() external view returns(address);
+    /// @dev Single Loan Liquidation Strategy implementation contract for this GammaPool
+    function singleLiquidationStrategy() external view returns(address);
+
+    /// @dev Batch Liquidations Strategy implementation contract for this GammaPool
+    function batchLiquidationStrategy() external view returns(address);
 
     /// @dev Balances in the GammaPool of collateral tokens, CFMM LP tokens, and invariant amounts at last update
     /// @return tokenBalances - balances of collateral tokens in GammaPool

@@ -70,6 +70,7 @@ describe("GammaPoolERC4626", function () {
       repayStrategy.address,
       rebalanceStrategy.address,
       shortStrategy.address,
+      liquidationStrategy.address,
       liquidationStrategy.address
     );
 
