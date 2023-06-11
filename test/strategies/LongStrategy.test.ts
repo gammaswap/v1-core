@@ -404,7 +404,7 @@ describe("LongStrategy", function () {
       expect(resp.events[0].event).to.equal("PoolUpdated");
       expect(resp.events[0].args.accFeeIndex).to.gt(_data.accFeeIndex);
       expect(resp.events[0].args.accFeeIndex).to.eq(_data1.accFeeIndex);
-      expect(resp.events[0].args.txType).to.eq(15);
+      expect(resp.events[0].args.txType).to.eq(16);
       expect(_data1.accFeeIndex).to.gt(_data.accFeeIndex);
     });
 
@@ -459,12 +459,12 @@ describe("LongStrategy", function () {
       expect(resp.events[0].args.rateIndex).to.gt(loan.rateIndex);
       expect(resp.events[0].args.initLiquidity).to.eq(0);
       expect(resp.events[0].args.lpTokens).to.eq(0);
-      expect(resp.events[0].args.txType).to.eq(15);
+      expect(resp.events[0].args.txType).to.eq(16);
 
       expect(resp.events[1].event).to.equal("PoolUpdated");
       expect(resp.events[1].args.accFeeIndex).to.gt(_data.accFeeIndex);
       expect(resp.events[1].args.accFeeIndex).to.eq(_data1.accFeeIndex);
-      expect(resp.events[1].args.txType).to.eq(15);
+      expect(resp.events[1].args.txType).to.eq(16);
       expect(_data1.accFeeIndex).to.gt(_data.accFeeIndex);
     });
 
