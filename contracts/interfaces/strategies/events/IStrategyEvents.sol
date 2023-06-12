@@ -6,22 +6,23 @@ pragma solidity >=0.8.0;
 /// @dev Events that should be emitted by all strategy implementations (root of all strategy events interfaces)
 interface IStrategyEvents {
     enum TX_TYPE {
-        DEPOSIT_LIQUIDITY,    // 0
-        WITHDRAW_LIQUIDITY,   // 1
-        DEPOSIT_RESERVES,     // 2
-        WITHDRAW_RESERVES,    // 3
-        INCREASE_COLLATERAL,  // 4
-        DECREASE_COLLATERAL,  // 5
-        REBALANCE_COLLATERAL, // 6
-        BORROW_LIQUIDITY,     // 7
-        REPAY_LIQUIDITY,      // 8
-        LIQUIDATE,            // 9
-        LIQUIDATE_WITH_LP,    // 10
-        BATCH_LIQUIDATION,    // 11
-        SYNC,                 // 12
-        EXTERNAL_REBALANCE,   // 13
-        EXTERNAL_LIQUIDATION, // 14
-        UPDATE_POOL }         // 15
+        DEPOSIT_LIQUIDITY,      // 0
+        WITHDRAW_LIQUIDITY,     // 1
+        DEPOSIT_RESERVES,       // 2
+        WITHDRAW_RESERVES,      // 3
+        INCREASE_COLLATERAL,    // 4
+        DECREASE_COLLATERAL,    // 5
+        REBALANCE_COLLATERAL,   // 6
+        BORROW_LIQUIDITY,       // 7
+        REPAY_LIQUIDITY,        // 8
+        REPAY_LIQUIDITY_WITH_LP,// 9
+        LIQUIDATE,              // 10
+        LIQUIDATE_WITH_LP,      // 11
+        BATCH_LIQUIDATION,      // 12
+        SYNC,                   // 13
+        EXTERNAL_REBALANCE,     // 14
+        EXTERNAL_LIQUIDATION,   // 15
+        UPDATE_POOL }           // 16
 
     /// @dev Event emitted when the Pool's global state variables is updated
     /// @param lpTokenBalance - quantity of CFMM LP tokens deposited in the pool

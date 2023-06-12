@@ -47,7 +47,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy, BaseRebala
     /// @param totalLiquidityDebt - total liquidity debt of loan
     /// @param fees - fees to transfer during payment in case token has transfer fees
     /// @return collateral - collateral portion of total collateral that will be used to pay `liquidity`
-    function proRataCollateral(uint128[] memory tokensHeld, uint256 liquidity, uint256 totalLiquidityDebt, uint256[] calldata fees) internal virtual view returns(uint128[] memory) {
+    function proRataCollateral(uint128[] memory tokensHeld, uint256 liquidity, uint256 totalLiquidityDebt, uint256[] memory fees) internal virtual view returns(uint128[] memory) {
         uint256 tokenCount = tokensHeld.length;
         bool skipFees = tokenCount != fees.length;
         for(uint256 i = 0; i < tokenCount;) {
@@ -79,7 +79,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy, BaseRebala
         return loanLiquidity;
     }
 
-    /// @dev See {ILongStrategy-_repayLiquidity}.
+    /// @dev See {IRepayStrategy-_repayLiquidity}.
     function _repayLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, uint256 collateralId, address to) external virtual override lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
         if(payLiquidity == 0) revert ZeroRepayLiquidity();
 
@@ -126,5 +126,43 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy, BaseRebala
 
         emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex,
             s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.REPAY_LIQUIDITY);
+    }
+
+    /// @dev See {IRepayStrategy-_repayLiquidityWithLP}.
+    function _repayLiquidityWithLP(uint256 tokenId, uint256 payLiquidity, uint256 collateralId, address to) external virtual override returns(uint256 liquidityPaid) {
+        if(payLiquidity == 0) revert ZeroRepayLiquidity();
+
+        // Get loan for tokenId, revert if not loan creator
+        LibStorage.Loan storage _loan = _getLoan(tokenId);
+
+        // Update liquidity debt to include accrued interest since last update
+        uint256 loanLiquidity = updatePayableLoan(_loan, payLiquidity);
+        liquidityPaid = payLiquidity >= loanLiquidity ? loanLiquidity : payLiquidity;
+
+        // Subtract loan liquidity repaid from total liquidity debt in pool and loan
+        uint256 remainingLiquidity;
+        (liquidityPaid, remainingLiquidity) = payLoan(_loan, liquidityPaid, loanLiquidity);
+
+        // Check pro rata collateral that is now free to withdraw
+        uint128[] memory tokensHeld = _loan.tokensHeld;
+        if(to != address(0)) {
+            // Get pro rata collateral of liquidity paid to withdraw
+            tokensHeld = proRataCollateral(tokensHeld, liquidityPaid, loanLiquidity, new uint256[](0));
+            if(collateralId > 0) { // If collateralId was chosen, rebalance to one of the amounts and withdraw
+                // Swap the one amount to get the other one
+                int256[] memory deltas = new int256[](tokensHeld.length);
+                deltas[collateralId - 1] = -int256(uint256(tokensHeld[collateralId - 1]));
+                (, deltas) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
+                tokensHeld = remainingCollateral(tokensHeld, deltas);
+            }
+            // Withdraw, check margin
+            tokensHeld = withdrawCollateral(_loan, remainingLiquidity, tokensHeld, to);
+        }
+        // If not withdrawing, do not check for loan undercollateralization because repaying debt always improves pool debt health
+
+        emit LoanUpdated(tokenId, tokensHeld, uint128(remainingLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.REPAY_LIQUIDITY_WITH_LP);
+
+        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex,
+            s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.REPAY_LIQUIDITY_WITH_LP);
     }
 }
