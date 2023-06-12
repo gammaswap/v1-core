@@ -136,7 +136,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy, BaseRebala
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         // Update liquidity debt to include accrued interest since last update
-        uint256 loanLiquidity = updatePayableLoan(_loan);
+        uint256 loanLiquidity = updatePayableLoan(_loan, payLiquidity);
         liquidityPaid = payLiquidity >= loanLiquidity ? loanLiquidity : payLiquidity;
 
         // Subtract loan liquidity repaid from total liquidity debt in pool and loan
