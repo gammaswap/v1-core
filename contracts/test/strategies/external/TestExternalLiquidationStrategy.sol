@@ -19,7 +19,7 @@ contract TestExternalLiquidationStrategy is TestExternalBaseRebalanceStrategy, E
 
     // create loan
     function createLoan(uint128 liquidity) external virtual override returns(uint256 tokenId) {
-        tokenId = s.createLoan(s.tokens.length);
+        tokenId = s.createLoan(s.tokens.length, 0);
         LibStorage.Loan storage _loan = s.loans[tokenId];
         updateCollateral(_loan);
 

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
+import "../interfaces/IGammaPoolFactory.sol";
+
 /// @title Library containing global storage variables for GammaPools according to App Storage pattern
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Structs are packed to minimize storage size
@@ -29,7 +31,18 @@ library LibStorage {
         uint128[] tokensHeld; // array of 128 bit numbers
 
         /// @dev price at which loan was opened
-        uint256 px;
+        uint248 px;
+
+        /// @dev id to refer in factory for external collateral information upon loan creation
+        uint8 refId;
+    }
+
+    /// @dev Reference struct used to track external collateral information or a loan
+    struct Ref {
+        /// @dev external collateral address
+        address addr;
+        /// @dev origination fee discount to external collateral address
+        uint16 feeDiscount;
     }
 
     /// @dev Storage struct used to track GammaPool's state variables
@@ -83,6 +96,9 @@ library LibStorage {
         /// @dev Mapping of all loans issued by the GammaPool, the key is the tokenId (unique identifier) of the loan
         mapping(uint256 => Loan) loans;
 
+        /// @dev Mapping of all loans issued by the GammaPool, the key is the tokenId (unique identifier) of the loan
+        mapping(uint256 => Ref) loanRef;
+
         // tokens and balances
         /// @dev ERC20 tokens of CFMM
         address[] tokens;
@@ -133,12 +149,21 @@ library LibStorage {
     /// @param self - pointer to storage variables (doesn't need to be passed)
     /// @param _tokenCount - number of tokens in the CFMM the loan is for
     /// @return _tokenId - unique tokenId used to get and update loan
-    function createLoan(Storage storage self, uint256 _tokenCount) internal returns(uint256 _tokenId) {
+    function createLoan(Storage storage self, uint256 _tokenCount, uint16 refId) internal returns(uint256 _tokenId) {
         // get loan counter for GammaPool and increase it by 1 for the next loan
         uint256 id = self.nextId++;
 
         // create unique tokenId to identify loan across all GammaPools. _tokenId is hash of GammaPool address, sender address, and loan counter
         _tokenId = uint256(keccak256(abi.encode(msg.sender, address(this), id)));
+
+        (address addr, uint16 fee) = IGammaPoolFactory(self.factory).externalReference(refId);
+
+        if(addr != address(0)) {
+            self.loanRef[_tokenId] = Ref({
+            addr: addr,
+            fee: fee
+            });
+        }
 
         // instantiate Loan struct and store it mapped to _tokenId
         self.loans[_tokenId] = Loan({
@@ -149,7 +174,8 @@ library LibStorage {
             liquidity: 0,
             lpTokens: 0,
             tokensHeld: new uint128[](_tokenCount),
-            px: 0
+            px: 0,
+            refId: refId > 0 ? 1 : 0
         });
 
         self.tokenIds.push(_tokenId);

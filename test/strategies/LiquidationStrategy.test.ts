@@ -5,9 +5,11 @@ import { BigNumber } from "ethers";
 describe("LiquidationStrategy", function () {
   let TestERC20: any;
   let TestCFMM: any;
+  let TestFactory: any;
   let TestLiquidationStrategy: any;
   let tokenA: any;
   let tokenB: any;
+  let factory: any;
   let cfmm: any;
   let liquidationStrategy: any;
   let owner: any;
@@ -23,6 +25,7 @@ describe("LiquidationStrategy", function () {
     TestLiquidationStrategy = await ethers.getContractFactory(
       "TestLiquidationStrategy"
     );
+    TestFactory = await ethers.getContractFactory("TestGammaPoolFactory2");
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
     tokenB = await TestERC20.deploy("Test Token B", "TOKB");
     TestCFMM = await ethers.getContractFactory("TestCFMM2");
@@ -40,9 +43,11 @@ describe("LiquidationStrategy", function () {
     tokenA = await TestERC20.attach(token0addr);
     tokenB = await TestERC20.attach(token1addr);
 
+    factory = await TestFactory.deploy();
     liquidationStrategy = await TestLiquidationStrategy.deploy();
     await (
       await liquidationStrategy.initialize(
+        factory.address,
         cfmm.address,
         [tokenA.address, tokenB.address],
         [18, 18]
@@ -121,7 +126,7 @@ describe("LiquidationStrategy", function () {
       expect(await liquidationStrategy.getLiquidationFeeAdjustment()).to.equal(
         9750
       );
-      expect(res.factory).to.equal(owner.address);
+      expect(res.factory).to.equal(factory.address);
       expect(res.cfmm).to.equal(cfmm.address);
       expect(res.tokens.length).to.equal(2);
       expect(res.tokens[0]).to.equal(tokenA.address);

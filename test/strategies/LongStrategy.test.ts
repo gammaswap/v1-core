@@ -8,10 +8,12 @@ describe("LongStrategy", function () {
   let TestERC20: any;
   let TestCFMM: any;
   let TestStrategy: any;
+  let TestFactory: any;
   let tokenA: any;
   let tokenB: any;
   let cfmm: any;
   let strategy: any;
+  let factory: any;
   let owner: any;
   let addr1: any;
   let addr2: any;
@@ -23,6 +25,7 @@ describe("LongStrategy", function () {
     TestERC20 = await ethers.getContractFactory("TestERC20");
     TestCFMM = await ethers.getContractFactory("TestCFMM");
     TestStrategy = await ethers.getContractFactory("TestLongStrategy");
+    TestFactory = await ethers.getContractFactory("TestGammaPoolFactory2");
     [owner, addr1, addr2] = await ethers.getSigners();
 
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
@@ -35,9 +38,11 @@ describe("LongStrategy", function () {
       "TCFMM"
     );
 
+    factory = await TestFactory.deploy();
     strategy = await TestStrategy.deploy();
     await (
       await strategy.initialize(
+        factory.address,
         cfmm.address,
         PROTOCOL_ID,
         [tokenA.address, tokenB.address],

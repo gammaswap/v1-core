@@ -23,9 +23,9 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy, RebalanceStrategy {
     constructor() {
     }
 
-    function initialize(address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) external virtual {
+    function initialize(address _factory, address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) external virtual {
         protocolId = _protocolId;
-        s.initialize(msg.sender, _cfmm, _tokens, _decimals);
+        s.initialize(_factory, _cfmm, _tokens, _decimals);
     }
 
     function setMinBorrow(uint256 _newMinBorrow) external virtual {
@@ -74,7 +74,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy, RebalanceStrategy {
 
     // **** LONG GAMMA **** //
     function createLoan() external virtual returns(uint256 tokenId) {
-        tokenId = s.createLoan(s.tokens.length);
+        tokenId = s.createLoan(s.tokens.length, 0);
         emit LoanCreated(msg.sender, tokenId);
     }
 

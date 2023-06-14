@@ -9,10 +9,12 @@ describe("ExternalLiquidationStrategy", function () {
   let TestCFMM: any;
   let TestStrategy: any;
   let TestCallee2: any;
+  let TestFactory: any;
   let tokenA: any;
   let tokenB: any;
   let cfmm: any;
   let strategy: any;
+  let factory: any;
   let owner: any;
   let callee2: any;
 
@@ -26,6 +28,7 @@ describe("ExternalLiquidationStrategy", function () {
       "TestExternalLiquidationStrategy"
     );
     TestCallee2 = await ethers.getContractFactory("TestExternalCallee2");
+    TestFactory = await ethers.getContractFactory("TestGammaPoolFactory2");
     [owner] = await ethers.getSigners();
 
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
@@ -38,11 +41,13 @@ describe("ExternalLiquidationStrategy", function () {
       "TCFMM"
     );
 
+    factory = await TestFactory.deploy();
     callee2 = await TestCallee2.deploy();
 
     strategy = await TestStrategy.deploy();
     await (
       await strategy.initialize(
+        factory.address,
         cfmm.address,
         PROTOCOL_ID,
         [tokenA.address, tokenB.address],

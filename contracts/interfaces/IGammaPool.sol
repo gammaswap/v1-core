@@ -289,7 +289,7 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
 
     /// @dev Create a new Loan struct
     /// @return tokenId - unique id of loan struct created
-    function createLoan() external returns(uint256 tokenId);
+    function createLoan(uint16 refId) external returns(uint256 tokenId);
 
     /// @dev Get loan information for loan identified by tokenId
     /// @param _tokenId - unique id of loan, used to look up loan in GammaPool

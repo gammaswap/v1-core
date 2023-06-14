@@ -29,8 +29,8 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
         uint256 lastCFMMTotalSupply;
     }
 
-    function initialize(address cfmm, address[] calldata tokens, uint8[] calldata decimals) external virtual {
-        s.initialize(msg.sender, cfmm, tokens, decimals);
+    function initialize(address _factory, address cfmm, address[] calldata tokens, uint8[] calldata decimals) external virtual {
+        s.initialize(_factory, cfmm, tokens, decimals);
     }
 
     function minBorrow() internal virtual override view returns(uint256) {
@@ -91,7 +91,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
 
     // **** LONG GAMMA **** //
     function createLoan(uint256 lpTokens) external virtual returns(uint256 tokenId) {
-        tokenId = s.createLoan(s.tokens.length);
+        tokenId = s.createLoan(s.tokens.length, 0);
 
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 

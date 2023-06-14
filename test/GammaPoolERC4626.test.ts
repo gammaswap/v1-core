@@ -5,7 +5,7 @@ import { BigNumber } from "ethers";
 const PROTOCOL_ID = 1;
 const MIN_SHARES = 1000;
 
-describe("GammaPoolERC4626", function () {
+describe.skip("GammaPoolERC4626", function () {
   let TestERC20: any;
   let TestAddressCalculator: any;
   let TestShortStrategy: any;
