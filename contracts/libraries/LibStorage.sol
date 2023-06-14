@@ -161,7 +161,7 @@ library LibStorage {
         if(addr != address(0)) {
             self.loanRef[_tokenId] = Ref({
             addr: addr,
-            fee: fee
+            feeDiscount: fee
             });
         }
 
