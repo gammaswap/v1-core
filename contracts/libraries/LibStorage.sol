@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
+import "../interfaces/ICollateralReferenceStore.sol";
 import "../interfaces/IGammaPoolFactory.sol";
 
 /// @title Library containing global storage variables for GammaPools according to App Storage pattern
@@ -31,17 +32,11 @@ library LibStorage {
         uint128[] tokensHeld; // array of 128 bit numbers
 
         /// @dev price at which loan was opened
-        uint248 px;
+        uint256 px;
 
-        /// @dev id to refer in factory for external collateral information upon loan creation
-        uint8 refId;
-    }
-
-    /// @dev Reference struct used to track external collateral information or a loan
-    struct Ref {
-        /// @dev external collateral address
-        address addr;
-        /// @dev origination fee discount to external collateral address
+        /// @dev address holding additional collateral information for the loan
+        address collateralRef;
+        /// @dev fee discount, typically used for loans using a collateral reference addresses
         uint16 feeDiscount;
     }
 
@@ -95,9 +90,6 @@ library LibStorage {
 
         /// @dev Mapping of all loans issued by the GammaPool, the key is the tokenId (unique identifier) of the loan
         mapping(uint256 => Loan) loans;
-
-        /// @dev Mapping of all loans issued by the GammaPool, the key is the tokenId (unique identifier) of the loan
-        mapping(uint256 => Ref) loanRef;
 
         // tokens and balances
         /// @dev ERC20 tokens of CFMM
@@ -156,13 +148,10 @@ library LibStorage {
         // create unique tokenId to identify loan across all GammaPools. _tokenId is hash of GammaPool address, sender address, and loan counter
         _tokenId = uint256(keccak256(abi.encode(msg.sender, address(this), id)));
 
-        (address addr, uint16 fee) = IGammaPoolFactory(self.factory).externalReference(refId);
-
-        if(addr != address(0)) {
-            self.loanRef[_tokenId] = Ref({
-            addr: addr,
-            feeDiscount: fee
-            });
+        address collateralRef;
+        uint16 feeDiscount;
+        if(refId > 0 ) {
+            (collateralRef, feeDiscount) = ICollateralReferenceStore(self.factory).externalReference(refId, msg.sender);
         }
 
         // instantiate Loan struct and store it mapped to _tokenId
@@ -175,7 +164,8 @@ library LibStorage {
             lpTokens: 0,
             tokensHeld: new uint128[](_tokenCount),
             px: 0,
-            refId: refId > 0 ? 1 : 0
+            collateralRef: collateralRef,
+            feeDiscount: feeDiscount
         });
 
         self.tokenIds.push(_tokenId);

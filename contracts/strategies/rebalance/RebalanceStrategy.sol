@@ -49,7 +49,7 @@ abstract contract RebalanceStrategy is IRebalanceStrategy, BaseRebalanceStrategy
         (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
 
         // Check that loan is not undercollateralized after swap
-        checkMargin(calcInvariant(s.cfmm, tokensHeld), loanLiquidity);
+        checkMargin(calcInvariant(s.cfmm, tokensHeld) + getExternalCollateral(_loan, tokenId), loanLiquidity);
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.REBALANCE_COLLATERAL);
 

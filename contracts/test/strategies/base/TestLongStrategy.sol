@@ -343,6 +343,6 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy, RebalanceStrategy {
 
     function testUpdatePayableLoan(uint256 tokenId, uint256 payLiquidity) external virtual {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        updatePayableLoan(_loan, payLiquidity);
+        updatePayableLoan(_loan, payLiquidity, 0);
     }
 }

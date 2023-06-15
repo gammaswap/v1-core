@@ -4,8 +4,9 @@ pragma solidity 0.8.17;
 import "../libraries/AddressCalculator.sol";
 import "../base/AbstractGammaPoolFactory.sol";
 import "../interfaces/IGammaPool.sol";
+import "../interfaces/ICollateralReferenceStore.sol";
 
-contract TestGammaPoolFactory is AbstractGammaPoolFactory {
+contract TestGammaPoolFactory is AbstractGammaPoolFactory, ICollateralReferenceStore {
 
     address public deployer;
     address public cfmm;
@@ -73,7 +74,7 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
     function getPools(uint256 start, uint256 end) external override view returns(address[] memory _pools) {
     }
 
-    function externalReference(uint16 refId) external virtual override view returns(address, uint16) {
-        return (address(0), 0);
+    function externalReference(uint16 refId, address requester) external override virtual view returns(address, uint16) {
+        return (address(0), 10);
     }
 }

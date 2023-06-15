@@ -110,8 +110,4 @@ interface IGammaPoolFactory {
     /// @param end - end index of pools to search
     /// @return _pools - all pools requested
     function getPools(uint256 start, uint256 end) external view returns(address[] memory _pools);
-
-    /// @return addr - address that has the power to set protocol fees
-    /// @return fee - fee to charge for external reference
-    function externalReference(uint16 refId) external view returns(address, uint16);
 }

@@ -9,6 +9,7 @@ import "./BaseLongStrategy.sol";
 /// @dev Used to flash loan collateral and CFMM LP tokens to an external address
 abstract contract BaseExternalStrategy is BaseLongStrategy {
     error WrongLPTokenBalance();
+    error ExternalCollateralRef();
 
     /// @return feeRate - rate in basis points charged to liquidity flash loaned for external swaps
     function externalSwapFee() internal view virtual returns(uint256);

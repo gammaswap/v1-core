@@ -2,6 +2,7 @@
 pragma solidity >=0.8.4;
 
 import "../../interfaces/strategies/base/ILongStrategy.sol";
+import "../../interfaces/ICollateralManager.sol";
 import "./BaseStrategy.sol";
 
 /// @title Base Long Strategy abstract contract
@@ -52,6 +53,17 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
     /// @dev See {ILongStrategy-ltvThreshold}.
     function ltvThreshold() external virtual override view returns(uint256) {
         return _ltvThreshold();
+    }
+
+    function calcOriginationFee(uint256 discount) internal virtual view returns(uint256) {
+        uint256 origFee = originationFee();
+        return discount > origFee ? 0 : (origFee - discount);
+    }
+
+    function getExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual view returns(uint256 externalCollateral) {
+        if(_loan.collateralRef != address(0)) {
+            externalCollateral = ICollateralManager(_loan.collateralRef).getCollateral(address(this), tokenId);
+        }
     }
 
     /// @dev Get `loan` from `tokenId` if it exists

@@ -19,6 +19,7 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, B
 
         // No need to check if msg.sender has permission
         LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
+        if(_loan.collateralRef != address(0)) revert ExternalCollateralRef();
 
         (loanLiquidity, collateral, tokensHeld, writeDownAmt) = getLoanLiquidityAndCollateral(_loan, s.cfmm);
 
