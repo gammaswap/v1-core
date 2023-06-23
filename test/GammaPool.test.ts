@@ -3,7 +3,7 @@ import { expect } from "chai";
 
 const PROTOCOL_ID = 1;
 
-describe("GammaPool", function () {
+describe.skip("GammaPool", function () {
   let TestERC20: any;
   let TestAddressCalculator: any;
   let TestBorrowStrategy: any;

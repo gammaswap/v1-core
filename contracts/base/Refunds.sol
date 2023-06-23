@@ -17,7 +17,7 @@ abstract contract Refunds is IRefunds {
     /// @param token - address of ERC20 token that will be transferred
     /// @param balance - quantity of ERC20 token to be expected to remain in GammaPool, excess will be withdrawn
     /// @param to - destination address where ERC20 token will be sent to
-    function skim(address token, uint256 balance, address to) internal {
+    function skim(address token, uint256 balance, address to) internal virtual {
         uint256 newBalance = IERC20(token).balanceOf(address(this));
         if(newBalance > balance) {
             uint256 excessBalance;
@@ -29,7 +29,7 @@ abstract contract Refunds is IRefunds {
     }
 
     /// @dev See {ITransfers-clearToken}
-    function clearToken(address token, address to, uint256 minAmt) external override {
+    function clearToken(address token, address to, uint256 minAmt) external override virtual {
         // Can't clear CFMM LP tokens or collateral tokens
         if(isCFMMToken(token) || isCollateralToken(token)) revert RestrictedToken();
 
