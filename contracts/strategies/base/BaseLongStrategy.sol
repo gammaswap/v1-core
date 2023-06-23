@@ -66,6 +66,18 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
         }
     }
 
+    function getMaxExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual view returns(uint256 externalCollateral) {
+        if(_loan.collateralRef != address(0)) {
+            externalCollateral = ICollateralManager(_loan.collateralRef).getMaxCollateral(address(this), tokenId);
+        }
+    }
+
+    function repayWithExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId, uint256 liquidity) internal virtual returns(uint256 externalLiquidity) {
+        if(_loan.collateralRef != address(0)) {
+            externalLiquidity = ICollateralManager(_loan.collateralRef).payLiquidity(address(this), tokenId, liquidity, address(this));
+        }
+    }
+
     /// @dev Get `loan` from `tokenId` if it exists
     /// @param tokenId - liquidity loan whose collateral will be traded
     /// @return _loan - existing loan (id > 0)
@@ -148,7 +160,7 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
     /// @param amounts - amount of `token` being transferred
     /// @param fees - transfer fees charged to amount of `token` being transferred in basis points
     /// @return amountsWithFees - amount of `token` being transferred including fees
-    function addFees(uint256[] memory amounts, uint256[] calldata fees) internal virtual pure returns(uint256[] memory) {
+    function addFees(uint256[] memory amounts, uint256[] memory fees) internal virtual pure returns(uint256[] memory) {
         if(fees.length != amounts.length) {
             return amounts;
         }

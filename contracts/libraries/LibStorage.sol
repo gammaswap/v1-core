@@ -140,6 +140,7 @@ library LibStorage {
     /// @dev Creates an empty loan struct in the GammaPool and initializes it to start tracking borrowed liquidity
     /// @param self - pointer to storage variables (doesn't need to be passed)
     /// @param _tokenCount - number of tokens in the CFMM the loan is for
+    /// @param refId - reference id of CollateralManager set up in CollateralReferenceStore (e.g. GammaPoolFactory)
     /// @return _tokenId - unique tokenId used to get and update loan
     function createLoan(Storage storage self, uint256 _tokenCount, uint16 refId) internal returns(uint256 _tokenId) {
         // get loan counter for GammaPool and increase it by 1 for the next loan

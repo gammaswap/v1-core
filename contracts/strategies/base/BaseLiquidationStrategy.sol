@@ -13,16 +13,24 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     error NoLiquidityProvided();
     error NotFullLiquidation();
     error InvalidTokenIdsLength();
-    error InvalidDeltasLength();
     error HasMargin();
+
+    /// @dev loan data used to determine results of liquidation
+    struct LiquidatableLoan {
+        /// @dev most updated loan liquidity invariant debt
+        uint256 loanLiquidity;
+        /// @dev loan collateral in liquidity invariant units
+        uint256 collateral;
+        /// @dev loan collateral token amounts
+        uint128[] tokensHeld;
+        /// @dev collateral liquidity invariant units written down from loan's debt
+        uint256 writeDownAmt;
+        /// @dev fee in liquidity invariant units paid for liquidation
+        uint256 fee;
+    }
 
     /// @return - liquidationFee - threshold used to measure the liquidation fee
     function _liquidationFee() internal virtual view returns(uint16);
-
-    /// @return - liquidationFeeAdjustment - threshold used to measure the liquidation fee
-    function liquidationFeeAdjustment() internal virtual view returns(uint16) {
-        return 1e4 - _liquidationFee();
-    }
 
     /// @dev See {LiquidationStrategy-liquidationFee}.
     function liquidationFee() external override virtual view returns(uint256) {
@@ -36,39 +44,39 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
 
     /// @dev Update loan liquidity and check if can liquidate
     /// @param _loan - loan to liquidate
-    /// @param cfmm - adress of CFMM
-    /// @return loanLiquidity - most updated loan liquidity debt
-    /// @return collateral - loan collateral liquidity invariant units
-    /// @return tokensHeld - loan collateral token amounts
-    /// @return writeDownAmt - collateral liquidity invariant units written down from loan's debt
-    function getLoanLiquidityAndCollateral(LibStorage.Loan storage _loan, address cfmm) internal virtual returns(uint256 loanLiquidity, uint256 collateral, uint128[] memory tokensHeld, uint256 writeDownAmt) {
+    /// @return _liqLoan - loan with most updated data used for liquidation
+    /// @return deltas - deltas to rebalance collateral to get max LP deposit
+    function getLiquidatableLoan(LibStorage.Loan storage _loan) internal virtual
+        returns(LiquidatableLoan memory _liqLoan, int256[] memory deltas) {
         // Update loan's liquidity debt and GammaPool's state variables
-        loanLiquidity = updateLoan(_loan);
+        uint256 loanLiquidity = updateLoan(_loan);
 
         // Check if loan can be liquidated
-        tokensHeld = _loan.tokensHeld; // Saves gas
-        collateral = calcInvariant(cfmm, tokensHeld);
+        uint128[] memory tokensHeld = _loan.tokensHeld; // Saves gas
+        uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
         checkMargin(collateral, loanLiquidity);
 
-        // Write down any bad debt
-        (writeDownAmt, loanLiquidity) = writeDown(adjustCollateralByLiqFee(collateral), loanLiquidity);
-    }
+        // the loanLiquidity should match the number of tokens we expect to deposit including theliquidation fee
+        deltas = _calcDeltasForMaxLP(tokensHeld, s.CFMM_RESERVES);
+        collateral = _calcMaxCollateral(deltas, tokensHeld, s.CFMM_RESERVES);
 
-    function adjustCollateralByLiqFee(uint256 collateral) internal virtual returns(uint256) {
-        return collateral * liquidationFeeAdjustment() / 10000;
+        // we deposit enought to cover the liquidity + the liquidationFee. We send the liquidationFee to the
+        // the collateral gives us the maxCollateral that we may deposit, after the writeDown (if any) we calculate
+        // exact amounts to cover the liquidity debt + liquidation fee and deposit those amounts
+        uint256 fee = collateral * _liquidationFee() / 10000;
+        (_liqLoan.writeDownAmt, _liqLoan.loanLiquidity) = writeDown(collateral - fee, loanLiquidity);
+        _liqLoan.fee = fee;
+        _liqLoan.collateral = collateral;
+        _liqLoan.tokensHeld = tokensHeld;
     }
 
     /// @dev Account for liquidity payments in the loan and pool
     /// @param tokenId - id of loan to liquidate
-    /// @param tokensHeld - loan collateral
     /// @param loanLiquidity - most updated total loan liquidity debt
-    /// @param lpTokenPrincipalPaid - loan's CFMM LP token principal
-    /// @param isFullPayment - true if liquidating in full
-    /// @return tokensHeld - remaining collateral
-    /// @return refund - refunded amounts
+    /// @param lpTokensPaid - loan's CFMM LP token principal
     /// @return loanLiquidity - remaining liquidity debt
-    function payLoanAndRefundLiquidator(uint256 tokenId, uint128[] memory tokensHeld, uint256 loanLiquidity, uint256 lpTokenPrincipalPaid, bool isFullPayment)
-        internal virtual returns(uint128[] memory, uint256[] memory, uint256) {
+    function payLiquidatableLoan(uint256 tokenId, uint256 loanLiquidity, uint256 lpTokensPaid)
+        internal virtual returns(uint256) {
 
         uint256 payLiquidity;
         uint256 currLpBalance = s.LP_TOKEN_BALANCE;
@@ -90,48 +98,41 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
         }
 
         // Check if must be full liquidation
-        if(isFullPayment && payLiquidity < loanLiquidity) revert NotFullLiquidation();
-
-        // Refund collateral to liquidator and get remaining collateral and refunded amounts
-        uint256[] memory refund;
-        (tokensHeld, refund) = refundLiquidator(payLiquidity, loanLiquidity, tokensHeld);
+        if(payLiquidity < loanLiquidity) revert NotFullLiquidation();
 
         {
             if(tokenId > 0) { // if liquidating a specific loan
                 LibStorage.Loan storage _loan = s.loans[tokenId];
 
                 // Account for loan's liquidity paid and get CFMM LP token principal paid and remaining loan liquidity
-                (lpTokenPrincipalPaid, loanLiquidity) = payLoanLiquidity(payLiquidity, loanLiquidity, _loan);
+                (lpTokensPaid, loanLiquidity) = payLoanLiquidity(payLiquidity, loanLiquidity, _loan);
             }
-            payPoolDebt(payLiquidity, lpTokenPrincipalPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance);
+            payPoolDebt(payLiquidity, lpTokensPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance);
         }
 
-        return(tokensHeld, refund, loanLiquidity);
+        return loanLiquidity;
     }
 
     /// @dev Refund liquidator with collateral from liquidated loan and return remaining loan collateral
-    /// @param payLiquidity - liquidity debt paid by liquidator
     /// @param loanLiquidity - most updated loan liquidity debt before payment
+    /// @param collateral - liquidity unit value of collateral tokens at current prices
     /// @param tokensHeld - loan collateral amounts
-    /// @return tokensHeld - remaining loan collateral amounts
     /// @return refund - loan collateral amounts refunded to liquidator
-    function refundLiquidator(uint256 payLiquidity, uint256 loanLiquidity, uint128[] memory tokensHeld) internal virtual returns(uint128[] memory, uint256[] memory) {
-        address[] memory tokens = s.tokens; // Saves gas
-        uint256[] memory refund = new uint256[](tokens.length);
-        uint128 payAmt = 0;
-        for (uint256 i; i < tokens.length;) {
-            payAmt = uint128(payLiquidity * tokensHeld[i] / loanLiquidity); // Collateral share of liquidated debt
-            s.TOKEN_BALANCE[i] = s.TOKEN_BALANCE[i] - payAmt;
-            refund[i] = payAmt;
-            tokensHeld[i] = tokensHeld[i] - payAmt;
-
-            // Refund collateral share of liquidated debt to liquidator
+    /// @return tokensHeld - remaining loan collateral amounts
+    function refundLiquidator(uint256 loanLiquidity, uint256 collateral, uint128[] memory tokensHeld)
+        internal virtual returns(uint128[] memory, uint128[] memory) {
+        address[] memory tokens = s.tokens;
+        uint128[] memory refund = new uint128[](tokens.length);
+        for(uint256 i = 0; i < tokens.length;) {
+            refund[i] = uint128(loanLiquidity * tokensHeld[i] / collateral);
+            s.TOKEN_BALANCE[i] = s.TOKEN_BALANCE[i] - refund[i];
+            tokensHeld[i] = tokensHeld[i] - refund[i];
             GammaSwapLibrary.safeTransfer(tokens[i], msg.sender, refund[i]);
-        unchecked {
-            ++i;
+            unchecked{
+                ++i;
+            }
         }
-        }
-        return(tokensHeld, refund);
+        return(refund, tokensHeld);
     }
 
     /// @dev See {BaseLongStrategy-checkMargin}.
@@ -159,21 +160,8 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
 
         // Convert excess liquidity deposited back to CFMM LP tokens
         uint256 lpRefund = convertInvariantToLP(excessInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
-        GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, lpRefund); // Refund excess LP tokens
+        GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, lpRefund); // Refund excess LP tokens, includes liquidation fee
 
         return(loanLiquidity, lpDeposit - lpRefund);
-    }
-
-    /// @dev Increase loan collateral amounts then repay liquidity debt
-    /// @param _loan - loan whose collateral will be rebalanced
-    /// @param loanLiquidity - liquidity of loan to liquidate (avoids reading from _loan again to save gas)
-    /// @param fees - fee on transfer for tokens[i]. Send empty array if no token in pool has fee on transfer or array of zeroes
-    /// @return tokensHeld - remaining loan collateral amounts
-    function depositCollateralIntoCFMM(LibStorage.Loan storage _loan, uint256 loanLiquidity, uint256[] calldata fees) internal virtual returns(uint128[] memory tokensHeld) {
-        updateCollateral(_loan); // Update collateral from token deposits or rebalancing
-
-        // Repay liquidity debt, increase lastCFMMTotalSupply and lastCFMMTotalInvariant
-        repayTokens(_loan, addFees(calcTokensToRepay(s.CFMM_RESERVES, loanLiquidity), fees));
-        (tokensHeld,) = updateCollateral(_loan); // Update remaining collateral
     }
 }

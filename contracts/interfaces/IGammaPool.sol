@@ -344,11 +344,20 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @param tokenId - unique id identifying loan
     /// @param liquidity - liquidity debt being repaid, capped at actual liquidity owed. Can't repay more than you owe
     /// @param fees - fee on transfer for tokens[i]. Send empty array if no token in pool has fee on transfer or array of zeroes
+    /// @param ratio - ratio to rebalance collateral after repaying liquidity
+    /// @return liquidityPaid - liquidity amount that has been repaid
+    /// @return amounts - collateral amounts consumed in repaying liquidity debt
+    function repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external returns(uint256 liquidityPaid, uint256[] memory amounts);
+
+    /// @dev Repay liquidity debt of loan identified by tokenId, debt is repaid using available collateral in loan
+    /// @param tokenId - unique id identifying loan
+    /// @param liquidity - liquidity debt being repaid, capped at actual liquidity owed. Can't repay more than you owe
+    /// @param fees - fee on transfer for tokens[i]. Send empty array if no token in pool has fee on transfer or array of zeroes
     /// @param collateralId - index of collateral token + 1
     /// @param to - if repayment type requires withdrawal, the address that will receive the funds. Otherwise can be zero address
     /// @return liquidityPaid - liquidity amount that has been repaid
     /// @return amounts - collateral amounts consumed in repaying liquidity debt
-    function repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external returns(uint256 liquidityPaid, uint256[] memory amounts);
+    function repayLiquidityAndWithdraw(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external returns(uint256 liquidityPaid, uint256[] memory amounts);
 
     /// @dev Repay liquidity debt of loan identified by tokenId, using CFMM LP token
     /// @param tokenId - unique id identifying loan
@@ -374,11 +383,9 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @notice When calling this function and adding additional collateral it is assumed that you have sent the collateral first
     /// @dev Function to liquidate a loan using its own collateral or depositing additional tokens. Seeks full liquidation
     /// @param tokenId - tokenId of loan being liquidated
-    /// @param deltas - amount tokens to trade to re-balance the collateral
     /// @param fees - fee on transfer for tokens[i]. Send empty array if no token in pool has fee on transfer or array of zeroes
     /// @return loanLiquidity - loan liquidity liquidated (after write down)
-    /// @return refund - amounts from collateral tokens being refunded to liquidator
-    function liquidate(uint256 tokenId, int256[] calldata deltas, uint256[] calldata fees) external returns(uint256 loanLiquidity, uint256[] memory refund);
+    function liquidate(uint256 tokenId, uint256[] calldata fees) external returns(uint256 loanLiquidity);
 
     /// @dev Function to liquidate a loan using external LP tokens. Allows partial liquidation
     /// @param tokenId - tokenId of loan being liquidated
@@ -389,9 +396,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @dev Function to liquidate multiple loans in batch.
     /// @param tokenIds - list of tokenIds of loans to liquidate
     /// @return totalLoanLiquidity - total loan liquidity liquidated (after write down)
-    /// @return totalCollateral - total collateral available for liquidation
     /// @return refund - amounts from collateral tokens being refunded to liquidator
-    function batchLiquidations(uint256[] calldata tokenIds) external returns(uint256 totalLoanLiquidity, uint256 totalCollateral, uint256[] memory refund);
+    function batchLiquidations(uint256[] calldata tokenIds) external returns(uint256 totalLoanLiquidity, uint256[] memory refund);
 
     // Sync functions
 

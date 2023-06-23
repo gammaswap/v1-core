@@ -96,6 +96,7 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
                 checkMargin(calcInvariant(s.cfmm, tokensHeld) + externalCollateral, loanLiquidity);
             } else {
                 // rebalance to match ratio after withdrawal
+                // TODO: Have to withdraw the funded amount from tokensHeld first
                 rebalanceCollateral(_loan, _calcDeltasForWithdrawal(unfundedAmounts, tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
                 // Withdraw collateral tokens from loan
                 tokensHeld = withdrawCollateral(_loan, loanLiquidity, externalCollateral, amounts, to);

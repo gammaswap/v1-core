@@ -3,7 +3,7 @@ import { expect } from "chai";
 
 const PROTOCOL_ID = 1;
 
-describe.skip("GammaPool", function () {
+describe("GammaPool", function () {
   let TestERC20: any;
   let TestAddressCalculator: any;
   let TestBorrowStrategy: any;
@@ -521,7 +521,7 @@ describe.skip("GammaPool", function () {
   // You can nest describe calls to create subsections.
   describe("Long Gamma", function () {
     it("Create & View Loan", async function () {
-      const res = await (await gammaPool.createLoan()).wait();
+      const res = await (await gammaPool.createLoan(0)).wait();
       expect(res.events[0].args.caller).to.eq(owner.address);
       const abi = ethers.utils.defaultAbiCoder;
       const data = abi.encode(
@@ -544,18 +544,18 @@ describe.skip("GammaPool", function () {
     });
 
     it("Increase Loan Count", async function () {
-      await (await gammaPool.createLoan()).wait();
-      await (await gammaPool.createLoan()).wait();
-      await (await gammaPool.createLoan()).wait();
-      await (await gammaPool.createLoan()).wait();
-      await (await gammaPool.createLoan()).wait();
+      await (await gammaPool.createLoan(0)).wait();
+      await (await gammaPool.createLoan(0)).wait();
+      await (await gammaPool.createLoan(0)).wait();
+      await (await gammaPool.createLoan(0)).wait();
+      await (await gammaPool.createLoan(0)).wait();
       expect(await gammaPool.getLoanCount()).to.equal(5);
-      await (await gammaPool.createLoan()).wait();
-      await (await gammaPool.createLoan()).wait();
-      await (await gammaPool.createLoan()).wait();
+      await (await gammaPool.createLoan(0)).wait();
+      await (await gammaPool.createLoan(0)).wait();
+      await (await gammaPool.createLoan(0)).wait();
       expect(await gammaPool.getLoanCount()).to.equal(8);
-      await (await gammaPool.connect(addr1).createLoan()).wait();
-      await (await gammaPool.connect(addr1).createLoan()).wait();
+      await (await gammaPool.connect(addr1).createLoan(0)).wait();
+      await (await gammaPool.connect(addr1).createLoan(0)).wait();
       expect(await gammaPool.getLoanCount()).to.equal(10);
     });
 
@@ -571,27 +571,27 @@ describe.skip("GammaPool", function () {
     }
 
     it("Get List of Loans", async function () {
-      const res0 = await (await gammaPool.createLoan()).wait();
+      const res0 = await (await gammaPool.createLoan(0)).wait();
       const tokenId0 = res0.events[0].args.tokenId;
-      const res1 = await (await gammaPool.createLoan()).wait();
+      const res1 = await (await gammaPool.createLoan(0)).wait();
       const tokenId1 = res1.events[0].args.tokenId;
-      const res2 = await (await gammaPool.createLoan()).wait();
+      const res2 = await (await gammaPool.createLoan(0)).wait();
       const tokenId2 = res2.events[0].args.tokenId;
-      const res3 = await (await gammaPool.createLoan()).wait();
+      const res3 = await (await gammaPool.createLoan(0)).wait();
       const tokenId3 = res3.events[0].args.tokenId;
-      const res4 = await (await gammaPool.createLoan()).wait();
+      const res4 = await (await gammaPool.createLoan(0)).wait();
       const tokenId4 = res4.events[0].args.tokenId;
-      const res5 = await (await gammaPool.createLoan()).wait();
+      const res5 = await (await gammaPool.createLoan(0)).wait();
       const tokenId5 = res5.events[0].args.tokenId;
-      const res6 = await (await gammaPool.createLoan()).wait();
+      const res6 = await (await gammaPool.createLoan(0)).wait();
       const tokenId6 = res6.events[0].args.tokenId;
-      const res7 = await (await gammaPool.createLoan()).wait();
+      const res7 = await (await gammaPool.createLoan(0)).wait();
       const tokenId7 = res7.events[0].args.tokenId;
-      const res8 = await (await gammaPool.createLoan()).wait();
+      const res8 = await (await gammaPool.createLoan(0)).wait();
       const tokenId8 = res8.events[0].args.tokenId;
-      const res9 = await (await gammaPool.createLoan()).wait();
+      const res9 = await (await gammaPool.createLoan(0)).wait();
       const tokenId9 = res9.events[0].args.tokenId;
-      const res10 = await (await gammaPool.createLoan()).wait();
+      const res10 = await (await gammaPool.createLoan(0)).wait();
       const tokenId10 = res10.events[0].args.tokenId;
 
       const _loans = await gammaPool.getLoans(1, 10, false);
@@ -746,7 +746,7 @@ describe.skip("GammaPool", function () {
       expect(res2.events[0].args.txType).to.eq(7);
 
       const res3 = await (
-        await gammaPool.repayLiquidity(
+        await gammaPool.repayLiquidityAndWithdraw(
           tokenId,
           400,
           [43, 44],
@@ -819,10 +819,8 @@ describe.skip("GammaPool", function () {
       expect(res0.events[0].args.collateral).to.eq(11);
       expect(res0.events[0].args.liquidity).to.eq(12);
       expect(res0.events[0].args.writeDownAmt).to.eq(15);
+      expect(res0.events[0].args.fee).to.eq(17);
       expect(res0.events[0].args.txType).to.eq(12);
-      expect(res0.events[0].args.tokenIds.length).to.eq(2);
-      expect(res0.events[0].args.tokenIds[0]).to.eq(tokenId1);
-      expect(res0.events[0].args.tokenIds[1]).to.eq(tokenId2);
       expect(res0.events[1].event).to.eq("PoolUpdated");
       expect(res0.events[1].args.lpTokenBalance).to.eq(16);
       expect(res0.events[1].args.lpTokenBorrowed).to.eq(13);
@@ -861,7 +859,7 @@ describe.skip("GammaPool", function () {
       expect(res0.events[1].args.liquidity).to.eq(500);
       expect(res0.events[1].args.writeDownAmt).to.eq(600);
       expect(res0.events[1].args.txType).to.eq(11);
-      expect(res0.events[1].args.tokenIds.length).to.eq(0);
+      expect(res0.events[1].args.fee).to.eq(700);
     });
 
     it("Liquidate", async function () {
@@ -871,7 +869,7 @@ describe.skip("GammaPool", function () {
         [owner.address, gammaPool.address, 1]
       );
       const tokenId = ethers.BigNumber.from(ethers.utils.keccak256(data));
-      const res0 = await (await gammaPool.liquidate(tokenId, [], [])).wait();
+      const res0 = await (await gammaPool.liquidate(tokenId, [])).wait();
       expect(res0.events[0].event).to.eq("LoanUpdated");
       expect(res0.events[0].args.tokenId).to.eq(tokenId);
       expect(res0.events[0].args.tokensHeld.length).to.eq(2);
@@ -887,12 +885,11 @@ describe.skip("GammaPool", function () {
       expect(res0.events[1].args.collateral).to.eq(100);
       expect(res0.events[1].args.liquidity).to.eq(200);
       expect(res0.events[1].args.writeDownAmt).to.eq(300);
+      expect(res0.events[1].args.fee).to.eq(6);
       expect(res0.events[1].args.txType).to.eq(10);
-      expect(res0.events[1].args.tokenIds.length).to.eq(0);
 
-      const res1 = await (
-        await gammaPool.liquidate(tokenId, [999, 1111], [1, 2])
-      ).wait();
+      const res1 = await (await gammaPool.liquidate(tokenId, [1, 2])).wait();
+      expect(res1.events[0].event).to.eq("LoanUpdated");
       expect(res1.events[0].args.tokenId).to.eq(tokenId);
       expect(res1.events[0].args.tokensHeld.length).to.eq(2);
       expect(res1.events[0].args.tokensHeld[0]).to.eq(1);
@@ -907,6 +904,7 @@ describe.skip("GammaPool", function () {
       expect(res1.events[1].args.collateral).to.eq(100);
       expect(res1.events[1].args.liquidity).to.eq(201);
       expect(res1.events[1].args.writeDownAmt).to.eq(302);
+      expect(res1.events[1].args.fee).to.eq(6);
       expect(res1.events[1].args.txType).to.eq(10);
     });
   });

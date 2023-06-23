@@ -9,7 +9,7 @@ import "./GammaPool.sol";
 /// @title Basic GammaPool smart contract with flash loan functionality
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used as template for building other GammaPool contract implementations with flash loan functionality for other CFMMs
-abstract contract GammaPoolExternal is GammaPool, IGammaPoolExternal{
+abstract contract GammaPoolExternal is GammaPool, IGammaPoolExternal {
 
     /// @dev See {IGammaPool-externalRebalanceStrategy}
     address immutable public override externalRebalanceStrategy;

@@ -7,7 +7,7 @@ import "../../TestERC20.sol";
 import "../../../strategies/lending/RepayStrategy.sol";
 import "../../../strategies/lending/BorrowStrategy.sol";
 
-contract TestLongStrategy is RepayStrategy, BorrowStrategy {
+contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
 
     using LibStorage for LibStorage.Storage;
 
@@ -241,9 +241,9 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         return(_loan.liquidity, _loan.lpTokens, _loan.px,
-            s.BORROWED_INVARIANT, s.LP_INVARIANT, (s.BORROWED_INVARIANT + s.LP_INVARIANT),
-            s.LP_TOKEN_BORROWED, s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
-            (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST), s.lastCFMMInvariant, s.lastCFMMTotalSupply);
+        s.BORROWED_INVARIANT, s.LP_INVARIANT, (s.BORROWED_INVARIANT + s.LP_INVARIANT),
+        s.LP_TOKEN_BORROWED, s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
+        (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST), s.lastCFMMInvariant, s.lastCFMMTotalSupply);
     }
 
     function getPoolData() external virtual view returns(uint256 LP_TOKEN_BALANCE, uint256 LP_TOKEN_BORROWED, uint48 LAST_BLOCK_NUMBER,
@@ -349,10 +349,6 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         deltas[1] = 100;
     }
 
-    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external override returns(uint256 liquidityPaid, uint256[] memory amounts){
-        amounts = new uint256[](2);
-        amounts[0] = ratio[0];
-        amounts[1] = ratio[1];
-        liquidityPaid = liquidity;
+    function _repayLiquidityAndWithdraw(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external override returns(uint256 liquidityPaid, uint256[] memory amounts){
     }
 }

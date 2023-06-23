@@ -37,10 +37,6 @@ contract TestExternalLiquidationStrategy is TestExternalBaseRebalanceStrategy, E
         return liqFee;
     }
 
-    function liqFeeAdjustment() external view returns(uint16) {
-        return liquidationFeeAdjustment();
-    }
-
     function beforeRepay(LibStorage.Loan storage _loan, uint256[] memory amounts) internal virtual override {
     }
 
@@ -64,5 +60,38 @@ contract TestExternalLiquidationStrategy is TestExternalBaseRebalanceStrategy, E
 
     function getCurrentCFMMPrice() internal virtual override view returns(uint256) {
         return 0;
+    }
+
+    function _calcMaxCollateral(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
+        return Math.sqrt(uint256(tokensHeld[0]) * tokensHeld[1]);
+    }
+
+    function _calcDeltasForMaxLP(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 100;
+    }
+
+    function _calcDeltasToCloseKeepRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256[] memory ratio) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 100;
+    }
+    function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 100;
+    }
+
+    function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 100;
+    }
+
+    function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 0;
     }
 }
