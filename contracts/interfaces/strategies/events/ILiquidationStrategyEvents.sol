@@ -12,7 +12,7 @@ interface ILiquidationStrategyEvents is ILongStrategyEvents {
     /// @param collateral - collateral of loan being liquidated
     /// @param liquidity - liquidity debt being repaid
     /// @param writeDownAmt - amount of liquidity invariant being written down
+    /// @param fee - liquidation fee paid to liquidator in liquidity invariant units
     /// @param txType - type of liquidation. Possible values come from enum TX_TYPE
-    /// @param tokenIds - list of tokenIds liquidated if batch liquidation
-    event Liquidation(uint256 indexed tokenId, uint128 collateral, uint128 liquidity, uint128 writeDownAmt, TX_TYPE txType, uint256[] tokenIds);
+    event Liquidation(uint256 indexed tokenId, uint128 collateral, uint128 liquidity, uint128 writeDownAmt, uint128 fee, TX_TYPE txType);
 }

@@ -6,7 +6,7 @@ import "../base/AbstractGammaPoolFactory.sol";
 import "../interfaces/IGammaPool.sol";
 import "../interfaces/ICollateralReferenceStore.sol";
 
-contract TestGammaPoolFactory is AbstractGammaPoolFactory, ICollateralReferenceStore {
+contract TestGammaPoolFactory2 is AbstractGammaPoolFactory, ICollateralReferenceStore {
 
     address public deployer;
     address public cfmm;
@@ -15,23 +15,10 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory, ICollateralReferenceS
     address public protocol;
     uint8[] public decimals;
 
-    constructor(address _cfmm, uint16 _protocolId, address[] memory _tokens) AbstractGammaPoolFactory(msg.sender, msg.sender, msg.sender) {
-        cfmm = _cfmm;
-        protocolId = _protocolId;
-        tokens = _tokens;
-        decimals = new uint8[](2);
+    constructor() AbstractGammaPoolFactory(msg.sender, msg.sender, msg.sender)  {
     }
 
     function createPool2(bytes calldata _data) external virtual returns(address pool) {
-        bytes32 key = AddressCalculator.getGammaPoolKey(cfmm, protocolId);
-
-        pool = cloneDeterministic(protocol, key);
-        decimals[0] = 18;
-        decimals[1] = 18;
-        IGammaPool(pool).initialize(cfmm, tokens, decimals, _data);
-
-        getPool[key] = pool;
-        getKey[pool] = key;
     }
 
     function createPool(uint16, address, address[] calldata, bytes calldata) external override virtual returns(address) {
@@ -49,7 +36,7 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory, ICollateralReferenceS
     }
 
     function removeProtocol(uint16) external override {
-      protocol = address(0);
+        protocol = address(0);
     }
 
     function getProtocol(uint16) external override view returns (address) {

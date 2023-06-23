@@ -10,57 +10,75 @@ import "../base/BaseLiquidationStrategy.sol";
 /// @dev Defines function to liquidate loans in batch
 abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiquidationStrategy {
 
+    /// @dev Aggregate liquidity, collateral amounts, and CFMM LP token principal of loans to liquidate.
+    struct SummedLoans {
+        /// @dev aggregated debt in liquidity invariant terms to be liquidated
+        uint256 liquidityTotal;
+        /// @dev aggregated collateral in liquidity invariant terms available for liquidation
+        uint256 collateralTotal;
+        /// @dev total loan liquidity debt in terms of LP tokens
+        uint256 lpTokensTotal;
+        /// @dev total fees paid to liquidator
+        uint256 feeTotal;
+        /// @dev amount of liquidity written down from loans
+        uint256 writeDownAmtTotal;
+        /// @dev tokenIds that will be liquidated
+        uint256[] tokenIds;
+    }
+
     /// @dev See {LiquidationStrategy-_batchLiquidations}.
-    function _batchLiquidations(uint256[] calldata tokenIds) external override lock virtual returns(uint256 totalLoanLiquidity, uint256 totalCollateral, uint256[] memory refund) {
+    function _batchLiquidations(uint256[] calldata tokenIds) external override lock virtual
+        returns(uint256 totalLoanLiquidity, uint128[] memory refund) {
         if(tokenIds.length == 0) revert InvalidTokenIdsLength(); // Revert if no loan tokenIds are passed
 
         // Sum up liquidity, collateral, and LP token principal from loans that can be liquidated
-        uint256 lpTokenPrincipalPaid;
-        uint128[] memory tokensHeld;
-        uint256[] memory _tokenIds;
-        (totalLoanLiquidity, totalCollateral, lpTokenPrincipalPaid, tokensHeld, _tokenIds) = sumLiquidity(tokenIds);
+        SummedLoans memory summedLoans;
+        (summedLoans, refund) = sumLiquidity(tokenIds);
+
+        totalLoanLiquidity = summedLoans.liquidityTotal;
 
         if(totalLoanLiquidity == 0) revert NoLiquidityDebt(); // Revert if no loans to liquidate
 
-        uint256 writeDownAmt;
-        // Write down bad debt if any
-        (writeDownAmt, totalLoanLiquidity) = writeDown(adjustCollateralByLiqFee(totalCollateral), totalLoanLiquidity);
+        // write down if there as anything to write down
+        uint256 writeDownAmt = summedLoans.writeDownAmtTotal;
+        if(writeDownAmt > 0) writeDown(0, writeDownAmt);
 
         // Pay total liquidity debts in full with previously deposited CFMM LP tokens and refund remaining collateral to liquidator
-        (, refund,) = payLoanAndRefundLiquidator(0, tokensHeld, totalLoanLiquidity, lpTokenPrincipalPaid, true);
+        payLiquidatableLoan(0, totalLoanLiquidity, summedLoans.lpTokensTotal);
+
+        refundLiquidator(totalLoanLiquidity, totalLoanLiquidity, refund);
 
         // Store through event tokenIds of loans liquidated in batch and amounts liquidated
-        emit Liquidation(0, uint128(totalCollateral), uint128(totalLoanLiquidity), uint128(writeDownAmt), TX_TYPE.BATCH_LIQUIDATION, _tokenIds);
+        emit Liquidation(0, uint128(summedLoans.collateralTotal), uint128(totalLoanLiquidity), uint128(writeDownAmt), uint128(summedLoans.feeTotal), TX_TYPE.BATCH_LIQUIDATION);
 
         emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.BATCH_LIQUIDATION);
     }
 
     /// @dev Aggregate liquidity, collateral amounts, and CFMM LP token principal of loans to liquidate. Skip loans not eligible to liquidate
-    /// @param tokenIds - list of tokenIds of loans to liquidate
-    /// @return liquidityTotal - loan collateral as liquidity invariant units
-    /// @return collateralTotal - most updated loan liquidity debt
-    /// @return lpTokensPrincipalTotal - loan liquidity debt after write down
-    /// @return tokensHeldTotal - loan liquidity debt after write down
-    /// @return _tokenIds - list of tokenIds of loans that will be liquidated (excludes loans that can't be liquidated)
-    function sumLiquidity(uint256[] calldata tokenIds) internal virtual returns(uint256 liquidityTotal, uint256 collateralTotal, uint256 lpTokensPrincipalTotal, uint128[] memory tokensHeldTotal, uint256[] memory _tokenIds) {
-        address[] memory tokens = s.tokens; // Save gas
-        uint128[] memory tokensHeld;
+    /// @return summedLoans - struct containing loan aggregated information
+    /// @return refund - refunds that will be sent back to liquidator
+    function sumLiquidity(uint256[] calldata tokenIds) internal virtual returns(SummedLoans memory summedLoans, uint128[] memory refund) {
         address cfmm = s.cfmm; // Save gas
-        tokensHeldTotal = new uint128[](tokens.length);
+        refund = new uint128[](s.tokens.length);
         (uint256 accFeeIndex,,) = updateIndex(); // Update GammaPool state variables and get interest rate index
-        _tokenIds = new uint256[](tokenIds.length); // Array of ids of loans eligible to liquidate
+        uint256 liqFee = _liquidationFee();
+        uint128[] memory reserves = s.CFMM_RESERVES;
+        summedLoans.tokenIds = new uint256[](tokenIds.length);
         for(uint256 i; i < tokenIds.length;) {
             LibStorage.Loan storage _loan = s.loans[tokenIds[i]];
             uint256 liquidity = _loan.liquidity;
-            uint256 rateIndex = _loan.rateIndex;
-            if(liquidity == 0 || rateIndex == 0) { // Skip loans already paid in full
-                unchecked {
-                    ++i;
+            {
+                uint256 rateIndex = _loan.rateIndex;
+                // Skip loans already paid in full or that use external collateral
+                if(liquidity == 0 || rateIndex == 0 || _loan.collateralRef != address(0)) {
+                    unchecked {
+                        ++i;
+                    }
+                    continue;
                 }
-                continue;
+                liquidity = liquidity * accFeeIndex / rateIndex; // Update loan's liquidity debt
             }
-            liquidity = liquidity * accFeeIndex / rateIndex; // Update loan's liquidity debt
-            tokensHeld = _loan.tokensHeld; // Save gas
+            uint128[] memory tokensHeld = _loan.tokensHeld; // Save gas
             uint256 collateral = calcInvariant(cfmm, tokensHeld);
             if(hasMargin(collateral, liquidity, _ltvThreshold())) { // Skip loans with enough collateral
                 unchecked {
@@ -68,34 +86,49 @@ abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiq
                 }
                 continue;
             }
-            _tokenIds[i] = tokenIds[i]; // Can liquidate loan
+            summedLoans.tokenIds[i] = tokenIds[i];
+            collateral = _calcMaxCollateralNotMktImpact(tokensHeld, reserves); // without market impact
+            summedLoans.collateralTotal += collateral;
+
+            uint256 fee = collateral * liqFee / 10000;
+            summedLoans.feeTotal += fee;
+
+            uint256 writeDownAmt = collateral - fee < liquidity ? liquidity - collateral + fee : 0;
+            summedLoans.writeDownAmtTotal += writeDownAmt;
+
+            liquidity -= writeDownAmt;
+
+            // Aggregate liquidity debts
+            summedLoans.liquidityTotal += liquidity;
 
             // Aggregate CFMM LP token principals
-            lpTokensPrincipalTotal = lpTokensPrincipalTotal + _loan.lpTokens;
+            summedLoans.lpTokensTotal += _loan.lpTokens;
 
             // Clear storage, gas refunds
             _loan.liquidity = 0;
             _loan.initLiquidity = 0;
             _loan.rateIndex = 0;
             _loan.lpTokens = 0;
-
-            // Aggregate collateral invariants
-            collateralTotal = collateralTotal + collateral;
-
-            // Aggregate liquidity debts
-            liquidityTotal = liquidityTotal + liquidity;
+            _loan.px = 0;
 
             // Aggregate collateral tokens
-            for(uint256 j; j < tokens.length;) {
-                tokensHeldTotal[j] = tokensHeldTotal[j] + tokensHeld[j];
-                _loan.tokensHeld[j] = 0;
+            for(uint256 j; j < refund.length;) {
+                uint128 refundAmt = uint128(tokensHeld[j] * (liquidity + fee) / collateral);
+                tokensHeld[j] = tokensHeld[j] - refundAmt;
+                refund[j] = refund[j] + refundAmt;
                 unchecked {
                     ++j;
                 }
             }
+            _loan.tokensHeld = tokensHeld;
+
+            emit LoanUpdated(tokenIds[i], tokensHeld, uint128(liquidity), 0, 0, 0, TX_TYPE.BATCH_LIQUIDATION);
+
             unchecked {
                 ++i;
             }
         }
     }
+
+    function _calcMaxCollateralNotMktImpact(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual returns(uint256);
 }

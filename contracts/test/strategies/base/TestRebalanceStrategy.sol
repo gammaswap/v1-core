@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.17;
 
-import "../../../libraries/Math.sol";
 import "../../TestCFMM.sol";
 import "../../TestERC20.sol";
-import "../../../strategies/lending/RepayStrategy.sol";
+import "../../../libraries/Math.sol";
 import "../../../strategies/lending/BorrowStrategy.sol";
+import "../../../strategies/rebalance/RebalanceStrategy.sol";
 
-contract TestLongStrategy is RepayStrategy, BorrowStrategy {
+contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
 
     using LibStorage for LibStorage.Storage;
 
@@ -185,11 +185,6 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         openLoan(_getLoan(tokenId), lpTokens);
     }
 
-    function testPayLoan(uint256 tokenId, uint256 liquidity) public virtual {
-        LibStorage.Loan storage _loan = _getLoan(tokenId);
-        payLoan(_loan, liquidity, _loan.liquidity);
-    }
-
     function updateLoan(LibStorage.Loan storage _loan) internal override returns(uint256){
         uint96 rateIndex = borrowRate;
         s.accFeeIndex = rateIndex;
@@ -241,9 +236,9 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         return(_loan.liquidity, _loan.lpTokens, _loan.px,
-            s.BORROWED_INVARIANT, s.LP_INVARIANT, (s.BORROWED_INVARIANT + s.LP_INVARIANT),
-            s.LP_TOKEN_BORROWED, s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
-            (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST), s.lastCFMMInvariant, s.lastCFMMTotalSupply);
+        s.BORROWED_INVARIANT, s.LP_INVARIANT, (s.BORROWED_INVARIANT + s.LP_INVARIANT),
+        s.LP_TOKEN_BORROWED, s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
+        (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST), s.lastCFMMInvariant, s.lastCFMMTotalSupply);
     }
 
     function getPoolData() external virtual view returns(uint256 LP_TOKEN_BALANCE, uint256 LP_TOKEN_BORROWED, uint48 LAST_BLOCK_NUMBER,
@@ -301,16 +296,28 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         emit AmountsWithFees(amountsWithFees);
     }
 
+    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
+        return _calcDeltasForRatio(tokensHeld, reserves, ratio);
+    }
+
     function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
         deltas[0] = 0;
         deltas[1] = 100;
     }
 
+    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) external virtual override view returns(int256[] memory deltas) {
+        return _calcDeltasToClose(tokensHeld, reserves, liquidity, collateralId);
+    }
+
     function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
         deltas[0] = 0;
         deltas[1] = 0;
+    }
+
+    function calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
+        return _calcDeltasForWithdrawal(amounts, tokensHeld, reserves, ratio);
     }
 
     function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
@@ -328,13 +335,8 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         return false;
     }
 
-    function testUpdatePayableLoan(uint256 tokenId, uint256 payLiquidity) external virtual {
-        LibStorage.Loan storage _loan = _getLoan(tokenId);
-        updatePayableLoan(_loan, payLiquidity);
-    }
-
     function _calcMaxCollateral(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
-        return calcInvariant(address(0), tokensHeld);
+        return 0;
     }
 
     function _calcDeltasForMaxLP(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(int256[] memory deltas) {
@@ -347,12 +349,5 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         deltas = new int256[](2);
         deltas[0] = 0;
         deltas[1] = 100;
-    }
-
-    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external override returns(uint256 liquidityPaid, uint256[] memory amounts){
-        amounts = new uint256[](2);
-        amounts[0] = ratio[0];
-        amounts[1] = ratio[1];
-        liquidityPaid = liquidity;
     }
 }

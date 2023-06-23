@@ -40,7 +40,7 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         if (liquidityBorrowedExFee < minBorrow()) revert MinBorrow();
 
         // Calculate add loan origination fee to LP token debt
-        uint256 lpTokensPlusOrigFee = lpTokens + lpTokens * originationFee() / 10000;
+        uint256 lpTokensPlusOrigFee = lpTokens + lpTokens * calcOriginationFee(_loan.feeDiscount) / 10000;
 
         // Calculate borrowed liquidity invariant including origination fee
         liquidityBorrowed = convertLPToInvariant(lpTokensPlusOrigFee, lastCFMMInvariant, lastCFMMTotalSupply);

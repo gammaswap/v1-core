@@ -9,6 +9,7 @@ import "./BaseLongStrategy.sol";
 /// @dev Used to flash loan collateral and CFMM LP tokens to an external address
 abstract contract BaseExternalStrategy is BaseLongStrategy {
     error WrongLPTokenBalance();
+    error ExternalCollateralRef();
 
     /// @return feeRate - rate in basis points charged to liquidity flash loaned for external swaps
     function externalSwapFee() internal view virtual returns(uint256);
@@ -40,9 +41,9 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
             // Collateral sent is measured as max of LP token equivalent if requested proportionally at current CFMM pool price
             swappedCollateralAsLPTokens = Math.max(swappedCollateralAsLPTokens, amounts[i] * lastCFMMTotalSupply / s.CFMM_RESERVES[i]);
             sendToken(tokens[i], to, amounts[i], s.TOKEN_BALANCE[i], type(uint128).max);
-        unchecked {
-            ++i;
-        }
+            unchecked {
+                ++i;
+            }
         }
     }
 

@@ -12,7 +12,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
     event Refund(uint128[] tokensHeld, uint256[] tokenIds);
     event WriteDown2(uint256 writeDownAmt, uint256 loanLiquidity);
     event RefundOverPayment(uint256 loanLiquidity, uint256 lpDeposit);
-    event RefundLiquidator(uint128[] tokensHeld, uint256[] refund);
+    event RefundLiquidator(uint128[] tokensHeld, uint128[] refund);
     event BatchLiquidations(uint256 liquidityTotal, uint256 collateralTotal, uint256 lpTokensPrincipalTotal, uint128[] tokensHeldTotal, uint256[] tokenIds);
 
     struct PoolBalances {
@@ -29,8 +29,8 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
         uint256 lastCFMMTotalSupply;
     }
 
-    function initialize(address cfmm, address[] calldata tokens, uint8[] calldata decimals) external virtual {
-        s.initialize(msg.sender, cfmm, tokens, decimals);
+    function initialize(address _factory, address cfmm, address[] calldata tokens, uint8[] calldata decimals) external virtual {
+        s.initialize(_factory, cfmm, tokens, decimals);
     }
 
     function minBorrow() internal virtual override view returns(uint256) {
@@ -43,10 +43,6 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
 
     function _liquidationFee() internal virtual override pure returns(uint16) {
         return 250;
-    }
-
-    function getLiquidationFeeAdjustment() external virtual view returns(uint16) {
-        return liquidationFeeAdjustment();
     }
 
     function maxTotalApy() internal virtual override view returns(uint256) {
@@ -91,7 +87,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
 
     // **** LONG GAMMA **** //
     function createLoan(uint256 lpTokens) external virtual returns(uint256 tokenId) {
-        tokenId = s.createLoan(s.tokens.length);
+        tokenId = s.createLoan(s.tokens.length, 0);
 
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
@@ -128,19 +124,19 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
     }
 
     function testPayBatchLoanAndRefundLiquidator(uint256[] calldata tokenIds) external virtual {
-        (uint256 liquidityTotal, uint256 payLiquidityTotal,, uint128[] memory tokensHeldTotal, uint256[] memory _tokenIds) = sumLiquidity(tokenIds);
-        (tokensHeldTotal, ) = refundLiquidator(payLiquidityTotal, liquidityTotal, tokensHeldTotal);
-        emit Refund(tokensHeldTotal, _tokenIds);
+        (SummedLoans memory summedLoans, uint128[] memory refund) = sumLiquidity(tokenIds);
+        (refund, ) = refundLiquidator(summedLoans.liquidityTotal, summedLoans.liquidityTotal, refund);
+        emit Refund(refund, tokenIds);
     }
 
     function testRefundLiquidator(uint256 tokenId, uint256 payLiquidity, uint256 loanLiquidity) external virtual {
-        (uint128[] memory tokensHeld, uint256[] memory refund) = refundLiquidator(payLiquidity, loanLiquidity, _getLoan(tokenId).tokensHeld);
+        (uint128[] memory refund, uint128[] memory tokensHeld) = refundLiquidator(payLiquidity, loanLiquidity, _getLoan(tokenId).tokensHeld);
         emit RefundLiquidator(tokensHeld, refund);
     }
 
     function testSumLiquidity(uint256[] calldata tokenIds) external virtual {
-        (uint256 liquidityTotal, uint256 collateralTotal, uint256 lpTokensPrincipalTotal, uint128[] memory tokensHeldTotal, uint256[] memory _tokenIds) = sumLiquidity(tokenIds);
-        emit BatchLiquidations(liquidityTotal, collateralTotal, lpTokensPrincipalTotal, tokensHeldTotal, _tokenIds);
+        (SummedLoans memory summedLoans, uint128[] memory refund) = sumLiquidity(tokenIds);
+        emit BatchLiquidations(summedLoans.liquidityTotal, summedLoans.collateralTotal, summedLoans.lpTokensTotal, refund, summedLoans.tokenIds);
     }
 
     function testCanLiquidate(uint256 collateral, uint256 liquidity) external virtual {
@@ -157,6 +153,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
 
     function updateIndex() internal override virtual returns(uint256 accFeeIndex, uint256 lastFeeIndex, uint256 lastCFMMIndex) {
         accFeeIndex = s.accFeeIndex;
+        s.CFMM_RESERVES = getReserves(s.cfmm);
         lastFeeIndex = 1e18;
         lastCFMMIndex = 1e18;
     }
@@ -248,5 +245,45 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
 
     function getCurrentCFMMPrice() internal virtual override view returns(uint256) {
         return 0;
+    }
+
+    function _calcMaxCollateral(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
+        return Math.sqrt(uint256(tokensHeld[0]) * tokensHeld[1]);
+    }
+
+    function _calcDeltasForMaxLP(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 100;
+    }
+
+    function _calcDeltasToCloseKeepRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256[] memory ratio) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 100;
+    }
+    function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 100;
+    }
+
+    function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 100;
+    }
+
+    function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual override view returns(int256[] memory deltas) {
+        deltas = new int256[](2);
+        deltas[0] = 0;
+        deltas[1] = 0;
+    }
+
+    function _calcMaxCollateralNotMktImpact(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override returns(uint256) {
+        uint256 price = uint256(reserves[1]) * (10**18) / uint256(reserves[0]);
+        uint256 num = uint256(tokensHeld[0]) * price / (10 ** 18) + uint256(tokensHeld[1]);
+        uint256 denom = 2 * Math.sqrt(price*(10**18));
+        return num * (10**18)/ denom;
     }
 }

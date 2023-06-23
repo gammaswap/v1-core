@@ -13,6 +13,19 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
     error InvalidRatioLength();
 
     /// @dev Calculate quantities to trade to rebalance collateral to desired `ratio`
+    /// @param deltas - amount of collateral to trade to achieve desired final collateral amount
+    /// @param tokensHeld - loan collateral to rebalance
+    /// @param reserves - reserve token quantities in CFMM
+    /// @return collateral - collateral amount
+    function _calcMaxCollateral(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual view returns(uint256 collateral);
+
+    /// @dev Calculate quantities to trade to rebalance collateral to desired `ratio`
+    /// @param tokensHeld - loan collateral to rebalance
+    /// @param reserves - reserve token quantities in CFMM
+    /// @return deltas - amount of collateral to trade to achieve desired `ratio`
+    function _calcDeltasForMaxLP(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual view returns(int256[] memory deltas);
+
+    /// @dev Calculate quantities to trade to rebalance collateral to desired `ratio`
     /// @param tokensHeld - loan collateral to rebalance
     /// @param reserves - reserve token quantities in CFMM
     /// @param ratio - desired ratio of collateral
@@ -26,6 +39,14 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
     /// @param collateralId - index of tokensHeld array to rebalance to (e.g. the collateral of the chosen index will be completely used up in repayment)
     /// @return deltas - amounts of collateral to trade to be able to repay `liquidity`
     function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual view returns(int256[] memory deltas);
+
+    /// @dev Calculate quantities to trade to be able to close the `liquidity` amount
+    /// @param tokensHeld - tokens held as collateral for liquidity to pay
+    /// @param reserves - reserve token quantities in CFMM
+    /// @param liquidity - amount of liquidity to pay
+    /// @param ratio - desired ratio of collateral
+    /// @return deltas - amounts of collateral to trade to be able to repay `liquidity`
+    function _calcDeltasToCloseKeepRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256[] memory ratio) internal virtual view returns(int256[] memory deltas);
 
     /// @dev Calculate quantities to trade to rebalance collateral so that after withdrawing `amounts` we achieve desired `ratio`
     /// @param amounts - amounts that will be withdrawn from collateral
@@ -42,7 +63,7 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
         if(!hasMargin(collateral, liquidity, _ltvThreshold())) revert Margin(); // revert if collateral below ltvThreshold
     }
 
-    /// @dev Withdraw loan collateral
+    /// @dev Rebalance loan collateral through a swap with the CFMM
     /// @param _loan - loan whose collateral will be rebalanced
     /// @param deltas - collateral amounts being bought or sold (>0 buy, <0 sell), index matches tokensHeld[] index. Only n-1 tokens can be traded
     /// @return tokensHeld - loan collateral after rebalancing
@@ -61,10 +82,11 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
     /// @dev Withdraw loan collateral
     /// @param _loan - loan whose collateral will bee withdrawn
     /// @param loanLiquidity - total liquidity debt of loan
+    /// @param externalCollateral - additional collateral at an external account (e.g. CollateralManager)
     /// @param amounts - amounts of collateral to withdraw
     /// @param to - address that will receive collateral withdrawn
     /// @return tokensHeld - remaining loan collateral after withdrawal
-    function withdrawCollateral(LibStorage.Loan storage _loan, uint256 loanLiquidity, uint128[] memory amounts, address to) internal virtual returns(uint128[] memory tokensHeld) {
+    function withdrawCollateral(LibStorage.Loan storage _loan, uint256 loanLiquidity, uint256 externalCollateral, uint128[] memory amounts, address to) internal virtual returns(uint128[] memory tokensHeld) {
         if(amounts.length != _loan.tokensHeld.length) revert InvalidAmountsLength();
 
         // Withdraw collateral tokens from loan
@@ -74,7 +96,6 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
         (tokensHeld,) = updateCollateral(_loan);
 
         // Revert if collateral invariant is below threshold after withdrawal
-        uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
-        checkMargin(collateral, loanLiquidity);
+        checkMargin(calcInvariant(s.cfmm, tokensHeld) + externalCollateral, loanLiquidity);
     }
 }

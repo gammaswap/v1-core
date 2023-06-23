@@ -10,7 +10,6 @@ interface IBatchLiquidationStrategy is ILiquidationStrategy {
     /// @dev Function to liquidate multiple loans in batch.
     /// @param tokenIds - list of tokenIds of loans to liquidate
     /// @return totalLoanLiquidity - total loan liquidity liquidated (after write down)
-    /// @return totalCollateral - total collateral available for liquidation
     /// @return refund - amounts from collateral tokens being refunded to liquidator
-    function _batchLiquidations(uint256[] calldata tokenIds) external returns(uint256 totalLoanLiquidity, uint256 totalCollateral, uint256[] memory refund);
+    function _batchLiquidations(uint256[] calldata tokenIds) external returns(uint256 totalLoanLiquidity, uint128[] memory refund);
 }

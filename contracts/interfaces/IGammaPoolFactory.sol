@@ -110,5 +110,4 @@ interface IGammaPoolFactory {
     /// @param end - end index of pools to search
     /// @return _pools - all pools requested
     function getPools(uint256 start, uint256 end) external view returns(address[] memory _pools);
-
 }

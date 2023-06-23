@@ -9,10 +9,12 @@ describe("ExternalLiquidationStrategy", function () {
   let TestCFMM: any;
   let TestStrategy: any;
   let TestCallee2: any;
+  let TestFactory: any;
   let tokenA: any;
   let tokenB: any;
   let cfmm: any;
   let strategy: any;
+  let factory: any;
   let owner: any;
   let callee2: any;
 
@@ -26,6 +28,7 @@ describe("ExternalLiquidationStrategy", function () {
       "TestExternalLiquidationStrategy"
     );
     TestCallee2 = await ethers.getContractFactory("TestExternalCallee2");
+    TestFactory = await ethers.getContractFactory("TestGammaPoolFactory2");
     [owner] = await ethers.getSigners();
 
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
@@ -38,11 +41,13 @@ describe("ExternalLiquidationStrategy", function () {
       "TCFMM"
     );
 
+    factory = await TestFactory.deploy();
     callee2 = await TestCallee2.deploy();
 
     strategy = await TestStrategy.deploy();
     await (
       await strategy.initialize(
+        factory.address,
         cfmm.address,
         PROTOCOL_ID,
         [tokenA.address, tokenB.address],
@@ -90,7 +95,6 @@ describe("ExternalLiquidationStrategy", function () {
   describe("Deployment", function () {
     it("Should set right init params", async function () {
       expect(await strategy.liquidationFee()).to.equal(250);
-      expect(await strategy.liqFeeAdjustment()).to.equal(9750);
       const params = await strategy.getParameters();
       expect(params.cfmm).to.equal(cfmm.address);
       expect(params.tokens[0]).to.equal(tokenA.address);

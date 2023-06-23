@@ -18,9 +18,9 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
     constructor() {
     }
 
-    function initialize(address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) external virtual {
+    function initialize(address factory, address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) external virtual {
         protocolId = _protocolId;
-        s.initialize(msg.sender, _cfmm, _tokens, _decimals);
+        s.initialize(factory, _cfmm, _tokens, _decimals);
     }
 
     function maxTotalApy() internal virtual override view returns(uint256) {
@@ -83,7 +83,7 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
 
     // create loan
     function createLoan(uint128 liquidity) external virtual returns(uint256 tokenId) {
-        tokenId = s.createLoan(s.tokens.length);
+        tokenId = s.createLoan(s.tokens.length, 0);
         LibStorage.Loan storage _loan = s.loans[tokenId];
         _loan.liquidity = liquidity;
         _loan.initLiquidity = liquidity;

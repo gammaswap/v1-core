@@ -18,6 +18,7 @@ abstract contract ExternalRebalanceStrategy is IExternalRebalanceStrategy, BaseE
     function _rebalanceExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock virtual returns(uint256 loanLiquidity, uint128[] memory tokensHeld) {
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
+        if(_loan.collateralRef != address(0)) revert ExternalCollateralRef();
 
         // Update liquidity debt to include accrued interest since last update
         loanLiquidity = updateLoan(_loan);

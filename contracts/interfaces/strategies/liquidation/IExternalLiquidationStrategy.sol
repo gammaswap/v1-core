@@ -17,5 +17,5 @@ interface IExternalLiquidationStrategy is ILiquidationStrategy, IExternalStrateg
     /// @param data - optional bytes parameter for custom user defined data
     /// @return loanLiquidity - loan liquidity liquidated (after write down if there's bad debt), flash loan fees added after write down
     /// @return refund - amounts from collateral tokens being refunded to liquidator
-    function _liquidateExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external returns(uint256 loanLiquidity, uint256[] memory refund);
+    function _liquidateExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external returns(uint256 loanLiquidity, uint128[] memory refund);
 }
