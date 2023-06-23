@@ -27,6 +27,18 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
         uint256 writeDownAmt;
         /// @dev fee in liquidity invariant units paid for liquidation
         uint256 fee;
+        /// @dev liquidation fee in liquidity invariant units paid from internal collateral
+        uint256 internalFee;
+        /// @dev liquidation fee in liquidity invariant units paid from external collateral
+        uint256 externalFee;
+        /// @dev liquidity debt measured in invariant units payable from internal collateral
+        uint256 payableInternalLiquidity;
+        /// @dev liquidity debt measured in invariant units payable from external collateral
+        uint256 payableExternalLiquidity;
+        /// @dev internal collateral available to pay liquidity debt
+        uint256 internalCollateral;
+        /// @dev external (e.g. CollateralManager) collateral available to pay liquidity debt
+        uint256 externalCollateral;
     }
 
     /// @return - liquidationFee - threshold used to measure the liquidation fee
@@ -46,28 +58,36 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     /// @param _loan - loan to liquidate
     /// @return _liqLoan - loan with most updated data used for liquidation
     /// @return deltas - deltas to rebalance collateral to get max LP deposit
-    function getLiquidatableLoan(LibStorage.Loan storage _loan) internal virtual
+    function getLiquidatableLoan(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual
         returns(LiquidatableLoan memory _liqLoan, int256[] memory deltas) {
         // Update loan's liquidity debt and GammaPool's state variables
         uint256 loanLiquidity = updateLoan(_loan);
 
         // Check if loan can be liquidated
-        uint128[] memory tokensHeld = _loan.tokensHeld; // Saves gas
-        uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
-        checkMargin(collateral, loanLiquidity);
+        _liqLoan.tokensHeld = _loan.tokensHeld; // Saves gas
+        uint256 internalCollateral = calcInvariant(s.cfmm, _liqLoan.tokensHeld);
+        uint256 externalCollateral = getExternalCollateral(_loan, tokenId);
+        checkMargin(internalCollateral + externalCollateral, loanLiquidity);
 
         // the loanLiquidity should match the number of tokens we expect to deposit including theliquidation fee
-        deltas = _calcDeltasForMaxLP(tokensHeld, s.CFMM_RESERVES);
-        collateral = _calcMaxCollateral(deltas, tokensHeld, s.CFMM_RESERVES);
+        deltas = _calcDeltasForMaxLP(_liqLoan.tokensHeld, s.CFMM_RESERVES);
+        internalCollateral = _calcMaxCollateral(deltas, _liqLoan.tokensHeld, s.CFMM_RESERVES);
+        externalCollateral = getMaxExternalCollateral(_loan, tokenId);
+        _liqLoan.collateral = internalCollateral + externalCollateral;
 
         // we deposit enought to cover the liquidity + the liquidationFee. We send the liquidationFee to the
         // the collateral gives us the maxCollateral that we may deposit, after the writeDown (if any) we calculate
         // exact amounts to cover the liquidity debt + liquidation fee and deposit those amounts
-        uint256 fee = collateral * _liquidationFee() / 10000;
-        (_liqLoan.writeDownAmt, _liqLoan.loanLiquidity) = writeDown(collateral - fee, loanLiquidity);
-        _liqLoan.fee = fee;
-        _liqLoan.collateral = collateral;
-        _liqLoan.tokensHeld = tokensHeld;
+        _liqLoan.internalFee = internalCollateral * _liquidationFee() / 10000;
+        _liqLoan.externalFee = externalCollateral * _liquidationFee() / 10000;
+        _liqLoan.fee = _liqLoan.internalFee + _liqLoan.externalFee;
+        (_liqLoan.writeDownAmt, _liqLoan.loanLiquidity) = writeDown(_liqLoan.collateral - _liqLoan.fee, loanLiquidity);
+
+        _liqLoan.payableInternalLiquidity = Math.min(internalCollateral - _liqLoan.internalFee, _liqLoan.loanLiquidity);
+        _liqLoan.payableExternalLiquidity = _liqLoan.loanLiquidity - _liqLoan.payableInternalLiquidity;// Pay remainder
+
+        _liqLoan.internalCollateral = internalCollateral;
+        _liqLoan.externalCollateral = externalCollateral;
     }
 
     /// @dev Account for liquidity payments in the loan and pool

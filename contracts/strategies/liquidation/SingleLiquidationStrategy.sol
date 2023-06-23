@@ -10,19 +10,16 @@ import "../base/BaseLiquidationStrategy.sol";
 /// @dev Only defines common functions that would be used by all concrete contracts that liquidate loans
 abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseLiquidationStrategy {
 
-    error ExternalCollateralRef();
-
     /// @dev See {LiquidationStrategy-_liquidate}.
     function _liquidate(uint256 tokenId, uint256[] calldata fees) external override lock virtual returns(uint256 loanLiquidity) {
         // Check can liquidate loan and get loan with updated loan liquidity
         // No need to check if msg.sender has permission
         LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
-        if(_loan.collateralRef != address(0)) revert ExternalCollateralRef();
 
         LiquidatableLoan memory _liqLoan;
         {
             int256[] memory deltas;
-            (_liqLoan, deltas) = getLiquidatableLoan(_loan);
+            (_liqLoan, deltas) = getLiquidatableLoan(_loan, tokenId);
             rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
         }
 
@@ -30,7 +27,9 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
 
         // Update loan collateral amounts (e.g. re-balance and/or account for deposited collateral)
         // Repay liquidity debt in full and get back remaining collateral amounts
-        repayTokens(_loan, addFees(calcTokensToRepay(getReserves(s.cfmm), loanLiquidity + _liqLoan.fee), fees));
+        repayTokens(_loan, addFees(calcTokensToRepay(getReserves(s.cfmm), _liqLoan.payableInternalLiquidity + _liqLoan.internalFee), fees));
+        repayWithExternalCollateral(_loan, tokenId, _liqLoan.payableExternalLiquidity + _liqLoan.externalFee);
+
         (uint128[] memory tokensHeld,) = updateCollateral(_loan); // Update remaining collateral
 
         // Pay loan liquidity in full with collateral amounts and refund remaining collateral to liquidator
@@ -52,18 +51,21 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
         // Check can liquidate loan and get loan with updated loan liquidity and collateral
         // No need to check if msg.sender has permission
         LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
-        if(_loan.collateralRef != address(0)) revert ExternalCollateralRef();
 
-        (LiquidatableLoan memory _liqLoan,) = getLiquidatableLoan(_loan);
+        (LiquidatableLoan memory _liqLoan,) = getLiquidatableLoan(_loan, tokenId);
         loanLiquidity = _liqLoan.loanLiquidity;
+
+        // get share of liquidity from external collateral source deposited in to GammaPool
+        repayWithExternalCollateral(_loan, tokenId, _liqLoan.payableExternalLiquidity + _liqLoan.externalFee);
 
         // In this case you send LPs and get more LPs back, what if you send LPs and get tokensHeld back
         // Pay loan liquidity in full or partially with previously deposited CFMM LP tokens and refund remaining liquidated share of collateral to liquidator
         // CFMM LP token principal paid will be calculated during function call, hence pass 0
+        // This will refund to liquidator the LP tokens from the CollateralManager
         payLiquidatableLoan(tokenId, loanLiquidity, 0);
 
         uint128[] memory tokensHeld;
-        (refund, tokensHeld) = refundLiquidator(loanLiquidity + _liqLoan.fee, _liqLoan.collateral, _liqLoan.tokensHeld);
+        (refund, tokensHeld) = refundLiquidator(_liqLoan.payableInternalLiquidity + _liqLoan.internalFee, _liqLoan.internalCollateral, _liqLoan.tokensHeld);
 
         _loan.tokensHeld = tokensHeld; // Update loan collateral
 
