@@ -3,14 +3,16 @@ import { expect } from "chai";
 
 const PROTOCOL_ID = 1;
 
-describe.skip("GammaPoolFactory", function () {
+describe("GammaPoolFactory", function () {
   let TestERC20: any;
   let TestAddressCalculator: any;
   let TestRateModel: any;
   let GammaPool: any;
+  let PoolViewer: any;
   let GammaPoolFactory: any;
   let factory: any;
   let addressCalculator: any;
+  let poolViewer: any;
   let rateModel: any;
   let protocol: any;
   let protocolZero: any;
@@ -35,6 +37,7 @@ describe.skip("GammaPoolFactory", function () {
     // Get the ContractFactory and Signers here.
     TestERC20 = await ethers.getContractFactory("TestERC20");
     TestRateModel = await ethers.getContractFactory("TestRateModel");
+    PoolViewer = await ethers.getContractFactory("PoolViewer");
     GammaPool = await ethers.getContractFactory("TestGammaPool");
     GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
     TestAddressCalculator = await ethers.getContractFactory(
@@ -62,7 +65,7 @@ describe.skip("GammaPoolFactory", function () {
     tokenC = await TestERC20.deploy("Test Token C", "TOKC");
     tokenD = await TestERC20.deploy("Test Token D", "TOKD");
     factory = await GammaPoolFactory.deploy(owner.address);
-
+    poolViewer = await PoolViewer.deploy();
     rateModel = await TestRateModel.deploy(owner.address);
 
     protocol = await GammaPool.deploy(
@@ -73,7 +76,8 @@ describe.skip("GammaPoolFactory", function () {
       addr10.address,
       addr2.address,
       addr5.address,
-      addr5.address
+      addr5.address,
+      poolViewer.address
     );
 
     addressCalculator = await TestAddressCalculator.deploy();
@@ -86,7 +90,8 @@ describe.skip("GammaPoolFactory", function () {
       addr10.address,
       addr2.address,
       addr5.address,
-      addr5.address
+      addr5.address,
+      poolViewer.address
     );
 
     // We can interact with the contract by calling `hardhatToken.method()`

@@ -275,15 +275,15 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
             LoanData memory _loan;
             uint256 k = 0;
             for(uint256 i = _start; i <= _end;) {
-                _loan = getLoanData(_tokenIds[i]);
+                _loan = _getLoanData(_tokenIds[i]);
                 if(!active || _loan.initLiquidity > 0) {
                     _loans[k] = _loan;
                     unchecked {
-                        k++;
+                        ++k;
                     }
                 }
                 unchecked {
-                    i++;
+                    ++i;
                 }
             }
         }
@@ -301,11 +301,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
             if(_loan.id > 0 && (!active || _loan.initLiquidity > 0)) {
                 _loans[k] = _loan;
                 unchecked {
-                    k++;
+                    ++k;
                 }
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
     }

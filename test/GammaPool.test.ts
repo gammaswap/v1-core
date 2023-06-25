@@ -3,7 +3,7 @@ import { expect } from "chai";
 
 const PROTOCOL_ID = 1;
 
-describe.skip("GammaPool", function () {
+describe("GammaPool", function () {
   let TestERC20: any;
   let TestAddressCalculator: any;
   let TestBorrowStrategy: any;
@@ -12,6 +12,7 @@ describe.skip("GammaPool", function () {
   let TestShortStrategy: any;
   let TestLiquidationStrategy: any;
   let GammaPool: any;
+  let PoolViewer: any;
   let TestGammaPoolFactory: any;
   let factory: any;
   let addressCalculator: any;
@@ -30,6 +31,7 @@ describe.skip("GammaPool", function () {
   let liquidationStrategy: any;
   let batchLiquidationStrategy: any;
   let gammaPool: any;
+  let poolViewer: any;
   let implementation: any;
   let tokens: any;
 
@@ -56,6 +58,7 @@ describe.skip("GammaPool", function () {
       "TestLiquidationStrategy2"
     );
 
+    PoolViewer = await ethers.getContractFactory("PoolViewer");
     GammaPool = await ethers.getContractFactory("TestGammaPool");
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
 
@@ -73,6 +76,7 @@ describe.skip("GammaPool", function () {
     liquidationStrategy = await TestLiquidationStrategy.deploy();
     batchLiquidationStrategy = await TestLiquidationStrategy.deploy();
     addressCalculator = await TestAddressCalculator.deploy();
+    poolViewer = await PoolViewer.deploy();
 
     tokens = [tokenA.address, tokenB.address];
 
@@ -90,7 +94,8 @@ describe.skip("GammaPool", function () {
       rebalanceStrategy.address,
       shortStrategy.address,
       liquidationStrategy.address,
-      batchLiquidationStrategy.address
+      batchLiquidationStrategy.address,
+      poolViewer.address
     );
 
     await (await factory.addProtocol(implementation.address)).wait();
@@ -160,6 +165,7 @@ describe.skip("GammaPool", function () {
       expect(await gammaPool.batchLiquidationStrategy()).to.equal(
         batchLiquidationStrategy.address
       );
+      expect(await gammaPool.viewer()).to.equal(poolViewer.address);
 
       const res = await gammaPool.getPoolBalances();
       const tokenBalances = res.tokenBalances;
@@ -187,7 +193,7 @@ describe.skip("GammaPool", function () {
       expect(res2.lastCFMMFeeIndex).to.equal(ONE);
       expect(res2.lastBlockNumber).to.gt(0);
 
-      const res3 = await gammaPool.getPoolData();
+      const res3 = await poolViewer.getPoolData(gammaPool.address);
       expect(res3.cfmm).to.equal(cfmm.address);
       expect(res3.protocolId).to.equal(PROTOCOL_ID);
       expect(res3.ltvThreshold).to.equal(await borrowStrategy.ltvThreshold());
@@ -241,12 +247,10 @@ describe.skip("GammaPool", function () {
       expect(res3.borrowRate).to.equal(0);
 
       const latestBlock = await ethers.provider.getBlock("latest");
-      const res4 = await gammaPool.getConstantPoolData();
+      const res4 = await gammaPool.getPoolData();
       expect(res4.currBlockNumber).to.equal(latestBlock.number);
       expect(res4.cfmm).to.equal(cfmm.address);
       expect(res4.protocolId).to.equal(PROTOCOL_ID);
-      expect(res4.ltvThreshold).to.equal(res3.ltvThreshold);
-      expect(res4.liquidationFee).to.equal(res3.liquidationFee);
       const _toks = res4.tokens;
       expect(_toks.length).to.equal(2);
       expect(_toks[0]).to.equal(tokenA.address);
@@ -272,7 +276,7 @@ describe.skip("GammaPool", function () {
       expect(_tokBalances[0]).to.equal(0);
       expect(_tokBalances[1]).to.equal(0);
 
-      expect(res4.accFeeIndex).to.equal(0);
+      expect(res4.accFeeIndex).to.gt(0);
       expect(res4.LAST_BLOCK_NUMBER).to.gt(0);
       expect(res4.LP_TOKEN_BALANCE).to.equal(0);
       expect(res4.LP_TOKEN_BORROWED).to.equal(0);
@@ -281,19 +285,19 @@ describe.skip("GammaPool", function () {
       expect(res4.LP_INVARIANT).to.equal(0);
 
       const _cfmmReserv = res4.CFMM_RESERVES;
-      expect(_cfmmReserv.length).to.equal(0);
-      expect(res4.lastCFMMFeeIndex).to.equal(0);
+      expect(_cfmmReserv.length).to.equal(2);
+      expect(res4.lastCFMMFeeIndex).to.equal(ONE);
       expect(res4.lastCFMMInvariant).to.equal(0);
       expect(res4.lastCFMMTotalSupply).to.equal(0);
       expect(res4.totalSupply).to.equal(await gammaPool.totalSupply());
       expect(res4.lastPrice).to.equal(0);
-      expect(res4.lastCFMMFeeIndex).to.equal(0);
+      expect(res4.lastCFMMFeeIndex).to.equal(ONE);
       expect(res4.lastFeeIndex).to.equal(0);
       expect(res4.borrowRate).to.equal(0);
 
       await (await cfmm.mint(addr1.address, ONE.mul(100))).wait();
 
-      const res5 = await gammaPool.getLatestPoolData();
+      const res5 = await poolViewer.getLatestPoolData(gammaPool.address);
       expect(res5.utilizationRate).to.equal(44);
       expect(res5.cfmm).to.equal(cfmm.address);
       expect(res5.protocolId).to.equal(PROTOCOL_ID);
@@ -341,7 +345,7 @@ describe.skip("GammaPool", function () {
       expect(res5.LP_TOKEN_BORROWED_PLUS_INTEREST).to.equal(5);
       expect(res5.BORROWED_INVARIANT).to.equal(6);
 
-      const res6 = await gammaPool.getLatestRates();
+      const res6 = await poolViewer.getLatestRates(gammaPool.address);
       expect(res6.lastPrice).to.equal(res5.lastPrice);
       expect(res6.utilizationRate).to.equal(res5.utilizationRate);
       expect(res6.accFeeIndex).to.eq(res5.accFeeIndex);
