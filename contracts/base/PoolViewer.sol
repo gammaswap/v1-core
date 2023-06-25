@@ -8,38 +8,28 @@ import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
 
-contract GammaPoolViewer is IPoolViewer {
+/// @title Implementation of Viewer Contract for GammaPool
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
+/// @dev Used make complex view function calls from GammaPool's storage data (e.g. updated loan and pool debt)
+contract PoolViewer is IPoolViewer {
 
-    /// @dev See {IGammaPool-canLiquidate}
-    function canLiquidate(address pool, uint256 tokenId) external virtual override view returns(bool) {
-        IGammaPool.LoanData memory _loan = IGammaPool(pool).getLoanData(tokenId);
-        IGammaPool.RateData memory data = _getLastFeeIndex(pool);
-        uint256 liquidity = _updateLiquidity(_loan.liquidity, _loan.rateIndex, data.accFeeIndex);
-        uint256 collateral = collateral(pool, tokenId, _loan.tokensHeld, _loan.collateralRef);
-        return ILiquidationStrategy(_loan.liquidationStrategy).canLiquidate(liquidity, collateral);
-    }
-
-    /// @dev See {IGammaPool-getLatestRates}
-    function getLatestRates(address pool) external virtual override view returns(IGammaPool.RateData memory data) {
-        data = _getLastFeeIndex(pool);
-        data.currBlockNumber = block.number;
-        data.lastPrice = IGammaPool(pool).getLastCFMMPrice();
-        data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;/**/
-    }
-
-    /// @dev See {IGammaPool-getLoans}
+    /// @dev See {IPoolViewer-getLoans}
     function getLoans(address pool, uint256 start, uint256 end, bool active) external virtual override view returns(IGammaPool.LoanData[] memory _loans) {
         _loans = IGammaPool(pool).getLoans(start, end, active);
-        return getUpdatedLoans(pool, _loans);
+        return _getUpdatedLoans(pool, _loans);
     }
 
-    /// @dev See {IGammaPool-getLoansById}
+    /// @dev See {IPoolViewer-getLoansById}
     function getLoansById(address pool, uint256[] calldata tokenIds, bool active) external virtual override view returns(IGammaPool.LoanData[] memory _loans) {
         _loans = IGammaPool(pool).getLoansById(tokenIds, active);
-        return getUpdatedLoans(pool, _loans);
+        return _getUpdatedLoans(pool, _loans);
     }
 
-    function getUpdatedLoans(address pool, IGammaPool.LoanData[] memory _loans) internal virtual view returns(IGammaPool.LoanData[] memory) {
+    /// @dev Get interest rate changes per source, utilization rate, and borrowing and supply APR charged to users
+    /// @param pool - address of GammaPool loans in `_loans` array belongs to
+    /// @param _loans - list of LoanData structs containing loan information to update
+    /// @return updatedLoans - updated accFeeIndex of pool loan belongs to
+    function _getUpdatedLoans(address pool, IGammaPool.LoanData[] memory _loans) internal virtual view returns(IGammaPool.LoanData[] memory) {
         address[] memory _tokens = IGammaPool(pool).tokens();
         (string[] memory _symbols, string[] memory _names, uint8[] memory _decimals) = getTokensMetaData(_tokens);
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
@@ -55,7 +45,7 @@ contract GammaPoolViewer is IPoolViewer {
             _loan.names = _names;
             _loan.decimals = _decimals;
             _loan.liquidity = _updateLiquidity(_loan.liquidity, _loan.rateIndex, data.accFeeIndex);
-            _loan.collateral = collateral(pool, _loan.tokenId, _loan.tokensHeld, _loan.collateralRef);
+            _loan.collateral = _collateral(pool, _loan.tokenId, _loan.tokensHeld, _loan.collateralRef);
             _loan.canLiquidate = ILiquidationStrategy(_loan.liquidationStrategy).canLiquidate(_loan.liquidity, _loan.collateral);
             unchecked {
                 ++i;
@@ -64,15 +54,40 @@ contract GammaPoolViewer is IPoolViewer {
         return _loans;
     }
 
-    /// @dev See {IGammaPool-loan}
+    /// @dev See {IPoolViewer-loan}
     function loan(address pool, uint256 tokenId) external virtual override view returns(IGammaPool.LoanData memory _loanData) {
         _loanData = IGammaPool(pool).getLoanData(tokenId);
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
-        _loanData.liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, data.accFeeIndex);
-        _loanData.collateral = collateral(pool, tokenId, _loanData.tokensHeld, _loanData.collateralRef);
+        _loanData.accFeeIndex = _getLoanLastFeeIndex(_loanData);
+        _loanData.liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, _loanData.accFeeIndex);
+        _loanData.collateral = _collateral(pool, tokenId, _loanData.tokensHeld, _loanData.collateralRef);
         _loanData.canLiquidate = ILiquidationStrategy(_loanData.liquidationStrategy).canLiquidate(_loanData.liquidity, _loanData.collateral);
         (_loanData.symbols, _loanData.names, _loanData.decimals) = getTokensMetaData(_loanData.tokens);
         return _loanData;
+    }
+
+    /// @dev See {IGammaPool-canLiquidate}
+    function canLiquidate(address pool, uint256 tokenId) external virtual override view returns(bool) {
+        IGammaPool.LoanData memory _loanData = IGammaPool(pool).getLoanData(tokenId);
+        uint256 accFeeIndex = _getLoanLastFeeIndex(_loanData);
+        uint256 liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, accFeeIndex);
+        uint256 collateral = _collateral(pool, tokenId, _loanData.tokensHeld, _loanData.collateralRef);
+        return ILiquidationStrategy(_loanData.liquidationStrategy).canLiquidate(liquidity, collateral);
+    }
+
+    /// @dev Get interest rate changes per source, utilization rate, and borrowing and supply APR charged to users
+    /// @param _loanData - struct containing necessary loan information to calculate accFeeIndex
+    /// @return accFeeIndex - updated accFeeIndex of pool loan belongs to
+    function _getLoanLastFeeIndex(IGammaPool.LoanData memory _loanData) internal virtual view returns(uint256 accFeeIndex) {
+        uint256 lastCFMMInvariant;
+        uint256 lastCFMMTotalSupply;
+        (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(_loanData.poolId).getLatestCFMMBalances();
+
+        (,uint256 lastFeeIndex,,) = IShortStrategy(_loanData.shortStrategy).getLastFees(_loanData.factory,
+            _loanData.BORROWED_INVARIANT, _loanData.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply,
+            _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply, _loanData.LAST_BLOCK_NUMBER, _loanData.poolId);
+
+        accFeeIndex = _loanData.accFeeIndex * lastFeeIndex / 1e18;
     }
 
     /// @dev Get collateral in terms of liquidity invariant units for loan identified by `tokenId`
@@ -81,7 +96,7 @@ contract GammaPoolViewer is IPoolViewer {
     /// @param tokensHeld - tokens held in GammaPool as collateral for loan
     /// @param collateralRef - address of contract holding additional collateral for loan
     /// @return collateral - collateral of loan in terms of liquidity invariant units;
-    function collateral(address pool, uint256 tokenId, uint128[] memory tokensHeld, address collateralRef) internal virtual view returns(uint256 collateral) {
+    function _collateral(address pool, uint256 tokenId, uint128[] memory tokensHeld, address collateralRef) internal virtual view returns(uint256 collateral) {
         collateral = IGammaPool(pool).calcInvariant(tokensHeld);
         if(collateralRef != address(0)) {
             collateral += ICollateralManager(collateralRef).getCollateral(pool, tokenId);
@@ -90,6 +105,7 @@ contract GammaPoolViewer is IPoolViewer {
 
     /// @dev Get interest rate changes per source, utilization rate, and borrowing and supply APR charged to users
     /// @param pool - struct containing necessary loan information to calculate accFeeIndex
+    /// @param data - struct containing updated fee index information from pool
     function _getLastFeeIndex(address pool) internal virtual view returns(IGammaPool.RateData memory data) {
 
         IGammaPool.FeeIndexUpdateParams memory params = IGammaPool(pool).getFeeIndexUpdateParams();
@@ -106,7 +122,15 @@ contract GammaPoolViewer is IPoolViewer {
         data.lastBlockNumber = params.LAST_BLOCK_NUMBER;
     }
 
-    /// @dev See {IGammaPool-getLatestPoolData}
+    /// @dev See {IGammaPool-getLatestRates}
+    function getLatestRates(address pool) external virtual override view returns(IGammaPool.RateData memory data) {
+        data = _getLastFeeIndex(pool);
+        data.currBlockNumber = block.number;
+        data.lastPrice = IGammaPool(pool).getLastCFMMPrice();
+        data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
+    }
+
+    /// @dev See {IPoolViewer-getLatestPoolData}
     function getLatestPoolData(address pool) external virtual override view returns(IGammaPool.PoolData memory data) {
         data = getPoolData(pool);
         uint256 borrowedInvariant = data.BORROWED_INVARIANT;
@@ -132,26 +156,18 @@ contract GammaPoolViewer is IPoolViewer {
 
         data.lastPrice = IGammaPool(pool).getLastCFMMPrice();
         data.lastCFMMInvariant = uint128(lastCFMMInvariant);
-        data.lastCFMMTotalSupply = lastCFMMTotalSupply;/**/
+        data.lastCFMMTotalSupply = lastCFMMTotalSupply;
     }
 
-    /// @dev See {IGammaPool-getPoolData}
+    /// @dev See {IPoolViewer-getPoolData}
     function getPoolData(address pool) public virtual override view returns(IGammaPool.PoolData memory data) {
         data = IGammaPool(pool).getPoolData();
-        /*data.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST;
-        data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
-        data.LP_INVARIANT = s.LP_INVARIANT;
-        data.accFeeIndex = s.accFeeIndex;
-        data.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
-        data.lastCFMMInvariant = s.lastCFMMInvariant;
-        data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
-        data.CFMM_RESERVES = s.CFMM_RESERVES;/**/
         data.ltvThreshold = ILongStrategy(data.borrowStrategy).ltvThreshold();
         data.liquidationFee = ILiquidationStrategy(data.singleLiquidationStrategy).liquidationFee();
         (data.symbols, data.names,) = getTokensMetaData(data.tokens);
     }
 
-    /// dev See {IGammaPool-getTokensMetaData}
+    /// dev See {IPoolViewer-getTokensMetaData}
     function getTokensMetaData(address[] memory _tokens) public virtual override view returns(string[] memory _symbols,
         string[] memory _names, uint8[] memory _decimals) {
         _symbols = new string[](_tokens.length);
@@ -162,7 +178,7 @@ contract GammaPoolViewer is IPoolViewer {
             _names[i] = GammaSwapLibrary.name(_tokens[i]);
             _decimals[i] = GammaSwapLibrary.decimals(_tokens[i]);
             unchecked {
-                i++;
+                ++i;
             }
         }
     }

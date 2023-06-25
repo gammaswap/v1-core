@@ -263,16 +263,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @return data - parameters to calculate current accFeeIndex
     function getFeeIndexUpdateParams() external view returns(FeeIndexUpdateParams memory data);
 
-    /// @return data - struct containing all relevant global state variables that are not updated from time passage or accrued trading fees
-    function getConstantPoolData() external view returns(PoolData memory data);
-
     /// @return data - struct containing all relevant global state variables and descriptive information of GammaPool. Used to avoid making multiple calls
     function getPoolData() external view returns(PoolData memory data);
-
-    /// @dev Returns additional nonzero fields (e.g. lastPrice, borrowRate, etc.)
-    /// @notice Difference with getPoolData() is this struct is what PoolData would return if an update of the GammaPool were to occur at the current block
-    /// @return data - struct containing all relevant global state variables and descriptive information of GammaPool. Used to avoid making multiple calls
-    function getLatestPoolData() external view returns(PoolData memory data);
 
     /// @dev Check GammaPool for CFMM and tokens can be created with this implementation
     /// @param _tokens - assumed tokens of CFMM, validate function should check CFMM is indeed for these tokens
@@ -319,17 +311,6 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @return lastPrice - calculates and gets current price at CFMM
     function getLastCFMMPrice() external view returns(uint256);
 
-    /// @dev Get latest rate information from GammaPool
-    /// @return data - RateData struct containing latest rate information
-    function getLatestRates() external view returns(RateData memory data);
-
-    /// @dev Get CFMM tokens meta data
-    /// @return _tokens - array of token address of ERC20 tokens of CFMM
-    /// @return _symbols - array of symbols of ERC20 tokens of CFMM
-    /// @return _names - array of names of ERC20 tokens of CFMM
-    /// @return _decimals - array of decimals of ERC20 tokens of CFMM
-    function getTokensMetaData() external view returns(address[] memory _tokens, string[] memory _symbols, string[] memory _names, uint8[] memory _decimals);
-
     // Long Gamma
 
     /// @dev Create a new Loan struct
@@ -363,11 +344,6 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @param active - if true, return loans that have an outstanding liquidity debt
     /// @return _loans - list of loans created in GammaPool
     function getLoansById(uint256[] calldata tokenIds, bool active) external view returns(LoanData[] memory _loans);
-
-    /// @dev Check if can liquidate loan identified by `tokenId`
-    /// @param tokenId - unique id of loan, used to look up loan in GammaPool
-    /// @return canLiquidate - true if loan can be liquidated, false otherwise
-    function canLiquidate(uint256 tokenId) external view returns(bool);
 
     /// @return loanCount - total number of loans opened
     function getLoanCount() external view returns(uint256);
