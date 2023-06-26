@@ -2,9 +2,8 @@
 pragma solidity 0.8.17;
 
 import "../base/GammaPool.sol";
-import "../base/GammaPoolExternal.sol";
 
-contract TestGammaPool is GammaPool {//, GammaPoolExternal {
+contract TestGammaPool is GammaPool {
 
     using LibStorage for LibStorage.Storage;
 
@@ -14,8 +13,13 @@ contract TestGammaPool is GammaPool {//, GammaPoolExternal {
     }
 
     constructor(uint16 _protocolId, address _factory, address _borrowStrategy, address _repayStrategy, address _rebalanceStrategy,
-        address _shortStrategy, address _singleLiquidationStrategy, address _batchLiquidationStrategy, address _viewer) GammaPool(_protocolId, _factory, _borrowStrategy, _repayStrategy,
-        _rebalanceStrategy, _shortStrategy, _singleLiquidationStrategy, _batchLiquidationStrategy, _viewer) { // GammaPoolExternal(address(0), address(0)) {
+        address _shortStrategy, address _singleLiquidationStrategy, address _batchLiquidationStrategy, address _viewer)
+        GammaPool(_protocolId, _factory, _borrowStrategy, _repayStrategy, _rebalanceStrategy, _shortStrategy,
+        _singleLiquidationStrategy, _batchLiquidationStrategy, _viewer) {
+    }
+
+    function setAccFeeIndex(uint96 _accFeeIndex) external virtual {
+        s.accFeeIndex = _accFeeIndex;
     }
 
     function _getLastCFMMPrice() internal virtual override view returns(uint256) {

@@ -120,6 +120,7 @@ contract PoolViewer is IPoolViewer {
 
         data.accFeeIndex = params.accFeeIndex * data.lastFeeIndex / 1e18;
         data.lastBlockNumber = params.LAST_BLOCK_NUMBER;
+        data.currBlockNumber = block.number;
     }
 
     /// @dev See {IGammaPool-getLatestRates}

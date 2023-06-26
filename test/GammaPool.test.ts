@@ -5,6 +5,7 @@ const PROTOCOL_ID = 1;
 
 describe("GammaPool", function () {
   let TestERC20: any;
+  let TestERC20b: any;
   let TestAddressCalculator: any;
   let TestBorrowStrategy: any;
   let TestRepayStrategy: any;
@@ -19,6 +20,7 @@ describe("GammaPool", function () {
   let tokenA: any;
   let tokenB: any;
   let tokenC: any;
+  let tokenD: any;
   let cfmm: any;
   let owner: any;
   let addr1: any;
@@ -40,6 +42,7 @@ describe("GammaPool", function () {
   beforeEach(async function () {
     // Get the ContractFactory and Signers here.
     TestERC20 = await ethers.getContractFactory("TestERC20");
+    TestERC20b = await ethers.getContractFactory("TestERC20b");
     TestAddressCalculator = await ethers.getContractFactory(
       "TestAddressCalculator"
     );
@@ -58,7 +61,7 @@ describe("GammaPool", function () {
       "TestLiquidationStrategy2"
     );
 
-    PoolViewer = await ethers.getContractFactory("PoolViewer");
+    PoolViewer = await ethers.getContractFactory("TestPoolViewer");
     GammaPool = await ethers.getContractFactory("TestGammaPool");
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
 
@@ -68,6 +71,7 @@ describe("GammaPool", function () {
     tokenA = await TestERC20.deploy("Test Token A", "TOKA");
     tokenB = await TestERC20.deploy("Test Token B", "TOKB");
     tokenC = await TestERC20.deploy("Test Token C", "TOKC");
+    tokenD = await TestERC20b.deploy("Test Token D", "TOKD", 6);
     cfmm = await TestERC20.deploy("Test CFMM", "CFMM");
     borrowStrategy = await TestBorrowStrategy.deploy();
     repayStrategy = await TestRepayStrategy.deploy();
@@ -354,6 +358,17 @@ describe("GammaPool", function () {
       expect(res6.borrowRate).to.eq(res5.borrowRate);
       expect(res6.supplyRate).to.equal(res5.supplyRate);
       expect(res6.lastBlockNumber).to.eq(res5.LAST_BLOCK_NUMBER);
+
+      const res7 = await gammaPool.getFeeIndexUpdateParams();
+      expect(res7.pool).to.equal(gammaPool.address);
+      expect(res7.shortStrategy).to.equal(await gammaPool.shortStrategy());
+      expect(res7.factory).to.equal(await gammaPool.factory());
+      expect(res7.BORROWED_INVARIANT).to.equal(res4.BORROWED_INVARIANT);
+      expect(res7.LP_TOKEN_BALANCE).to.equal(res4.LP_TOKEN_BALANCE);
+      expect(res7.lastCFMMInvariant).to.equal(res4.lastCFMMInvariant);
+      expect(res7.lastCFMMTotalSupply).to.equal(res4.lastCFMMTotalSupply);
+      expect(res7.LAST_BLOCK_NUMBER).to.equal(res4.LAST_BLOCK_NUMBER);
+      expect(res7.accFeeIndex).to.equal(res4.accFeeIndex);
     });
 
     it("Custom Fields Set & Get", async function () {
@@ -472,6 +487,139 @@ describe("GammaPool", function () {
       const _obj5 = await gammaPool.getObj();
       expect(_obj5.protocolId).to.equal(0);
       expect(_obj5.cfmm).to.equal(ethers.constants.AddressZero);
+    });
+  });
+
+  describe("Pool Viewer", function () {
+    it("Collateral no External Reference", async function () {
+      expect(
+        await poolViewer.testCollateral(
+          gammaPool.address,
+          1,
+          [100, 200],
+          ethers.constants.AddressZero
+        )
+      ).to.equal(await gammaPool.calcInvariant([100, 200]));
+
+      expect(
+        await poolViewer.testCollateral(
+          gammaPool.address,
+          1,
+          [200, 200],
+          ethers.constants.AddressZero
+        )
+      ).to.equal(await gammaPool.calcInvariant([200, 200]));
+
+      expect(
+        await poolViewer.testCollateral(
+          gammaPool.address,
+          1,
+          [200, 200],
+          ethers.constants.AddressZero
+        )
+      ).to.not.equal(await gammaPool.calcInvariant([300, 200]));
+    });
+
+    it("Update Liquidity", async function () {
+      expect(await poolViewer.testUpdateLiquidity(1000, 10, 10)).to.equal(1000);
+
+      expect(await poolViewer.testUpdateLiquidity(1000, 10, 20)).to.equal(2000);
+
+      expect(await poolViewer.testUpdateLiquidity(1000, 10, 30)).to.equal(3000);
+
+      expect(await poolViewer.testUpdateLiquidity(2000, 10, 40)).to.equal(8000);
+
+      expect(await poolViewer.testUpdateLiquidity(1000, 0, 20)).to.equal(0);
+
+      expect(await poolViewer.testUpdateLiquidity(1000, 0, 0)).to.equal(0);
+
+      expect(
+        poolViewer.testUpdateLiquidity(1000, 10, 0)
+      ).to.be.revertedWithPanic();
+    });
+
+    it("Last Fee Index", async function () {
+      const ONE = ethers.BigNumber.from(10).pow(18);
+
+      await (await gammaPool.setAccFeeIndex(ONE.mul(2))).wait();
+
+      const res0 = await poolViewer.testGetLastFeeIndex(gammaPool.address);
+
+      const res1 = await gammaPool.getFeeIndexUpdateParams();
+
+      expect(res0.accFeeIndex).to.eq(4);
+      expect(res0.lastCFMMFeeIndex).to.eq(1);
+      expect(res0.lastFeeIndex).to.eq(2);
+      expect(res0.borrowRate).to.eq(3);
+      expect(res0.utilizationRate).to.eq(44);
+      expect(res0.lastBlockNumber).to.eq(res1.LAST_BLOCK_NUMBER);
+      expect(res0.currBlockNumber).to.gt(res1.LAST_BLOCK_NUMBER);
+      expect(res0.lastPrice).to.eq(0);
+      expect(res0.supplyRate).to.eq(0);
+
+      expect(
+        await poolViewer.testGetLoanLastFeeIndex(gammaPool.address, ONE.mul(10))
+      ).to.eq(20);
+    });
+
+    it("Test Get Tokens Metadata", async function () {
+      const res = await poolViewer.getTokensMetaData([
+        tokenA.address,
+        tokenB.address,
+        tokenC.address,
+        tokenD.address,
+        cfmm.address,
+      ]);
+      expect(res._symbols.length).to.eq(5);
+      expect(res._symbols[0]).to.eq("TOKA");
+      expect(res._symbols[1]).to.eq("TOKB");
+      expect(res._symbols[2]).to.eq("TOKC");
+      expect(res._symbols[3]).to.eq("TOKD");
+      expect(res._symbols[4]).to.eq("CFMM");
+      expect(res._names.length).to.eq(5);
+      expect(res._names[0]).to.eq("Test Token A");
+      expect(res._names[1]).to.eq("Test Token B");
+      expect(res._names[2]).to.eq("Test Token C");
+      expect(res._names[3]).to.eq("Test Token D");
+      expect(res._names[4]).to.eq("Test CFMM");
+      expect(res._decimals.length).to.eq(5);
+      expect(res._decimals[0]).to.eq(18);
+      expect(res._decimals[1]).to.eq(18);
+      expect(res._decimals[2]).to.eq(18);
+      expect(res._decimals[3]).to.eq(6);
+      expect(res._decimals[4]).to.eq(18);
+    });
+
+    it("Test Get Updated Loans", async function () {
+      const ONE = ethers.BigNumber.from(10).pow(18);
+      const res = await (
+        await poolViewer.testGetUpdatedLoans(gammaPool.address, ONE.mul(2))
+      ).wait();
+
+      const token0 =
+        tokenA.address.toLowerCase() < tokenB.address.toLowerCase()
+          ? tokenA.address
+          : tokenB.address;
+      const token1 =
+        tokenA.address.toLowerCase() > tokenB.address.toLowerCase()
+          ? tokenA.address
+          : tokenB.address;
+
+      const event0 = res.events[0].args;
+      expect(event0.tokenId).to.eq(10);
+      expect(event0.liquidity).to.eq(4);
+      expect(event0.collateral).to.eq(ONE.mul(100));
+      expect(event0.canLiquidate).to.eq(false);
+      expect(event0.token0).to.eq(token0);
+      expect(event0.token1).to.eq(token1);
+
+      const event1 = res.events[1].args;
+      expect(event1.tokenId).to.eq(20);
+      expect(event1.liquidity).to.eq(12);
+      expect(event1.collateral).to.eq(0);
+      expect(event1.canLiquidate).to.eq(true);
+      expect(event1.token0).to.eq(token0);
+      expect(event1.token1).to.eq(token1);
     });
   });
 
