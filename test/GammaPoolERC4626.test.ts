@@ -10,6 +10,7 @@ describe("GammaPoolERC4626", function () {
   let TestAddressCalculator: any;
   let TestShortStrategy: any;
   let GammaPool: any;
+  let PoolViewer: any;
   let TestGammaPoolFactory: any;
   let factory: any;
   let addressCalculator: any;
@@ -29,6 +30,7 @@ describe("GammaPoolERC4626", function () {
   let shortStrategy: any;
   let liquidationStrategy: any;
   let gammaPool: any;
+  let poolViewer: any;
   let implementation: any;
 
   beforeEach(async function () {
@@ -40,7 +42,7 @@ describe("GammaPoolERC4626", function () {
     TestGammaPoolFactory = await ethers.getContractFactory(
       "TestGammaPoolFactory"
     );
-
+    PoolViewer = await ethers.getContractFactory("PoolViewer");
     GammaPool = await ethers.getContractFactory("TestGammaPool");
     [owner, addr1, addr2, addr3, addr4, addr5, addr6] =
       await ethers.getSigners();
@@ -52,6 +54,7 @@ describe("GammaPoolERC4626", function () {
     cfmm = await TestERC20.deploy("Test CFMM", "CFMM");
     shortStrategy = await TestShortStrategy.deploy(cfmm.address);
     addressCalculator = await TestAddressCalculator.deploy();
+    poolViewer = await PoolViewer.deploy();
 
     factory = await TestGammaPoolFactory.deploy(cfmm.address, PROTOCOL_ID, [
       tokenA.address,
@@ -71,7 +74,8 @@ describe("GammaPoolERC4626", function () {
       rebalanceStrategy.address,
       shortStrategy.address,
       liquidationStrategy.address,
-      liquidationStrategy.address
+      liquidationStrategy.address,
+      poolViewer.address
     );
 
     await factory.addProtocol(implementation.address);

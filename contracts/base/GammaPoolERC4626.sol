@@ -3,11 +3,12 @@ pragma solidity >=0.8.4;
 
 import "../interfaces/strategies/base/IShortStrategy.sol";
 import "./GammaPoolERC20.sol";
+import "../utils/DelegateCaller.sol";
 
 /// @title ERC4626 (GS LP) implementation of GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Vault implementation of GammaPool, assets are CFMM LP tokens, shares are GS LP tokens
-abstract contract GammaPoolERC4626 is GammaPoolERC20 {
+abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller {
 
     error MinShares();
 
@@ -177,21 +178,5 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20 {
     /// @return maxShares - maximum amount of GS LP tokens that can be redeemed by owner address
     function maxRedeem(address owner) public view virtual returns (uint256) {
         return convertToShares(maxWithdraw(owner)); // get maximum amount of CFMM LP tokens that can be withdrawn and convert to equivalent GS LP token amount
-    }
-
-    /// @dev Implement contract logic via delegate calls of implementation contracts
-    /// @param strategy - address of implementation contract
-    /// @param data - bytes containing function call and parameters at implementation (`strategy`) contract
-    /// @return result - returned data from delegate function call
-    function callStrategy(address strategy, bytes memory data) internal virtual returns(bytes memory result) {
-        bool success;
-        (success, result) = strategy.delegatecall(data);
-        if (!success) {
-            if (result.length == 0) revert();
-            assembly {
-                revert(add(32, result), mload(result))
-            }
-        }
-        return result;
     }
 }

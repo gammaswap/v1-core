@@ -13,8 +13,13 @@ contract TestGammaPool is GammaPool {
     }
 
     constructor(uint16 _protocolId, address _factory, address _borrowStrategy, address _repayStrategy, address _rebalanceStrategy,
-        address _shortStrategy, address _singleLiquidationStrategy, address _batchLiquidationStrategy) GammaPool(_protocolId, _factory, _borrowStrategy, _repayStrategy,
-        _rebalanceStrategy, _shortStrategy, _singleLiquidationStrategy, _batchLiquidationStrategy) {
+        address _shortStrategy, address _singleLiquidationStrategy, address _batchLiquidationStrategy, address _viewer)
+        GammaPool(_protocolId, _factory, _borrowStrategy, _repayStrategy, _rebalanceStrategy, _shortStrategy,
+        _singleLiquidationStrategy, _batchLiquidationStrategy, _viewer) {
+    }
+
+    function setAccFeeIndex(uint96 _accFeeIndex) external virtual {
+        s.accFeeIndex = _accFeeIndex;
     }
 
     function _getLastCFMMPrice() internal virtual override view returns(uint256) {

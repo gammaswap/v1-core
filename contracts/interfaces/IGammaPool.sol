@@ -30,16 +30,26 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         uint128 lastLiquidity; // 128 bits
         /// @dev Loan debt in liquidity invariant units, increases with every update according to how many blocks have passed
         uint128 liquidity; // 128 bits
+        /// @dev Collateral in terms of liquidity invariant units, increases with every update according to how many blocks have passed
+        uint256 collateral;
 
         /// @dev Initial loan debt in terms of LP tokens at time liquidity was borrowed, updates along with initLiquidity
         uint256 lpTokens;
         /// @dev Reserve tokens held as collateral for the liquidity debt, indices match GammaPool's tokens[] array indices
         uint128[] tokensHeld; // array of 128 bit numbers
 
+        /// @dev address of contract holding additional collateral for loan (e.g. CollateralManager)
+        address collateralRef;
+
         /// @dev price at which loan was opened
         uint256 px;
         /// @dev if true loan can be liquidated
         bool canLiquidate;
+
+        /// @dev names of ERC20 tokens of CFMM
+        uint256 accFeeIndex;
+        /// @dev names of ERC20 tokens of CFMM
+        uint256 LAST_BLOCK_NUMBER;
 
         /// @dev ERC20 tokens of CFMM
         address[] tokens;
@@ -49,6 +59,22 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         string[] symbols;
         /// @dev names of ERC20 tokens of CFMM
         string[] names;
+
+        /// @dev factory contract of pool
+        address factory;
+        /// @dev names of ERC20 tokens of CFMM
+        address shortStrategy;
+        /// @dev names of ERC20 tokens of CFMM
+        address liquidationStrategy;
+
+        /// @dev names of ERC20 tokens of CFMM
+        uint256 BORROWED_INVARIANT;
+        /// @dev names of ERC20 tokens of CFMM
+        uint256 LP_TOKEN_BALANCE;
+        /// @dev names of ERC20 tokens of CFMM
+        uint256 lastCFMMInvariant;
+        /// @dev names of ERC20 tokens of CFMM
+        uint256 lastCFMMTotalSupply;
     }
 
     /// @dev Struct returned in getLatestRates function. Contains all relevant global state variables
@@ -159,6 +185,18 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         uint256 supplyRate;
     }
 
+    struct FeeIndexUpdateParams {
+        address shortStrategy;
+        address factory;
+        address pool;
+        uint256 BORROWED_INVARIANT;
+        uint256 LP_TOKEN_BALANCE;
+        uint256 lastCFMMInvariant;
+        uint256 lastCFMMTotalSupply;
+        uint256 LAST_BLOCK_NUMBER;
+        uint256 accFeeIndex;
+    }
+
     /// @dev Function to initialize state variables GammaPool, called usually from GammaPoolFactory contract right after GammaPool instantiation
     /// @param _cfmm - address of CFMM GammaPool is for
     /// @param _tokens - ERC20 tokens of CFMM
@@ -175,8 +213,11 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @dev ERC20 tokens of CFMM
     function tokens() external view returns(address[] memory);
 
-    /// @dev factory - address of factory contract that instantiated this GammaPool
+    /// @dev address of factory contract that instantiated this GammaPool
     function factory() external view returns(address);
+
+    /// @dev viewer contract to implement complex view functions for data in this GammaPool
+    function viewer() external view returns(address);
 
     /// @dev Borrow Strategy implementation contract for this GammaPool
     function borrowStrategy() external view returns(address);
@@ -218,16 +259,12 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @return lastBlockNumber - last block GammaPool was updated
     function getRates() external view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastBlockNumber);
 
-    /// @return data - struct containing all relevant global state variables that are not updated from time passage or accrued trading fees
-    function getConstantPoolData() external view returns(PoolData memory data);
+    /// @dev Get storage parameters to calculate the current value of accFeeIndex
+    /// @return data - parameters to calculate current accFeeIndex
+    function getFeeIndexUpdateParams() external view returns(FeeIndexUpdateParams memory data);
 
     /// @return data - struct containing all relevant global state variables and descriptive information of GammaPool. Used to avoid making multiple calls
     function getPoolData() external view returns(PoolData memory data);
-
-    /// @dev Returns additional nonzero fields (e.g. lastPrice, borrowRate, etc.)
-    /// @notice Difference with getPoolData() is this struct is what PoolData would return if an update of the GammaPool were to occur at the current block
-    /// @return data - struct containing all relevant global state variables and descriptive information of GammaPool. Used to avoid making multiple calls
-    function getLatestPoolData() external view returns(PoolData memory data);
 
     /// @dev Check GammaPool for CFMM and tokens can be created with this implementation
     /// @param _tokens - assumed tokens of CFMM, validate function should check CFMM is indeed for these tokens
@@ -274,24 +311,18 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @return lastPrice - calculates and gets current price at CFMM
     function getLastCFMMPrice() external view returns(uint256);
 
-    /// @dev Get latest rate information from GammaPool
-    /// @return data - RateData struct containing latest rate information
-    function getLatestRates() external view returns(RateData memory data);
-
-    /// @dev Get CFMM tokens meta data
-    /// @return _tokens - array of token address of ERC20 tokens of CFMM
-    /// @return _symbols - array of symbols of ERC20 tokens of CFMM
-    /// @return _names - array of names of ERC20 tokens of CFMM
-    /// @return _decimals - array of decimals of ERC20 tokens of CFMM
-    function getTokensMetaData() external view returns(address[] memory _tokens, string[] memory _symbols, string[] memory _names, uint8[] memory _decimals);
-
     // Long Gamma
 
     /// @dev Create a new Loan struct
     /// @return tokenId - unique id of loan struct created
     function createLoan(uint16 refId) external returns(uint256 tokenId);
 
-    /// @dev Get loan information for loan identified by tokenId
+    /// @dev Get loan from storage and convert to LoanData struct
+    /// @param _tokenId - tokenId of loan to convert
+    /// @return _loanData - loan data struct (same as Loan + tokenId)
+    function getLoanData(uint256 _tokenId) external view returns(LoanData memory _loanData);
+
+    /// @dev Get loan with its most updated information
     /// @param _tokenId - unique id of loan, used to look up loan in GammaPool
     /// @return _loanData - loan data struct (same as Loan + tokenId)
     function loan(uint256 _tokenId) external view returns(LoanData memory _loanData);
@@ -303,17 +334,16 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @return _loans - list of loans created in GammaPool
     function getLoans(uint256 start, uint256 end, bool active) external view returns(LoanData[] memory _loans);
 
+    /// @dev calculate liquidity invariant from collateral tokens
+    /// @param tokensHeld - loan's collateral tokens
+    /// @return collateralInvariant - invariant calculated from loan's collateral tokens
+    function calcInvariant(uint128[] memory tokensHeld) external view returns(uint256);
 
     /// @dev Get list of loans mapped to tokenIds in array `tokenIds`
     /// @param tokenIds - list of loan tokenIds
     /// @param active - if true, return loans that have an outstanding liquidity debt
     /// @return _loans - list of loans created in GammaPool
     function getLoansById(uint256[] calldata tokenIds, bool active) external view returns(LoanData[] memory _loans);
-
-    /// @dev Check if can liquidate loan identified by `tokenId`
-    /// @param tokenId - unique id of loan, used to look up loan in GammaPool
-    /// @return canLiquidate - true if loan can be liquidated, false otherwise
-    function canLiquidate(uint256 tokenId) external view returns(bool);
 
     /// @return loanCount - total number of loans opened
     function getLoanCount() external view returns(uint256);
