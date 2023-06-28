@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../interfaces/collateral/ICollateralReferenceStore.sol";
+import "../interfaces/observer/ILoanObserverStore.sol";
 import "../interfaces/IGammaPoolFactory.sol";
 
 /// @title Library containing global storage variables for GammaPools according to App Storage pattern
@@ -155,7 +155,7 @@ library LibStorage {
         uint16 refFee;
         uint8 refTyp;
         if(refId > 0 ) {
-            (refAddr, refFee, refTyp) = ICollateralReferenceStore(self.factory).externalReference(refId, address(this), msg.sender);
+            (refAddr, refFee, refTyp) = ILoanObserverStore(self.factory).externalReference(refId, address(this), msg.sender);
         }
 
         // instantiate Loan struct and store it mapped to _tokenId

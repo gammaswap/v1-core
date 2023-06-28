@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../interfaces/collateral/ICollateralManager.sol";
-import "../interfaces/collateral/ICollateralReferenceStore.sol";
+import "../interfaces/observer/ILoanObserver.sol";
+import "../interfaces/observer/ILoanObserverStore.sol";
 
 /// @title Collateral Reference Store contract
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Stores Collateral Manager (CM) addresses that can be used by GammaPools (GP) mapped to reference ids.
 /// @notice The mapping can be many to many, depending on the implementation of the CM but preferably one GP to many CMs
 /// @notice Collateral References can use a discount to lower the origination fees charged by GammaPools
-abstract contract AbstractCollateralReferenceStore is ICollateralReferenceStore {
+abstract contract AbstractLoanObserverStore is ILoanObserverStore {
 
     /*So if we set the collateralManager, can it be set to discount only? Should be able to right?
     we want to avoid refId being and address in one pool and not being an address in another pool
@@ -59,7 +59,7 @@ abstract contract AbstractCollateralReferenceStore is ICollateralReferenceStore 
                 references[refId] = ExternalReference({ refAddr: address(0), refFee: refFee, refTyp: refTyp, active: active, restricted: restricted });
             } else if(refTyp == 2 || refTyp == 3) {
                 require(refAddr != address(0), "ZERO_ADDRESS");
-                require(refTyp < 3 || ICollateralManager(refAddr).refId() == refId, "REF_ID");
+                require(refTyp < 3 || ILoanObserver(refAddr).refId() == refId, "REF_ID");
                 references[refId] = ExternalReference({ refAddr: refAddr, refFee: refFee, refTyp: refTyp, active: active, restricted: restricted });
             }
         } else { // refId, refAddr, and refTyp do not change
@@ -80,7 +80,7 @@ abstract contract AbstractCollateralReferenceStore is ICollateralReferenceStore 
         poolReferences[refId][pool] = false;
     }
 
-    /// @dev See {ICollateralReferenceStore.-setExternalReference};
+    /// @dev See {ICollateralReferenceStore.-setPoolExternalReference};
     function setPoolExternalReference(uint256 refId, address pool) external override virtual {
         require(msg.sender == _collateralReferenceStoreOwner(), "FORBIDDEN");
         require(pool != address(0), "ZERO_ADDRESS");
@@ -88,7 +88,7 @@ abstract contract AbstractCollateralReferenceStore is ICollateralReferenceStore 
 
         ExternalReference storage ref = references[refId];
 
-        require(ref.refTyp < 3 || ICollateralManager(ref.refAddr).validate(pool), "INVALID_POOL") ;
+        require(ref.refTyp < 3 || ILoanObserver(ref.refAddr).validate(pool), "INVALID_POOL") ;
 
         poolReferences[refId][pool] = true;
     }

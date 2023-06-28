@@ -2,7 +2,7 @@
 pragma solidity >=0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../../interfaces/strategies/lending/ICollateralManagerRepayStrategy.sol";
+import "../../interfaces/strategies/lending/IObserverRepayStrategy.sol";
 import "../base/BaseRepayStrategy.sol";
 
 /// @title Collateral Manager Repay Strategy abstract contract implementation of ICollateralManagerRepayStrategy
@@ -10,7 +10,7 @@ import "../base/BaseRepayStrategy.sol";
 /// @notice All external functions are locked to avoid reentrancy
 /// @dev Defines external functions for concrete contract implementations to allow external accounts to repay liquidity loans
 /// @dev Inherits BaseRebalanceStrategy because RepayStrategy needs to rebalance collateral to repay a loan
-abstract contract CollateralManagerRepayStrategy is ICollateralManagerRepayStrategy, BaseRepayStrategy {
+abstract contract ObserverRepayStrategy is IObserverRepayStrategy, BaseRepayStrategy {
 
     error InternalCollateralRef();
     error ZeroRepayLiquidity();
@@ -141,8 +141,8 @@ abstract contract CollateralManagerRepayStrategy is ICollateralManagerRepayStrat
         (, deltas) = rebalanceCollateral(_loan, _calcDeltasToClose(collateral, s.CFMM_RESERVES, payLiquidity, collateralId - 1), s.CFMM_RESERVES);
     }
 
-    /// @dev See {ICollateralManagerRepayStrategy-_repayCollMgrLiquidity}.
-    function _repayCollMgrLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, uint256 collateralId, address to) external virtual override lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
+    /// @dev See {ICollateralManagerRepayStrategy-_repayObserverLiquidity}.
+    function _repayObserverLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, uint256 collateralId, address to) external virtual override lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
         if(payLiquidity == 0) revert ZeroRepayLiquidity();
 
         // Get loan for tokenId, revert if not loan creator
@@ -177,6 +177,7 @@ abstract contract CollateralManagerRepayStrategy is ICollateralManagerRepayStrat
                     // nothing left over to pay
                 }
                 amounts = addFees(calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate),fees);
+                repayTokens(_loan, amounts);
             }
         }
 
@@ -201,8 +202,8 @@ abstract contract CollateralManagerRepayStrategy is ICollateralManagerRepayStrat
             s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.REPAY_LIQUIDITY);/**/
     }
 
-    /// @dev See {IRepayStrategy-_repayCollMgrLiquidityWithLP}.
-    function _repayCollMgrLiquidityWithLP(uint256 tokenId, uint256 payLiquidity, uint256 collateralId, address to) external virtual override lock returns(uint256 liquidityPaid) {
+    /// @dev See {IRepayStrategy-_repayObserverLiquidityWithLP}.
+    function _repayObserverLiquidityWithLP(uint256 tokenId, uint256 payLiquidity, uint256 collateralId, address to) external virtual override lock returns(uint256 liquidityPaid) {
         if(payLiquidity == 0) revert ZeroRepayLiquidity();
 
         // Get loan for tokenId, revert if not loan creator

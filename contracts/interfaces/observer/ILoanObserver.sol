@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-/// @title Interface for CollateralManager
+/// @title Interface for LoanObserver
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Interface used for CollateralManager. External contract that holds collateral
-interface ICollateralManager {
+interface ILoanObserver {
 
     function refId() external view returns(uint16);
 

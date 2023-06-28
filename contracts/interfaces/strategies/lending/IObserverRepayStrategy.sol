@@ -6,7 +6,7 @@ import "../base/ILongStrategy.sol";
 /// @title Interface for External Collateral Reference Repay Strategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used in strategies that repay liquidity loans
-interface ICollateralManagerRepayStrategy is ILongStrategy {
+interface IObserverRepayStrategy is ILongStrategy {
 
     /// @dev Repay liquidity debt of loan identified by tokenId, debt is repaid using available collateral in loan
     /// @param tokenId - unique id identifying loan
@@ -16,7 +16,7 @@ interface ICollateralManagerRepayStrategy is ILongStrategy {
     /// @param to - if repayment type requires withdrawal, the address that will receive the funds. Otherwise can be zero address
     /// @return liquidityPaid - liquidity amount that has been repaid
     /// @return amounts - collateral amounts consumed in repaying liquidity debt
-    function _repayCollMgrLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external returns(uint256 liquidityPaid, uint256[] memory amounts);
+    function _repayObserverLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external returns(uint256 liquidityPaid, uint256[] memory amounts);
 
     /// @dev Repay liquidity debt of loan identified by tokenId, using CFMM LP token
     /// @param tokenId - unique id identifying loan
@@ -24,5 +24,5 @@ interface ICollateralManagerRepayStrategy is ILongStrategy {
     /// @param collateralId - index of collateral token to rebalance to + 1
     /// @param to - if repayment type requires withdrawal, the address that will receive the funds. Otherwise can be zero address
     /// @return liquidityPaid - liquidity amount that has been repaid
-    function _repayCollMgrLiquidityWithLP(uint256 tokenId, uint256 liquidity, uint256 collateralId, address to) external returns(uint256 liquidityPaid);
+    function _repayObserverLiquidityWithLP(uint256 tokenId, uint256 liquidity, uint256 collateralId, address to) external returns(uint256 liquidityPaid);
 }

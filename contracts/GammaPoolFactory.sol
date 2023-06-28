@@ -6,12 +6,12 @@ import "./base/AbstractGammaPoolFactory.sol";
 import "./rates/storage/AbstractRateParamsStore.sol";
 import "./libraries/AddressCalculator.sol";
 import "./libraries/GammaSwapLibrary.sol";
-import "./collateral/AbstractCollateralReferenceStore.sol";
+import "./observer/AbstractLoanObserverStore.sol";
 
 /// @title Factory contract to create more GammaPool contracts.
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Creates new GammaPool instances as minimal proxy contracts (EIP-1167) to implementation contracts identified by a protocol id
-contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, AbstractCollateralReferenceStore {
+contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, AbstractLoanObserverStore {
 
     struct Fee {
         uint16 protocol;

@@ -4,7 +4,7 @@ pragma solidity >=0.8.4;
 import "../libraries/GammaSwapLibrary.sol";
 import "../interfaces/IPoolViewer.sol";
 import "../interfaces/IGammaPool.sol";
-import "../interfaces/collateral/ICollateralManager.sol";
+import "../interfaces/observer/ILoanObserver.sol";
 import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
@@ -103,7 +103,7 @@ contract PoolViewer is IPoolViewer {
     function _collateral(address pool, uint256 tokenId, uint128[] memory tokensHeld, address refAddr) internal virtual view returns(uint256 collateral) {
         collateral = IGammaPool(pool).calcInvariant(tokensHeld);
         if(refAddr != address(0)) {
-            collateral += ICollateralManager(refAddr).getCollateral(pool, tokenId);
+            collateral += ILoanObserver(refAddr).getCollateral(pool, tokenId);
         }
     }
 

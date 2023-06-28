@@ -4,7 +4,7 @@ pragma solidity >=0.8.4;
 /// @title Interface for CollateralReferenceStore
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Interface used for CollateralReferenceStore implementations
-interface ICollateralReferenceStore {
+interface ILoanObserverStore {
 
     /// @dev Get external collateral reference for a new position being opened
     /// @param refId - address of GammaPool we're setting an external reference for
