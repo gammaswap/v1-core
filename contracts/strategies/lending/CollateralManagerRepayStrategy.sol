@@ -147,7 +147,7 @@ abstract contract CollateralManagerRepayStrategy is ICollateralManagerRepayStrat
 
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        if(_loan.collateralRef == address(0)) revert InternalCollateralRef();
+        if(_loan.refAddr == address(0) || _loan.refTyp != 3) revert InternalCollateralRef();
 
         uint256 externalCollateral = getExternalCollateral(_loan, tokenId);
 
@@ -207,7 +207,7 @@ abstract contract CollateralManagerRepayStrategy is ICollateralManagerRepayStrat
 
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        if(_loan.collateralRef != address(0)) revert InternalCollateralRef();
+        if(_loan.refAddr == address(0) || _loan.refTyp != 3) revert InternalCollateralRef();
 
         uint256 externalCollateral = getExternalCollateral(_loan, tokenId);
 

@@ -2,7 +2,7 @@
 pragma solidity >=0.8.4;
 
 import "../../interfaces/strategies/base/ILongStrategy.sol";
-import "../../interfaces/ICollateralManager.sol";
+import "../../interfaces/collateral/ICollateralManager.sol";
 import "./BaseStrategy.sol";
 
 /// @title Base Long Strategy abstract contract
@@ -61,20 +61,20 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
     }
 
     function getExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual view returns(uint256 externalCollateral) {
-        if(_loan.collateralRef != address(0)) {
-            externalCollateral = ICollateralManager(_loan.collateralRef).getCollateral(address(this), tokenId);
+        if(_loan.refAddr != address(0) && _loan.refTyp == 3) {
+            externalCollateral = ICollateralManager(_loan.refAddr).getCollateral(address(this), tokenId);
         }
     }
 
     function getMaxExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual view returns(uint256 externalCollateral) {
-        if(_loan.collateralRef != address(0)) {
-            externalCollateral = ICollateralManager(_loan.collateralRef).getMaxCollateral(address(this), tokenId);
+        if(_loan.refAddr != address(0) && _loan.refTyp == 3) {
+            externalCollateral = ICollateralManager(_loan.refAddr).getMaxCollateral(address(this), tokenId);
         }
     }
 
     function repayWithExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId, uint256 liquidity) internal virtual returns(uint256 externalLiquidity) {
-        if(_loan.collateralRef != address(0)) {
-            externalLiquidity = ICollateralManager(_loan.collateralRef).payLiquidity(address(this), tokenId, liquidity, address(this));
+        if(_loan.refAddr != address(0) && _loan.refTyp == 3) {
+            externalLiquidity = ICollateralManager(_loan.refAddr).payLiquidity(address(this), tokenId, liquidity, address(this));
         }
     }
 

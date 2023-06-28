@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../interfaces/ICollateralReferenceStore.sol";
+import "../interfaces/collateral/ICollateralReferenceStore.sol";
 import "../interfaces/IGammaPoolFactory.sol";
 
 /// @title Library containing global storage variables for GammaPools according to App Storage pattern
@@ -34,10 +34,12 @@ library LibStorage {
         /// @dev price at which loan was opened
         uint256 px;
 
-        /// @dev address holding additional collateral information for the loan
-        address collateralRef;
-        /// @dev fee discount, typically used for loans using a collateral reference addresses
-        uint16 feeDiscount;
+        /// @dev reference address holding additional collateral information for the loan
+        address refAddr;
+        /// @dev reference fee, typically used for loans using a collateral reference addresses
+        uint16 refFee;
+        /// @dev reference type, typically used for loans using a collateral reference addresses
+        uint8 refTyp;
     }
 
     /// @dev Storage struct used to track GammaPool's state variables
@@ -149,10 +151,11 @@ library LibStorage {
         // create unique tokenId to identify loan across all GammaPools. _tokenId is hash of GammaPool address, sender address, and loan counter
         _tokenId = uint256(keccak256(abi.encode(msg.sender, address(this), id)));
 
-        address collateralRef;
-        uint16 feeDiscount;
+        address refAddr;
+        uint16 refFee;
+        uint8 refTyp;
         if(refId > 0 ) {
-            (collateralRef, feeDiscount) = ICollateralReferenceStore(self.factory).externalReference(refId, msg.sender);
+            (refAddr, refFee, refTyp) = ICollateralReferenceStore(self.factory).externalReference(refId, address(this), msg.sender);
         }
 
         // instantiate Loan struct and store it mapped to _tokenId
@@ -165,8 +168,9 @@ library LibStorage {
             lpTokens: 0,
             tokensHeld: new uint128[](_tokenCount),
             px: 0,
-            collateralRef: collateralRef,
-            feeDiscount: feeDiscount
+            refAddr: refAddr,
+            refFee: refFee,
+            refTyp: refTyp
         });
 
         self.tokenIds.push(_tokenId);

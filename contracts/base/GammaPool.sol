@@ -239,7 +239,9 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         _loanData.lpTokens = _loan.lpTokens;
         _loanData.rateIndex = _loan.rateIndex;
         _loanData.px = _loan.px;
-        _loanData.collateralRef = _loan.collateralRef;
+        _loanData.refAddr = _loan.refAddr;
+        _loanData.refFee = _loan.refFee;
+        _loanData.refTyp = _loan.refTyp;
     }
 
     /// @dev Get loan and convert to LoanData struct

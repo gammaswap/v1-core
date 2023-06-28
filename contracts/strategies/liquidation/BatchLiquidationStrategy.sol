@@ -70,7 +70,7 @@ abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiq
             {
                 uint256 rateIndex = _loan.rateIndex;
                 // Skip loans already paid in full or that use external collateral
-                if(liquidity == 0 || rateIndex == 0 || _loan.collateralRef != address(0)) {
+                if(liquidity == 0 || rateIndex == 0 || (_loan.refAddr != address(0) && _loan.refTyp == 3)) {
                     unchecked {
                         ++i;
                     }

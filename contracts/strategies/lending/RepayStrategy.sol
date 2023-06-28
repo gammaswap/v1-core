@@ -123,7 +123,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
 
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        if(_loan.collateralRef != address(0)) revert ExternalCollateralRef();
+        if(_loan.refAddr != address(0) && _loan.refTyp == 3) revert ExternalCollateralRef();
 
         // Update liquidity debt to include accrued interest since last update
         (uint256 loanLiquidity, int256[] memory deltas,) = updatePayableLoan(_loan, payLiquidity);
@@ -184,7 +184,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
 
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        if(_loan.collateralRef != address(0)) revert ExternalCollateralRef();
+        if(_loan.refAddr != address(0) && _loan.refTyp == 3) revert ExternalCollateralRef();
 
         // Update liquidity debt to include accrued interest since last update
         (uint256 loanLiquidity,,bool hasWriteDown) = updatePayableLoan(_loan, payLiquidity);
@@ -224,7 +224,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
 
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        if(_loan.collateralRef != address(0)) revert ExternalCollateralRef();
+        if(_loan.refAddr != address(0) && _loan.refTyp == 3) revert ExternalCollateralRef();
 
         // Update liquidity debt to include accrued interest since last update
         (uint256 loanLiquidity, int256[] memory deltas,) = updatePayableLoan(_loan, payLiquidity);

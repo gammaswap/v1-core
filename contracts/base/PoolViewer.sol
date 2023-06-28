@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
 import "../libraries/GammaSwapLibrary.sol";
 import "../interfaces/IPoolViewer.sol";
 import "../interfaces/IGammaPool.sol";
-import "../interfaces/ICollateralManager.sol";
+import "../interfaces/collateral/ICollateralManager.sol";
 import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
@@ -45,7 +46,8 @@ contract PoolViewer is IPoolViewer {
             _loan.names = _names;
             _loan.decimals = _decimals;
             _loan.liquidity = _updateLiquidity(_loan.liquidity, _loan.rateIndex, data.accFeeIndex);
-            _loan.collateral = _collateral(pool, _loan.tokenId, _loan.tokensHeld, _loan.collateralRef);
+            address refAddr = _loan.refTyp == 3 ? _loan.refAddr : address(0);
+            _loan.collateral = _collateral(pool, _loan.tokenId, _loan.tokensHeld, refAddr);
             _loan.canLiquidate = ILiquidationStrategy(_loan.liquidationStrategy).canLiquidate(_loan.liquidity, _loan.collateral);
             unchecked {
                 ++i;
@@ -60,7 +62,8 @@ contract PoolViewer is IPoolViewer {
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
         _loanData.accFeeIndex = _getLoanLastFeeIndex(_loanData);
         _loanData.liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, _loanData.accFeeIndex);
-        _loanData.collateral = _collateral(pool, tokenId, _loanData.tokensHeld, _loanData.collateralRef);
+        address refAddr = _loanData.refTyp == 3 ? _loanData.refAddr : address(0);
+        _loanData.collateral = _collateral(pool, tokenId, _loanData.tokensHeld, refAddr);
         _loanData.canLiquidate = ILiquidationStrategy(_loanData.liquidationStrategy).canLiquidate(_loanData.liquidity, _loanData.collateral);
         (_loanData.symbols, _loanData.names, _loanData.decimals) = getTokensMetaData(_loanData.tokens);
         return _loanData;
@@ -71,7 +74,8 @@ contract PoolViewer is IPoolViewer {
         IGammaPool.LoanData memory _loanData = IGammaPool(pool).getLoanData(tokenId);
         uint256 accFeeIndex = _getLoanLastFeeIndex(_loanData);
         uint256 liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, accFeeIndex);
-        uint256 collateral = _collateral(pool, tokenId, _loanData.tokensHeld, _loanData.collateralRef);
+        address refAddr = _loanData.refTyp == 3 ? _loanData.refAddr : address(0);
+        uint256 collateral = _collateral(pool, tokenId, _loanData.tokensHeld, refAddr);
         return ILiquidationStrategy(_loanData.liquidationStrategy).canLiquidate(liquidity, collateral);
     }
 
@@ -94,12 +98,12 @@ contract PoolViewer is IPoolViewer {
     /// @param pool - address of GammaPool loan belongs to
     /// @param tokenId - unique id of loan, used to look up loan in GammaPool
     /// @param tokensHeld - tokens held in GammaPool as collateral for loan
-    /// @param collateralRef - address of contract holding additional collateral for loan
+    /// @param refAddr - address of contract holding additional collateral for loan
     /// @return collateral - collateral of loan in terms of liquidity invariant units;
-    function _collateral(address pool, uint256 tokenId, uint128[] memory tokensHeld, address collateralRef) internal virtual view returns(uint256 collateral) {
+    function _collateral(address pool, uint256 tokenId, uint128[] memory tokensHeld, address refAddr) internal virtual view returns(uint256 collateral) {
         collateral = IGammaPool(pool).calcInvariant(tokensHeld);
-        if(collateralRef != address(0)) {
-            collateral += ICollateralManager(collateralRef).getCollateral(pool, tokenId);
+        if(refAddr != address(0)) {
+            collateral += ICollateralManager(refAddr).getCollateral(pool, tokenId);
         }
     }
 

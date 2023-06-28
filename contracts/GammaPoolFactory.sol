@@ -6,12 +6,12 @@ import "./base/AbstractGammaPoolFactory.sol";
 import "./rates/storage/AbstractRateParamsStore.sol";
 import "./libraries/AddressCalculator.sol";
 import "./libraries/GammaSwapLibrary.sol";
-import "./interfaces/ICollateralReferenceStore.sol";
+import "./collateral/AbstractCollateralReferenceStore.sol";
 
 /// @title Factory contract to create more GammaPool contracts.
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Creates new GammaPool instances as minimal proxy contracts (EIP-1167) to implementation contracts identified by a protocol id
-contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, ICollateralReferenceStore {
+contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, AbstractCollateralReferenceStore {
 
     struct Fee {
         uint16 protocol;
@@ -200,8 +200,13 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         return _rateParamsStoreOwner();
     }
 
-    /// @dev See {ICollateralReferenceStore.-externalReference};
-    function externalReference(uint16 refId, address requester) external override virtual view returns(address, uint16) {
-        return (address(0), 10);
+    /// @dev See {AbstractRateParamsStore.-_collateralReferenceStoreOwner};
+    function _collateralReferenceStoreOwner() internal override virtual view returns(address) {
+        return owner;
+    }
+
+    /// @dev Return collateral reference store owner
+    function collateralReferenceStoreOwner() external virtual view returns(address) {
+        return _collateralReferenceStoreOwner();
     }
 }

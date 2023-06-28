@@ -38,8 +38,12 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         /// @dev Reserve tokens held as collateral for the liquidity debt, indices match GammaPool's tokens[] array indices
         uint128[] tokensHeld; // array of 128 bit numbers
 
-        /// @dev address of contract holding additional collateral for loan (e.g. CollateralManager)
-        address collateralRef;
+        /// @dev reference address of contract holding additional collateral for loan (e.g. CollateralManager)
+        address refAddr;
+        /// @dev reference fee of contract holding additional collateral for loan (e.g. CollateralManager)
+        uint16 refFee;
+        /// @dev reference type of contract holding additional collateral for loan (e.g. CollateralManager)
+        uint8 refTyp;
 
         /// @dev price at which loan was opened
         uint256 px;
