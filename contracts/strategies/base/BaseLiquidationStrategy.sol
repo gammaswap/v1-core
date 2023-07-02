@@ -146,7 +146,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     /// @param liquidator - address liquidating loan through GammaPool
     /// @return externalLiquidity - liquidated liquidity invariant units in loan observer
     function liquidateWithObserver(LiquidatableLoan memory _liqLoan, address liquidator) internal virtual returns(uint256 externalLiquidity) {
-        return ICollateralManager(_liqLoan.refAddr).liquidateCollateral(address(this), _liqLoan.tokenId, _liqLoan.remainderLiquidity, liquidator);
+        return ICollateralManager(_liqLoan.refAddr).liquidateCollateral(s.cfmm, s.protocolId, _liqLoan.tokenId, _liqLoan.remainderLiquidity, liquidator);
     }
 
     function getCollateralAtObserver(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual view returns(uint256 externalCollateral) {

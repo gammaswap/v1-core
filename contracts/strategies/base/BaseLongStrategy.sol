@@ -65,7 +65,7 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
         address refAddr = _loan.refAddr;
         uint256 collateral = 0;
         if(refAddr != address(0) && refType > 1) {
-            collateral = ILoanObserver(refAddr).onLoanUpdate(address(this), tokenId,
+            collateral = ILoanObserver(refAddr).onLoanUpdate(s.cfmm, s.protocolId, tokenId,
                 abi.encode(ILoanObserver.LoanObserved({ id: _loan.id, rateIndex: _loan.rateIndex, initLiquidity: _loan.initLiquidity,
                 liquidity: _loan.liquidity, lpTokens: _loan.lpTokens, tokensHeld: _loan.tokensHeld, px: _loan.px})));
         }

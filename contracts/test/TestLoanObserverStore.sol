@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/rates/storage/IRateParamsStore.sol";
-import "../rates/storage/AbstractRateParamsStore.sol";
+import "../observer/AbstractLoanObserverStore.sol";
 
-contract TestRateParamsStore is AbstractRateParamsStore {
+contract TestLoanObserverStore is AbstractLoanObserverStore {
 
     address storeOwner;
 
@@ -12,7 +12,7 @@ contract TestRateParamsStore is AbstractRateParamsStore {
         storeOwner = _storeOwner;
     }
 
-    function _rateParamsStoreOwner() internal override virtual view returns(address) {
+    function _loanObserverStoreOwner() internal override virtual view returns(address) {
         return storeOwner;
     }
 }

@@ -14,7 +14,7 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
     }
 
     function initialize(address cfmm, address[] calldata tokens, uint8[] calldata decimals) external virtual {
-        s.initialize(msg.sender, cfmm, tokens, decimals);
+        s.initialize(msg.sender, cfmm, 1, tokens, decimals);
     }
 
     function maxTotalApy() internal virtual override view returns(uint256) {

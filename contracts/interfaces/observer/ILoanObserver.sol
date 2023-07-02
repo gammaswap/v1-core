@@ -36,19 +36,22 @@ interface ILoanObserver {
     /// @dev Observer type (2 = does not track collateral and onLoanUpdate returns zero, 3 = tracks collateral and onLoanUpdate returns collateral held outside of GammaPool)
     function refType() external view returns(uint16);
 
-    /// @dev Validate observer is for GammaPool
+    /// @dev Validate observer can work with GammaPool
+    /// @param gammaPool - address of GammaPool observer contract will observe
+    /// @return validated - true if observer can work with `gammaPool`, false otherwise
     function validate(address gammaPool) external view returns(bool);
 
     /// @notice Used to identify requests from GammaPool
-    /// @dev Factory contract of GammaPool collateral manager works for
+    /// @dev Factory contract of GammaPool observer will receive updates from
     function factory() external view returns(address);
 
     /// @notice Should require authentication that msg.sender is GammaPool of tokenId and GammaPool is registered
     /// @dev Update observer when a loan update occurs
     /// @dev If an observer does not hold collateral for loan it should return 0
-    /// @param gammaPool - address of GammaPool loan that was updated belongs to
+    /// @param cfmm - address of the CFMM GammaPool is for
+    /// @param protocolId - protocol id of the implementation contract for this GammaPool
     /// @param tokenId - unique identifier of loan in GammaPool
     /// @param data - data passed by gammaPool (e.g. LoanObserved)
     /// @return collateral - loan collateral held outside of GammaPool (Only significant when the loan tracks collateral)
-    function onLoanUpdate(address gammaPool, uint256 tokenId, bytes memory data) external returns(uint256 collateral);
+    function onLoanUpdate(address cfmm, uint16 protocolId, uint256 tokenId, bytes memory data) external returns(uint256 collateral);
 }

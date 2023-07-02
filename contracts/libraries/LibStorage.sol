@@ -48,8 +48,10 @@ library LibStorage {
         // 1x256 bits
         /// @dev factory - address of factory contract that instantiated this GammaPool
         address factory; // 160 bits
+        /// @dev Protocol id of the implementation contract for this GammaPool
+        uint16 protocolId; // 16 bits
         /// @dev unlocked - flag used in mutex implementation (1 = unlocked, 0 = locked). Initialized at 1
-        uint96 unlocked; // 96 bits
+        uint80 unlocked; // 80 bits
 
         //3x256 bits, LP Tokens
         /// @dev Quantity of CFMM's LP tokens deposited in GammaPool by liquidity providers
@@ -118,12 +120,14 @@ library LibStorage {
     /// @param self - pointer to storage variables (doesn't need to be passed)
     /// @param _factory - address of factory that created this GammaPool
     /// @param _cfmm - address of CFMM this GammaPool is for
+    /// @param _protocolId - protocol id of the implementation contract for this GammaPool
     /// @param _tokens - tokens of CFMM this GammaPool is for
     /// @param _decimals -decimals of the tokens of the CFMM the GammaPool is for, indices must match tokens array
-    function initialize(Storage storage self, address _factory, address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) internal {
+    function initialize(Storage storage self, address _factory, address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) internal {
         if(self.factory != address(0)) revert Initialized();// cannot initialize twice
 
         self.factory = _factory;
+        self.protocolId = _protocolId;
         self.cfmm = _cfmm;
         self.tokens = _tokens;
         self.decimals = _decimals;
