@@ -11,7 +11,7 @@ import "../base/BaseLiquidationStrategy.sol";
 abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseLiquidationStrategy {
 
     /// @dev See {LiquidationStrategy-_liquidate}.
-    function _liquidate(uint256 tokenId, uint256[] calldata fees) external override lock virtual returns(uint256 loanLiquidity) {
+    function _liquidate(uint256 tokenId) external override lock virtual returns(uint256 loanLiquidity) {
         // Check can liquidate loan and get loan with updated loan liquidity
         // No need to check if msg.sender has permission
         LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
@@ -20,26 +20,23 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
         {
             int256[] memory deltas;
             (_liqLoan, deltas) = getLiquidatableLoan(_loan, tokenId);
-            rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
+            rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES); // the rebalancing trade will increase the cfmmLiquidityInvariant, which means I'll actually get less LP tokens
         }
 
         loanLiquidity = _liqLoan.loanLiquidity;
 
-        // Update loan collateral amounts (e.g. re-balance and/or account for deposited collateral)
-        // Repay liquidity debt in full and get back remaining collateral amounts
-        repayTokens(_loan, addFees(calcTokensToRepay(getReserves(s.cfmm), _liqLoan.payableInternalLiquidity + _liqLoan.internalFee), fees));
-        repayWithExternalCollateral(_loan, tokenId, _liqLoan.payableExternalLiquidity + _liqLoan.externalFee);
+        if(_liqLoan.payableInternalLiquidityPlusFee > 0) {
+            uint256 lpDeposit = repayTokens(_loan, calcTokensToRepay(getReserves(s.cfmm), _liqLoan.payableInternalLiquidityPlusFee));
+            GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, lpDeposit * _liqLoan.internalFee / _liqLoan.payableInternalLiquidityPlusFee);
+        }
 
         (uint128[] memory tokensHeld,) = updateCollateral(_loan); // Update remaining collateral
 
-        // Pay loan liquidity in full with collateral amounts and refund remaining collateral to liquidator
-        // CFMM LP token principal paid will be calculated during function call, hence pass 0
-        payLiquidatableLoan(tokenId, loanLiquidity, 0);
+        _liqLoan.writeDownAmt = payLiquidatableLoan(_liqLoan, 0);
 
-        // we don't call refundLiquidator after paying the loan because deposit of LP tokens before resulted in an
-        // LP token refund. This refund is the fee for the liquidator
+        onLoanUpdate(_loan, tokenId);
 
-        emit Liquidation(tokenId, uint128(_liqLoan.collateral), uint128(loanLiquidity), uint128(_liqLoan.writeDownAmt), uint128(_liqLoan.fee), TX_TYPE.LIQUIDATE);
+        emit Liquidation(tokenId, uint128(_liqLoan.collateral), uint128(loanLiquidity - _liqLoan.writeDownAmt), uint128(_liqLoan.writeDownAmt), uint128(_liqLoan.internalFee), TX_TYPE.LIQUIDATE);
 
         emit LoanUpdated(tokenId, tokensHeld, 0, 0, 0, 0, TX_TYPE.LIQUIDATE);
 
@@ -55,21 +52,16 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
         (LiquidatableLoan memory _liqLoan,) = getLiquidatableLoan(_loan, tokenId);
         loanLiquidity = _liqLoan.loanLiquidity;
 
-        // get share of liquidity from external collateral source deposited in to GammaPool
-        repayWithExternalCollateral(_loan, tokenId, _liqLoan.payableExternalLiquidity + _liqLoan.externalFee);
-
-        // In this case you send LPs and get more LPs back, what if you send LPs and get tokensHeld back
-        // Pay loan liquidity in full or partially with previously deposited CFMM LP tokens and refund remaining liquidated share of collateral to liquidator
-        // CFMM LP token principal paid will be calculated during function call, hence pass 0
-        // This will refund to liquidator the LP tokens from the CollateralManager
-        payLiquidatableLoan(tokenId, loanLiquidity, 0);
+        _liqLoan.writeDownAmt = payLiquidatableLoan(_liqLoan, 0);
 
         uint128[] memory tokensHeld;
-        (refund, tokensHeld) = refundLiquidator(_liqLoan.payableInternalLiquidity + _liqLoan.internalFee, _liqLoan.internalCollateral, _liqLoan.tokensHeld);
+        (refund, tokensHeld) = refundLiquidator(_liqLoan.payableInternalLiquidityPlusFee, _liqLoan.internalCollateral, _liqLoan.tokensHeld);
 
         _loan.tokensHeld = tokensHeld; // Update loan collateral
 
-        emit Liquidation(tokenId, uint128(_liqLoan.collateral), uint128(loanLiquidity), uint128(_liqLoan.writeDownAmt), uint128(_liqLoan.fee), TX_TYPE.LIQUIDATE_WITH_LP);
+        onLoanUpdate(_loan, tokenId);
+
+        emit Liquidation(tokenId, uint128(_liqLoan.collateral), uint128(loanLiquidity - _liqLoan.writeDownAmt), uint128(_liqLoan.writeDownAmt), uint128(_liqLoan.internalFee), TX_TYPE.LIQUIDATE_WITH_LP);
 
         emit LoanUpdated(tokenId, tokensHeld, 0, 0, 0, 0, TX_TYPE.LIQUIDATE_WITH_LP);
 

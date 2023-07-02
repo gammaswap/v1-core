@@ -3,7 +3,6 @@ pragma solidity >=0.8.0;
 
 import "../base/PoolViewer.sol";
 import "./TestGammaPool.sol";
-import "hardhat/console.sol";
 
 contract TestPoolViewer is PoolViewer {
 
@@ -18,7 +17,7 @@ contract TestPoolViewer is PoolViewer {
         _loans[0].liquidity = 10**18;
         _loans[0].refAddr = address(0);
         _loans[0].refFee = 0;
-        _loans[0].refTyp = 0;
+        _loans[0].refType = 0;
         _loans[0].tokensHeld = new uint128[](2);
         _loans[0].tokensHeld[0] = 10**18;
         _loans[0].tokensHeld[1] = 2*(10**18);
@@ -31,7 +30,7 @@ contract TestPoolViewer is PoolViewer {
         _loans[1].liquidity = 3*(10**18);
         _loans[1].refAddr = address(0);
         _loans[1].refFee = 0;
-        _loans[1].refTyp = 0;
+        _loans[1].refType = 0;
         _loans[1].tokensHeld = new uint128[](2);
         _loans[1].tokensHeld[0] = 0;
         _loans[1].tokensHeld[1] = 2*(10**18);

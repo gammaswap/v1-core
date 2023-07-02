@@ -4,105 +4,84 @@ pragma solidity >=0.8.4;
 import "../interfaces/observer/ILoanObserver.sol";
 import "../interfaces/observer/ILoanObserverStore.sol";
 
-/// @title Collateral Reference Store contract
+/// @title Collateral Tracker Store contract
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Stores Collateral Manager (CM) addresses that can be used by GammaPools (GP) mapped to reference ids.
 /// @notice The mapping can be many to many, depending on the implementation of the CM but preferably one GP to many CMs
 /// @notice Collateral References can use a discount to lower the origination fees charged by GammaPools
 abstract contract AbstractLoanObserverStore is ILoanObserverStore {
 
-    /*So if we set the collateralManager, can it be set to discount only? Should be able to right?
-    we want to avoid refId being and address in one pool and not being an address in another pool
-    The collateralRef should be able to do 4 things
-        -apply origination fee discounts with/without collateralRef address
-        -apply origination fee referrals/rebates with/without collateralRef address
-        -handle rewards program through additional collateral (i.e. track outstanding loan balance)
-        -vault strategies (loan insurance, Hedged LPing, etc.)
-        -permissioned to a specific address
-        *Referrals are performed by human users (not desirable), so they have their own way (doesn't auto stake or use any other logic)
-            -refAddress: receiver of referral
-            -discount: % of orig fee sent to referrer
-            -auth: PM
-        *Discounts:
-            -refAddress: 0
-            -discount: % of orig fee
-            -auth: PM (handles NFT, etc.)
-        *Vaults/Apps/AutoStaking:
-            -refAddress: collMgr holding the collateral / collMgr issuing additional tokens (will track balance as it is repaid)
-            -discount: % applied to this collMgr
-            -auth: PM
-        *This can tell us about how the loan was closed but if it was partially closed, it won't be useful
-    */
-
-    struct ExternalReference {
-        address refAddr;
+    struct LoanObserver {
+        address refAddr; // address of observer
         uint16 refFee; // in basis points
-        uint8 refTyp; // 0 = not set, 1 = discount, 2 = referral (has addr), 3 = app (has addr, collMgr, can have discount)
-        bool active;
+        uint8 refTyp; // 0 = not set, 1 = discount only (null observer), 2 = observer does not track collateral (has addr), 3 = observer tracks collateral (has addr, collMgr, can have discount)
+        bool active; // if true loans can be observed by observer
         bool restricted; // If restricted, look up permissioned address, the auth check happens here
     }
 
-    mapping(uint256 => ExternalReference) references;
-    mapping(uint256 => mapping(address => bool)) poolReferences;
-    mapping(uint256 => mapping(address => bool)) allowed; // allowed addresses
+    mapping(uint256 => LoanObserver) observers;
+    mapping(uint256 => mapping(address => bool)) isPoolObserved;
+    mapping(uint256 => mapping(address => bool)) allowedToBeObserved; // allowed addresses to create observed loans
 
-    /// @dev Get owner of CollateralReferenceStore contract to perform permissioned transactions
-    function _collateralReferenceStoreOwner() internal virtual view returns(address);
+    /// @dev Get owner of LoanObserverStoreOwner contract to perform permissioned transactions
+    function _loanObserverStoreOwner() internal virtual view returns(address);
 
-    /// @dev See {ICollateralReferenceStore.-addExternalReference};
-    function setExternalReference(uint256 refId, address refAddr, uint16 refFee, uint8 refTyp, bool active, bool restricted) external override virtual {
+    /// @dev See {ILoanObserverStore.-setLoanObserver};
+    function setLoanObserver(uint256 refId, address refAddr, uint16 refFee, uint8 refTyp, bool active, bool restricted) external override virtual {
+        require(msg.sender == _loanObserverStoreOwner(), "FORBIDDEN");
         require(refTyp > 0 && refTyp < 4, "INVALID_TYPE");
 
-        ExternalReference storage exRef = references[refId];
+        LoanObserver storage exRef = observers[refId];
         if(exRef.refTyp == 0) {
             if(refTyp == 1) {
-                references[refId] = ExternalReference({ refAddr: address(0), refFee: refFee, refTyp: refTyp, active: active, restricted: restricted });
+                observers[refId] = LoanObserver({ refAddr: address(0), refFee: refFee, refTyp: refTyp, active: active, restricted: restricted });
             } else if(refTyp == 2 || refTyp == 3) {
                 require(refAddr != address(0), "ZERO_ADDRESS");
                 require(refTyp < 3 || ILoanObserver(refAddr).refId() == refId, "REF_ID");
-                references[refId] = ExternalReference({ refAddr: refAddr, refFee: refFee, refTyp: refTyp, active: active, restricted: restricted });
+                observers[refId] = LoanObserver({ refAddr: refAddr, refFee: refFee, refTyp: refTyp, active: active, restricted: restricted });
             }
-        } else { // refId, refAddr, and refTyp do not change
+        } else { // refId, refAddr, and refType do not change
             exRef.refFee = refFee;
             exRef.active = active;
             exRef.restricted = restricted;
         }
     }
 
-    /// @dev See {ICollateralReferenceStore.-setAllowedAddress};
+    /// @dev See {ILoanObserverStore.-setAllowedAddress};
     function setAllowedAddress(uint256 refId, address addr, bool isAllowed) external override virtual {
-        allowed[refId][addr] = isAllowed;
+        require(msg.sender == _loanObserverStoreOwner(), "FORBIDDEN");
+        allowedToBeObserved[refId][addr] = isAllowed;
     }
 
-    /// @dev See {ICollateralReferenceStore.-setExternalReference};
-    function unsetPoolExternalReference(uint256 refId, address pool) external override virtual {
-        require(msg.sender == _collateralReferenceStoreOwner(), "FORBIDDEN");
-        poolReferences[refId][pool] = false;
+    /// @dev See {ILoanObserverStore.-unsetPoolObserved};
+    function unsetPoolObserved(uint256 refId, address pool) external override virtual {
+        require(msg.sender == _loanObserverStoreOwner(), "FORBIDDEN");
+        isPoolObserved[refId][pool] = false;
     }
 
-    /// @dev See {ICollateralReferenceStore.-setPoolExternalReference};
-    function setPoolExternalReference(uint256 refId, address pool) external override virtual {
-        require(msg.sender == _collateralReferenceStoreOwner(), "FORBIDDEN");
+    /// @dev See {ILoanObserverStore.-setPoolObserved};
+    function setPoolObserved(uint256 refId, address pool) external override virtual {
+        require(msg.sender == _loanObserverStoreOwner(), "FORBIDDEN");
         require(pool != address(0), "ZERO_ADDRESS");
         require(refId > 0, "REF_ID");
 
-        ExternalReference storage ref = references[refId];
+        LoanObserver storage ref = observers[refId];
 
         require(ref.refTyp < 3 || ILoanObserver(ref.refAddr).validate(pool), "INVALID_POOL") ;
 
-        poolReferences[refId][pool] = true;
+        isPoolObserved[refId][pool] = true;
     }
 
-    /// @dev See {ICollateralReferenceStore.-externalReference};
-    function externalReference(uint16 refId, address pool, address requester) external override virtual view returns(address, uint16, uint8) {
-        require(poolReferences[refId][pool], "NOT_SET");
+    /// @dev See {ILoanObserverStore.-getLoanObserver};
+    function getLoanObserver(uint16 refId, address pool, address requester) external override virtual view returns(address, uint16, uint8) {
+        require(isPoolObserved[refId][pool], "NOT_SET");
 
-        ExternalReference memory exRef = references[refId];
+        LoanObserver memory exRef = observers[refId];
         if(!exRef.active) {
             return(address(0), 0, 0);
         }
 
-        require(!exRef.restricted || allowed[refId][requester], "FORBIDDEN");
+        require(!exRef.restricted || allowedToBeObserved[refId][requester], "FORBIDDEN");
 
         return(exRef.refAddr, exRef.refFee, exRef.refTyp);
     }

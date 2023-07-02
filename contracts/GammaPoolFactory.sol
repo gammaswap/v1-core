@@ -109,7 +109,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         for(uint256 i = 0; i < _tokens.length;) {
             _decimals[i] = GammaSwapLibrary.decimals(_tokens[i]);
             unchecked {
-                i++;
+                ++i;
             }
         }
     }
@@ -183,8 +183,8 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
             for(uint256 i = _start; i <= _end;) {
                 _pools[k] = allPools[i];
                 unchecked {
-                    k++;
-                    i++;
+                    ++k;
+                    ++i;
                 }
             }
         }
@@ -200,13 +200,13 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         return _rateParamsStoreOwner();
     }
 
-    /// @dev See {AbstractRateParamsStore.-_collateralReferenceStoreOwner};
-    function _collateralReferenceStoreOwner() internal override virtual view returns(address) {
+    /// @dev See {AbstractLoanObserverStore.-_loanObserverStoreOwner};
+    function _loanObserverStoreOwner() internal override virtual view returns(address) {
         return owner;
     }
 
     /// @dev Return collateral reference store owner
-    function collateralReferenceStoreOwner() external virtual view returns(address) {
-        return _collateralReferenceStoreOwner();
+    function loanObserverStoreOwner() external virtual view returns(address) {
+        return _loanObserverStoreOwner();
     }
 }

@@ -166,8 +166,8 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(s.BORROWED_INVARIANT, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
     }
 
-    function testRefundOverPayment(uint256 loanLiquidity, uint256 lpDeposit) external virtual {
-        (loanLiquidity, lpDeposit) = refundOverPayment(loanLiquidity, lpDeposit, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
+    function testRefundOverPayment(uint256 loanLiquidity, uint256 lpDeposit, bool fullPayment) external virtual {
+        (loanLiquidity, lpDeposit) = calcDeposit(loanLiquidity, s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LP_TOKEN_BALANCE, fullPayment);
         emit RefundOverPayment(loanLiquidity, lpDeposit);
     }
 

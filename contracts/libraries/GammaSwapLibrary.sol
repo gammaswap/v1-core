@@ -116,7 +116,7 @@ library GammaSwapLibrary {
         return account.code.length > 0;
     }
 
-    function convertUint128ToUint256Array(uint128[] memory arr) internal view returns(uint256[] memory res) {
+    function convertUint128ToUint256Array(uint128[] memory arr) internal pure returns(uint256[] memory res) {
         res = new uint256[](arr.length);
         for(uint256 i = 0; i < arr.length;) {
             res[i] = uint256(arr[i]);

@@ -18,7 +18,6 @@ abstract contract ExternalRebalanceStrategy is IExternalRebalanceStrategy, BaseE
     function _rebalanceExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock virtual returns(uint256 loanLiquidity, uint128[] memory tokensHeld) {
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        if(_loan.refAddr != address(0) && _loan.refTyp == 3) revert ExternalCollateralRef();
 
         // Update liquidity debt to include accrued interest since last update
         loanLiquidity = updateLoan(_loan);
@@ -36,7 +35,7 @@ abstract contract ExternalRebalanceStrategy is IExternalRebalanceStrategy, BaseE
         }
 
         // Check that loan is not undercollateralized after external swap
-        uint256 collateral = calcInvariant(_cfmm, tokensHeld);
+        uint256 collateral = calcInvariant(_cfmm, tokensHeld) + onLoanUpdate(_loan, tokenId);
         checkMargin(collateral, loanLiquidity);
 
         emit ExternalSwap(tokenId, amounts, lpTokens, uint128(liquiditySwapped), TX_TYPE.EXTERNAL_REBALANCE);

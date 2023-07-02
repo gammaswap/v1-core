@@ -63,12 +63,12 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST + lpTokensPlusOrigFee;
 
         // Update loan's total liquidity debt and principal amounts
-        uint256 loanLiquidity = _loan.liquidity;
-        _loan.px = updateLoanPrice(liquidityBorrowed, getCurrentCFMMPrice(), loanLiquidity, _loan.px);
-        liquidity = loanLiquidity + liquidityBorrowed;
-        _loan.initLiquidity = _loan.initLiquidity + uint128(liquidityBorrowed);
-        _loan.lpTokens = _loan.lpTokens + lpTokens;
+        uint256 initLiquidity = _loan.initLiquidity;
+        _loan.px = updateLoanPrice(liquidityBorrowed, getCurrentCFMMPrice(), initLiquidity, _loan.px);
+        liquidity = _loan.liquidity + liquidityBorrowed;
         _loan.liquidity = uint128(liquidity);
+        _loan.initLiquidity = uint128(initLiquidity + liquidityBorrowed);
+        _loan.lpTokens = _loan.lpTokens + lpTokens;
     }
 
     /// @return currPrice - calculates and gets current price at CFMM

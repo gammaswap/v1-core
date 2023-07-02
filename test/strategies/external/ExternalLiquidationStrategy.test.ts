@@ -1133,7 +1133,7 @@ describe("ExternalLiquidationStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWithCustomError(strategy, "NoLiquidityProvided");
+      ).to.be.revertedWithCustomError(strategy, "InsufficientDeposit");
     });
 
     it("Deposit LP tokens, withdrew tokenA, NotEnoughCollateral", async function () {
@@ -1289,7 +1289,7 @@ describe("ExternalLiquidationStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWithCustomError(strategy, "NoLiquidityProvided");
+      ).to.be.revertedWithCustomError(strategy, "InsufficientDeposit");
     });
 
     it("Deposit LP tokens, withdrew both tokens, negative LP token change", async function () {

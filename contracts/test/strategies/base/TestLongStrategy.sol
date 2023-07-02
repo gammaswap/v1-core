@@ -12,6 +12,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
     using LibStorage for LibStorage.Storage;
 
     event LoanCreated(address indexed caller, uint256 tokenId);
+    event LiquidityAndDeltas(uint256 liquidity, uint256 delta0, uint256 delta1, uint256 deltaLen);
     event AmountsWithFees(uint256[] amounts);
     uint80 public borrowRate = 1e18;
     uint24 public origFee = 0;
@@ -328,13 +329,16 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         return false;
     }
 
-    function testUpdatePayableLoan(uint256 tokenId, uint256 payLiquidity) external virtual {
+    function testUpdatePayableLoan(uint256 tokenId, uint256 payLiquidity, uint256[] calldata ratio) external virtual {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        updatePayableLoan(_loan, payLiquidity);
+        (uint256 loanLiquidity, int256[] memory deltas) = updatePayableLoan(_loan, payLiquidity, ratio);
+        uint256 delta0 = deltas.length > 0 ? uint256(deltas[0]) : 0;
+        uint256 delta1 = deltas.length > 1 ? uint256(deltas[1]) : 0;
+        emit LiquidityAndDeltas(loanLiquidity, delta0, delta1, deltas.length);
     }
 
     function _calcMaxCollateral(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
-        return calcInvariant(address(0), tokensHeld);
+        return calcInvariant(address(0), tokensHeld) + (calcInvariant(address(0), tokensHeld) / 2);
     }
 
     function _calcDeltasForMaxLP(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(int256[] memory deltas) {
@@ -346,13 +350,9 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
     function _calcDeltasToCloseKeepRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256[] memory ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
         deltas[0] = 0;
-        deltas[1] = 100;
+        deltas[1] = 0;
     }
 
-    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external override returns(uint256 liquidityPaid, uint256[] memory amounts){
-        amounts = new uint256[](2);
-        amounts[0] = ratio[0];
-        amounts[1] = ratio[1];
-        liquidityPaid = liquidity;
+    function _repayLiquidityWithLP(uint256 tokenId, uint256 payLiquidity, uint256 collateralId, address to) external virtual override returns(uint256 liquidityPaid) {
     }
 }

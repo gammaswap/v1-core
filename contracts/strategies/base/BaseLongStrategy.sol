@@ -60,22 +60,16 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
         return discount > origFee ? 0 : (origFee - discount);
     }
 
-    function getExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual view returns(uint256 externalCollateral) {
-        if(_loan.refAddr != address(0) && _loan.refTyp == 3) {
-            externalCollateral = ILoanObserver(_loan.refAddr).getCollateral(address(this), tokenId);
+    function onLoanUpdate(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual returns(uint256 externalCollateral) {
+        uint256 refType = _loan.refType;
+        address refAddr = _loan.refAddr;
+        uint256 collateral = 0;
+        if(refAddr != address(0) && refType > 1) {
+            collateral = ILoanObserver(refAddr).onLoanUpdate(address(this), tokenId,
+                abi.encode(ILoanObserver.LoanObserved({ id: _loan.id, rateIndex: _loan.rateIndex, initLiquidity: _loan.initLiquidity,
+                liquidity: _loan.liquidity, lpTokens: _loan.lpTokens, tokensHeld: _loan.tokensHeld, px: _loan.px})));
         }
-    }
-
-    function getMaxExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual view returns(uint256 externalCollateral) {
-        if(_loan.refAddr != address(0) && _loan.refTyp == 3) {
-            externalCollateral = ILoanObserver(_loan.refAddr).getMaxCollateral(address(this), tokenId);
-        }
-    }
-
-    function repayWithExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId, uint256 liquidity) internal virtual returns(uint256 externalLiquidity) {
-        if(_loan.refAddr != address(0) && _loan.refTyp == 3) {
-            externalLiquidity = ILoanObserver(_loan.refAddr).payLiquidity(address(this), tokenId, liquidity, address(this));
-        }
+        externalCollateral = refType == 3 ? collateral : 0;
     }
 
     /// @dev Get `loan` from `tokenId` if it exists

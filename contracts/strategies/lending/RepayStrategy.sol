@@ -65,44 +65,44 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
     /// @notice in such a situation a liquidator would not have any incentive to liquidate and write down the debt
     /// @param _loan - loan to update liquidity debt
     /// @param payLiquidity - amount of liquidity to pay
+    /// @param ratio - amount of liquidity to pay
     /// @return loanLiquidity - updated liquidity debt of loan, including debt write down
     /// @return deltas - updated liquidity debt of loan, including debt write down
-    /// @return hasWriteDown - updated liquidity debt of loan, including debt write down
-    function updatePayableLoan(LibStorage.Loan storage _loan, uint256 payLiquidity) internal virtual
-        returns(uint256 loanLiquidity, int256[] memory deltas, bool hasWriteDown){
+    function updatePayableLoan(LibStorage.Loan storage _loan, uint256 payLiquidity, uint256[] memory ratio) internal virtual
+        returns(uint256 loanLiquidity, int256[] memory deltas) {
         loanLiquidity = updateLoan(_loan);
-        uint256 _loanLiquidity;
-        (_loanLiquidity, deltas) = writeDownPayableLoan(_loan, loanLiquidity, payLiquidity);
-        hasWriteDown = _loanLiquidity != loanLiquidity;
-        if(hasWriteDown) {
-            _loan.liquidity = uint128(_loanLiquidity);
-        }
-        loanLiquidity = _loanLiquidity;
+        payLiquidity = payLiquidity >= loanLiquidity ? loanLiquidity : payLiquidity;
+        deltas = _calcRebalanceCollateralDeltas(_loan, payLiquidity, ratio);
     }
 
     /// @dev Calculate written down liquidity debt if it needs to be written down
     /// @param _loan - loan to update liquidity debt
-    /// @param loanLiquidity - amount of liquidity debt
     /// @param payLiquidity - amount of liquidity to pay
-    /// @return _loanLiquidity - updated liquidity debt of loan, including debt write down
+    /// @param ratio - amount of liquidity to pay
     /// @return deltas - updated liquidity debt of loan, including debt write down
-    function writeDownPayableLoan(LibStorage.Loan storage _loan, uint256 loanLiquidity, uint256 payLiquidity) internal virtual
-        returns(uint256 _loanLiquidity, int256[] memory deltas) {
-        uint256 collateral = calcInvariant(s.cfmm, _loan.tokensHeld);
+    function _calcRebalanceCollateralDeltas(LibStorage.Loan storage _loan, uint256 payLiquidity, uint256[] memory ratio) internal virtual
+        returns(int256[] memory deltas) {
+        uint128[] memory tokensHeld = _loan.tokensHeld;
+        uint256 collateral = calcInvariant(s.cfmm, tokensHeld);
         uint256 _minBorrow = minBorrow();
         collateral = collateral > _minBorrow ? collateral - _minBorrow : 0;
-        _loanLiquidity = loanLiquidity;
-        if(_loanLiquidity > collateral) { // Undercollateralized so must pay in full
-            if(payLiquidity < _loanLiquidity && collateral > 0) revert BadDebt(); // only write down if paying in full
-            deltas = _calcDeltasForMaxLP(_loan.tokensHeld, s.CFMM_RESERVES);
-            collateral = _calcMaxCollateral(deltas, _loan.tokensHeld, s.CFMM_RESERVES);
+        if(payLiquidity > collateral) { // Not enough internal collateral
+            deltas = _calcDeltasForMaxLP(tokensHeld, s.CFMM_RESERVES);
+            collateral = _calcMaxCollateral(deltas, tokensHeld, s.CFMM_RESERVES);
             collateral = collateral > _minBorrow ? collateral - _minBorrow : 0;
-            (uint256 writeDownAmt,) = writeDown(collateral, _loanLiquidity); // also write down if collateral is 0
-            _loanLiquidity = (_loanLiquidity - writeDownAmt);
-            if(writeDownAmt == 0) {// no write down => maybe
-                deltas = new int256[](0);
+            if(collateral >= payLiquidity) { // use rebalanceToCloseKeepRatio logic
+                if(ratio.length == 0) {
+                    ratio = new uint256[](tokensHeld.length);
+                    for(uint256 i = 0; i < tokensHeld.length;) {
+                        ratio[i] = uint256(tokensHeld[i]);
+                        unchecked{
+                            ++i;
+                        }
+                    }
+                }
+                deltas = _calcDeltasToCloseKeepRatio(tokensHeld, s.CFMM_RESERVES, payLiquidity, ratio);
             }
-        } else {
+        } else {// use rebalanceToClose
             deltas = new int256[](0);
         }
     }
@@ -117,16 +117,25 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         (, deltas) = rebalanceCollateral(_loan, _calcDeltasToClose(collateral, s.CFMM_RESERVES, payLiquidity, collateralId - 1), s.CFMM_RESERVES);
     }
 
-    /// @dev See {IRepayStrategy-_repayLiquidityAndWithdraw}.
-    function _repayLiquidityAndWithdraw(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, uint256 collateralId, address to) external virtual override lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
+    struct RepayArgs {
+        uint256[] ratio;
+        uint256 collateralId;
+        address to;
+    }
+
+    /// @dev See {IRepayStrategy-_repayLiquidity}.
+    function _repayLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, uint256 collateralId, address to, uint256[] calldata ratio) external virtual lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
+        return _repayLiquidity(tokenId, payLiquidity, fees, RepayArgs({ collateralId: collateralId, to: to, ratio: ratio}));
+    }
+
+    function _repayLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, RepayArgs memory args) internal virtual returns(uint256 liquidityPaid, uint256[] memory amounts) {
         if(payLiquidity == 0) revert ZeroRepayLiquidity();
 
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        if(_loan.refAddr != address(0) && _loan.refTyp == 3) revert ExternalCollateralRef();
 
         // Update liquidity debt to include accrued interest since last update
-        (uint256 loanLiquidity, int256[] memory deltas,) = updatePayableLoan(_loan, payLiquidity);
+        (uint256 loanLiquidity, int256[] memory deltas) = updatePayableLoan(_loan, payLiquidity, args.ratio);
         // in the above function we should also get the internal and external liquidity we have available to pay
 
         uint128[] memory collateral;
@@ -137,25 +146,22 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
 
             if(deltas.length > 0) { // there's bad debt, so a write down happened, payLiquidity >= loanLiquidity is true
                 (collateral,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES); // rebalance collateral to deposit all of it.
-                collateralId = 0; // we will use up all the collateral, we won't get anything back
-                // we don't know the actual transfer fees of the loan, and we're going to deposit everything.
-                // so we have to write down the debt to zero here regardless
-                updateIndex();
-                amounts = GammaSwapLibrary.convertUint128ToUint256Array(collateral);
+                args.collateralId = 0; // we will use up all the collateral, we won't get anything back
+                amounts = GammaSwapLibrary.convertUint128ToUint256Array(collateral);// so we have to write down the debt to zero here regardless
             } else {
-                if(collateralId > 0) {
-                    // we have enough liquidity in the tokensHeld to make payment
-                    // here I would only be able to cover the collateral amount that I can cover, so I have to reduce loanLiquidity to what I can pay
-                    // and the rest is left to the externalCollateral
+                if(args.collateralId > 0) {
                     collateral = proRataCollateral(_loan.tokensHeld, liquidityToCalculate, loanLiquidity, fees); // discount fees because they will be added later
-                    collateral = remainingCollateral(collateral, _rebalanceCollateralToClose(_loan, collateral, collateralId, liquidityToCalculate));
-                    updateIndex();
+                    collateral = remainingCollateral(collateral, _rebalanceCollateralToClose(_loan, collateral, args.collateralId, liquidityToCalculate));
+                } else {
+                    rebalanceCollateral(_loan, _calcDeltasToCloseKeepRatio(_loan.tokensHeld, s.CFMM_RESERVES, liquidityToCalculate, args.ratio), s.CFMM_RESERVES);
                 }
-                amounts = addFees(calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate),fees);
+                amounts = addFees(calcTokensToRepay(getReserves(s.cfmm), liquidityToCalculate),fees);
             }
         }
+
         // Repay liquidity debt with reserve tokens, must check against available loan collateral
-        repayTokens(_loan, amounts);
+        repayTokens(_loan, amounts); // convert LP Tokens to liquidity to check how much got back
+        // with this strategy we don't request for payment, we assume collateral vault sent payment already
 
         // Update loan collateral after repayment
         uint128[] memory tokensHeld;
@@ -165,10 +171,14 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         uint256 remainingLiquidity;
         (liquidityPaid, remainingLiquidity) = payLoan(_loan, liquidityPaid, loanLiquidity);// don't want to do this twice
 
-        if(collateralId > 0 && to != address(0)) {
-            // withdraw, check margin
-            tokensHeld = withdrawCollateral(_loan, remainingLiquidity, 0, remainingCollateral(collateral, deltas), to);
+        bool isWithdrawal = args.collateralId > 0 && args.to != address(0);
+        if(isWithdrawal) {
+            tokensHeld = withdrawCollateral(_loan, remainingCollateral(collateral, deltas), args.to);
         }
+
+        checkCollateral(_loan, tokenId, tokensHeld, remainingLiquidity, isWithdrawal);
+
+        // we check here if debt > 0, then we should be collateralized or collateral should be zero. If collateral not zero, then revert. Ask for full payment
 
         // Do not check for loan undercollateralization because repaying debt always improves pool debt health
 
@@ -184,16 +194,14 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
 
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        if(_loan.refAddr != address(0) && _loan.refTyp == 3) revert ExternalCollateralRef();
 
         // Update liquidity debt to include accrued interest since last update
-        (uint256 loanLiquidity,,bool hasWriteDown) = updatePayableLoan(_loan, payLiquidity);
+        (uint256 loanLiquidity,) = updatePayableLoan(_loan, payLiquidity, new uint256[](0));
         liquidityPaid = payLiquidity >= loanLiquidity ? loanLiquidity : payLiquidity;
 
         // Subtract loan liquidity repaid from total liquidity debt in pool and loan
         uint256 remainingLiquidity;
         (liquidityPaid, remainingLiquidity) = payLoan(_loan, liquidityPaid, loanLiquidity);
-        if(hasWriteDown && remainingLiquidity > 0) revert BadDebt();
 
         // Check pro rata collateral that is now free to withdraw
         uint128[] memory tokensHeld = _loan.tokensHeld;
@@ -208,8 +216,10 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                 tokensHeld = remainingCollateral(tokensHeld, deltas);
             }
             // Withdraw, check margin
-            tokensHeld = withdrawCollateral(_loan, remainingLiquidity, 0, tokensHeld, to);
+            tokensHeld = withdrawCollateral(_loan, tokensHeld, to);
         }
+
+        checkCollateral(_loan, tokenId, tokensHeld, remainingLiquidity, to!=address(0));
         // If not withdrawing, do not check for loan undercollateralization because repaying debt always improves pool debt health
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(remainingLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.REPAY_LIQUIDITY_WITH_LP);
@@ -218,51 +228,19 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
             s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.REPAY_LIQUIDITY_WITH_LP);
     }
 
-    /// @dev See {IRepayStrategy-_repayLiquidity}.
-    function _repayLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, uint256[] calldata ratio) external virtual override lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
-        if(payLiquidity == 0) revert ZeroRepayLiquidity();
-
-        // Get loan for tokenId, revert if not loan creator
-        LibStorage.Loan storage _loan = _getLoan(tokenId);
-        if(_loan.refAddr != address(0) && _loan.refTyp == 3) revert ExternalCollateralRef();
-
-        // Update liquidity debt to include accrued interest since last update
-        (uint256 loanLiquidity, int256[] memory deltas,) = updatePayableLoan(_loan, payLiquidity);
-        // in the above function we should also get the internal and external liquidity we have available to pay
-
-        uint128[] memory tokensHeld;
-        {
-            // Cap liquidity repayment at total liquidity debt
-            uint256 liquidityToCalculate;
-            (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minBorrow()) : (payLiquidity, payLiquidity);
-
-            if(deltas.length > 0) { // there's bad debt, so a write down happened, payLiquidity >= loanLiquidity is true
-                (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES); // rebalance collateral to deposit all of it.
-                // we don't know the actual transfer fees of the loan, and we're going to deposit everything.
-                // so we have to write down the debt to zero here regardless
-                updateIndex();
-                amounts = GammaSwapLibrary.convertUint128ToUint256Array(tokensHeld);
-            } else {
-                rebalanceCollateral(_loan, _calcDeltasToCloseKeepRatio(_loan.tokensHeld, s.CFMM_RESERVES, liquidityToCalculate, ratio), s.CFMM_RESERVES);
-                updateIndex();
-                amounts = addFees(calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate),fees);
-            }
+    function checkCollateral(LibStorage.Loan storage _loan, uint256 tokenId, uint128[] memory tokensHeld, uint256 remainingLiquidity, bool isWithdrawal) internal virtual {
+        uint256 loanCollateral = calcInvariant(s.cfmm, tokensHeld) + onLoanUpdate(_loan, tokenId);//this calls outside contract can affect market but it won't affect invariantCalc since it's happening after the fact
+        if(isWithdrawal) {
+            // Revert if collateral invariant is below threshold after withdrawal
+            checkMargin(loanCollateral, remainingLiquidity); // this makes it a requirement to pay in full if undercollateralized
+        } else if(loanCollateral == 0 && remainingLiquidity > 0) { //close everything else in the loan (loan is paid)
+            writeDown(0, remainingLiquidity);
+            remainingLiquidity = 0;
+            _loan.liquidity = 0;
+            _loan.initLiquidity = 0;
+            _loan.lpTokens = 0;
+            _loan.rateIndex = 0;
+            _loan.px = 0;
         }
-        // Repay liquidity debt with reserve tokens, must check against available loan collateral
-        repayTokens(_loan, amounts);
-
-        // Update loan collateral after repayment
-        (tokensHeld,) = updateCollateral(_loan);
-
-        // Subtract loan liquidity repaid from total liquidity debt in pool and loan
-        uint256 remainingLiquidity;
-        (liquidityPaid, remainingLiquidity) = payLoan(_loan, liquidityPaid, loanLiquidity);// don't want to do this twice
-
-        // Do not check for loan undercollateralization because repaying debt always improves pool debt health
-
-        emit LoanUpdated(tokenId, tokensHeld, uint128(remainingLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.REPAY_LIQUIDITY);
-
-        emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex,
-            s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.REPAY_LIQUIDITY);
     }
 }

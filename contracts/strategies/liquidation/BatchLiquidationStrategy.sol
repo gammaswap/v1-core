@@ -43,8 +43,13 @@ abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiq
         uint256 writeDownAmt = summedLoans.writeDownAmtTotal;
         if(writeDownAmt > 0) writeDown(0, writeDownAmt);
 
+        LiquidatableLoan memory _liqLoan;
+        _liqLoan.payableInternalLiquidity = totalLoanLiquidity;
+        _liqLoan.loanLiquidity = totalLoanLiquidity;
+
         // Pay total liquidity debts in full with previously deposited CFMM LP tokens and refund remaining collateral to liquidator
-        payLiquidatableLoan(0, totalLoanLiquidity, summedLoans.lpTokensTotal);
+        //payLiquidatableLoan(0, totalLoanLiquidity, summedLoans.lpTokensTotal);
+        payLiquidatableLoan(_liqLoan, summedLoans.lpTokensTotal);
 
         refundLiquidator(totalLoanLiquidity, totalLoanLiquidity, refund);
 
@@ -70,7 +75,7 @@ abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiq
             {
                 uint256 rateIndex = _loan.rateIndex;
                 // Skip loans already paid in full or that use external collateral
-                if(liquidity == 0 || rateIndex == 0 || (_loan.refAddr != address(0) && _loan.refTyp == 3)) {
+                if(liquidity == 0 || rateIndex == 0 || _loan.refAddr != address(0)) {
                     unchecked {
                         ++i;
                     }

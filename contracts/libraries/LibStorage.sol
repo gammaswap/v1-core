@@ -39,7 +39,7 @@ library LibStorage {
         /// @dev reference fee, typically used for loans using a collateral reference addresses
         uint16 refFee;
         /// @dev reference type, typically used for loans using a collateral reference addresses
-        uint8 refTyp;
+        uint8 refType;
     }
 
     /// @dev Storage struct used to track GammaPool's state variables
@@ -153,9 +153,9 @@ library LibStorage {
 
         address refAddr;
         uint16 refFee;
-        uint8 refTyp;
+        uint8 refType;
         if(refId > 0 ) {
-            (refAddr, refFee, refTyp) = ILoanObserverStore(self.factory).externalReference(refId, address(this), msg.sender);
+            (refAddr, refFee, refType) = ILoanObserverStore(self.factory).getLoanObserver(refId, address(this), msg.sender);
         }
 
         // instantiate Loan struct and store it mapped to _tokenId
@@ -170,7 +170,7 @@ library LibStorage {
             px: 0,
             refAddr: refAddr,
             refFee: refFee,
-            refTyp: refTyp
+            refType: refType
         });
 
         self.tokenIds.push(_tokenId);
