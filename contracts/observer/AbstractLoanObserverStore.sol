@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../interfaces/observer/ILoanObserver.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import "../interfaces/observer/ILoanObserverStore.sol";
+import "../interfaces/observer/ILoanObserver.sol";
+import "../interfaces/observer/ICollateralManager.sol";
 
 /// @title Collateral Tracker Store contract
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
@@ -23,6 +26,9 @@ abstract contract AbstractLoanObserverStore is ILoanObserverStore {
     mapping(uint256 => mapping(address => bool)) isPoolObserved;
     mapping(uint256 => mapping(address => bool)) allowedToBeObserved; // allowed addresses to create observed loans
 
+    bytes4 private constant COLLATERAL_MANAGER_INTERFACE = type(ICollateralManager).interfaceId;
+    bytes4 private constant LOAN_OBSERVER_INTERFACE = type(ILoanObserver).interfaceId;
+
     /// @dev Get owner of LoanObserverStoreOwner contract to perform permissioned transactions
     function _loanObserverStoreOwner() internal virtual view returns(address);
 
@@ -37,7 +43,9 @@ abstract contract AbstractLoanObserverStore is ILoanObserverStore {
                 observers[refId] = LoanObserver({ refAddr: address(0), refFee: refFee, refTyp: refTyp, active: active, restricted: restricted });
             } else if(refTyp == 2 || refTyp == 3) {
                 require(refAddr != address(0), "ZERO_ADDRESS");
-                require(refTyp < 3 || ILoanObserver(refAddr).refId() == refId, "REF_ID");
+                require(ILoanObserver(refAddr).refId() == refId, "REF_ID");
+                require(IERC165(refAddr).supportsInterface(LOAN_OBSERVER_INTERFACE), "NOT_LOAN_OBSERVER");
+                require(refTyp != 3 || IERC165(refAddr).supportsInterface(COLLATERAL_MANAGER_INTERFACE), "NOT_COLLATERAL_MANAGER");
                 observers[refId] = LoanObserver({ refAddr: refAddr, refFee: refFee, refTyp: refTyp, active: active, restricted: restricted });
             }
         } else { // refId, refAddr, and refType do not change
@@ -47,10 +55,18 @@ abstract contract AbstractLoanObserverStore is ILoanObserverStore {
         }
     }
 
-    /// @dev See {ILoanObserverStore.-setAllowedAddress};
-    function setAllowedAddress(uint256 refId, address addr, bool isAllowed) external override virtual {
-        require(msg.sender == _loanObserverStoreOwner(), "FORBIDDEN");
-        allowedToBeObserved[refId][addr] = isAllowed;
+    /// @dev See {ILoanObserverStore.-getLoanObserver};
+    function getLoanObserver(uint16 refId, address pool, address requester) external override virtual view returns(address, uint16, uint8) {
+        require(isPoolObserved[refId][pool], "NOT_SET");
+
+        LoanObserver memory exRef = observers[refId];
+        if(!exRef.active) {
+            return(address(0), 0, 0);
+        }
+
+        require(!exRef.restricted || allowedToBeObserved[refId][requester], "FORBIDDEN");
+
+        return(exRef.refAddr, exRef.refFee, exRef.refTyp);
     }
 
     /// @dev See {ILoanObserverStore.-unsetPoolObserved};
@@ -67,22 +83,15 @@ abstract contract AbstractLoanObserverStore is ILoanObserverStore {
 
         LoanObserver storage ref = observers[refId];
 
-        require(ref.refTyp < 3 || ILoanObserver(ref.refAddr).validate(pool), "INVALID_POOL") ;
+        require(ref.refTyp < 2 || ILoanObserver(ref.refAddr).validate(pool), "INVALID_POOL") ;
 
         isPoolObserved[refId][pool] = true;
     }
 
-    /// @dev See {ILoanObserverStore.-getLoanObserver};
-    function getLoanObserver(uint16 refId, address pool, address requester) external override virtual view returns(address, uint16, uint8) {
-        require(isPoolObserved[refId][pool], "NOT_SET");
-
-        LoanObserver memory exRef = observers[refId];
-        if(!exRef.active) {
-            return(address(0), 0, 0);
-        }
-
-        require(!exRef.restricted || allowedToBeObserved[refId][requester], "FORBIDDEN");
-
-        return(exRef.refAddr, exRef.refFee, exRef.refTyp);
+    /// @dev See {ILoanObserverStore.-setAllowedAddress};
+    function setAllowedAddress(uint256 refId, address addr, bool isAllowed) external override virtual {
+        require(msg.sender == _loanObserverStoreOwner(), "FORBIDDEN");
+        allowedToBeObserved[refId][addr] = isAllowed;
     }
+
 }

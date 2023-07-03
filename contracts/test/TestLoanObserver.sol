@@ -12,7 +12,6 @@ contract TestLoanObserver is AbstractLoanObserver {
         return true;
     }
 
-    function _onLoanUpdate(address gammaPool, uint256 tokenId, LoanObserved memory loan) internal override virtual returns(uint256 collateral) {
-        return 0;
+    function _onLoanUpdate(address gammaPool, uint256 tokenId, LoanObserved memory loan) internal override virtual {
     }
 }

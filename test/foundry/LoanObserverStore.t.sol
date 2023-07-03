@@ -1,16 +1,17 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "../../contracts/interfaces/rates/storage/IRateParamsStore.sol";
-import "../../contracts/interfaces/rates/ILogDerivativeRateModel.sol";
+import "../../contracts/interfaces/observer/ILoanObserverStore.sol";
+import "../../contracts/interfaces/observer/ILoanObserver.sol";
 import "../../contracts/test/TestLoanObserverStore.sol";
-import "../../contracts/test/rates/TestLogDerivativeRateModel.sol";
+import "../../contracts/test/TestLoanObserver.sol";
 
 contract LoanObserverStoreTest is Test {
 
-    /*IRateParamsStore paramsStore;
-    ILogDerivativeRateModel rateModel;
+    /*ILoanObserverStore paramsStore;
+    ILoanObserver rateModel;
 
+    address factory;
     address owner;
     address addr1;
 
@@ -33,9 +34,15 @@ contract LoanObserverStoreTest is Test {
     function setUp() public {
         owner = address(this);
         addr1 = vm.addr(1);
+        factory = vm.addr(2);
         paramsStore = new TestLoanObserverStore(owner);
-        rateModel = new TestLogDerivativeRateModel(1,2,3);
-        TestLogDerivativeRateModel(address(rateModel)).setRateParamsStore(address(paramsStore));
+        rateModel = new TestLoanObserver(factory, 1, 2);
+    }
+
+    function testFailSetRateParams() public {
+        TestParams memory params = TestParams({ num1: 10, num2: 20, num3: 40 });
+        vm.prank(addr1);
+        paramsStore.setRateParams(address(rateModel), abi.encode(params), false);
     }
 
     function testFailSetRateParams() public {
@@ -93,5 +100,4 @@ contract LoanObserverStoreTest is Test {
         assertEq(factor, 20);
         assertEq(maxApy, 40);
     }/**/
-
 }

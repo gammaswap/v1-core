@@ -11,20 +11,19 @@ import "../interfaces/observer/ICollateralManager.sol";
 /// @notice onLoanUpdate function should perform GammaPool authentication every time it is called
 abstract contract AbstractCollateralManager is ICollateralManager, AbstractLoanObserver {
 
-    // TODO: Another question is, whether the CollateralManager will be ERC20? Give receipts of the collateral of a loan?
-    // No I don't think so, but it should be ERC721? Probably not either, but must have a way to register the loan so that it starts being tracked
+    // TODO: Should it be ERC721? probably not, but must have a way to register the loan so that we can deposit/withdraw collateral
 
     // TODO: Has to determine how to check whether CollateralManager has collateral support for specific GammaPool
     // This contract is supposed to serve many GammaPools
     /// @dev Set `factory`, and `refId`
     constructor(address _factory, uint16 _refId) AbstractLoanObserver(_factory, _refId, 3) {
+        _registerInterface(type(ICollateralManager).interfaceId);
     }
 
 
     /// @dev See {ICollateralManager.-getCollateral}
     function getCollateral(address gammaPool, uint256 tokenId) external virtual override view returns(uint256 collateral) {
-        // TODO: Here have some generic logic to figure out function to use to calculate collateral then use _getCollateral()
-        return 0;//_getCollateral(gammaPool, tokenId);
+        return _getCollateral(gammaPool, tokenId);
     }
 
     /// @dev See {ICollateralManager.-liquidateCollateral}

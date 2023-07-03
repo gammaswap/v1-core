@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+
 import "../interfaces/observer/ILoanObserver.sol";
 import "../interfaces/IGammaPool.sol";
 import "../libraries/AddressCalculator.sol";
@@ -10,7 +12,7 @@ import "../libraries/AddressCalculator.sol";
 /// @dev Abstract implementation of ILoanObserver interface, meant to be inherited by every LoanObserver implementation
 /// @dev There can be two types of loan observer implementation, type 2 (does not track external collateral) and type 3 (tracks external collateral)
 /// @notice onLoanUpdate function should perform GammaPool authentication every time it is called
-abstract contract AbstractLoanObserver is ILoanObserver { // TODO: Should have an owner? Should factory be owner?
+abstract contract AbstractLoanObserver is ILoanObserver, ERC165Storage { // TODO: Should have an owner? Should factory be owner?
 
     /// @dev See {ILoanObserver-factory}
     address immutable public override factory;
@@ -26,6 +28,7 @@ abstract contract AbstractLoanObserver is ILoanObserver { // TODO: Should have a
         factory = _factory;
         refId = _refId;
         refType = _refType;
+        _registerInterface(type(ILoanObserver).interfaceId);
     }
 
     /// @dev Retrieves GammaPool address using cfmm address and protocolId
@@ -53,13 +56,24 @@ abstract contract AbstractLoanObserver is ILoanObserver { // TODO: Should have a
     /// @return validated - true if observer can work with `gammaPool`, false otherwise
     function _validate(address gammaPool) internal virtual view returns(bool);
 
+    /// @dev Get collateral of loan identified by tokenId
+    /// @param gammaPool - address of pool loan identified by tokenId belongs to
+    /// @param tokenId - unique identifier of loan in GammaPool
+    /// @return collateral - loan collateral held outside of GammaPool for loan identified by `tokenId`
+    function _getCollateral(address gammaPool, uint256 tokenId) internal virtual view returns(uint256 collateral) {
+        collateral = 0;
+    }
+
     /// @dev See {ILoanObserver.-onLoanUpdate}
     function onLoanUpdate(address cfmm, uint16 protocolId, uint256 tokenId, bytes memory data) external override virtual returns(uint256 collateral) {
         address gammaPool = getGammaPoolAddress(cfmm, protocolId);
         require(msg.sender == gammaPool, "FORBIDDEN");
 
+        // Never return collateral value
+        collateral = _getCollateral(gammaPool, tokenId);
+
         LoanObserved memory loan = abi.decode(data, (LoanObserved));
-        return _onLoanUpdate(gammaPool, tokenId, loan);
+        _onLoanUpdate(gammaPool, tokenId, loan);
     }
 
     /// @dev Update observer when a loan update occurs
@@ -67,7 +81,6 @@ abstract contract AbstractLoanObserver is ILoanObserver { // TODO: Should have a
     /// @param gammaPool - address of GammaPool loan identified by tokenId belongs to
     /// @param tokenId - unique identifier of loan in GammaPool
     /// @param loan - loan observed
-    /// @return collateral - loan collateral held outside of GammaPool (Only significant when the loan tracks collateral)
-    function _onLoanUpdate(address gammaPool, uint256 tokenId, LoanObserved memory loan) internal virtual returns(uint256 collateral);
+    function _onLoanUpdate(address gammaPool, uint256 tokenId, LoanObserved memory loan) internal virtual;
 
 }
