@@ -20,7 +20,6 @@ abstract contract AbstractCollateralManager is ICollateralManager, AbstractLoanO
         _registerInterface(type(ICollateralManager).interfaceId);
     }
 
-
     /// @dev See {ICollateralManager.-getCollateral}
     function getCollateral(address gammaPool, uint256 tokenId) external virtual override view returns(uint256 collateral) {
         return _getCollateral(gammaPool, tokenId);

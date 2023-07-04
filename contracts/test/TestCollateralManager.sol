@@ -6,7 +6,14 @@ import "../observer/AbstractCollateralManager.sol";
 
 contract TestCollateralManager is AbstractCollateralManager {
 
-    constructor(address _factory, uint16 _refId) AbstractCollateralManager(_factory, _refId) {
+    bool mValidate;
+
+    constructor(address _factory, uint16 _refId, bool validate_) AbstractCollateralManager(_factory, _refId) {
+        mValidate = validate_;
+    }
+
+    function validate(address gammaPool) external override(AbstractLoanObserver,ILoanObserver) virtual view returns(bool) {
+        return mValidate;
     }
 
     function _validate(address gammaPool) internal virtual override view returns(bool) {

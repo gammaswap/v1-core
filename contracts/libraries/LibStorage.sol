@@ -159,7 +159,7 @@ library LibStorage {
         uint16 refFee;
         uint8 refType;
         if(refId > 0 ) {
-            (refAddr, refFee, refType) = ILoanObserverStore(self.factory).getLoanObserver(refId, address(this), msg.sender);
+            (refAddr, refFee, refType) = ILoanObserverStore(self.factory).getPoolObserverByUser(refId, address(this), msg.sender);
         }
 
         // instantiate Loan struct and store it mapped to _tokenId
