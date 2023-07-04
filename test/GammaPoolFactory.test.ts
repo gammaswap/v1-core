@@ -630,6 +630,48 @@ describe("GammaPoolFactory", function () {
     });
   });
 
+  describe.only("Setting Loan Observer", function () {
+    it("Check Loan Observer Owner", async function () {
+      expect(await factory.loanObserverStoreOwner()).to.be.equal(
+        await factory.owner()
+      );
+    });
+    it("Allow to be Observed Errors", async function () {
+      await expect(
+        factory.connect(addr1).allowToBeObserved(1, addr2.address, false)
+      ).to.be.revertedWith("FORBIDDEN");
+
+      await expect(
+        factory.allowToBeObserved(1, addr2.address, false)
+      ).to.be.revertedWith("NOT_EXISTS");
+    });
+
+    it("Set Loan Observer Errors", async function () {
+      await expect(
+        factory
+          .connect(addr1)
+          .setLoanObserver(1, addr2.address, 1000, 1, true, false)
+      ).to.be.revertedWith("FORBIDDEN");
+
+      await expect(
+        factory.setLoanObserver(1, addr2.address, 1000, 1, true, false)
+      ).to.be.revertedWith("NOT_ZERO_ADDRESS");
+    });
+
+    it("Set Loan Observer", async function () {
+      await (
+        await factory.setLoanObserver(
+          1,
+          ethers.constants.AddressZero,
+          1000,
+          1,
+          true,
+          false
+        )
+      ).wait();
+    });
+  });
+
   describe("Transfer Ownership", function () {
     it("Forbidden transfer", async function () {
       expect(await factory.owner()).to.equal(owner.address);
