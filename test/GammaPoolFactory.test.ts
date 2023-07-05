@@ -630,7 +630,7 @@ describe("GammaPoolFactory", function () {
     });
   });
 
-  describe.only("Setting Loan Observer", function () {
+  describe("Setting Loan Observer", function () {
     it("Check Loan Observer Owner", async function () {
       expect(await factory.loanObserverStoreOwner()).to.be.equal(
         await factory.owner()
