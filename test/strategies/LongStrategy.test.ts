@@ -600,6 +600,8 @@ describe("LongStrategy", function () {
       expect(res0.unfundedAmounts.length).to.eq(2);
       expect(res0.unfundedAmounts[0]).to.eq(0);
       expect(res0.unfundedAmounts[1]).to.eq(0);
+      expect(res0._tokensHeld[0]).to.eq(0);
+      expect(res0._tokensHeld[1]).to.eq(0);
 
       const res1 = await strategy.testGetUnfundedAmounts(
         [101, 100],
@@ -609,6 +611,8 @@ describe("LongStrategy", function () {
       expect(res1.unfundedAmounts.length).to.eq(2);
       expect(res1.unfundedAmounts[0]).to.eq(101);
       expect(res1.unfundedAmounts[1]).to.eq(0);
+      expect(res1._tokensHeld[0]).to.eq(100);
+      expect(res1._tokensHeld[1]).to.eq(0);
 
       const res2 = await strategy.testGetUnfundedAmounts(
         [100, 101],
@@ -618,6 +622,8 @@ describe("LongStrategy", function () {
       expect(res2.unfundedAmounts.length).to.eq(2);
       expect(res2.unfundedAmounts[0]).to.eq(0);
       expect(res2.unfundedAmounts[1]).to.eq(101);
+      expect(res2._tokensHeld[0]).to.eq(0);
+      expect(res2._tokensHeld[1]).to.eq(100);
 
       const res3 = await strategy.testGetUnfundedAmounts(
         [101, 101],
@@ -627,24 +633,32 @@ describe("LongStrategy", function () {
       expect(res3.unfundedAmounts.length).to.eq(2);
       expect(res3.unfundedAmounts[0]).to.eq(101);
       expect(res3.unfundedAmounts[1]).to.eq(101);
+      expect(res3._tokensHeld[0]).to.eq(100);
+      expect(res3._tokensHeld[1]).to.eq(100);
 
       const res4 = await strategy.testGetUnfundedAmounts([99, 99], [100, 100]);
       expect(res4.hasUnfundedAmounts).to.eq(false);
       expect(res4.unfundedAmounts.length).to.eq(2);
       expect(res4.unfundedAmounts[0]).to.eq(0);
       expect(res4.unfundedAmounts[1]).to.eq(0);
+      expect(res4._tokensHeld[0]).to.eq(1);
+      expect(res4._tokensHeld[1]).to.eq(1);
 
       const res5 = await strategy.testGetUnfundedAmounts([101, 99], [100, 100]);
       expect(res5.hasUnfundedAmounts).to.eq(true);
       expect(res5.unfundedAmounts.length).to.eq(2);
       expect(res5.unfundedAmounts[0]).to.eq(101);
       expect(res5.unfundedAmounts[1]).to.eq(0);
+      expect(res5._tokensHeld[0]).to.eq(100);
+      expect(res5._tokensHeld[1]).to.eq(1);
 
       const res6 = await strategy.testGetUnfundedAmounts([99, 101], [100, 100]);
       expect(res6.hasUnfundedAmounts).to.eq(true);
       expect(res6.unfundedAmounts.length).to.eq(2);
       expect(res6.unfundedAmounts[0]).to.eq(0);
       expect(res6.unfundedAmounts[1]).to.eq(101);
+      expect(res6._tokensHeld[0]).to.eq(1);
+      expect(res6._tokensHeld[1]).to.eq(100);
     });
 
     it("Increase Collateral", async function () {

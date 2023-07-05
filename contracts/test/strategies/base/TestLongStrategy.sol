@@ -64,7 +64,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         return s.TOKEN_BALANCE;
     }
 
-    function testGetUnfundedAmounts(uint128[] memory amounts, uint128[] memory tokensHeld) external virtual view returns(bool hasUnfundedAmounts, uint128[] memory unfundedAmounts) {
+    function testGetUnfundedAmounts(uint128[] memory amounts, uint128[] memory tokensHeld) external virtual view returns(bool hasUnfundedAmounts, uint128[] memory unfundedAmounts, uint128[] memory _tokensHeld) {
         return getUnfundedAmounts(amounts, tokensHeld);
     }
 

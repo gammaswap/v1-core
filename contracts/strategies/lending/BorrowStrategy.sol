@@ -20,19 +20,23 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
     /// @param tokensHeld - collateral quantities in loan
     /// @return hasUnfundedAmounts - if true, we don't have enough collateral to withdraw for at least on token of the CFMM
     /// @return unfundedAmounts - amount requested to withdraw for which there isn't enough collateral to withdraw
-    function getUnfundedAmounts(uint128[] memory amounts, uint128[] memory tokensHeld) internal virtual view returns(bool hasUnfundedAmounts, uint128[] memory unfundedAmounts){
+    /// @return _tokensHeld - amount requested to withdraw for which there isn't enough collateral to withdraw
+    function getUnfundedAmounts(uint128[] memory amounts, uint128[] memory tokensHeld) internal virtual view returns(bool, uint128[] memory, uint128[] memory){
         uint256 len = tokensHeld.length;
-        unfundedAmounts = new uint128[](len);
-        hasUnfundedAmounts = false;
+        uint128[] memory unfundedAmounts = new uint128[](len);
+        bool hasUnfundedAmounts = false;
         for(uint256 i = 0; i < len;) {
             if(amounts[i] > tokensHeld[i]) { // if amount requested is higher than existing collateral
                 hasUnfundedAmounts = true; // we don't have enough collateral of at least one token to withdraw
                 unfundedAmounts[i] = amounts[i]; // amount we are requesting to withdraw for which there isn't enough collateral
+            } else {
+                tokensHeld[i] -= amounts[i];
             }
             unchecked {
                 ++i;
             }
         }
+        return(hasUnfundedAmounts, unfundedAmounts, tokensHeld);
     }
 
     /// @notice We do this because we may withdraw the collateral to the CFMM prior to requesting the reserves
@@ -84,7 +88,9 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
         uint256 loanLiquidity = updateLoan(_loan);
         if(ratio.length > 0) {
             tokensHeld = _loan.tokensHeld;
-            (bool hasUnfundedAmounts, uint128[] memory unfundedAmounts) = getUnfundedAmounts(amounts, tokensHeld);
+            bool hasUnfundedAmounts;
+            uint128[] memory unfundedAmounts;
+            (hasUnfundedAmounts, unfundedAmounts, tokensHeld) = getUnfundedAmounts(amounts, tokensHeld);
 
             if(!hasUnfundedAmounts) {
                 // Withdraw collateral tokens from loan
