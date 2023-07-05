@@ -63,10 +63,6 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
         return s.TOKEN_BALANCE;
     }
 
-    function testGetUnfundedAmounts(uint128[] memory amounts, uint128[] memory tokensHeld) external virtual view returns(bool hasUnfundedAmounts, uint128[] memory unfundedAmounts) {
-        return getUnfundedAmounts(amounts, tokensHeld);
-    }
-
     function testGetReserves(address to) external virtual view returns(uint128[] memory) {
         return _getReserves(to);
     }
