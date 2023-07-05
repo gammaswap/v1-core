@@ -101,7 +101,6 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
                 (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);
             } else {
                 // rebalance to match ratio after withdrawal
-                // TODO: Have to withdraw the funded amount from tokensHeld first (check with spreadsheet)
                 rebalanceCollateral(_loan, _calcDeltasForWithdrawal(unfundedAmounts, tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
                 // Withdraw collateral tokens from loan
                 tokensHeld = withdrawCollateral(_loan, amounts, to);
