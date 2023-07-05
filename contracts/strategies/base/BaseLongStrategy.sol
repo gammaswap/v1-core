@@ -2,7 +2,7 @@
 pragma solidity >=0.8.4;
 
 import "../../interfaces/strategies/base/ILongStrategy.sol";
-import "../../interfaces/ICollateralManager.sol";
+import "../../interfaces/observer/ILoanObserver.sol";
 import "./BaseStrategy.sol";
 
 /// @title Base Long Strategy abstract contract
@@ -60,22 +60,16 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
         return discount > origFee ? 0 : (origFee - discount);
     }
 
-    function getExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual view returns(uint256 externalCollateral) {
-        if(_loan.collateralRef != address(0)) {
-            externalCollateral = ICollateralManager(_loan.collateralRef).getCollateral(address(this), tokenId);
+    function onLoanUpdate(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual returns(uint256 externalCollateral) {
+        uint256 refType = _loan.refType;
+        address refAddr = _loan.refAddr;
+        uint256 collateral = 0;
+        if(refAddr != address(0) && refType > 1) {
+            collateral = ILoanObserver(refAddr).onLoanUpdate(s.cfmm, s.protocolId, tokenId,
+                abi.encode(ILoanObserver.LoanObserved({ id: _loan.id, rateIndex: _loan.rateIndex, initLiquidity: _loan.initLiquidity,
+                liquidity: _loan.liquidity, lpTokens: _loan.lpTokens, tokensHeld: _loan.tokensHeld, px: _loan.px})));
         }
-    }
-
-    function getMaxExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual view returns(uint256 externalCollateral) {
-        if(_loan.collateralRef != address(0)) {
-            externalCollateral = ICollateralManager(_loan.collateralRef).getMaxCollateral(address(this), tokenId);
-        }
-    }
-
-    function repayWithExternalCollateral(LibStorage.Loan storage _loan, uint256 tokenId, uint256 liquidity) internal virtual returns(uint256 externalLiquidity) {
-        if(_loan.collateralRef != address(0)) {
-            externalLiquidity = ICollateralManager(_loan.collateralRef).payLiquidity(address(this), tokenId, liquidity, address(this));
-        }
+        externalCollateral = refType == 3 ? collateral : 0;
     }
 
     /// @dev Get `loan` from `tokenId` if it exists

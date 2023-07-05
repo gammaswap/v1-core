@@ -8,11 +8,13 @@ describe("LongStrategy", function () {
   let TestERC20: any;
   let TestCFMM: any;
   let TestStrategy: any;
+  let TestStrategy2: any;
   let TestFactory: any;
   let tokenA: any;
   let tokenB: any;
   let cfmm: any;
   let strategy: any;
+  let strategy2: any;
   let factory: any;
   let owner: any;
   let addr1: any;
@@ -25,6 +27,7 @@ describe("LongStrategy", function () {
     TestERC20 = await ethers.getContractFactory("TestERC20");
     TestCFMM = await ethers.getContractFactory("TestCFMM");
     TestStrategy = await ethers.getContractFactory("TestLongStrategy");
+    TestStrategy2 = await ethers.getContractFactory("TestRepayStrategy");
     TestFactory = await ethers.getContractFactory("TestGammaPoolFactory2");
     [owner, addr1, addr2] = await ethers.getSigners();
 
@@ -42,6 +45,17 @@ describe("LongStrategy", function () {
     strategy = await TestStrategy.deploy();
     await (
       await strategy.initialize(
+        factory.address,
+        cfmm.address,
+        PROTOCOL_ID,
+        [tokenA.address, tokenB.address],
+        [18, 18]
+      )
+    ).wait();
+
+    strategy2 = await TestStrategy2.deploy();
+    await (
+      await strategy2.initialize(
         factory.address,
         cfmm.address,
         PROTOCOL_ID,
@@ -368,7 +382,7 @@ describe("LongStrategy", function () {
       expect(loan1.liquidity).to.gt(liquidity);
     });
 
-    it("Update Loan Liquidity for Repay, write down to 0", async function () {
+    it("Update Loan Liquidity for Repay, Deltas 0", async function () {
       // time passes by
       // mine 256 blocks
       await ethers.provider.send("hardhat_mine", ["0x100"]);
@@ -405,21 +419,36 @@ describe("LongStrategy", function () {
       );
       await (await strategy.setBorrowRate(ONE.mul(2))).wait();
       await (await strategy.setLoanLiquidity(tokenId, liquidity)).wait();
+      await (
+        await strategy.setHeldAmounts(tokenId, [
+          liquidity.mul(2),
+          liquidity.mul(2),
+        ])
+      ).wait();
       const loan1 = await strategy.getLoan(tokenId);
       expect(loan1.liquidity).to.eq(liquidity);
       expect(loan1.liquidity).gt(0);
+      expect(loan1.tokensHeld[0]).eq(liquidity.mul(2));
+      expect(loan1.tokensHeld[1]).eq(liquidity.mul(2));
 
       // time passes by
       // mine 256 blocks
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
-      await (await strategy.testUpdatePayableLoan(tokenId, liquidity)).wait();
+      const resp = await (
+        await strategy.testUpdatePayableLoan(tokenId, liquidity, [])
+      ).wait();
 
+      const evt = resp.events[0].args;
       const loan2 = await strategy.getLoan(tokenId);
-      expect(loan2.liquidity).to.eq(0);
+      expect(loan2.liquidity).to.gt(0);
+      expect(evt.liquidity).to.eq(loan2.liquidity);
+      expect(evt.delta0).to.eq(0);
+      expect(evt.delta1).to.eq(0);
+      expect(evt.deltaLen).to.eq(0);
     });
 
-    it("Update Loan Liquidity for Repay, write down to collateral", async function () {
+    it("Update Loan Liquidity for Repay, Deltas for Max Collateral", async function () {
       // time passes by
       // mine 256 blocks
       await ethers.provider.send("hardhat_mine", ["0x100"]);
@@ -469,16 +498,20 @@ describe("LongStrategy", function () {
       // mine 256 blocks
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
-      await (
-        await strategy.testUpdatePayableLoan(tokenId, liquidity.mul(2))
+      const resp = await (
+        await strategy.testUpdatePayableLoan(tokenId, liquidity.mul(2), [])
       ).wait();
 
+      const evt = resp.events[0].args;
       const loan2 = await strategy.getLoan(tokenId);
-      expect(loan2.liquidity).to.lt(loan1.liquidity);
-      expect(loan2.liquidity).to.eq(liquidity.div(2).sub(1000)); // 1000 is minBorrow
+      expect(loan2.liquidity).to.gt(0);
+      expect(evt.liquidity).to.eq(loan2.liquidity);
+      expect(evt.delta0).to.eq(0);
+      expect(evt.delta1).to.eq(100); // Deltas for Max LP
+      expect(evt.deltaLen).to.eq(2);
     });
 
-    it("Update Loan Liquidity for Repay, write down error BadDebt", async function () {
+    it("Update Loan Liquidity for Repay, Deltas to Close Keep Ratio", async function () {
       // time passes by
       // mine 256 blocks
       await ethers.provider.send("hardhat_mine", ["0x100"]);
@@ -517,80 +550,32 @@ describe("LongStrategy", function () {
       await (await strategy.setLoanLiquidity(tokenId, liquidity)).wait();
       await (
         await strategy.setHeldAmounts(tokenId, [
-          liquidity.div(2),
-          liquidity.div(2),
+          liquidity.mul(2).sub(liquidity.div(2)),
+          liquidity.mul(2).sub(liquidity.div(2)),
         ])
       ).wait();
       const loan1 = await strategy.getLoan(tokenId);
-      expect(loan1.tokensHeld[0]).to.equal(liquidity.div(2));
-      expect(loan1.tokensHeld[1]).to.equal(liquidity.div(2));
-      // time passes by
-      // mine 256 blocks
-      await ethers.provider.send("hardhat_mine", ["0x100"]);
-
-      await expect(
-        strategy.testUpdatePayableLoan(tokenId, liquidity)
-      ).to.be.revertedWithCustomError(strategy, "BadDebt");
-    });
-
-    it("Update Loan Liquidity for Repay, no write down", async function () {
-      // time passes by
-      // mine 256 blocks
-      await ethers.provider.send("hardhat_mine", ["0x100"]);
-
-      await (await strategy.testUpdateIndex()).wait();
-
-      // updateLoanLiquidity
-      const res = await (await strategy.createLoan()).wait();
-      expect(res.events[0].args.caller).to.equal(owner.address);
-      const tokenId = res.events[0].args.tokenId;
-
-      const ONE = BigNumber.from(10).pow(18);
-      const loan = await strategy.getLoan(tokenId);
-      expect(loan.id).to.equal(1);
-      expect(loan.poolId).to.equal(strategy.address);
-      expect(loan.tokensHeld.length).to.equal(2);
-      expect(loan.tokensHeld[0]).to.equal(0);
-      expect(loan.tokensHeld[1]).to.equal(0);
-      expect(loan.liquidity).to.equal(0);
-      expect(loan.lpTokens).to.equal(0);
-      const accFeeIndex = await strategy.getAccFeeIndex();
-      expect(loan.rateIndex).to.equal(accFeeIndex);
-
-      const liquidity = ONE.mul(100);
-
-      await await strategy.setLPTokenLoanBalance(
-        tokenId,
-        liquidity, // lpInvariant
-        liquidity, // lpTokenBalance
-        liquidity.mul(2), // borrowedInvariant
-        liquidity.mul(2), // lpTokens borrowed plus interest (accrued interest is 0)
-        liquidity.mul(3), // lastCFMMInvariant
-        liquidity.mul(3) // lastCFMMTotalSupply
+      expect(loan1.tokensHeld[0]).to.equal(
+        liquidity.mul(2).sub(liquidity.div(2))
       );
-      await (await strategy.setBorrowRate(ONE.mul(2))).wait();
-      await (await strategy.setLoanLiquidity(tokenId, liquidity)).wait();
-      const collateralTokenQty = liquidity.mul(2);
-      await (
-        await strategy.setHeldAmounts(tokenId, [
-          collateralTokenQty,
-          collateralTokenQty,
-        ])
-      ).wait();
-      const loan1 = await strategy.getLoan(tokenId);
-      expect(loan1.tokensHeld[0]).to.equal(collateralTokenQty);
-      expect(loan1.tokensHeld[1]).to.equal(collateralTokenQty);
+      expect(loan1.tokensHeld[1]).to.equal(
+        liquidity.mul(2).sub(liquidity.div(2))
+      );
       // time passes by
       // mine 256 blocks
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
-      await (
-        await strategy.testUpdatePayableLoan(tokenId, liquidity.mul(2))
+      const resp = await (
+        await strategy.testUpdatePayableLoan(tokenId, liquidity.mul(2), [])
       ).wait();
 
+      const evt = resp.events[0].args;
       const loan2 = await strategy.getLoan(tokenId);
-      expect(loan2.liquidity).gt(loan1.liquidity);
-      expect(loan2.liquidity).lt(collateralTokenQty.sub(1000)); // 1000 is minBorrow
+      expect(loan2.liquidity).to.gt(0);
+      expect(evt.liquidity).to.eq(loan2.liquidity);
+      expect(evt.delta0).to.eq(0);
+      expect(evt.delta1).to.eq(0); // Deltas for Close Keep Ratio
+      expect(evt.deltaLen).to.eq(2);
     });
   });
 
@@ -1849,32 +1834,35 @@ describe("LongStrategy", function () {
       await strategy._borrowLiquidity(tokenId, lpTokens, []);
 
       await expect(
-        strategy._repayLiquidityAndWithdraw(
+        strategy._repayLiquidity(
           tokenId,
           2,
           [],
           0,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          []
         )
       ).to.be.revertedWithCustomError(strategy, "MinBorrow");
 
       await expect(
-        strategy._repayLiquidityAndWithdraw(
+        strategy._repayLiquidity(
           tokenId,
           999,
           [],
           0,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          []
         )
       ).to.be.revertedWithCustomError(strategy, "MinBorrow");
 
       await (
-        await strategy._repayLiquidityAndWithdraw(
+        await strategy._repayLiquidity(
           tokenId,
           1000,
           [],
           0,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          []
         )
       ).wait();
     });
@@ -1935,12 +1923,13 @@ describe("LongStrategy", function () {
       expect(res1b.lpTokens).to.equal(loanLPTokens);
 
       await expect(
-        strategy._repayLiquidityAndWithdraw(
+        strategy._repayLiquidity(
           tokenId,
           loanLiquidity.mul(2),
           [],
           0,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          []
         )
       ).to.be.revertedWithPanic();
 
@@ -1948,13 +1937,15 @@ describe("LongStrategy", function () {
       await (await tokenB.transfer(strategy.address, amtB)).wait();
 
       await (await strategy._increaseCollateral(tokenId, [])).wait();
+
       await (
-        await strategy._repayLiquidityAndWithdraw(
+        await strategy._repayLiquidity(
           tokenId,
           loanLiquidity.mul(2),
           [],
           0,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          []
         )
       ).wait();
 
@@ -2026,12 +2017,13 @@ describe("LongStrategy", function () {
       expect(res1b.lpTokens).to.equal(loanLPTokens);
 
       const res = await (
-        await strategy._repayLiquidityAndWithdraw(
+        await strategy._repayLiquidity(
           tokenId,
           loanLiquidity.div(2),
           [],
           0,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          []
         )
       ).wait();
 
@@ -2137,12 +2129,13 @@ describe("LongStrategy", function () {
       await (await strategy.setMinBorrow(0)).wait();
 
       const res = await (
-        await strategy._repayLiquidityAndWithdraw(
+        await strategy._repayLiquidity(
           tokenId,
           loanLiquidity.mul(2),
           [],
           0,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          []
         )
       ).wait();
 
@@ -2218,12 +2211,13 @@ describe("LongStrategy", function () {
 
       // const beneficiary = "0x000000000000000000000000000000000000dEaD";
       const res = await (
-        await strategy._repayLiquidityAndWithdraw(
+        await strategy._repayLiquidity(
           tokenId,
           loanLiquidity,
           [],
           2,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          []
         )
       ).wait();
 
@@ -2343,12 +2337,13 @@ describe("LongStrategy", function () {
       await (await strategy.setMinBorrow(0)).wait();
 
       const res = await (
-        await strategy._repayLiquidityAndWithdraw(
+        await strategy._repayLiquidity(
           tokenId,
           loanLiquidity.mul(2),
           [1000, 0],
           0,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          []
         )
       ).wait();
 
@@ -2470,12 +2465,13 @@ describe("LongStrategy", function () {
       await (await strategy.setMinBorrow(0)).wait();
 
       const res = await (
-        await strategy._repayLiquidityAndWithdraw(
+        await strategy._repayLiquidity(
           tokenId,
           loanLiquidity.mul(2),
           [0, 1000],
           0,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          []
         )
       ).wait();
 
@@ -2589,12 +2585,13 @@ describe("LongStrategy", function () {
       await (await strategy.setMinBorrow(0)).wait();
 
       const res = await (
-        await strategy._repayLiquidityAndWithdraw(
+        await strategy._repayLiquidity(
           tokenId,
           loanLiquidity.mul(2),
           [1000, 2000],
           0,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          []
         )
       ).wait();
 
@@ -2657,6 +2654,7 @@ describe("LongStrategy", function () {
 
   describe("Repay Liquidity with LP", function () {
     it("Error Payment, Min Borrow", async function () {
+      strategy = strategy2;
       const ONE = BigNumber.from(10).pow(18);
       const startLiquidity = ONE.mul(800);
       const startLpTokens = ONE.mul(400);
@@ -2725,6 +2723,7 @@ describe("LongStrategy", function () {
     });
 
     it("Error Full Payment, MinBorrow", async function () {
+      strategy = strategy2;
       const ONE = BigNumber.from(10).pow(18);
 
       const res1 = await (await strategy.createLoan()).wait();
@@ -2816,6 +2815,7 @@ describe("LongStrategy", function () {
     });
 
     it("Partial Payment", async function () {
+      strategy = strategy2;
       const ONE = BigNumber.from(10).pow(18);
 
       const res1 = await (await strategy.createLoan()).wait();
@@ -2926,6 +2926,7 @@ describe("LongStrategy", function () {
     });
 
     it("Partial Payment, Withdraw", async function () {
+      strategy = strategy2;
       const ONE = BigNumber.from(10).pow(18);
 
       const res1 = await (await strategy.createLoan()).wait();
@@ -3036,6 +3037,7 @@ describe("LongStrategy", function () {
     });
 
     it("Full Payment", async function () {
+      strategy = strategy2;
       const ONE = BigNumber.from(10).pow(18);
 
       const res1 = await (await strategy.createLoan()).wait();
@@ -3144,6 +3146,7 @@ describe("LongStrategy", function () {
     });
 
     it("Full Payment, Withdraw", async function () {
+      strategy = strategy2;
       const ONE = BigNumber.from(10).pow(18);
 
       const res1 = await (await strategy.createLoan()).wait();

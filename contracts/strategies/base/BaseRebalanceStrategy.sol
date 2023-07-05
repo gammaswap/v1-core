@@ -81,12 +81,10 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
 
     /// @dev Withdraw loan collateral
     /// @param _loan - loan whose collateral will bee withdrawn
-    /// @param loanLiquidity - total liquidity debt of loan
-    /// @param externalCollateral - additional collateral at an external account (e.g. CollateralManager)
     /// @param amounts - amounts of collateral to withdraw
     /// @param to - address that will receive collateral withdrawn
     /// @return tokensHeld - remaining loan collateral after withdrawal
-    function withdrawCollateral(LibStorage.Loan storage _loan, uint256 loanLiquidity, uint256 externalCollateral, uint128[] memory amounts, address to) internal virtual returns(uint128[] memory tokensHeld) {
+    function withdrawCollateral(LibStorage.Loan storage _loan, uint128[] memory amounts, address to) internal virtual returns(uint128[] memory tokensHeld) {
         if(amounts.length != _loan.tokensHeld.length) revert InvalidAmountsLength();
 
         // Withdraw collateral tokens from loan
@@ -94,8 +92,5 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
 
         // Update loan collateral token amounts after withdrawal
         (tokensHeld,) = updateCollateral(_loan);
-
-        // Revert if collateral invariant is below threshold after withdrawal
-        checkMargin(calcInvariant(s.cfmm, tokensHeld) + externalCollateral, loanLiquidity);
     }
 }

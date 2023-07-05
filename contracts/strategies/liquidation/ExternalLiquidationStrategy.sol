@@ -24,25 +24,25 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, B
 
         uint256 loanLiquidity = _liqLoan.loanLiquidity;
         if(liquiditySwapped > loanLiquidity) {
-            loanLiquidity += calcExternalSwapFee(liquiditySwapped, loanLiquidity) / 2;
+            uint256 swapFee = calcExternalSwapFee(liquiditySwapped, loanLiquidity) / 2;
+            loanLiquidity += swapFee;
             _loan.liquidity = uint128(loanLiquidity);
+            _liqLoan.payableInternalLiquidity += swapFee;
+            _liqLoan.loanLiquidity = loanLiquidity;
         }
 
-        // get share of liquidity from external collateral source deposited in to GammaPool
-        repayWithExternalCollateral(_loan, tokenId, _liqLoan.payableExternalLiquidity + _liqLoan.externalFee);
-
-        // Pay loan liquidity in full with collateral amounts and refund remaining collateral to liquidator
-        // CFMM LP token principal paid will be calculated during function call, hence pass 0
-        payLiquidatableLoan(tokenId, loanLiquidity, 0); // so here we expect to pay in CFMM LP tokens the loanLiquidity amount
+        _liqLoan.writeDownAmt = payLiquidatableLoan(_liqLoan, 0);
 
         uint128[] memory refund;
-        (refund, _liqLoan.tokensHeld) = refundLiquidator(_liqLoan.payableInternalLiquidity + _liqLoan.internalFee, _liqLoan.internalCollateral, _liqLoan.tokensHeld);
+        (refund, _liqLoan.tokensHeld) = refundLiquidator(_liqLoan.payableInternalLiquidityPlusFee, _liqLoan.internalCollateral, _liqLoan.tokensHeld);
 
         _loan.tokensHeld = _liqLoan.tokensHeld; // Clear loan collateral
 
+        onLoanUpdate(_loan, tokenId);
+
         emit ExternalSwap(tokenId, amounts, lpTokens, uint128(liquiditySwapped), TX_TYPE.EXTERNAL_LIQUIDATION);
 
-        emit Liquidation(tokenId, uint128(_liqLoan.collateral), uint128(_liqLoan.loanLiquidity), uint128(_liqLoan.writeDownAmt), uint128(_liqLoan.fee), TX_TYPE.EXTERNAL_LIQUIDATION);
+        emit Liquidation(tokenId, uint128(_liqLoan.collateral), uint128(loanLiquidity - _liqLoan.writeDownAmt), uint128(_liqLoan.writeDownAmt), uint128(_liqLoan.internalFee), TX_TYPE.EXTERNAL_LIQUIDATION);
 
         emit LoanUpdated(tokenId, _liqLoan.tokensHeld, 0, 0, 0, 0, TX_TYPE.EXTERNAL_LIQUIDATION);
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "./TestGammaPool.sol";
@@ -10,7 +11,6 @@ contract TestRateModel is IRateModel {
     constructor(address _owner){
         owner = _owner;
     }
-
 
     function validateParameters(bytes calldata _data) external view returns(bool) {
         return true;

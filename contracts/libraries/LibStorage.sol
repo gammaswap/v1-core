@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
-import "../interfaces/ICollateralReferenceStore.sol";
+import "../interfaces/observer/ILoanObserverStore.sol";
 import "../interfaces/IGammaPoolFactory.sol";
 
 /// @title Library containing global storage variables for GammaPools according to App Storage pattern
@@ -34,10 +34,12 @@ library LibStorage {
         /// @dev price at which loan was opened
         uint256 px;
 
-        /// @dev address holding additional collateral information for the loan
-        address collateralRef;
-        /// @dev fee discount, typically used for loans using a collateral reference addresses
-        uint16 feeDiscount;
+        /// @dev reference address holding additional collateral information for the loan
+        address refAddr;
+        /// @dev reference fee, typically used for loans using a collateral reference addresses
+        uint16 refFee;
+        /// @dev reference type, typically used for loans using a collateral reference addresses
+        uint8 refType;
     }
 
     /// @dev Storage struct used to track GammaPool's state variables
@@ -46,8 +48,10 @@ library LibStorage {
         // 1x256 bits
         /// @dev factory - address of factory contract that instantiated this GammaPool
         address factory; // 160 bits
+        /// @dev Protocol id of the implementation contract for this GammaPool
+        uint16 protocolId; // 16 bits
         /// @dev unlocked - flag used in mutex implementation (1 = unlocked, 0 = locked). Initialized at 1
-        uint96 unlocked; // 96 bits
+        uint80 unlocked; // 80 bits
 
         //3x256 bits, LP Tokens
         /// @dev Quantity of CFMM's LP tokens deposited in GammaPool by liquidity providers
@@ -116,12 +120,14 @@ library LibStorage {
     /// @param self - pointer to storage variables (doesn't need to be passed)
     /// @param _factory - address of factory that created this GammaPool
     /// @param _cfmm - address of CFMM this GammaPool is for
+    /// @param _protocolId - protocol id of the implementation contract for this GammaPool
     /// @param _tokens - tokens of CFMM this GammaPool is for
     /// @param _decimals -decimals of the tokens of the CFMM the GammaPool is for, indices must match tokens array
-    function initialize(Storage storage self, address _factory, address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals) internal {
+    function initialize(Storage storage self, address _factory, address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) internal {
         if(self.factory != address(0)) revert Initialized();// cannot initialize twice
 
         self.factory = _factory;
+        self.protocolId = _protocolId;
         self.cfmm = _cfmm;
         self.tokens = _tokens;
         self.decimals = _decimals;
@@ -149,10 +155,11 @@ library LibStorage {
         // create unique tokenId to identify loan across all GammaPools. _tokenId is hash of GammaPool address, sender address, and loan counter
         _tokenId = uint256(keccak256(abi.encode(msg.sender, address(this), id)));
 
-        address collateralRef;
-        uint16 feeDiscount;
+        address refAddr;
+        uint16 refFee;
+        uint8 refType;
         if(refId > 0 ) {
-            (collateralRef, feeDiscount) = ICollateralReferenceStore(self.factory).externalReference(refId, msg.sender);
+            (refAddr, refFee, refType) = ILoanObserverStore(self.factory).getPoolObserverByUser(refId, address(this), msg.sender);
         }
 
         // instantiate Loan struct and store it mapped to _tokenId
@@ -165,8 +172,9 @@ library LibStorage {
             lpTokens: 0,
             tokensHeld: new uint128[](_tokenCount),
             px: 0,
-            collateralRef: collateralRef,
-            feeDiscount: feeDiscount
+            refAddr: refAddr,
+            refFee: refFee,
+            refType: refType
         });
 
         self.tokenIds.push(_tokenId);

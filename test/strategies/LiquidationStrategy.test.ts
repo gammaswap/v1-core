@@ -387,10 +387,15 @@ describe("LiquidationStrategy", function () {
       const stratBalance0 = await cfmm.balanceOf(liquidationStrategy.address);
       const ownerBalance0 = await cfmm.balanceOf(owner.address);
 
+      await (
+        await cfmm.transfer(liquidationStrategy.address, lpDeposit)
+      ).wait();
+
       const res1 = await (
         await liquidationStrategy.testRefundOverPayment(
           loanLiquidity,
-          lpDeposit
+          lpDeposit,
+          false
         )
       ).wait();
 
@@ -400,16 +405,23 @@ describe("LiquidationStrategy", function () {
 
       const stratBalance1 = await cfmm.balanceOf(liquidationStrategy.address);
       const ownerBalance1 = await cfmm.balanceOf(owner.address);
-      expect(stratBalance1).to.equal(stratBalance0);
-      expect(ownerBalance1).to.equal(ownerBalance0);
+      expect(stratBalance1).to.equal(stratBalance0.add(lpDeposit));
+      expect(ownerBalance1).to.equal(ownerBalance0.sub(lpDeposit));
+
+      await (await liquidationStrategy.updatePoolBalances()).wait();
 
       const lpDeposit1 = ONE.div(2);
       const expectedPayLiquidity1 = lpDeposit1.mul(2);
 
+      await (
+        await cfmm.transfer(liquidationStrategy.address, lpDeposit1)
+      ).wait();
+
       const res2 = await (
         await liquidationStrategy.testRefundOverPayment(
           loanLiquidity,
-          lpDeposit1
+          lpDeposit1,
+          false
         )
       ).wait();
 
@@ -419,8 +431,8 @@ describe("LiquidationStrategy", function () {
 
       const stratBalance2 = await cfmm.balanceOf(liquidationStrategy.address);
       const ownerBalance2 = await cfmm.balanceOf(owner.address);
-      expect(stratBalance2).to.equal(stratBalance0);
-      expect(ownerBalance2).to.equal(ownerBalance0);
+      expect(stratBalance2).to.equal(stratBalance1.add(lpDeposit1));
+      expect(ownerBalance2).to.equal(ownerBalance1.sub(lpDeposit1));
     });
 
     it("refund over payment, payLiquidity > loanLiquidity", async function () {
@@ -439,10 +451,15 @@ describe("LiquidationStrategy", function () {
       const stratBalance0 = await cfmm.balanceOf(liquidationStrategy.address);
       const ownerBalance0 = await cfmm.balanceOf(owner.address);
 
+      await (
+        await cfmm.transfer(liquidationStrategy.address, lpDepositChange)
+      ).wait();
+
       const res1 = await (
         await liquidationStrategy.testRefundOverPayment(
           loanLiquidity,
-          lpDeposit
+          lpDeposit,
+          true
         )
       ).wait();
 
@@ -452,8 +469,8 @@ describe("LiquidationStrategy", function () {
 
       const stratBalance1 = await cfmm.balanceOf(liquidationStrategy.address);
       const ownerBalance1 = await cfmm.balanceOf(owner.address);
-      expect(stratBalance1).to.equal(stratBalance0.sub(lpDepositChange));
-      expect(ownerBalance1).to.equal(ownerBalance0.add(lpDepositChange));
+      expect(stratBalance1).to.equal(stratBalance0.add(expectedLpDeposit));
+      expect(ownerBalance1).to.equal(ownerBalance0.sub(expectedLpDeposit));
     });
 
     it("refund liquidator, 25%", async function () {
@@ -924,7 +941,7 @@ describe("LiquidationStrategy", function () {
       ).to.be.revertedWithCustomError(liquidationStrategy, "LoanDoesNotExist");
     });
 
-    it("error NoLiquidityProvided", async function () {
+    it("error InsufficientDeposit", async function () {
       const lpTokens = ONE.mul(2);
       const amt0 = ONE.mul(1);
       const amt1 = ONE.mul(1);
@@ -942,7 +959,7 @@ describe("LiquidationStrategy", function () {
         liquidationStrategy._liquidateWithLP(tokenIds[0])
       ).to.be.revertedWithCustomError(
         liquidationStrategy,
-        "NoLiquidityProvided"
+        "InsufficientDeposit"
       );
     });
 
@@ -985,7 +1002,7 @@ describe("LiquidationStrategy", function () {
         liquidationStrategy._liquidateWithLP(tokenIds[0])
       ).to.be.revertedWithCustomError(
         liquidationStrategy,
-        "NotFullLiquidation"
+        "InsufficientDeposit"
       );
     });
 
@@ -1054,7 +1071,7 @@ describe("LiquidationStrategy", function () {
       ).wait();
 
       const collateral = sqrt(tokenAChange.mul(tokenBChange));
-      const fee = collateral.mul(250).div(10000);
+      const fee = loan0.liquidity.mul(250).div(10000);
       const debtPlusFee = loan0.liquidity.add(fee);
       const _tokenAChange = debtPlusFee.mul(tokenAChange).div(collateral);
       const _tokenBChange = debtPlusFee.mul(tokenBChange).div(collateral);
@@ -1137,7 +1154,7 @@ describe("LiquidationStrategy", function () {
       const refundGain = refundLiq.sub(payLiquidity);
       const refundGainPerc = refundGain.mul(ONE).div(payLiquidity);
       const expGainPerc = ONE.mul(5).div(200);
-      expect(refundGainPerc).gt(expGainPerc);
+      expect(refundGainPerc).eq(expGainPerc);
       expect(tokenAChange.mul(1)).to.equal(amt0.mul(5));
       expect(tokenBChange.mul(1)).to.equal(amt1.mul(5));
     });
@@ -1372,7 +1389,7 @@ describe("LiquidationStrategy", function () {
       ).wait();
 
       const collateral = sqrt(tokenAChange.mul(tokenBChange));
-      const fee = collateral.mul(250).div(10000);
+      const fee = loan0.liquidity.mul(250).div(10000);
       const debtPlusFee = loan0.liquidity.add(fee);
       const _tokenAChange = debtPlusFee.mul(tokenAChange).div(collateral);
       const _tokenBChange = debtPlusFee.mul(tokenBChange).div(collateral);
@@ -1454,7 +1471,7 @@ describe("LiquidationStrategy", function () {
       const refundGain = refundLiq.sub(payLiquidity);
       const refundGainPerc = refundGain.mul(ONE).div(payLiquidity);
       const expGainPerc = ONE.mul(5).div(200);
-      expect(refundGainPerc).gt(expGainPerc);
+      expect(refundGainPerc).eq(expGainPerc);
       expect(tokenAChange.mul(1)).to.equal(amt0.mul(5));
       expect(tokenBChange.mul(1)).to.equal(amt1.mul(5));
     });
@@ -1647,7 +1664,7 @@ describe("LiquidationStrategy", function () {
       ).to.be.revertedWithCustomError(liquidationStrategy, "NoLiquidityDebt");
     });
 
-    it("returns error NoLiquidityProvided", async function () {
+    it("returns error InsufficientDeposit", async function () {
       const lpTokens = ONE.mul(2);
       const amt0 = ONE.mul(1);
       const amt1 = ONE.mul(1);
@@ -1665,7 +1682,7 @@ describe("LiquidationStrategy", function () {
         liquidationStrategy._batchLiquidations(tokenIds)
       ).to.be.revertedWithCustomError(
         liquidationStrategy,
-        "NoLiquidityProvided"
+        "InsufficientDeposit"
       );
     });
 
@@ -2293,16 +2310,10 @@ describe("LiquidationStrategy", function () {
 
       // function _liquidate(uint256 tokenId, bool isRebalance, int256[] calldata deltas) external override lock virtual returns(uint256[] memory refund)
       await expect(
-        liquidationStrategy._liquidate(tokenIds[0], [], [])
+        liquidationStrategy._liquidate(tokenIds[0])
       ).to.be.revertedWithCustomError(liquidationStrategy, "HasMargin");
       await expect(
-        liquidationStrategy._liquidate(tokenIds[0], [1, 0], [])
-      ).to.be.revertedWithCustomError(liquidationStrategy, "HasMargin");
-      await expect(
-        liquidationStrategy._liquidate(tokenIds[0], [], [])
-      ).to.be.revertedWithCustomError(liquidationStrategy, "HasMargin");
-      await expect(
-        liquidationStrategy._liquidate(tokenIds[0], [1, 0], [])
+        liquidationStrategy._liquidate(tokenIds[0])
       ).to.be.revertedWithCustomError(liquidationStrategy, "HasMargin");
     });
 
@@ -2319,11 +2330,7 @@ describe("LiquidationStrategy", function () {
       );
 
       await expect(
-        liquidationStrategy._liquidate(
-          BigNumber.from(tokenIds[0]).add(1),
-          [1, 0],
-          []
-        )
+        liquidationStrategy._liquidate(BigNumber.from(tokenIds[0]).add(1))
       ).to.be.revertedWithCustomError(liquidationStrategy, "LoanDoesNotExist");
     });
   });

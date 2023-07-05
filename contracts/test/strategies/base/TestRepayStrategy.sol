@@ -24,7 +24,7 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
 
     function initialize(address _factory, address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) external virtual {
         protocolId = _protocolId;
-        s.initialize(_factory, _cfmm, _tokens, _decimals);
+        s.initialize(_factory, _cfmm, _protocolId, _tokens, _decimals);
     }
 
     function setMinBorrow(uint256 _newMinBorrow) external virtual {
@@ -328,9 +328,9 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
         return false;
     }
 
-    function testUpdatePayableLoan(uint256 tokenId, uint256 payLiquidity) external virtual {
+    function testUpdatePayableLoan(uint256 tokenId, uint256 payLiquidity, uint256[] calldata ratio) external virtual {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        updatePayableLoan(_loan, payLiquidity);
+        updatePayableLoan(_loan, payLiquidity, ratio);
     }
 
     function _calcMaxCollateral(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
@@ -349,6 +349,6 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
         deltas[1] = 100;
     }
 
-    function _repayLiquidityAndWithdraw(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external override returns(uint256 liquidityPaid, uint256[] memory amounts){
+    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to, uint256[] calldata ratio) external override returns(uint256 liquidityPaid, uint256[] memory amounts){
     }
 }

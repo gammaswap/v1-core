@@ -30,17 +30,18 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
                 unfundedAmounts[i] = amounts[i]; // amount we are requesting to withdraw for which there isn't enough collateral
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
     }
 
+    /// @notice We do this because we may withdraw the collateral to the CFMM prior to requesting the reserves
     /// @dev Ask for reserve quantities from CFMM if address that will receive withdrawn quantities is CFMM
     /// @param to - address that will receive withdrawn collateral quantities
     /// @return reserves - CFMM reserve quantities
     function _getReserves(address to) internal virtual view returns(uint128[] memory) {
         if(to == s.cfmm) {
-            return getReserves(s.cfmm);
+            return getReserves(to);
         }
         return s.CFMM_RESERVES;
     }
@@ -60,7 +61,9 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
         if(ratio.length > 0) {
             (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
             // Check that loan is not undercollateralized after swap
-            checkMargin(calcInvariant(s.cfmm, tokensHeld) + getExternalCollateral(_loan, tokenId), loanLiquidity);
+            checkMargin(calcInvariant(s.cfmm, tokensHeld) + onLoanUpdate(_loan, tokenId), loanLiquidity);
+        } else {
+            onLoanUpdate(_loan, tokenId);
         }
         // If not rebalanced, do not check for undercollateralization because adding collateral always improves loan health
 
@@ -79,31 +82,29 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
 
         // Update liquidity debt with accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
-        uint256 externalCollateral = getExternalCollateral(_loan, tokenId);
         if(ratio.length > 0) {
             tokensHeld = _loan.tokensHeld;
             (bool hasUnfundedAmounts, uint128[] memory unfundedAmounts) = getUnfundedAmounts(amounts, tokensHeld);
 
             if(!hasUnfundedAmounts) {
                 // Withdraw collateral tokens from loan
-                tokensHeld = withdrawCollateral(_loan, loanLiquidity, externalCollateral, amounts, to);
+                tokensHeld = withdrawCollateral(_loan, amounts, to);
 
                 // rebalance to ratio
                 uint128[] memory _reserves = _getReserves(to);
                 (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);
-
-                // Check that loan is not undercollateralized after swap
-                checkMargin(calcInvariant(s.cfmm, tokensHeld) + externalCollateral, loanLiquidity);
             } else {
                 // rebalance to match ratio after withdrawal
-                // TODO: Have to withdraw the funded amount from tokensHeld first
+                // TODO: Have to withdraw the funded amount from tokensHeld first (check with spreadsheet)
                 rebalanceCollateral(_loan, _calcDeltasForWithdrawal(unfundedAmounts, tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
                 // Withdraw collateral tokens from loan
-                tokensHeld = withdrawCollateral(_loan, loanLiquidity, externalCollateral, amounts, to);
+                tokensHeld = withdrawCollateral(_loan, amounts, to);
             }
         } else {
-            tokensHeld = withdrawCollateral(_loan, loanLiquidity, externalCollateral, amounts, to);
+            tokensHeld = withdrawCollateral(_loan, amounts, to);
         }
+
+        checkMargin(calcInvariant(s.cfmm, tokensHeld) + onLoanUpdate(_loan, tokenId), loanLiquidity);
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.DECREASE_COLLATERAL);
 
@@ -141,7 +142,7 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
         }
 
         // Check that loan is not undercollateralized
-        checkMargin(calcInvariant(s.cfmm, tokensHeld) + getExternalCollateral(_loan, tokenId), loanLiquidity);
+        checkMargin(calcInvariant(s.cfmm, tokensHeld) + onLoanUpdate(_loan, tokenId), loanLiquidity);
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(loanLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.BORROW_LIQUIDITY);
 

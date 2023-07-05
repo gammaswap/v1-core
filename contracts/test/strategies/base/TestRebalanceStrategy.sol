@@ -24,7 +24,7 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
 
     function initialize(address _factory, address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) external virtual {
         protocolId = _protocolId;
-        s.initialize(_factory, _cfmm, _tokens, _decimals);
+        s.initialize(_factory, _cfmm, _protocolId, _tokens, _decimals);
     }
 
     function setMinBorrow(uint256 _newMinBorrow) external virtual {
