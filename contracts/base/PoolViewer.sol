@@ -59,7 +59,7 @@ contract PoolViewer is IPoolViewer {
     /// @dev See {IPoolViewer-loan}
     function loan(address pool, uint256 tokenId) external virtual override view returns(IGammaPool.LoanData memory _loanData) {
         _loanData = IGammaPool(pool).getLoanData(tokenId);
-        IGammaPool.RateData memory data = _getLastFeeIndex(pool);
+        //IGammaPool.RateData memory data = _getLastFeeIndex(pool);
         _loanData.accFeeIndex = _getLoanLastFeeIndex(_loanData);
         _loanData.liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, _loanData.accFeeIndex);
         address refAddr = _loanData.refType == 3 ? _loanData.refAddr : address(0);

@@ -6,7 +6,7 @@ import "./IGammaPool.sol";
 /// @title Interface for GammaPoolExternal
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Interface used for GammaPool implementations that have flash loan functionality
-interface IGammaPoolExternal is IGammaPool {
+interface IGammaPoolExternal {
 
     /// @dev External Rebalance Strategy implementation contract for this GammaPool
     function externalRebalanceStrategy() external view returns(address);
