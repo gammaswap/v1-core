@@ -58,7 +58,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     }
 
     /// @dev See {ILiquidationStrategy-canLiquidate}.
-    function canLiquidate(uint256 liquidity, uint256 collateral) external virtual override view returns(bool) {
+    function canLiquidate(uint256 liquidity, uint256 collateral) public virtual override view returns(bool) {
         return !hasMargin(collateral, liquidity, _ltvThreshold());
     }
 
@@ -79,7 +79,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
         _liqLoan.isObserved = _loan.refAddr != address(0) && _loan.refType == 3;
         _liqLoan.externalCollateral = getCollateralAtObserver(_loan, tokenId); // point of this is to determine if we're undercollateralized
         _liqLoan.collateral = _liqLoan.internalCollateral + _liqLoan.externalCollateral;
-        checkMargin(_liqLoan.collateral, _liqLoan.loanLiquidity);
+        if(!canLiquidate(_liqLoan.loanLiquidity, _liqLoan.collateral)) revert HasMargin();
 
         // the loanLiquidity should match the number of tokens we expect to deposit including theliquidation fee
         deltas = _calcDeltasForMaxLP(_liqLoan.tokensHeld, s.CFMM_RESERVES);
@@ -117,11 +117,6 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
             }
         }
         return(refund, tokensHeld);
-    }
-
-    /// @dev See {BaseLongStrategy-checkMargin}.
-    function checkMargin(uint256 collateral, uint256 liquidity) internal virtual override view {
-        if(hasMargin(collateral, liquidity, _ltvThreshold())) revert HasMargin(); // Revert if loan has enough collateral
     }
 
     /// @dev Calculate excess invariant liquidity units deposited in GammaPool to liquidate loan
