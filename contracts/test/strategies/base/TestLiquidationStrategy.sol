@@ -140,7 +140,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
     }
 
     function testCanLiquidate(uint256 collateral, uint256 liquidity) external virtual {
-        checkMargin(collateral, liquidity);
+        if(!canLiquidate(liquidity, collateral)) revert HasMargin();
     }
 
     function testUpdateLoan(uint256 tokenId) external virtual {
