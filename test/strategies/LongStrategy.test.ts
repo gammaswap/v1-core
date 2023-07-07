@@ -436,7 +436,7 @@ describe("LongStrategy", function () {
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
       const resp = await (
-        await strategy.testUpdatePayableLoan(tokenId, liquidity, [])
+        await strategy.testUpdatePayableLoan(tokenId, liquidity)
       ).wait();
 
       const evt = resp.events[0].args;
@@ -499,7 +499,7 @@ describe("LongStrategy", function () {
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
       const resp = await (
-        await strategy.testUpdatePayableLoan(tokenId, liquidity.mul(2), [])
+        await strategy.testUpdatePayableLoan(tokenId, liquidity.mul(2))
       ).wait();
 
       const evt = resp.events[0].args;
@@ -566,7 +566,7 @@ describe("LongStrategy", function () {
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
       const resp = await (
-        await strategy.testUpdatePayableLoan(tokenId, liquidity.mul(2), [])
+        await strategy.testUpdatePayableLoan(tokenId, liquidity.mul(2))
       ).wait();
 
       const evt = resp.events[0].args;
@@ -575,7 +575,7 @@ describe("LongStrategy", function () {
       expect(evt.liquidity).to.eq(loan2.liquidity);
       expect(evt.delta0).to.eq(0);
       expect(evt.delta1).to.eq(0); // Deltas for Close Keep Ratio
-      expect(evt.deltaLen).to.eq(2);
+      expect(evt.deltaLen).to.eq(0);
     });
   });
 
