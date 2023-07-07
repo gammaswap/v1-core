@@ -324,11 +324,6 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
         return false;
     }
 
-    function testUpdatePayableLoan(uint256 tokenId, uint256 payLiquidity, uint256[] calldata ratio) external virtual {
-        LibStorage.Loan storage _loan = _getLoan(tokenId);
-        updatePayableLoan(_loan, payLiquidity, ratio);
-    }
-
     function _calcMaxCollateral(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
         return calcInvariant(address(0), tokensHeld);
     }
@@ -345,6 +340,9 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
         deltas[1] = 100;
     }
 
-    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to, uint256[] calldata ratio) external override returns(uint256 liquidityPaid, uint256[] memory amounts){
+    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external override virtual returns(uint256 liquidityPaid, uint256[] memory amounts){
+    }
+
+    function _repayLiquiditySetRatio(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external override virtual returns(uint256 liquidityPaid, uint256[] memory amounts){
     }
 }
