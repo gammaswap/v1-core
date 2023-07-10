@@ -49,7 +49,7 @@ abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiq
 
         // Pay total liquidity debts in full with previously deposited CFMM LP tokens and refund remaining collateral to liquidator
         //payLiquidatableLoan(0, totalLoanLiquidity, summedLoans.lpTokensTotal);
-        payLiquidatableLoan(_liqLoan, summedLoans.lpTokensTotal);
+        payLiquidatableLoan(_liqLoan, summedLoans.lpTokensTotal, true);
 
         refundLiquidator(totalLoanLiquidity, totalLoanLiquidity, refund);
 

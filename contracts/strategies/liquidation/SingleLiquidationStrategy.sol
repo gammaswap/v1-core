@@ -27,12 +27,17 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
 
         if(_liqLoan.payableInternalLiquidityPlusFee > 0) {
             uint256 lpDeposit = repayTokens(_loan, calcTokensToRepay(getReserves(s.cfmm), _liqLoan.payableInternalLiquidityPlusFee));
-            GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, lpDeposit * _liqLoan.internalFee / _liqLoan.payableInternalLiquidityPlusFee);
+            uint256 refund = lpDeposit * _liqLoan.internalFee / _liqLoan.payableInternalLiquidityPlusFee;
+            if(refund < minBorrow()) {
+                refund = 0;
+            } else {
+                GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, refund - minBorrow());
+            }
         }
 
         (uint128[] memory tokensHeld,) = updateCollateral(_loan); // Update remaining collateral
 
-        _liqLoan.writeDownAmt = payLiquidatableLoan(_liqLoan, 0);
+        _liqLoan.writeDownAmt = payLiquidatableLoan(_liqLoan, 0, false);
 
         onLoanUpdate(_loan, tokenId);
 
@@ -52,7 +57,7 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
         (LiquidatableLoan memory _liqLoan,) = getLiquidatableLoan(_loan, tokenId);
         loanLiquidity = _liqLoan.loanLiquidity;
 
-        _liqLoan.writeDownAmt = payLiquidatableLoan(_liqLoan, 0);
+        _liqLoan.writeDownAmt = payLiquidatableLoan(_liqLoan, 0, true);
 
         uint128[] memory tokensHeld;
         (refund, tokensHeld) = refundLiquidator(_liqLoan.payableInternalLiquidityPlusFee, _liqLoan.internalCollateral, _liqLoan.tokensHeld);
