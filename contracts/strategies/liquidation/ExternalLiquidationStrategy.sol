@@ -31,7 +31,7 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, B
             _liqLoan.loanLiquidity = loanLiquidity;
         }
 
-        _liqLoan.writeDownAmt = payLiquidatableLoan(_liqLoan, 0);
+        _liqLoan.writeDownAmt = payLiquidatableLoan(_liqLoan, 0, true);
 
         uint128[] memory refund;
         (refund, _liqLoan.tokensHeld) = refundLiquidator(_liqLoan.payableInternalLiquidityPlusFee, _liqLoan.internalCollateral, _liqLoan.tokensHeld);

@@ -17,7 +17,7 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
     /// @param tokensHeld - loan collateral to rebalance
     /// @param reserves - reserve token quantities in CFMM
     /// @return collateral - collateral amount
-    function _calcMaxCollateral(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual view returns(uint256 collateral);
+    function _calcCollateralPostTrade(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual view returns(uint256 collateral);
 
     /// @dev Calculate quantities to trade to rebalance collateral to desired `ratio`
     /// @param tokensHeld - loan collateral to rebalance
@@ -46,7 +46,7 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
     /// @param liquidity - amount of liquidity to pay
     /// @param ratio - desired ratio of collateral
     /// @return deltas - amounts of collateral to trade to be able to repay `liquidity`
-    function _calcDeltasToCloseKeepRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256[] memory ratio) internal virtual view returns(int256[] memory deltas);
+    function _calcDeltasToCloseSetRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256[] memory ratio) internal virtual view returns(int256[] memory deltas);
 
     /// @dev Calculate quantities to trade to rebalance collateral so that after withdrawing `amounts` we achieve desired `ratio`
     /// @param amounts - amounts that will be withdrawn from collateral

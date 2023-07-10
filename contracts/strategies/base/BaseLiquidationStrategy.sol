@@ -83,7 +83,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
 
         // the loanLiquidity should match the number of tokens we expect to deposit including theliquidation fee
         deltas = _calcDeltasForMaxLP(_liqLoan.tokensHeld, s.CFMM_RESERVES);
-        _liqLoan.internalCollateral = _calcMaxCollateral(deltas, _liqLoan.tokensHeld, s.CFMM_RESERVES); // if external collateral has to rebalance too, that will affect the variables
+        _liqLoan.internalCollateral = _calcCollateralPostTrade(deltas, _liqLoan.tokensHeld, s.CFMM_RESERVES); // if external collateral has to rebalance too, that will affect the variables
 
         _liqLoan.payableInternalLiquidity = Math.min(_liqLoan.loanLiquidity, _liqLoan.internalCollateral);
         _liqLoan.remainderLiquidity = _liqLoan.loanLiquidity > _liqLoan.payableInternalLiquidity ? _liqLoan.loanLiquidity - _liqLoan.payableInternalLiquidity : 0;// Pay remainder
@@ -127,7 +127,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     function calcExcessLiquidity(uint256 liquidityDeposit, uint256 loanLiquidity, bool fullDeposit) internal virtual returns(uint256 excessLiquidity){
         if(fullDeposit && liquidityDeposit < loanLiquidity) {
             revert InsufficientDeposit();
-        } else if(liquidityDeposit > loanLiquidity) {
+        } else if(liquidityDeposit > (loanLiquidity + minBorrow())) {
             unchecked {
                 excessLiquidity = liquidityDeposit - loanLiquidity;
             }
@@ -153,13 +153,14 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     /// @dev Pay liquidity debt, and refund excess payments to liquidator
     /// @param _liqLoan - liquidatable loan struct with most up to date liquidity debt and collateral values
     /// @param lpTokensPaid - loan's CFMM LP token principal
+    /// @param fullPayment - if true, enforce isFullPayment check
     /// @return writeDownAmt - liquidity invariant units written down from loan's debt
-    function payLiquidatableLoan(LiquidatableLoan memory _liqLoan, uint256 lpTokensPaid) internal virtual returns(uint256){
+    function payLiquidatableLoan(LiquidatableLoan memory _liqLoan, uint256 lpTokensPaid, bool fullPayment) internal virtual returns(uint256){
         uint256 lastCFMMInvariant = s.lastCFMMInvariant;
         uint256 lastCFMMTotalSupply = s.lastCFMMTotalSupply;
         uint256 currLpBalance = s.LP_TOKEN_BALANCE;
 
-        (uint256 liquidityDeposit, uint256 lpDeposit) = calcDeposit(_liqLoan.payableInternalLiquidity, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, true);
+        (uint256 liquidityDeposit, uint256 lpDeposit) = calcDeposit(_liqLoan.payableInternalLiquidity, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, true && fullPayment);
 
         if(_liqLoan.isObserved) {
             liquidateWithObserver(_liqLoan, msg.sender);
@@ -170,11 +171,13 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
         currLpBalance = currLpBalance + lpDeposit;
 
         if(_liqLoan.tokenId > 0) { // if liquidating a specific loan
+            LibStorage.Loan storage _loan = s.loans[_liqLoan.tokenId];
             if(liquidityDeposit < _liqLoan.loanLiquidity) { // not fully paid so write down
                 (_liqLoan.writeDownAmt,_liqLoan.loanLiquidity) = writeDown(liquidityDeposit, _liqLoan.loanLiquidity);
+                _loan.liquidity = uint128(_liqLoan.loanLiquidity);
+            } else {
+                liquidityDeposit = _liqLoan.loanLiquidity;
             }
-            LibStorage.Loan storage _loan = s.loans[_liqLoan.tokenId];
-            _loan.liquidity = uint128(_liqLoan.loanLiquidity);
             // Account for loan's liquidity paid and get CFMM LP token principal paid and remaining loan liquidity
             (lpTokensPaid, _liqLoan.loanLiquidity) = payLoanLiquidity(liquidityDeposit, _liqLoan.loanLiquidity, _loan);
         } else {
@@ -200,7 +203,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
         if(excessInvariant > 0) {
             uint256 lpRefund = convertInvariantToLP(excessInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
             GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, lpRefund);
-            lpDeposit -= lpRefund;// refundInvariant(excessInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
+            lpDeposit -= lpRefund;
             liquidityDeposit = convertLPToInvariant(lpDeposit, lastCFMMInvariant, lastCFMMTotalSupply);
         }
     }

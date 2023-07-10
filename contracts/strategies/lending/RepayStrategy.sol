@@ -89,7 +89,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         collateral = collateral > _minBorrow ? collateral - _minBorrow : 0;
         if(payLiquidity > collateral) { // Not enough internal collateral
             deltas = _calcDeltasForMaxLP(tokensHeld, s.CFMM_RESERVES);
-            collateral = _calcMaxCollateral(deltas, tokensHeld, s.CFMM_RESERVES);
+            collateral = _calcCollateralPostTrade(deltas, tokensHeld, s.CFMM_RESERVES);
             collateral = collateral > _minBorrow ? collateral - _minBorrow : 0;
             if(collateral > payLiquidity) {
                 deltas = new int256[](0);
@@ -128,7 +128,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                 (collateral,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES); // rebalance collateral to deposit all of it.
                 amounts = GammaSwapLibrary.convertUint128ToUint256Array(collateral);// so we have to write down the debt to zero here regardless
             } else {
-                rebalanceCollateral(_loan, _calcDeltasToCloseKeepRatio(_loan.tokensHeld, s.CFMM_RESERVES, liquidityToCalculate, ratio), s.CFMM_RESERVES);
+                rebalanceCollateral(_loan, _calcDeltasToCloseSetRatio(_loan.tokensHeld, s.CFMM_RESERVES, liquidityToCalculate, ratio), s.CFMM_RESERVES);
                 amounts = addFees(calcTokensToRepay(getReserves(s.cfmm), liquidityToCalculate),fees);
             }
         }

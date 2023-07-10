@@ -337,7 +337,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         emit LiquidityAndDeltas(loanLiquidity, delta0, delta1, deltas.length);
     }
 
-    function _calcMaxCollateral(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
+    function _calcCollateralPostTrade(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
         return calcInvariant(address(0), tokensHeld) + (calcInvariant(address(0), tokensHeld) / 2);
     }
 
@@ -347,7 +347,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         deltas[1] = 100;
     }
 
-    function _calcDeltasToCloseKeepRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256[] memory ratio) internal virtual override view returns(int256[] memory deltas) {
+    function _calcDeltasToCloseSetRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256[] memory ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
         deltas[0] = 0;
         deltas[1] = 0;
