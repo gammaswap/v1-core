@@ -253,6 +253,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         _loanData.decimals = s.decimals;
         _loanData.factory = factory;
         _loanData.shortStrategy = shortStrategy;
+        _loanData.liquidationStrategy = singleLiquidationStrategy;
         _loanData.accFeeIndex = s.accFeeIndex;
         _loanData.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         _loanData.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
