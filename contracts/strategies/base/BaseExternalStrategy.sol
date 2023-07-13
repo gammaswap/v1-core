@@ -69,7 +69,6 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
     function externalSwap(LibStorage.Loan storage _loan, address _cfmm, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) internal virtual returns(uint256 liquiditySwapped, uint128[] memory tokensHeld) {
         // Track change in CFMM LP Tokens and get CFMM invariant and totalSupply for conversions
         uint256 prevLpTokenBalance = s.LP_TOKEN_BALANCE;
-        uint256 lastCFMMInvariant = s.lastCFMMInvariant;
         uint256 lastCFMMTotalSupply = s.lastCFMMTotalSupply;
 
         // Send collateral tokens and CFMM LP tokens to external address and calculate their value as LP tokens
@@ -77,7 +76,7 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
         if(lpTokens > 0) liquiditySwapped += sendCFMMLPTokens(_cfmm, to, lpTokens);
 
         // Calculate liquidity sent out
-        liquiditySwapped = convertLPToInvariant(liquiditySwapped, lastCFMMInvariant, lastCFMMTotalSupply);
+        liquiditySwapped = convertLPToInvariant(liquiditySwapped, s.lastCFMMInvariant, lastCFMMTotalSupply);
 
         // Perform swap externally
         IExternalCallee(to).externalCall(msg.sender, amounts, lpTokens, data);
@@ -85,8 +84,10 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
         // Update loan collateral tokens after external call
         (tokensHeld,) = updateCollateral(_loan);
 
+        updateIndex();
+
         // CFMM LP Tokens in pool must at least not decrease
-        checkLPTokens(_cfmm, prevLpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply);
+        checkLPTokens(_cfmm, prevLpTokenBalance, s.lastCFMMInvariant, s.lastCFMMTotalSupply);
     }
 
     /// @dev Check if CFMM LP tokens are above prevLpTokenBalance
