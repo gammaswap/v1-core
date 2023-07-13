@@ -127,9 +127,11 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
             if(deltas.length > 0) { // there's bad debt, so a write down happened, payLiquidity >= loanLiquidity is true
                 (collateral,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES); // rebalance collateral to deposit all of it.
                 amounts = GammaSwapLibrary.convertUint128ToUint256Array(collateral);// so we have to write down the debt to zero here regardless
+                updateIndex();
             } else {
                 rebalanceCollateral(_loan, _calcDeltasToCloseSetRatio(_loan.tokensHeld, s.CFMM_RESERVES, liquidityToCalculate, ratio), s.CFMM_RESERVES);
-                amounts = addFees(calcTokensToRepay(getReserves(s.cfmm), liquidityToCalculate),fees);
+                updateIndex();
+                amounts = addFees(calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate),fees);
             }
         }
 
@@ -179,10 +181,12 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                 collateralId = 0; // we will use up all the collateral, we won't get anything back
                 amounts = GammaSwapLibrary.convertUint128ToUint256Array(collateral);// so we have to write down the debt to zero here regardless
                 // we're paying all the debt here no matter what, but we don't have to deposit all the collateral.
+                updateIndex();
             } else {
                 if(collateralId > 0) {
                     collateral = proRataCollateral(_loan.tokensHeld, liquidityToCalculate, loanLiquidity, fees); // discount fees because they will be added later
                     collateral = remainingCollateral(collateral, _rebalanceCollateralToClose(_loan, collateral, collateralId, liquidityToCalculate));
+                    updateIndex();
                 }
                 amounts = addFees(calcTokensToRepay(getReserves(s.cfmm), liquidityToCalculate),fees);
             }
@@ -262,6 +266,14 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         if(loanCollateral == 0 && remainingLiquidity > 0) { //close everything else in the loan (loan is paid)
             writeDown(0, remainingLiquidity);
             remainingLiquidity = 0;
+            uint256 lpTokens = _loan.lpTokens;
+            if(lpTokens < s.LP_TOKEN_BORROWED) {
+                unchecked {
+                    s.LP_TOKEN_BORROWED -= lpTokens;
+                }
+            } else {
+                s.LP_TOKEN_BORROWED = 0;
+            }
             _loan.liquidity = 0;
             _loan.initLiquidity = 0;
             _loan.lpTokens = 0;
