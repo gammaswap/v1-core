@@ -2912,7 +2912,7 @@ describe("LongStrategy", function () {
         loanLPTokens.div(2),
         startLiquidity.add(loanLiquidity.div(2)),
         loanLiquidity.div(2),
-        9
+        10
       );
 
       const res2a = await strategy.getLoanChangeData(tokenId);
@@ -3023,7 +3023,7 @@ describe("LongStrategy", function () {
         loanLPTokens.div(2),
         startLiquidity.add(loanLiquidity.div(2)),
         loanLiquidity.div(2),
-        9
+        10
       );
 
       const res2a = await strategy.getLoanChangeData(tokenId);
@@ -3136,7 +3136,7 @@ describe("LongStrategy", function () {
         0,
         startLiquidity.add(loanLiquidity),
         0,
-        9
+        10
       );
 
       const res2a = await strategy.getLoanChangeData(tokenId);
@@ -3237,7 +3237,7 @@ describe("LongStrategy", function () {
         0,
         startLiquidity.add(loanLiquidity),
         0,
-        9
+        10
       );
 
       const res2a = await strategy.getLoanChangeData(tokenId);

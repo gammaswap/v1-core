@@ -1083,7 +1083,7 @@ describe("LiquidationStrategy", function () {
         collateral
       );
       expect(res.events[res.events.length - 3].args.writeDownAmt).to.equal(0);
-      expect(res.events[res.events.length - 3].args.txType).to.equal(11);
+      expect(res.events[res.events.length - 3].args.txType).to.equal(12);
 
       const ownerCFMMBal1 = await cfmm.balanceOf(owner.address);
       const ownerTokenABal1 = await tokenA.balanceOf(owner.address);
@@ -1240,7 +1240,7 @@ describe("LiquidationStrategy", function () {
       expect(res.events[res.events.length - 3].args.writeDownAmt).to.equal(
         writeDownAmt
       );
-      expect(res.events[res.events.length - 3].args.txType).to.equal(11);
+      expect(res.events[res.events.length - 3].args.txType).to.equal(12);
 
       const ownerCFMMBal1 = await cfmm.balanceOf(owner.address);
       const ownerTokenABal1 = await tokenA.balanceOf(owner.address);
@@ -1402,7 +1402,7 @@ describe("LiquidationStrategy", function () {
         collateral
       );
       expect(res.events[res.events.length - 3].args.writeDownAmt).to.equal(0);
-      expect(res.events[res.events.length - 3].args.txType).to.equal(11);
+      expect(res.events[res.events.length - 3].args.txType).to.equal(12);
       const ownerCFMMBal1 = await cfmm.balanceOf(owner.address);
       const ownerTokenABal1 = await tokenA.balanceOf(owner.address);
       const ownerTokenBBal1 = await tokenB.balanceOf(owner.address);
@@ -1557,7 +1557,7 @@ describe("LiquidationStrategy", function () {
       expect(res.events[res.events.length - 3].args.writeDownAmt).to.equal(
         writeDownAmt
       );
-      expect(res.events[res.events.length - 3].args.txType).to.equal(11);
+      expect(res.events[res.events.length - 3].args.txType).to.equal(12);
 
       const ownerCFMMBal1 = await cfmm.balanceOf(owner.address);
       const ownerTokenABal1 = await tokenA.balanceOf(owner.address);
@@ -1758,7 +1758,7 @@ describe("LiquidationStrategy", function () {
         sqrt(tokenAChange.mul(tokenBChange))
       );
       expect(res.events[res.events.length - 2].args.writeDownAmt).to.equal(0);
-      expect(res.events[res.events.length - 2].args.txType).to.equal(12);
+      expect(res.events[res.events.length - 2].args.txType).to.equal(13);
 
       const ownerCFMMBal1 = await cfmm.balanceOf(owner.address);
       const ownerTokenABal1 = await tokenA.balanceOf(owner.address);
@@ -1906,7 +1906,7 @@ describe("LiquidationStrategy", function () {
       expect(res.events[res.events.length - 2].args.writeDownAmt).to.equal(
         writeDownTotal
       );
-      expect(res.events[res.events.length - 2].args.txType).to.equal(12);
+      expect(res.events[res.events.length - 2].args.txType).to.equal(13);
 
       const ownerCFMMBal1 = await cfmm.balanceOf(owner.address);
       const ownerTokenABal1 = await tokenA.balanceOf(owner.address);
@@ -2057,7 +2057,7 @@ describe("LiquidationStrategy", function () {
         sqrt(tokenAChange.mul(tokenBChange))
       );
       expect(res.events[res.events.length - 2].args.writeDownAmt).to.equal(0);
-      expect(res.events[res.events.length - 2].args.txType).to.equal(12);
+      expect(res.events[res.events.length - 2].args.txType).to.equal(13);
 
       const ownerCFMMBal1 = await cfmm.balanceOf(owner.address);
       const ownerTokenABal1 = await tokenA.balanceOf(owner.address);
@@ -2212,7 +2212,7 @@ describe("LiquidationStrategy", function () {
       expect(res.events[res.events.length - 2].args.writeDownAmt).to.equal(
         writeDownTotal
       );
-      expect(res.events[res.events.length - 2].args.txType).to.equal(12);
+      expect(res.events[res.events.length - 2].args.txType).to.equal(13);
 
       const ownerCFMMBal1 = await cfmm.balanceOf(owner.address);
       const ownerTokenABal1 = await tokenA.balanceOf(owner.address);
