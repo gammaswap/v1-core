@@ -825,7 +825,7 @@ describe("LongStrategy", function () {
           owner.address,
           []
         )
-      ).to.be.revertedWithCustomError(strategy, "NotEnoughBalance");
+      ).to.be.revertedWithCustomError(strategy, "NotEnoughCollateral");
 
       const resp = await (await strategy.createLoan()).wait();
       const tokenId2 = resp.events[0].args.tokenId;

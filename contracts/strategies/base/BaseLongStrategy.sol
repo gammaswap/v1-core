@@ -174,8 +174,8 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
     /// @param balance - amount of `token` in GammaPool
     /// @param collateral - amount of `token` collateral in loan
     function sendToken(address token, address to, uint256 amount, uint256 balance, uint256 collateral) internal {
-        if(amount > balance) revert NotEnoughBalance(); // Check enough in pool's accounted balance
         if(amount > collateral) revert NotEnoughCollateral(); // Check enough collateral in loan
+        if(amount > balance) revert NotEnoughBalance(); // Check enough in pool's accounted balance
         GammaSwapLibrary.safeTransfer(token, to, amount); // Send token amount
     }
 
