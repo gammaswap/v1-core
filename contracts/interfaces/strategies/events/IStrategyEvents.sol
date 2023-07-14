@@ -15,14 +15,15 @@ interface IStrategyEvents {
         REBALANCE_COLLATERAL,   // 6
         BORROW_LIQUIDITY,       // 7
         REPAY_LIQUIDITY,        // 8
-        REPAY_LIQUIDITY_WITH_LP,// 9
-        LIQUIDATE,              // 10
-        LIQUIDATE_WITH_LP,      // 11
-        BATCH_LIQUIDATION,      // 12
-        SYNC,                   // 13
-        EXTERNAL_REBALANCE,     // 14
-        EXTERNAL_LIQUIDATION,   // 15
-        UPDATE_POOL }           // 16
+        REPAY_LIQUIDITY_SET_RATIO,// 9
+        REPAY_LIQUIDITY_WITH_LP,// 10
+        LIQUIDATE,              // 11
+        LIQUIDATE_WITH_LP,      // 12
+        BATCH_LIQUIDATION,      // 13
+        SYNC,                   // 14
+        EXTERNAL_REBALANCE,     // 15
+        EXTERNAL_LIQUIDATION,   // 16
+        UPDATE_POOL }           // 17
 
     /// @dev Event emitted when the Pool's global state variables is updated
     /// @param lpTokenBalance - quantity of CFMM LP tokens deposited in the pool

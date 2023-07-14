@@ -34,8 +34,8 @@ contract TestRepayStrategy2 is IRepayStrategy {
         amounts[0] = 9;
         amounts[1] = 10;
         uint128[] memory heldTokens = new uint128[](2);
-        heldTokens[0] = 9;
-        heldTokens[1] = 10;
-        emit LoanUpdated(tokenId, heldTokens, uint128(liquidity), uint128(40 + fees.length), fees[0], uint96(fees[1]), TX_TYPE.REPAY_LIQUIDITY);
+        heldTokens[0] = 13;
+        heldTokens[1] = 11;
+        emit LoanUpdated(tokenId, heldTokens, uint128(liquidity), uint128(40 + fees.length), fees[0], uint96(fees[1]), TX_TYPE.REPAY_LIQUIDITY_SET_RATIO);
     }
 }
