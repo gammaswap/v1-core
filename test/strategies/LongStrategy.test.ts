@@ -2708,28 +2708,19 @@ describe("LongStrategy", function () {
       await (await cfmm.transfer(strategy.address, 1)).wait();
 
       await expect(
-        strategy._repayLiquidityWithLP(
-          tokenId,
-          2,
-          0,
-          ethers.constants.AddressZero
-        )
+        strategy._repayLiquidityWithLP(tokenId, 0, ethers.constants.AddressZero)
       ).to.be.revertedWithCustomError(strategy, "MinBorrow");
 
-      await (await cfmm.transfer(strategy.address, 999)).wait();
+      await (await cfmm.transfer(strategy.address, 498)).wait();
+
       await expect(
-        strategy._repayLiquidityWithLP(
-          tokenId,
-          999,
-          0,
-          ethers.constants.AddressZero
-        )
+        strategy._repayLiquidityWithLP(tokenId, 0, ethers.constants.AddressZero)
       ).to.be.revertedWithCustomError(strategy, "MinBorrow");
 
+      await (await cfmm.transfer(strategy.address, 1)).wait();
       await (
         await strategy._repayLiquidityWithLP(
           tokenId,
-          1000,
           0,
           ethers.constants.AddressZero
         )
@@ -2793,12 +2784,7 @@ describe("LongStrategy", function () {
       expect(res1b.lpTokens).to.equal(loanLPTokens);
 
       await expect(
-        strategy._repayLiquidityWithLP(
-          tokenId,
-          loanLiquidity.mul(2),
-          0,
-          ethers.constants.AddressZero
-        )
+        strategy._repayLiquidityWithLP(tokenId, 0, ethers.constants.AddressZero)
       ).to.be.revertedWithCustomError(strategy, "NotEnoughLPDeposit");
 
       await (await tokenA.transfer(strategy.address, amtA)).wait();
@@ -2810,7 +2796,6 @@ describe("LongStrategy", function () {
       await (
         await strategy._repayLiquidityWithLP(
           tokenId,
-          loanLiquidity.mul(2),
           0,
           ethers.constants.AddressZero
         )
@@ -2889,7 +2874,6 @@ describe("LongStrategy", function () {
       const res = await (
         await strategy._repayLiquidityWithLP(
           tokenId,
-          loanLiquidity.div(2),
           0,
           ethers.constants.AddressZero
         )
@@ -2998,12 +2982,7 @@ describe("LongStrategy", function () {
       await (await cfmm.mint(loanLiquidity.div(4), strategy.address)).wait();
 
       const res = await (
-        await strategy._repayLiquidityWithLP(
-          tokenId,
-          loanLiquidity.div(2),
-          0,
-          owner.address
-        )
+        await strategy._repayLiquidityWithLP(tokenId, 0, owner.address)
       ).wait();
 
       checkEventData(
@@ -3113,7 +3092,6 @@ describe("LongStrategy", function () {
       const res = await (
         await strategy._repayLiquidityWithLP(
           tokenId,
-          loanLiquidity.mul(2),
           0,
           ethers.constants.AddressZero
         )
@@ -3220,12 +3198,7 @@ describe("LongStrategy", function () {
       await (await cfmm.mint(loanLiquidity.div(2), strategy.address)).wait();
 
       const res = await (
-        await strategy._repayLiquidityWithLP(
-          tokenId,
-          loanLiquidity.mul(2),
-          0,
-          owner.address
-        )
+        await strategy._repayLiquidityWithLP(tokenId, 0, owner.address)
       ).wait();
 
       checkEventData(res.events[res.events.length - 2], tokenId, 0, 0, 0, 0, 0);

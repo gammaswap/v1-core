@@ -65,16 +65,13 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
     /// @notice in such a situation a liquidator would not have any incentive to liquidate and write down the debt
     /// @param _loan - loan to update liquidity debt
     /// @param payLiquidity - amount of liquidity to pay
-    /// @param useCollateral - true if we're using the loan's collateral for repayment, therefore calculate deltas
     /// @return loanLiquidity - updated liquidity debt of loan, including debt write down
     /// @return deltas - updated liquidity debt of loan, including debt write down
-    function updatePayableLoan(LibStorage.Loan storage _loan, uint256 payLiquidity, bool useCollateral) internal virtual
+    function updatePayableLoan(LibStorage.Loan storage _loan, uint256 payLiquidity) internal virtual
         returns(uint256 loanLiquidity, int256[] memory deltas) {
         loanLiquidity = updateLoan(_loan);
         payLiquidity = payLiquidity >= loanLiquidity ? loanLiquidity : payLiquidity;
-        if(useCollateral) {
-            deltas = _calcRebalanceCollateralDeltas(_loan, payLiquidity);
-        }
+        deltas = _calcRebalanceCollateralDeltas(_loan, payLiquidity);
     }
 
     /// @dev Calculate written down liquidity debt if it needs to be written down
@@ -115,7 +112,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         // Update liquidity debt to include accrued interest since last update
-        (uint256 loanLiquidity, int256[] memory deltas) = updatePayableLoan(_loan, payLiquidity, true);
+        (uint256 loanLiquidity, int256[] memory deltas) = updatePayableLoan(_loan, payLiquidity);
         // in the above function we should also get the internal and external liquidity we have available to pay
 
         uint128[] memory collateral;
@@ -167,7 +164,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         // Update liquidity debt to include accrued interest since last update
-        (uint256 loanLiquidity, int256[] memory deltas) = updatePayableLoan(_loan, payLiquidity, true);
+        (uint256 loanLiquidity, int256[] memory deltas) = updatePayableLoan(_loan, payLiquidity);
         // in the above function we should also get the internal and external liquidity we have available to pay
 
         uint128[] memory collateral;
@@ -222,22 +219,20 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
     }
 
     /// @dev See {IRepayStrategy-_repayLiquidityWithLP}.
-    function _repayLiquidityWithLP(uint256 tokenId, uint256 payLiquidity, uint256 collateralId, address to) external virtual override lock returns(uint256 liquidityPaid) {
-        if(payLiquidity == 0) revert ZeroRepayLiquidity();
+    function _repayLiquidityWithLP(uint256 tokenId, uint256 collateralId, address to) external virtual override lock returns(uint256 liquidityPaid, uint128[] memory tokensHeld) {
 
         // Get loan for tokenId, revert if not loan creator
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         // Update liquidity debt to include accrued interest since last update
-        (uint256 loanLiquidity,) = updatePayableLoan(_loan, payLiquidity, false);
-        liquidityPaid = payLiquidity >= loanLiquidity ? loanLiquidity : payLiquidity;
+        uint256 loanLiquidity = updateLoan(_loan);
 
         // Subtract loan liquidity repaid from total liquidity debt in pool and loan
         uint256 remainingLiquidity;
-        (liquidityPaid, remainingLiquidity) = payLoan(_loan, liquidityPaid, loanLiquidity);
+        (liquidityPaid, remainingLiquidity) = payLoan(_loan, type(uint256).max, loanLiquidity);
 
         // Check pro rata collateral that is now free to withdraw
-        uint128[] memory tokensHeld = _loan.tokensHeld;
+        tokensHeld = _loan.tokensHeld;
         if(to != address(0)) {
             // Get pro rata collateral of liquidity paid to withdraw
             tokensHeld = proRataCollateral(tokensHeld, liquidityPaid, loanLiquidity, new uint256[](0));

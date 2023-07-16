@@ -9,12 +9,12 @@ contract TestRepayStrategy2 is IRepayStrategy {
         return 8000;
     }
 
-    function _repayLiquidityWithLP(uint256 tokenId, uint256 liquidity, uint256 collateralId, address to) external override returns(uint256 liquidityPaid){
+    function _repayLiquidityWithLP(uint256 tokenId, uint256 collateralId, address to) external override returns(uint256 liquidityPaid, uint128[] memory tokensHeld){
         liquidityPaid = tokenId;
-        uint128[] memory heldTokens = new uint128[](2);
-        heldTokens[0] = 11;
-        heldTokens[1] = 12;
-        emit LoanUpdated(tokenId, heldTokens, uint128(liquidity), uint128(40), uint8(collateralId), uint96(20), TX_TYPE.REPAY_LIQUIDITY_WITH_LP);
+        tokensHeld = new uint128[](2);
+        tokensHeld[0] = 11;
+        tokensHeld[1] = 12;
+        emit LoanUpdated(tokenId, tokensHeld, uint128(400), uint128(40), uint8(collateralId), uint96(20), TX_TYPE.REPAY_LIQUIDITY_WITH_LP);
     }
 
     function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external override returns(uint256 liquidityPaid, uint256[] memory amounts){

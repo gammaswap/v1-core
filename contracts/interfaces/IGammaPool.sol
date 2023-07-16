@@ -395,11 +395,11 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
 
     /// @dev Repay liquidity debt of loan identified by tokenId, using CFMM LP token
     /// @param tokenId - unique id identifying loan
-    /// @param liquidity - liquidity debt being repaid, capped at actual liquidity owed. Can't repay more than you owe
     /// @param collateralId - index of collateral token to rebalance to + 1
     /// @param to - if repayment type requires withdrawal, the address that will receive the funds. Otherwise can be zero address
     /// @return liquidityPaid - liquidity amount that has been repaid
-    function repayLiquidityWithLP(uint256 tokenId, uint256 liquidity, uint256 collateralId, address to) external returns(uint256 liquidityPaid);
+    /// @return tokensHeld - remaining token amounts collateralizing loan
+    function repayLiquidityWithLP(uint256 tokenId, uint256 collateralId, address to) external returns(uint256 liquidityPaid, uint128[] memory tokensHeld);
 
     /// @dev Rebalance collateral amounts of loan identified by tokenId by purchasing or selling some of the collateral
     /// @param tokenId - unique id identifying loan
