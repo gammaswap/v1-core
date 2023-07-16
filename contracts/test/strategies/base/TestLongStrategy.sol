@@ -331,7 +331,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
 
     function testUpdatePayableLoan(uint256 tokenId, uint256 payLiquidity) external virtual {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
-        (uint256 loanLiquidity, int256[] memory deltas) = updatePayableLoan(_loan, payLiquidity, true);
+        (uint256 loanLiquidity, int256[] memory deltas) = updatePayableLoan(_loan, payLiquidity);
         uint256 delta0 = deltas.length > 0 ? uint256(deltas[0]) : 0;
         uint256 delta1 = deltas.length > 1 ? uint256(deltas[1]) : 0;
         emit LiquidityAndDeltas(loanLiquidity, delta0, delta1, deltas.length);
@@ -353,7 +353,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         deltas[1] = 0;
     }
 
-    function _repayLiquidityWithLP(uint256 tokenId, uint256 payLiquidity, uint256 collateralId, address to) external virtual override returns(uint256 liquidityPaid) {
+    function _repayLiquidityWithLP(uint256 tokenId, uint256 collateralId, address to) external virtual override returns(uint256 liquidityPaid, uint128[] memory tokensHeld) {
     }
 
     function _repayLiquiditySetRatio(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external override virtual returns(uint256 liquidityPaid, uint256[] memory amounts){

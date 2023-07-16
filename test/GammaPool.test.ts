@@ -920,7 +920,6 @@ describe("GammaPool", function () {
       const res4 = await (
         await gammaPool.repayLiquidityWithLP(
           tokenId,
-          400,
           1,
           ethers.constants.AddressZero
         )
