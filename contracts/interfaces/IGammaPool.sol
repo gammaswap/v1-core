@@ -418,7 +418,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @dev Function to liquidate a loan using its own collateral or depositing additional tokens. Seeks full liquidation
     /// @param tokenId - tokenId of loan being liquidated
     /// @return loanLiquidity - loan liquidity liquidated (after write down)
-    function liquidate(uint256 tokenId) external returns(uint256 loanLiquidity);
+    /// @return refund - amount of CFMM LP tokens being refunded to liquidator
+    function liquidate(uint256 tokenId) external returns(uint256 loanLiquidity, uint256 refund);
 
     /// @dev Function to liquidate a loan using external LP tokens. Allows partial liquidation
     /// @param tokenId - tokenId of loan being liquidated
