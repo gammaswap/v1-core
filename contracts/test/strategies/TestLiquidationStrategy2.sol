@@ -16,13 +16,14 @@ contract TestLiquidationStrategy2 is ILiquidationStrategy, ISingleLiquidationStr
         return liquidity > collateral;
     }
 
-    function _liquidate(uint256 tokenId) external override virtual returns(uint256 loanLiquidity) {
+    function _liquidate(uint256 tokenId) external override virtual returns(uint256 loanLiquidity, uint256 refund) {
         uint128[] memory tokensHeld = new uint128[](2);
         tokensHeld[0] = 1;
         tokensHeld[1] = 2;
         loanLiquidity = 4;
+        refund = 400;
         emit LoanUpdated(tokenId, tokensHeld, 777, 888, loanLiquidity, 5, TX_TYPE.LIQUIDATE);
-        emit Liquidation(tokenId, 100, 200, 300, 400, TX_TYPE.LIQUIDATE);
+        emit Liquidation(tokenId, 100, 200, 300, uint128(refund), TX_TYPE.LIQUIDATE);
     }
 
     function _liquidateWithLP(uint256 tokenId) external override virtual returns(uint256 loanLiquidity, uint128[] memory refund) {

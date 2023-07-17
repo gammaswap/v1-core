@@ -115,18 +115,20 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         (uint256 loanLiquidity, int256[] memory deltas) = updatePayableLoan(_loan, payLiquidity);
         // in the above function we should also get the internal and external liquidity we have available to pay
 
-        uint128[] memory collateral;
+        uint128[] memory tokensHeld;
         {
             // Cap liquidity repayment at total liquidity debt
             uint256 liquidityToCalculate;
             (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minBorrow()) : (payLiquidity, payLiquidity);
 
             if(deltas.length > 0) { // there's bad debt, so a write down happened, payLiquidity >= loanLiquidity is true
-                (collateral,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES); // rebalance collateral to deposit all of it.
-                amounts = GammaSwapLibrary.convertUint128ToUint256Array(collateral);// so we have to write down the debt to zero here regardless
+                (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES); // rebalance collateral to deposit all of it.
+                amounts = GammaSwapLibrary.convertUint128ToUint256Array(tokensHeld);// so we have to write down the debt to zero here regardless
                 updateIndex();
             } else {
-                rebalanceCollateral(_loan, _calcDeltasToCloseSetRatio(_loan.tokensHeld, s.CFMM_RESERVES, liquidityToCalculate, ratio), s.CFMM_RESERVES);
+                tokensHeld = _loan.tokensHeld;
+                rebalanceCollateral(_loan, _calcDeltasToCloseSetRatio(tokensHeld, s.CFMM_RESERVES, liquidityToCalculate,
+                    tokensHeld.length != ratio.length ? GammaSwapLibrary.convertUint128ToUint256Array(tokensHeld) : ratio), s.CFMM_RESERVES);
                 updateIndex();
                 amounts = addFees(calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate),fees);
             }
@@ -137,7 +139,6 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         // with this strategy we don't request for payment, we assume collateral vault sent payment already
 
         // Update loan collateral after repayment
-        uint128[] memory tokensHeld;
         (tokensHeld, deltas) = updateCollateral(_loan);
 
         // Subtract loan liquidity repaid from total liquidity debt in pool and loan
