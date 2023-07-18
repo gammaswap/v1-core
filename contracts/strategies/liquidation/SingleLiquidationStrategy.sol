@@ -29,10 +29,13 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
         if(_liqLoan.payableInternalLiquidityPlusFee > 0) {
             uint256 lpDeposit = repayTokens(_loan, calcTokensToRepay(getReserves(s.cfmm), _liqLoan.payableInternalLiquidityPlusFee));
             refund = lpDeposit * _liqLoan.internalFee / _liqLoan.payableInternalLiquidityPlusFee;
-            if(refund < minBorrow()) {
+            if(refund <= minBorrow()) {
                 refund = 0;
             } else {
-                GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, refund - minBorrow());
+                unchecked {
+                    refund -= minBorrow();
+                }
+                GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, refund);
             }
         }
 

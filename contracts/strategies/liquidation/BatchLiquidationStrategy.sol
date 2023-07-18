@@ -51,7 +51,7 @@ abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiq
         //payLiquidatableLoan(0, totalLoanLiquidity, summedLoans.lpTokensTotal);
         payLiquidatableLoan(_liqLoan, summedLoans.lpTokensTotal, true);
 
-        refundLiquidator(totalLoanLiquidity, totalLoanLiquidity, refund);
+        (refund,) = refundLiquidator(totalLoanLiquidity, totalLoanLiquidity, refund);
 
         // Store through event tokenIds of loans liquidated in batch and amounts liquidated
         emit Liquidation(0, uint128(summedLoans.collateralTotal), uint128(totalLoanLiquidity), uint128(writeDownAmt), uint128(summedLoans.feeTotal), TX_TYPE.BATCH_LIQUIDATION);

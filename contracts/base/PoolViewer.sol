@@ -34,6 +34,7 @@ contract PoolViewer is IPoolViewer {
         address[] memory _tokens = IGammaPool(pool).tokens();
         (string[] memory _symbols, string[] memory _names, uint8[] memory _decimals) = getTokensMetaData(_tokens);
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
+        address liquidationStrategy = IGammaPool(pool).singleLiquidationStrategy();
         uint256 _size = _loans.length;
         IGammaPool.LoanData memory _loan;
         for(uint256 i = 0; i < _size;) {
@@ -48,7 +49,7 @@ contract PoolViewer is IPoolViewer {
             _loan.liquidity = _updateLiquidity(_loan.liquidity, _loan.rateIndex, data.accFeeIndex);
             address refAddr = _loan.refType == 3 ? _loan.refAddr : address(0);
             _loan.collateral = _collateral(pool, _loan.tokenId, _loan.tokensHeld, refAddr);
-            _loan.canLiquidate = ILiquidationStrategy(_loan.liquidationStrategy).canLiquidate(_loan.liquidity, _loan.collateral);
+            _loan.canLiquidate = ILiquidationStrategy(liquidationStrategy).canLiquidate(_loan.liquidity, _loan.collateral);
             unchecked {
                 ++i;
             }
