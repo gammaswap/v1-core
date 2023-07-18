@@ -32,7 +32,8 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
             if(refund < minBorrow()) {
                 refund = 0;
             } else {
-                GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, refund - minBorrow());
+                refund -= minBorrow();
+                GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, refund);
             }
         }
 
