@@ -144,10 +144,14 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         address cfmm;
         /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 7.9% trillion
         uint96 accFeeIndex;
+        /// @dev External swap fee in basis points, max 255 basis points = 2.55%
+        uint8 extSwapFee; // 8 bits
+        /// @dev Loan opening origination fee in basis points
+        uint16 origFee; // 16 bits
         /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
         uint40 LAST_BLOCK_NUMBER;
         /// @dev Percent accrual in CFMM invariant since last update
-        uint72 lastCFMMFeeIndex; // 72 bits
+        uint64 lastCFMMFeeIndex; // 64 bits
         /// @dev Total liquidity invariant amount in CFMM (from GammaPool and others), read in last update to GammaPool's storage variables
         uint128 lastCFMMInvariant;
         /// @dev Total LP token supply from CFMM (belonging to GammaPool and others), read in last update to GammaPool's storage variables
@@ -217,10 +221,12 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals, bytes calldata _data) external;
 
     /// @dev Set parameters to calculate origination fee
+    /// @param origFee - loan opening origination fee in basis points
+    /// @param extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
     /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
     /// @param minUtilRate - minimum utilization rate to calculate dynamic origination fee
     /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out
-    function setOrigFeeParams(uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate) external;
+    function setOrigFeeParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate) external;
 
     /// @dev cfmm - address of CFMM this GammaPool is for
     function cfmm() external view returns(address);

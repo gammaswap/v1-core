@@ -209,7 +209,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
                 mintToDevs(lastFeeIndex, lastCFMMFeeIndex);
             }
         } else {
-            s.lastCFMMFeeIndex = uint72(s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18);
+            s.lastCFMMFeeIndex = uint64(s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18);
             lastFeeIndex = 1e18;
             accFeeIndex = s.accFeeIndex;
             s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(borrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);

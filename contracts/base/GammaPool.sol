@@ -73,12 +73,14 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     }
 
     /// @dev See {IGammaPool-setOrigFeeParams}
-    function setOrigFeeParams(uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate) external virtual override {
+    function setOrigFeeParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate) external virtual override {
         if(msg.sender != factory) revert Forbidden(); // only factory is allowed to update dynamic fee parameters
 
         require(minUtilRate <= 100, "MIN_UTIL_RATE");
         require(maxUtilRate >= minUtilRate && maxUtilRate <= 100, "MAX_UTIL_RATE");
 
+        s.origFee = origFee;
+        s.extSwapFee = extSwapFee;
         s.emaMultiplier = emaMultiplier;
         s.minUtilRate = minUtilRate;
         s.feeDivisor = uint16(2 ** (maxUtilRate - minUtilRate));
@@ -195,6 +197,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
         data.LP_INVARIANT = s.LP_INVARIANT;
         data.accFeeIndex = s.accFeeIndex;
+        data.origFee = s.origFee;
+        data.extSwapFee = s.extSwapFee;
         data.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
         data.lastCFMMInvariant = s.lastCFMMInvariant;
         data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
@@ -274,7 +278,6 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         _loanData.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         _loanData.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
         _loanData.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
-        _loanData.accFeeIndex = s.accFeeIndex;
         _loanData.lastCFMMInvariant = s.lastCFMMInvariant;
         _loanData.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
     }

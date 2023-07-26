@@ -80,10 +80,14 @@ library LibStorage {
         address cfmm; // 160 bits
         /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 7.9% trillion
         uint96 accFeeIndex; // 96 bits
+        /// @dev External swap fee in basis points, max 255 basis points = 2.55%
+        uint8 extSwapFee; // 8 bits
+        /// @dev Loan opening origination fee in basis points
+        uint16 origFee; // 16 bits
         /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
-        uint40 LAST_BLOCK_NUMBER; // 40 bits //TODO: might be able to reduce this by 8 bits to make room for the origination fee
-        /// @dev percent accrual in CFMM invariant since last update
-        uint72 lastCFMMFeeIndex; // 72 bits, max 472,200% //TODO: might be able to reduce this by 8 bits to make room for the origination fee
+        uint40 LAST_BLOCK_NUMBER; // 40 bits
+        /// @dev Percent accrual in CFMM invariant since last update in a different block, max 1,844.67%
+        uint64 lastCFMMFeeIndex; // 64 bits
         /// @dev Total liquidity invariant amount in CFMM (from GammaPool and others), read in last update to GammaPool's storage variables
         uint128 lastCFMMInvariant; // 128 bits
         /// @dev Total LP token supply from CFMM (belonging to GammaPool and others), read in last update to GammaPool's storage variables
@@ -146,6 +150,9 @@ library LibStorage {
 
         self.nextId = 1; // loan counter starts at 1
         self.unlocked = 1; // mutex initialized as unlocked
+
+        self.origFee = 2;
+        self.extSwapFee = 10;
 
         self.emaMultiplier = 10; // ema smoothing factor is 10/1000 = 1%
         self.minUtilRate = 85; // min util rate is 85%
