@@ -24,12 +24,6 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     /// @dev See {IGammaPoolFactory-getKey}
     mapping(address => bytes32) public override getKey; // predetermined key maps to pool address
 
-    /// @dev See {IGammaPoolFactory-origMin}
-    uint24 public override origMin = 10000;
-
-    /// @dev See {IGammaPoolFactory-origMax}
-    uint24 public override origMax = 10000;
-
     /// @dev See {IGammaPoolFactory-fee}
     uint16 public override fee = 10000; // Default value is 10,000 basis points or 10%
 

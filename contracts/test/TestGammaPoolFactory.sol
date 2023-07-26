@@ -59,15 +59,15 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
         return 0;
     }
 
-    function feeInfo() external override view returns(address,uint256,uint256,uint256) {
-        return(feeTo, 0, 0, 0);
+    function feeInfo() external override view returns(address,uint256) {
+        return(feeTo, 0);
     }
 
-    function getPoolFee(address) external view override returns (address, uint256, uint256, uint256, bool) {
-        return(feeTo, 0, 0, 0, false);
+    function getPoolFee(address) external view override returns (address, uint256, bool) {
+        return(feeTo, 0, false);
     }
 
-    function setPoolFee(address _pool, address _to, uint16 _protocolFee, uint24 _origMinFee, uint24 _origMaxFee, bool _isSet) external override {
+    function setPoolFee(address _pool, address _to, uint16 _protocolFee, bool _isSet) external override {
     }
 
     function getPools(uint256 start, uint256 end) external override view returns(address[] memory _pools) {
