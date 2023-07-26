@@ -8,6 +8,7 @@ import "../interfaces/observer/ICollateralManager.sol";
 import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
+import "../libraries/Math.sol";
 
 /// @title Implementation of Viewer Contract for GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
@@ -107,11 +108,54 @@ contract PoolViewer is IPoolViewer {
         }
     }
 
+    /// @dev Calculate origination fee that will be charged if borrowing liquidity amount
+    /// @param pool - address of GammaPool to calculate origination fee for
+    /// @param liquidity - liquidity to borrow
+    /// @return origFee - calculated origination fee, without any discounts
+    function calcOriginationFee(address pool, uint256 liquidity) external virtual view returns(uint256) {
+        IGammaPool.RateData memory data = _getLastFeeIndex(pool);
+        uint256 origFee = data.origFee;
+        uint256 utilizationRate = _calcUtilizationRate(data.LP_INVARIANT - liquidity, data.BORROWED_INVARIANT + liquidity) / 1e16;// convert utilizationRate to integer
+        uint256 minUtilizationRate = data.minUtilRate;
+        uint40 ema = data.emaUtilRate / 1e8; // convert ema to integer
+        utilizationRate = utilizationRate >= ema ? utilizationRate : ema; // utilization rate drops at the speed of the EMA
+        if(utilizationRate > minUtilizationRate) {
+            uint256 diff = utilizationRate - minUtilizationRate;
+            origFee += Math.max((2 ** diff) * 10000 / data.feeDivisor, 10000);
+        }
+        return origFee;
+    }
+
+    /// @dev Calculate utilization rate from borrowed invariant and invariant from LP tokens in GammaPool
+    /// @param lpInvariant - liquidity invariant from LP tokens deposited in GammaPool
+    /// @param borrowedInvariant - liquidity invariant units borrowed from GammaPool
+    /// @return utilizationRate - utilization rate based on `borrowedInvariant` and `lpInvariant`
+    function _calcUtilizationRate(uint256 lpInvariant, uint256 borrowedInvariant) internal view returns(uint256) {
+        uint256 totalInvariant = borrowedInvariant + lpInvariant;
+        if(totalInvariant == 0) {
+            return 0;
+        }
+        return borrowedInvariant * 1e18 / totalInvariant;
+    }
+
+    /// @dev Calculate EMA of utilization rate
+    /// @param utilizationRate - interest accrued to loans in GammaPool
+    /// @param emaUtilRate - interest accrued to loans in GammaPool
+    /// @param emaMultiplier - interest accrued to loans in GammaPool
+    function _calcUtilRateEma(uint256 utilizationRate, uint40 emaUtilRate, uint8 emaMultiplier) internal virtual view returns(uint256) {
+        utilizationRate = utilizationRate / 1e10; // convert to 8 decimals
+        if(emaUtilRate == 0) {
+            return utilizationRate;
+        } else {
+            // EMA_1 = val * mult + EMA_0 * (1 - mult)
+            return utilizationRate * emaMultiplier / 1000 + emaUtilRate * (1000 - emaMultiplier) / 1000;
+        }
+    }
+
     /// @dev Get interest rate changes per source, utilization rate, and borrowing and supply APR charged to users
     /// @param pool - struct containing necessary loan information to calculate accFeeIndex
     /// @param data - struct containing updated fee index information from pool
     function _getLastFeeIndex(address pool) internal virtual view returns(IGammaPool.RateData memory data) {
-
         IGammaPool.FeeIndexUpdateParams memory params = IGammaPool(pool).getFeeIndexUpdateParams();
 
         uint256 lastCFMMInvariant;
@@ -121,6 +165,18 @@ contract PoolViewer is IPoolViewer {
         (data.lastCFMMFeeIndex,data.lastFeeIndex,data.borrowRate,data.utilizationRate) = IShortStrategy(params.shortStrategy)
         .getLastFees(params.factory, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply,
             params.lastCFMMInvariant, params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.pool);
+
+        (,, data.BORROWED_INVARIANT) = IShortStrategy(params.shortStrategy)
+        .getLatestBalances(data.lastFeeIndex, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE,
+            lastCFMMInvariant, lastCFMMTotalSupply);
+
+        data.LP_INVARIANT = uint128(params.LP_TOKEN_BALANCE * lastCFMMInvariant / lastCFMMTotalSupply);
+
+        data.utilizationRate = _calcUtilizationRate(data.LP_INVARIANT, data.BORROWED_INVARIANT);
+        data.emaUtilRate = uint40(_calcUtilRateEma(data.utilizationRate, params.emaUtilRate, params.emaMultiplier));
+        data.origFee = params.origFee;
+        data.feeDivisor = params.feeDivisor;
+        data.minUtilRate = params.minUtilRate;
 
         data.accFeeIndex = params.accFeeIndex * data.lastFeeIndex / 1e18;
         data.lastBlockNumber = params.LAST_BLOCK_NUMBER;
@@ -158,6 +214,9 @@ contract PoolViewer is IPoolViewer {
         data.BORROWED_INVARIANT = uint128(borrowedInvariant);
         data.LP_INVARIANT = uint128(data.LP_TOKEN_BALANCE * lastCFMMInvariant / lastCFMMTotalSupply);
         data.accFeeIndex = uint96(data.accFeeIndex * data.lastFeeIndex / 1e18);
+
+        data.utilizationRate = _calcUtilizationRate(data.LP_INVARIANT, data.BORROWED_INVARIANT);
+        data.emaUtilRate = uint40(_calcUtilRateEma(data.utilizationRate, data.emaUtilRate, data.emaMultiplier));
 
         data.lastPrice = IGammaPool(pool).getLastCFMMPrice();
         data.lastCFMMInvariant = uint128(lastCFMMInvariant);

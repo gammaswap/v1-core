@@ -166,12 +166,15 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
 
         // Convert borrowed liquidity to corresponding CFMM LP tokens using current conversion rate
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(newBorrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
-        s.LP_INVARIANT = uint128(convertLPToInvariant(s.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply));
+        uint256 lpInvariant = convertLPToInvariant(s.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply);
+        s.LP_INVARIANT = uint128(lpInvariant);
 
         // Update GammaPool's interest rate index and update last block updated
         accFeeIndex = s.accFeeIndex * lastFeeIndex / 1e18;
         s.accFeeIndex = uint96(accFeeIndex);
         s.LAST_BLOCK_NUMBER = uint40(block.number);
+
+        updateUtilRateEma(calcUtilizationRate(lpInvariant, newBorrowedInvariant));
     }
 
     /// @dev Update pool invariant, LP tokens borrowed plus interest, interest rate index, and last block update
@@ -202,7 +205,6 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
             lastCFMMFeeIndex = s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18;
             s.lastCFMMFeeIndex = 1e18;
             (uint256 borrowRate, uint256 utilizationRate) = calcBorrowRate(s.LP_INVARIANT, borrowedInvariant, s.factory, address(this));
-            updateUtilRateEma(utilizationRate);
             lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, blockDiff);
             (accFeeIndex, borrowedInvariant) = updateStore(lastFeeIndex, borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply);
             if(borrowedInvariant > 0) { // Only pay protocol fee if there are loans

@@ -101,6 +101,18 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         uint256 lastPrice;
         /// @dev Supply APR of LP tokens in GammaPool
         uint256 supplyRate;
+        /// @dev names of ERC20 tokens of CFMM
+        uint256 BORROWED_INVARIANT;
+        /// @dev Quantity of CFMM's liquidity invariant held in GammaPool as LP tokens, maps to LP_TOKEN_BALANCE
+        uint256 LP_INVARIANT;//Invariant from LP Tokens, TOTAL_INVARIANT = BORROWED_INVARIANT + LP_INVARIANT
+        /// @dev EMA of utilization Rate
+        uint40 emaUtilRate;
+        /// @dev Minimum Utilization Rate
+        uint8 minUtilRate;
+        /// @dev Dynamic origination fee divisor
+        uint16 feeDivisor;
+        /// @dev Loan opening origination fee in basis points
+        uint16 origFee; // 16 bits
     }
 
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
@@ -211,6 +223,11 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         uint256 lastCFMMTotalSupply;
         uint256 LAST_BLOCK_NUMBER;
         uint256 accFeeIndex;
+        uint40 emaUtilRate;
+        uint8 emaMultiplier;
+        uint8 minUtilRate;
+        uint16 feeDivisor;
+        uint16 origFee;
     }
 
     /// @dev Function to initialize state variables GammaPool, called usually from GammaPoolFactory contract right after GammaPool instantiation

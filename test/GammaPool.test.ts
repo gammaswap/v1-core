@@ -302,7 +302,7 @@ describe("GammaPool", function () {
       await (await cfmm.mint(addr1.address, ONE.mul(100))).wait();
 
       const res5 = await poolViewer.getLatestPoolData(gammaPool.address);
-      expect(res5.utilizationRate).to.equal(44);
+      expect(res5.utilizationRate).to.equal(ONE);
       expect(res5.cfmm).to.equal(cfmm.address);
       expect(res5.protocolId).to.equal(PROTOCOL_ID);
       expect(res5.ltvThreshold).to.equal(res3.ltvThreshold);
@@ -356,7 +356,7 @@ describe("GammaPool", function () {
       expect(res6.lastCFMMFeeIndex).to.eq(res5.lastCFMMFeeIndex);
       expect(res6.lastFeeIndex).to.eq(res5.lastFeeIndex);
       expect(res6.borrowRate).to.eq(res5.borrowRate);
-      expect(res6.supplyRate).to.equal(res5.supplyRate);
+      expect(res6.supplyRate).to.equal(res5.borrowRate);
       expect(res6.lastBlockNumber).to.eq(res5.LAST_BLOCK_NUMBER);
 
       const res7 = await gammaPool.getFeeIndexUpdateParams();
@@ -546,12 +546,11 @@ describe("GammaPool", function () {
       const res0 = await poolViewer.testGetLastFeeIndex(gammaPool.address);
 
       const res1 = await gammaPool.getFeeIndexUpdateParams();
-
       expect(res0.accFeeIndex).to.eq(4);
       expect(res0.lastCFMMFeeIndex).to.eq(1);
       expect(res0.lastFeeIndex).to.eq(2);
       expect(res0.borrowRate).to.eq(3);
-      expect(res0.utilizationRate).to.eq(44);
+      expect(res0.utilizationRate).to.eq(ONE);
       expect(res0.lastBlockNumber).to.eq(res1.LAST_BLOCK_NUMBER);
       expect(res0.currBlockNumber).to.gt(res1.LAST_BLOCK_NUMBER);
       expect(res0.lastPrice).to.eq(0);

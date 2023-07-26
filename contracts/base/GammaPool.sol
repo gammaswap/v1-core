@@ -172,6 +172,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         _data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
         _data.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         _data.accFeeIndex = s.accFeeIndex;
+        _data.emaUtilRate = s.emaUtilRate;
+        _data.emaMultiplier = s.emaMultiplier;
+        _data.minUtilRate = s.minUtilRate;
+        _data.feeDivisor = s.feeDivisor;
+        _data.origFee = s.origFee;
     }
 
     /// @dev See {IGammaPool-getPoolData}

@@ -34,13 +34,13 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
     /// @return origFee - origination fee that will be applied to loan
     function calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) internal virtual view returns(uint256 origFee) {
         origFee = originationFee(); // base fee
-        uint256 utilizationRate = calcUtilizationRate(borrowedInvariant + liquidityBorrowed, lpInvariant - liquidityBorrowed) / 1e16;// convert utilizationRate to integer
+        uint256 utilizationRate = calcUtilizationRate(lpInvariant - liquidityBorrowed, borrowedInvariant + liquidityBorrowed) / 1e16;// convert utilizationRate to integer
         uint256 minUtilizationRate = s.minUtilRate;
         // check if the new utilizationRate is higher than ema or less than ema. If less than ema, take ema, if higher than ema take higher one
         uint40 ema = s.emaUtilRate / 1e8; // convert ema to integer
         utilizationRate = utilizationRate >= ema ? utilizationRate : ema; // utilization rate drops at the speed of the EMA
         if(utilizationRate > minUtilizationRate) {
-            uint256 diff = (utilizationRate - minUtilizationRate);
+            uint256 diff = utilizationRate - minUtilizationRate;
             origFee += Math.max((2 ** diff) * 10000 / s.feeDivisor, 10000);
         }
         return discount > origFee ? 0 : (origFee - discount);
