@@ -108,13 +108,10 @@ contract PoolViewer is IPoolViewer {
         }
     }
 
-    /// @dev Calculate origination fee that will be charged if borrowing liquidity amount
-    /// @param pool - address of GammaPool to calculate origination fee for
-    /// @param liquidity - liquidity to borrow
-    /// @return origFee - calculated origination fee, without any discounts
-    function calcOriginationFee(address pool, uint256 liquidity) external virtual view returns(uint256) {
+    /// @dev See {IGammaPool-calcOriginationFee}
+    function calcOriginationFee(address pool, uint256 liquidity) external virtual override view returns(uint256 origFee) {
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
-        uint256 origFee = data.origFee;
+        origFee = data.origFee;
         uint256 utilizationRate = _calcUtilizationRate(data.LP_INVARIANT - liquidity, data.BORROWED_INVARIANT + liquidity) / 1e16;// convert utilizationRate to integer
         uint256 minUtilizationRate = data.minUtilRate;
         uint40 ema = data.emaUtilRate / 1e8; // convert ema to integer
