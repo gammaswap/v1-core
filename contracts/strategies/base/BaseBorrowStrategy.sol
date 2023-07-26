@@ -21,6 +21,11 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         return totalLiquidityPx / totalLiquidity;
     }
 
+    /// @return origFee - base origination fee charged to every new loan that is issued
+    function originationFee() internal virtual view returns(uint16) {
+        return s.origFee;
+    }
+
     /// @dev Calculate and return dynamic origination fee in basis points
     /// @param liquidityBorrowed - new liquidity borrowed from GammaSwap
     /// @param borrowedInvariant - invariant amount already borrowed from GammaSwap (before liquidityBorrowed is applied)

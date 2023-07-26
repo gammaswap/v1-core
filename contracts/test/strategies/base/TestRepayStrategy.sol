@@ -14,7 +14,7 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
     event LoanCreated(address indexed caller, uint256 tokenId);
     event AmountsWithFees(uint256[] amounts);
     uint80 public borrowRate = 1e18;
-    uint24 public origFee = 0;
+    uint16 public origFee = 0;
     uint16 public protocolId;
     uint256 private _minBorrow = 1e3;
     uint256 private mCurrPrice = 1e18;
@@ -254,11 +254,11 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
         CFMM_RESERVES = s.CFMM_RESERVES;
     }
 
-    function setOriginationFee(uint24 _origFee) external virtual {
+    function setOriginationFee(uint16 _origFee) external virtual {
         origFee = _origFee;
     }
 
-    function originationFee() internal override virtual view returns(uint24) {
+    function originationFee() internal override virtual view returns(uint16) {
         return origFee;
     }
 
@@ -346,8 +346,8 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
     function _repayLiquiditySetRatio(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external override virtual returns(uint256 liquidityPaid, uint256[] memory amounts){
     }
 
-    function calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) internal virtual override view returns(uint256 origFee) {
-        origFee = originationFee(); // base fee
-        return discount > origFee ? 0 : (origFee - discount);
+    function calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) internal virtual override view returns(uint256 _origFee) {
+        _origFee = originationFee(); // base fee
+        return discount > _origFee ? 0 : (_origFee - discount);
     }
 }

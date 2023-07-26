@@ -8,6 +8,10 @@ contract TestExternalRebalanceStrategy is TestExternalBaseRebalanceStrategy, Ext
     constructor(){
     }
 
+    function externalSwapFee() internal view override(TestExternalBaseRebalanceStrategy,BaseExternalStrategy) virtual returns(uint256) {
+        return swapFee;
+    }
+
     // **** Not used **** //
     function beforeRepay(LibStorage.Loan storage _loan, uint256[] memory amounts) internal virtual override {
     }

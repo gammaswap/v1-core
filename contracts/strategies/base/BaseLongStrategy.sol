@@ -44,9 +44,6 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
     /// @param inAmts - expected amounts to receive from CFMM (bought)
     function swapTokens(LibStorage.Loan storage _loan, uint256[] memory outAmts, uint256[] memory inAmts) internal virtual;
 
-    /// @return origFee - origination fee charged to every new loan that is issued
-    function originationFee() internal virtual view returns(uint24);
-
     /// @return ltvThreshold - max ltv ratio acceptable before a loan is eligible for liquidation
     function _ltvThreshold() internal virtual view returns(uint16);
 
