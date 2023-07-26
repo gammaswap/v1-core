@@ -54,6 +54,6 @@ contract TestLiquidationStrategy2 is ILiquidationStrategy, ISingleLiquidationStr
         cfmmReserves[1] = 16;
         uint256 fee = 17;
         emit Liquidation(0, tokensHeld[0], tokensHeld[1], uint128(totalLoanLiquidity), uint128(fee), TX_TYPE.BATCH_LIQUIDATION);
-        emit PoolUpdated(totalCollateral, refund[0], uint48(refund[1]), 700, 800, 900, 1000, cfmmReserves, TX_TYPE.BATCH_LIQUIDATION);
+        emit PoolUpdated(totalCollateral, refund[0], uint40(refund[1]), 700, 800, 900, 1000, cfmmReserves, TX_TYPE.BATCH_LIQUIDATION);
     }
 }

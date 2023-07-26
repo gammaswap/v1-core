@@ -55,11 +55,10 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
         return _ltvThreshold();
     }
 
-    function calcOriginationFee(uint256 discount) internal virtual view returns(uint256) {
-        uint256 origFee = originationFee();
-        return discount > origFee ? 0 : (origFee - discount);
-    }
-
+    /// @dev Update loan observer or collateral manager with updated loan information, return externally held collateral for loan if using collateral manager
+    /// @param _loan - loan being observed by loan observer or collateral manager
+    /// @param tokenId - identifier of liquidity loan that will be observed
+    /// @return externalCollateral - collateral held in the collateral manager for liquidity loan `_loan`
     function onLoanUpdate(LibStorage.Loan storage _loan, uint256 tokenId) internal virtual returns(uint256 externalCollateral) {
         uint256 refType = _loan.refType;
         address refAddr = _loan.refAddr;
@@ -73,7 +72,7 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
     }
 
     /// @dev Get `loan` from `tokenId` if it exists
-    /// @param tokenId - liquidity loan whose collateral will be traded
+    /// @param tokenId - identifier of liquidity loan whose collateral will be traded
     /// @return _loan - existing loan (id > 0)
     function _getExistingLoan(uint256 tokenId) internal virtual view returns(LibStorage.Loan storage _loan) {
         _loan = s.loans[tokenId]; // Get loan

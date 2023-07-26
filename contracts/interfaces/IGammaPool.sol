@@ -145,9 +145,9 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 7.9% trillion
         uint96 accFeeIndex;
         /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
-        uint48 LAST_BLOCK_NUMBER;
+        uint40 LAST_BLOCK_NUMBER;
         /// @dev Percent accrual in CFMM invariant since last update
-        uint80 lastCFMMFeeIndex; // 80 bits
+        uint72 lastCFMMFeeIndex; // 72 bits
         /// @dev Total liquidity invariant amount in CFMM (from GammaPool and others), read in last update to GammaPool's storage variables
         uint128 lastCFMMInvariant;
         /// @dev Total LP token supply from CFMM (belonging to GammaPool and others), read in last update to GammaPool's storage variables
@@ -180,13 +180,21 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         /// @dev Utilization rate of GammaPool
         uint256 utilizationRate;
         /// @dev Current block number when requesting pool data
-        uint48 currBlockNumber;
+        uint40 currBlockNumber;
         /// @dev LTV liquidation threshold
         uint256 ltvThreshold;
         /// @dev Liquidation fee
         uint256 liquidationFee;
         /// @dev Supply APR of LP tokens in GammaPool
         uint256 supplyRate;
+        /// @dev EMA of utilization Rate
+        uint40 emaUtilRate;
+        /// @dev Multiplier of EMA Utilization Rate
+        uint8 emaMultiplier;
+        /// @dev Minimum Utilization Rate
+        uint8 minUtilRate;
+        /// @dev Dynamic origination fee divisor
+        uint16 feeDivisor;
     }
 
     struct FeeIndexUpdateParams {
@@ -207,6 +215,12 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @param _decimals - decimals of CFMM tokens, indices must match _tokens[] array
     /// @param _data - custom struct containing additional information used to verify the `_cfmm`
     function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals, bytes calldata _data) external;
+
+    /// @dev Set parameters to calculate origination fee
+    /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
+    /// @param minUtilRate - minimum utilization rate to calculate dynamic origination fee
+    /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out
+    function setOrigFeeParams(uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate) external;
 
     /// @dev cfmm - address of CFMM this GammaPool is for
     function cfmm() external view returns(address);

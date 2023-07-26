@@ -237,7 +237,7 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
         (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST), s.lastCFMMInvariant, s.lastCFMMTotalSupply);
     }
 
-    function getPoolData() external virtual view returns(uint256 LP_TOKEN_BALANCE, uint256 LP_TOKEN_BORROWED, uint48 LAST_BLOCK_NUMBER,
+    function getPoolData() external virtual view returns(uint256 LP_TOKEN_BALANCE, uint256 LP_TOKEN_BORROWED, uint40 LAST_BLOCK_NUMBER,
         uint96 accFeeIndex, uint256 LP_TOKEN_BORROWED_PLUS_INTEREST, uint128 LP_INVARIANT, uint128 BORROWED_INVARIANT, uint128[] memory CFMM_RESERVES) {
         LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED;

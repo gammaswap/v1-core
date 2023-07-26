@@ -150,7 +150,7 @@ contract PoolViewer is IPoolViewer {
 
         data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
 
-        data.lastCFMMFeeIndex = uint80(lastCFMMFeeIndex);
+        data.lastCFMMFeeIndex = uint72(lastCFMMFeeIndex);
         (,data.LP_TOKEN_BORROWED_PLUS_INTEREST, borrowedInvariant) = IShortStrategy(data.shortStrategy)
         .getLatestBalances(data.lastFeeIndex, borrowedInvariant, data.LP_TOKEN_BALANCE,
             lastCFMMInvariant, lastCFMMTotalSupply);

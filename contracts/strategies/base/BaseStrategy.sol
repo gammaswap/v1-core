@@ -171,7 +171,21 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         // Update GammaPool's interest rate index and update last block updated
         accFeeIndex = s.accFeeIndex * lastFeeIndex / 1e18;
         s.accFeeIndex = uint96(accFeeIndex);
-        s.LAST_BLOCK_NUMBER = uint48(block.number);
+        s.LAST_BLOCK_NUMBER = uint40(block.number);
+    }
+
+    /// @dev Update pool invariant, LP tokens borrowed plus interest, interest rate index, and last block update
+    /// @param utilizationRate - interest accrued to loans in GammaPool
+    function updateUtilRateEma(uint256 utilizationRate) internal virtual {
+        utilizationRate = utilizationRate / 1e10; // convert to 8 decimals
+        uint40 emaUtilRate = s.emaUtilRate;
+        if(emaUtilRate == 0) {
+            emaUtilRate = uint40(utilizationRate); // 8 decimals
+        } else {
+            // EMA_1 = val * mult + EMA_0 * (1 - mult)
+            uint8 emaMultiplier = s.emaMultiplier;
+            s.emaUtilRate = uint40(utilizationRate * emaMultiplier / 1000 + emaUtilRate * (1000 - emaMultiplier) / 1000);
+        }
     }
 
     /// @dev Update GammaPool's state variables and pay protocol fee
@@ -187,14 +201,15 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         if(blockDiff > 0) {
             lastCFMMFeeIndex = s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18;
             s.lastCFMMFeeIndex = 1e18;
-            (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, borrowedInvariant, s.factory, address(this));
+            (uint256 borrowRate, uint256 utilizationRate) = calcBorrowRate(s.LP_INVARIANT, borrowedInvariant, s.factory, address(this));
+            updateUtilRateEma(utilizationRate);
             lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, blockDiff);
             (accFeeIndex, borrowedInvariant) = updateStore(lastFeeIndex, borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply);
             if(borrowedInvariant > 0) { // Only pay protocol fee if there are loans
                 mintToDevs(lastFeeIndex, lastCFMMFeeIndex);
             }
         } else {
-            s.lastCFMMFeeIndex = uint80(s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18);
+            s.lastCFMMFeeIndex = uint72(s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18);
             lastFeeIndex = 1e18;
             accFeeIndex = s.accFeeIndex;
             s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(borrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);

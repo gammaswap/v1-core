@@ -286,4 +286,9 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
         uint256 denom = 2 * Math.sqrt(price*(10**18));
         return num * (10**18)/ denom;
     }
+
+    function calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) internal virtual override view returns(uint256 origFee) {
+        origFee = originationFee(); // base fee
+        return discount > origFee ? 0 : (origFee - discount);
+    }
 }

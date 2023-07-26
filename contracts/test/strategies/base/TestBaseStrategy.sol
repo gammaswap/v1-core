@@ -16,7 +16,7 @@ contract TestBaseStrategy is BaseStrategy {
     uint256 public invariant;
     address public _factory;
     uint80 public _lastFeeIndex;
-    uint80 public _lastCFMMFeeIndex;
+    uint72 public _lastCFMMFeeIndex;
 
     constructor(address factory, uint16 protocolId) {
         _factory = factory;
@@ -85,19 +85,19 @@ contract TestBaseStrategy is BaseStrategy {
         borrowRate = _borrowRate;
     }
 
-    function setLastBlockNumber(uint48 lastBlockNumber) public virtual {
+    function setLastBlockNumber(uint40 lastBlockNumber) public virtual {
         s.LAST_BLOCK_NUMBER = lastBlockNumber;
     }
 
     function updateLastBlockNumber() public virtual {
-        s.LAST_BLOCK_NUMBER = uint48(block.number);
+        s.LAST_BLOCK_NUMBER = uint40(block.number);
     }
 
     function getLastBlockNumber() public virtual view returns(uint256) {
         return s.LAST_BLOCK_NUMBER;
     }
 
-    function setCFMMIndex(uint80 cfmmIndex) public virtual {
+    function setCFMMIndex(uint72 cfmmIndex) public virtual {
         _lastCFMMFeeIndex = cfmmIndex;
     }
 
@@ -108,7 +108,7 @@ contract TestBaseStrategy is BaseStrategy {
     function testUpdateIndex() public virtual {
         (, uint256 lastFeeIndex, uint256 lastCFMMFeeIndex) = updateIndex();
         _lastFeeIndex = uint80(lastFeeIndex);
-        _lastCFMMFeeIndex = uint80(lastCFMMFeeIndex);
+        _lastCFMMFeeIndex = uint72(lastCFMMFeeIndex);
     }
 
     function getUpdateIndexFields() public virtual view returns(uint256 lastCFMMTotalSupply, uint256 lastCFMMInvariant, uint256 lastCFMMFeeIndex,
@@ -130,7 +130,7 @@ contract TestBaseStrategy is BaseStrategy {
 
     function testUpdateCFMMIndex() public virtual {
         (uint256 lastCFMMFeeIndex,,) = updateCFMMIndex(s.BORROWED_INVARIANT);
-        _lastCFMMFeeIndex = uint80(lastCFMMFeeIndex);
+        _lastCFMMFeeIndex = uint72(lastCFMMFeeIndex);
     }
 
     function testUpdateFeeIndex() public virtual {
