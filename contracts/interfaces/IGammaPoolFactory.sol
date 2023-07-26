@@ -16,6 +16,7 @@ interface IGammaPoolFactory {
 
     /// @dev Event emitted when a GammaPool fee is updated
     /// @param pool - address of new pool whose fee is updated (zero address is default params)
+    /// @param to - receiving address of protocol fees
     /// @param protocolFee - address of CFMM the GammaPool is created for
     /// @param isSet - bool flag, true use fee information, false use GammaSwap default fees
     event FeeUpdate(address indexed pool, address indexed to, uint16 protocolFee, bool isSet);
