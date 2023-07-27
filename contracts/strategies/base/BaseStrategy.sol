@@ -183,11 +183,11 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         utilizationRate = utilizationRate / 1e10; // convert to 8 decimals
         uint40 emaUtilRate = s.emaUtilRate;
         if(emaUtilRate == 0) {
-            emaUtilRate = uint40(utilizationRate); // 8 decimals
+            s.emaUtilRate = uint40(utilizationRate); // 8 decimals
         } else {
             // EMA_1 = val * mult + EMA_0 * (1 - mult)
             uint8 emaMultiplier = s.emaMultiplier;
-            s.emaUtilRate = uint40(utilizationRate * emaMultiplier / 1000 + emaUtilRate * (1000 - emaMultiplier) / 1000);
+            s.emaUtilRate = uint40(utilizationRate * emaMultiplier / 100 + emaUtilRate * (100 - emaMultiplier) / 100);
         }
     }
 

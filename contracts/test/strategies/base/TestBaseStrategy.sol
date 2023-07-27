@@ -8,6 +8,7 @@ import "../../TestCFMM.sol";
 contract TestBaseStrategy is BaseStrategy {
 
     event LoanCreated(address indexed caller, uint256 tokenId);
+    event EmaUtilRate(uint256 emaUtilRate);
 
     using LibStorage for LibStorage.Storage;
 
@@ -200,4 +201,11 @@ contract TestBaseStrategy is BaseStrategy {
     function depositToCFMM(address, address, uint256[] memory) internal virtual override returns(uint256) { return 0; }
 
     function withdrawFromCFMM(address, address, uint256) internal virtual override returns(uint256[] memory amounts) { return amounts; }
+
+    function testUpdateUtilRateEma(uint256 utilizationRate, uint40 emaUtilRate, uint8 emaMultiplier) external virtual {
+        s.emaUtilRate = emaUtilRate;
+        s.emaMultiplier = emaMultiplier;
+        updateUtilRateEma(utilizationRate);
+        emit EmaUtilRate(s.emaUtilRate);
+    }
 }
