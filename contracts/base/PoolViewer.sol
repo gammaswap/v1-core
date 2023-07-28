@@ -162,7 +162,7 @@ contract PoolViewer is IPoolViewer {
         data.currBlockNumber = block.number;
     }
 
-    /// @dev See {IGammaPool-getLatestRates}
+    /// @dev See {IPoolViewer-getLatestRates}
     function getLatestRates(address pool) external virtual override view returns(IGammaPool.RateData memory data) {
         data = _getLastFeeIndex(pool);
         data.currBlockNumber = block.number;
