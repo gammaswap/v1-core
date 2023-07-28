@@ -9,6 +9,10 @@ contract TestBorrowStrategy2 is IBorrowStrategy {
         return 8000;
     }
 
+    function calcDynamicOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 lowUtilRate, uint256 discount) external virtual override view returns(uint256) {
+        return 0;
+    }
+
     function _increaseCollateral(uint256 tokenId, uint256[] calldata ratio) external override returns(uint128[] memory tokensHeld) {
         tokensHeld = new uint128[](2);
         tokensHeld[0] = 1;

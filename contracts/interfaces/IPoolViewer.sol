@@ -50,7 +50,7 @@ interface IPoolViewer {
     /// @param pool - address of GammaPool to calculate origination fee for
     /// @param liquidity - liquidity to borrow
     /// @return origFee - calculated origination fee, without any discounts
-    function calcOriginationFee(address pool, uint256 liquidity) external view returns(uint256 origFee);
+    function calcDynamicOriginationFee(address pool, uint256 liquidity) external view returns(uint256 origFee);
 
     /// @dev Return pool storage data
     /// @param pool - address of pool to get pool data for

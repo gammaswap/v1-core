@@ -342,7 +342,7 @@ contract TestBorrowStrategy is BorrowStrategy {
         s.minUtilRate = minUtilRate; // 85 integer
         s.feeDivisor = feeDivisor; // 16384;
 
-        uint256 dynOrigFee = calcOriginationFee(liquidityBorrowed, borrowedInvariant, lpInvariant, discount);
+        uint256 dynOrigFee = _calcOriginationFee(liquidityBorrowed, borrowedInvariant, lpInvariant, s.emaUtilRate, discount);
         emit DynOrigFee(dynOrigFee);
     }
 }

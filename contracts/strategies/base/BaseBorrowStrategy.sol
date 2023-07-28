@@ -30,21 +30,34 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
     /// @param liquidityBorrowed - new liquidity borrowed from GammaSwap
     /// @param borrowedInvariant - invariant amount already borrowed from GammaSwap (before liquidityBorrowed is applied)
     /// @param lpInvariant - invariant amount available to be borrowed from LP tokens deposited in GammaSwap (before liquidityBorrowed is applied)
+    /// @param lowUtilRate - low utilization rate threshold
     /// @param discount - discount in basis points to apply to origination fee
     /// @return origFee - origination fee that will be applied to loan
-    function calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) public virtual view returns(uint256 origFee) {
-        origFee = originationFee(); // base fee
-        uint256 utilizationRate = calcUtilizationRate(lpInvariant - liquidityBorrowed, borrowedInvariant + liquidityBorrowed) / 1e16;// convert utilizationRate to integer
-        uint256 minUtilizationRate = s.minUtilRate;
-        // check if the new utilizationRate is higher than ema or less than ema. If less than ema, take ema, if higher than ema take higher one
-        uint40 ema = s.emaUtilRate / 1e6; // convert ema to integer
-        utilizationRate = utilizationRate >= ema ? utilizationRate : ema; // utilization rate drops at the speed of the EMA
-        if(utilizationRate > minUtilizationRate) {
-            uint256 diff = utilizationRate - minUtilizationRate;
-            origFee += Math.min((2 ** diff) * 10000 / s.feeDivisor, 10000);
-            origFee = Math.min(origFee, 10000);
+    function _calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 lowUtilRate, uint256 discount) internal virtual view returns(uint256 origFee) {
+        uint256 utilRate = calcUtilizationRate(lpInvariant - liquidityBorrowed, borrowedInvariant + liquidityBorrowed) / 1e16;// convert utilizationRate to integer
+        // check if the new utilizationRate is higher than lowUtilRate or less than lowUtilRate. If less than lowUtilRate, take lowUtilRate, if higher than lowUtilRate take higher one
+        lowUtilRate = lowUtilRate / 1e6; // convert lowUtilRate to integer
+
+        origFee = _calcDynamicOriginationFee(originationFee(), utilRate, lowUtilRate, s.minUtilRate, s.feeDivisor);
+
+        origFee = discount > origFee ? 0 : (origFee - discount);
+    }
+
+    /// @dev Calculate and return dynamic origination fee in basis points
+    /// @param baseOrigFee - base origination fee charge
+    /// @param utilRate - current utilization rate of GammaPool
+    /// @param lowUtilRate - low utilization rate threshold, used as a lower bound for the utilization rate
+    /// @param minUtilRate - minimum utilization rate after which utilization rate after which fee will start increasing
+    /// @param feeDivisor - fee divisor of formula for dynamic origination fee
+    /// @return origFee - origination fee that will be applied to loan
+    function _calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate, uint256 feeDivisor) internal virtual view returns(uint256) {
+        utilRate = utilRate >= lowUtilRate ? utilRate : lowUtilRate; // utilization rate not allowed to be below lowUtilRate
+        if(utilRate > minUtilRate) {
+            uint256 diff = utilRate - minUtilRate;
+            baseOrigFee += Math.min((2 ** diff) * 10000 / s.feeDivisor, 10000);
+            baseOrigFee = Math.min(baseOrigFee, 10000);
         }
-        return discount > origFee ? 0 : (origFee - discount);
+        return baseOrigFee;
     }
 
     /// @dev Account for newly borrowed liquidity debt
@@ -68,7 +81,7 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         uint256 borrowedInvariant = s.BORROWED_INVARIANT;
 
         // Calculate add loan origination fee to LP token debt
-        uint256 lpTokensPlusOrigFee = lpTokens + lpTokens * calcOriginationFee(liquidityBorrowedExFee, borrowedInvariant, s.LP_INVARIANT, _loan.refFee) / 10000;
+        uint256 lpTokensPlusOrigFee = lpTokens + lpTokens * _calcOriginationFee(liquidityBorrowedExFee, borrowedInvariant, s.LP_INVARIANT, s.emaUtilRate, _loan.refFee) / 10000;
 
         // Calculate borrowed liquidity invariant including origination fee
         liquidityBorrowed = convertLPToInvariant(lpTokensPlusOrigFee, lastCFMMInvariant, lastCFMMTotalSupply);

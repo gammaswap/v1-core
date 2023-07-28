@@ -8,6 +8,7 @@ import "../interfaces/observer/ICollateralManager.sol";
 import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
+import "../interfaces/strategies/lending/IBorrowStrategy.sol";
 import "../libraries/Math.sol";
 
 /// @title Implementation of Viewer Contract for GammaPool
@@ -108,19 +109,14 @@ contract PoolViewer is IPoolViewer {
         }
     }
 
-    /// @dev See {IGammaPool-calcOriginationFee}
-    function calcOriginationFee(address pool, uint256 liquidity) external virtual override view returns(uint256 origFee) {
+    /// @dev See {IPoolViewer-calcDynamicOriginationFee}
+    function calcDynamicOriginationFee(address pool, uint256 liquidity) external virtual override view returns(uint256 origFee) {
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
-        origFee = data.origFee;
-        uint256 utilizationRate = _calcUtilizationRate(data.LP_INVARIANT - liquidity, data.BORROWED_INVARIANT + liquidity) / 1e16;// convert utilizationRate to integer
-        uint256 minUtilizationRate = data.minUtilRate;
-        uint40 ema = data.emaUtilRate / 1e8; // convert ema to integer
-        utilizationRate = utilizationRate >= ema ? utilizationRate : ema; // utilization rate drops at the speed of the EMA
-        if(utilizationRate > minUtilizationRate) {
-            uint256 diff = utilizationRate - minUtilizationRate;
-            origFee += Math.max((2 ** diff) * 10000 / data.feeDivisor, 10000);
-        }
-        return origFee;
+
+        uint256 utilRate = _calcUtilizationRate(data.LP_INVARIANT - liquidity, data.BORROWED_INVARIANT + liquidity) / 1e16;// convert utilizationRate to integer
+        uint256 emaUtilRate = data.emaUtilRate / 1e6; // convert ema to integer
+
+        origFee = IBorrowStrategy(IGammaPool(pool).borrowStrategy()).calcDynamicOriginationFee(data.origFee, utilRate, emaUtilRate, data.minUtilRate, data.feeDivisor);
     }
 
     /// @dev Calculate utilization rate from borrowed invariant and invariant from LP tokens in GammaPool
