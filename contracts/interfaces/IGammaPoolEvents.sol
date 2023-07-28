@@ -12,5 +12,6 @@ interface IGammaPoolEvents is IShortStrategyEvents, ILiquidationStrategyEvents, 
     /// @dev Event emitted when a Loan is created
     /// @param caller - address that created the loan
     /// @param tokenId - unique id that identifies the loan in question
-    event LoanCreated(address indexed caller, uint256 tokenId);
+    /// @param refId - Reference id of post transaction activities attached to this loan
+    event LoanCreated(address indexed caller, uint256 tokenId, uint16 refId);
 }

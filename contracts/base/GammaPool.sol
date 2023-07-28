@@ -241,7 +241,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
     /// @dev See {IGammaPool-createLoan}
     function createLoan(uint16 refId) external lock virtual override returns(uint256 tokenId) {
         tokenId = s.createLoan(s.tokens.length, refId);
-        emit LoanCreated(msg.sender, tokenId);
+        emit LoanCreated(msg.sender, tokenId, refId);
     }
 
     /// @dev See {IGammaPool-loan}

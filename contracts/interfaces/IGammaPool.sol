@@ -355,6 +355,7 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     // Long Gamma
 
     /// @dev Create a new Loan struct
+    /// @param refId - Reference id of post transaction activities attached to this loan
     /// @return tokenId - unique id of loan struct created
     function createLoan(uint16 refId) external returns(uint256 tokenId);
 
