@@ -1264,7 +1264,6 @@ describe("LongStrategy", function () {
         )
       ).wait();
       const event = tx.events[tx.events.length - 1];
-      console.log("event >> ", event.args.dynOrigFee);
       expect(event.event).to.eq("DynOrigFee");
       expect(event.args.dynOrigFee).to.eq(627);
     });
