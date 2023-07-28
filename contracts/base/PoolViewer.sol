@@ -135,20 +135,6 @@ contract PoolViewer is IPoolViewer {
         return borrowedInvariant * 1e18 / totalInvariant;
     }
 
-    /// @dev Calculate EMA of utilization rate
-    /// @param utilizationRate - interest accrued to loans in GammaPool
-    /// @param emaUtilRate - interest accrued to loans in GammaPool
-    /// @param emaMultiplier - interest accrued to loans in GammaPool
-    function _calcUtilRateEma(uint256 utilizationRate, uint40 emaUtilRate, uint8 emaMultiplier) internal virtual view returns(uint256) {
-        utilizationRate = utilizationRate / 1e10; // convert to 8 decimals
-        if(emaUtilRate == 0) {
-            return utilizationRate;
-        } else {
-            // EMA_1 = val * mult + EMA_0 * (1 - mult)
-            return utilizationRate * emaMultiplier / 1000 + emaUtilRate * (1000 - emaMultiplier) / 1000;
-        }
-    }
-
     /// @dev Get interest rate changes per source, utilization rate, and borrowing and supply APR charged to users
     /// @param pool - struct containing necessary loan information to calculate accFeeIndex
     /// @param data - struct containing updated fee index information from pool
@@ -170,7 +156,7 @@ contract PoolViewer is IPoolViewer {
         data.LP_INVARIANT = uint128(params.LP_TOKEN_BALANCE * lastCFMMInvariant / lastCFMMTotalSupply);
 
         data.utilizationRate = _calcUtilizationRate(data.LP_INVARIANT, data.BORROWED_INVARIANT);
-        data.emaUtilRate = uint40(_calcUtilRateEma(data.utilizationRate, params.emaUtilRate, params.emaMultiplier));
+        data.emaUtilRate = uint40(IShortStrategy(params.shortStrategy).calcUtilRateEma(data.utilizationRate, params.emaUtilRate, params.emaMultiplier));
         data.origFee = params.origFee;
         data.feeDivisor = params.feeDivisor;
         data.minUtilRate = params.minUtilRate;
@@ -213,7 +199,7 @@ contract PoolViewer is IPoolViewer {
         data.accFeeIndex = uint96(data.accFeeIndex * data.lastFeeIndex / 1e18);
 
         data.utilizationRate = _calcUtilizationRate(data.LP_INVARIANT, data.BORROWED_INVARIANT);
-        data.emaUtilRate = uint40(_calcUtilRateEma(data.utilizationRate, data.emaUtilRate, data.emaMultiplier));
+        data.emaUtilRate = uint40(IShortStrategy(data.shortStrategy).calcUtilRateEma(data.utilizationRate, data.emaUtilRate, data.emaMultiplier));
 
         data.lastPrice = IGammaPool(pool).getLastCFMMPrice();
         data.lastCFMMInvariant = uint128(lastCFMMInvariant);

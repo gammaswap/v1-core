@@ -346,7 +346,7 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
     function _repayLiquiditySetRatio(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external override virtual returns(uint256 liquidityPaid, uint256[] memory amounts){
     }
 
-    function calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) internal virtual override view returns(uint256 _origFee) {
+    function calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) public virtual override view returns(uint256 _origFee) {
         _origFee = originationFee(); // base fee
         return discount > _origFee ? 0 : (_origFee - discount);
     }

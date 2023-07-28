@@ -205,7 +205,8 @@ contract TestBaseStrategy is BaseStrategy {
     function testUpdateUtilRateEma(uint256 utilizationRate, uint40 emaUtilRate, uint8 emaMultiplier) external virtual {
         s.emaUtilRate = emaUtilRate;
         s.emaMultiplier = emaMultiplier;
-        updateUtilRateEma(utilizationRate);
+
+        s.emaUtilRate = uint40(_calcUtilRateEma(utilizationRate, s.emaUtilRate, s.emaMultiplier));
         emit EmaUtilRate(s.emaUtilRate);
     }
 }

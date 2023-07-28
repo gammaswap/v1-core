@@ -83,6 +83,13 @@ interface IShortStrategy is IShortStrategyEvents {
     /// @return lastBorrowedInvariant - current borrow rate of GammaPool
     function getLatestBalances(uint256 lastFeeIndex, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) external view returns(uint256 lastLPBalance, uint256 lastBorrowedLPBalance, uint256 lastBorrowedInvariant);
 
+    /// @dev Update pool invariant, LP tokens borrowed plus interest, interest rate index, and last block update
+    /// @param utilizationRate - interest accrued to loans in GammaPool
+    /// @param emaUtilRateLast - interest accrued to loans in GammaPool
+    /// @param emaMultiplier - interest accrued to loans in GammaPool
+    /// @return emaUtilRate - interest accrued to loans in GammaPool
+    function calcUtilRateEma(uint256 utilizationRate, uint256 emaUtilRateLast, uint256 emaMultiplier) external view returns(uint256 emaUtilRate);
+
     /// @dev Synchronize LP_TOKEN_BALANCE with actual CFMM LP tokens deposited in GammaPool
     function _sync() external;
 

@@ -4,13 +4,13 @@ pragma solidity 0.8.17;
 import "../../../libraries/Math.sol";
 import "../../TestCFMM.sol";
 import "../../TestERC20.sol";
-import "../../../strategies/lending/RepayStrategy.sol";
 import "../../../strategies/lending/BorrowStrategy.sol";
 
-contract TestLongStrategy is RepayStrategy, BorrowStrategy {
+contract TestBorrowStrategy is BorrowStrategy {
 
     using LibStorage for LibStorage.Storage;
 
+    event DynOrigFee(uint256 dynOrigFee);
     event LoanCreated(address indexed caller, uint256 tokenId);
     event LiquidityAndDeltas(uint256 liquidity, uint256 delta0, uint256 delta1, uint256 deltaLen);
     event AmountsWithFees(uint256[] amounts);
@@ -186,11 +186,6 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         openLoan(_getLoan(tokenId), lpTokens);
     }
 
-    function testPayLoan(uint256 tokenId, uint256 liquidity) public virtual {
-        LibStorage.Loan storage _loan = _getLoan(tokenId);
-        payLoan(_loan, liquidity, _loan.liquidity);
-    }
-
     function updateLoan(LibStorage.Loan storage _loan) internal override returns(uint256){
         uint96 rateIndex = borrowRate;
         s.accFeeIndex = rateIndex;
@@ -242,9 +237,9 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
         return(_loan.liquidity, _loan.lpTokens, _loan.px,
-            s.BORROWED_INVARIANT, s.LP_INVARIANT, (s.BORROWED_INVARIANT + s.LP_INVARIANT),
-            s.LP_TOKEN_BORROWED, s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
-            (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST), s.lastCFMMInvariant, s.lastCFMMTotalSupply);
+        s.BORROWED_INVARIANT, s.LP_INVARIANT, (s.BORROWED_INVARIANT + s.LP_INVARIANT),
+        s.LP_TOKEN_BORROWED, s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
+        (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST), s.lastCFMMInvariant, s.lastCFMMTotalSupply);
     }
 
     function getPoolData() external virtual view returns(uint256 LP_TOKEN_BALANCE, uint256 LP_TOKEN_BORROWED, uint40 LAST_BLOCK_NUMBER,
@@ -261,10 +256,6 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
 
     function setOriginationFee(uint16 _origFee) external virtual {
         origFee = _origFee;
-    }
-
-    function originationFee() internal override virtual view returns(uint16) {
-        return origFee;
     }
 
     function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal virtual override {
@@ -329,14 +320,6 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         return false;
     }
 
-    function testUpdatePayableLoan(uint256 tokenId, uint256 payLiquidity) external virtual {
-        LibStorage.Loan storage _loan = _getLoan(tokenId);
-        (uint256 loanLiquidity, int256[] memory deltas) = updatePayableLoan(_loan, payLiquidity);
-        uint256 delta0 = deltas.length > 0 ? uint256(deltas[0]) : 0;
-        uint256 delta1 = deltas.length > 1 ? uint256(deltas[1]) : 0;
-        emit LiquidityAndDeltas(loanLiquidity, delta0, delta1, deltas.length);
-    }
-
     function _calcCollateralPostTrade(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
         return calcInvariant(address(0), tokensHeld) + (calcInvariant(address(0), tokensHeld) / 2);
     }
@@ -353,14 +336,13 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         deltas[1] = 0;
     }
 
-    function _repayLiquidityWithLP(uint256 tokenId, uint256 collateralId, address to) external virtual override returns(uint256 liquidityPaid, uint128[] memory tokensHeld) {
-    }
+    function testCalcOriginationFee(uint16 _origFee, uint40 emaUtilRate, uint8 minUtilRate, uint16 feeDivisor, uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) external virtual {
+        s.origFee = _origFee; // 2 basis points
+        s.emaUtilRate = emaUtilRate; // 10 decimals
+        s.minUtilRate = minUtilRate; // 85 integer
+        s.feeDivisor = feeDivisor; // 16384;
 
-    function _repayLiquiditySetRatio(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external override virtual returns(uint256 liquidityPaid, uint256[] memory amounts){
-    }
-
-    function calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) public virtual override view returns(uint256 _origFee) {
-        _origFee = originationFee(); // base fee
-        return discount > _origFee ? 0 : (_origFee - discount);
+        uint256 dynOrigFee = calcOriginationFee(liquidityBorrowed, borrowedInvariant, lpInvariant, discount);
+        emit DynOrigFee(dynOrigFee);
     }
 }

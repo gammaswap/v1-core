@@ -174,20 +174,21 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         s.accFeeIndex = uint96(accFeeIndex);
         s.LAST_BLOCK_NUMBER = uint40(block.number);
 
-        updateUtilRateEma(calcUtilizationRate(lpInvariant, newBorrowedInvariant));
+        s.emaUtilRate = uint40(_calcUtilRateEma(calcUtilizationRate(lpInvariant, newBorrowedInvariant), s.emaUtilRate, s.emaMultiplier));
     }
 
     /// @dev Update pool invariant, LP tokens borrowed plus interest, interest rate index, and last block update
     /// @param utilizationRate - interest accrued to loans in GammaPool
-    function updateUtilRateEma(uint256 utilizationRate) internal virtual {
+    /// @param emaUtilRateLast - interest accrued to loans in GammaPool
+    /// @param emaMultiplier - interest accrued to loans in GammaPool
+    /// @return emaUtilRate - interest accrued to loans in GammaPool
+    function _calcUtilRateEma(uint256 utilizationRate, uint256 emaUtilRateLast, uint256 emaMultiplier) internal virtual view returns(uint256) {
         utilizationRate = utilizationRate / 1e10; // convert to 8 decimals
-        uint40 emaUtilRate = s.emaUtilRate;
-        if(emaUtilRate == 0) {
-            s.emaUtilRate = uint40(utilizationRate); // 8 decimals
+        if(emaUtilRateLast == 0) {
+            return utilizationRate;
         } else {
             // EMA_1 = val * mult + EMA_0 * (1 - mult)
-            uint8 emaMultiplier = s.emaMultiplier;
-            s.emaUtilRate = uint40(utilizationRate * emaMultiplier / 100 + emaUtilRate * (100 - emaMultiplier) / 100);
+            return utilizationRate * emaMultiplier / 100 + emaUtilRateLast * (100 - emaMultiplier) / 100;
         }
     }
 

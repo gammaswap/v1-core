@@ -9,12 +9,14 @@ describe("LongStrategy", function () {
   let TestCFMM: any;
   let TestStrategy: any;
   let TestStrategy2: any;
+  let TestStrategy3: any;
   let TestFactory: any;
   let tokenA: any;
   let tokenB: any;
   let cfmm: any;
   let strategy: any;
   let strategy2: any;
+  let strategy3: any;
   let factory: any;
   let owner: any;
   let addr1: any;
@@ -28,6 +30,7 @@ describe("LongStrategy", function () {
     TestCFMM = await ethers.getContractFactory("TestCFMM");
     TestStrategy = await ethers.getContractFactory("TestLongStrategy");
     TestStrategy2 = await ethers.getContractFactory("TestRepayStrategy");
+    TestStrategy3 = await ethers.getContractFactory("TestBorrowStrategy");
     TestFactory = await ethers.getContractFactory("TestGammaPoolFactory2");
     [owner, addr1, addr2] = await ethers.getSigners();
 
@@ -56,6 +59,17 @@ describe("LongStrategy", function () {
     strategy2 = await TestStrategy2.deploy();
     await (
       await strategy2.initialize(
+        factory.address,
+        cfmm.address,
+        PROTOCOL_ID,
+        [tokenA.address, tokenB.address],
+        [18, 18]
+      )
+    ).wait();
+
+    strategy3 = await TestStrategy3.deploy();
+    await (
+      await strategy3.initialize(
         factory.address,
         cfmm.address,
         PROTOCOL_ID,
@@ -1079,6 +1093,180 @@ describe("LongStrategy", function () {
       );
 
       await checkStrategyTokenBalances(amtA.div(2), amtB.div(2));
+    });
+  });
+
+  describe("Calculate Origination Fee", function () {
+    it("Calc Orig Fee, utilRate > emaUtilRate, discount > 0", async function () {
+      const ONE = BigNumber.from(10).pow(18);
+      const tenDec = BigNumber.from(10).pow(10);
+      const emaUtilRate = ONE.mul(80).div(100).div(tenDec); // 80%
+      const borrowedInvariant = ONE.mul(1000);
+      const lpInvariant = ONE.mul(1000);
+
+      const liquidityBorrowed = ONE.mul(100);
+      const tx = await (
+        await strategy3.testCalcOriginationFee(
+          2,
+          emaUtilRate,
+          85,
+          16384,
+          liquidityBorrowed.mul(96).div(10),
+          borrowedInvariant,
+          lpInvariant,
+          1000
+        )
+      ).wait();
+      const event = tx.events[tx.events.length - 1];
+      expect(event.event).to.eq("DynOrigFee");
+      expect(event.args.dynOrigFee).to.eq(4002);
+    });
+
+    it("Calc Orig Fee, utilRate > emaUtilRate", async function () {
+      const ONE = BigNumber.from(10).pow(18);
+      const tenDec = BigNumber.from(10).pow(10);
+      const emaUtilRate = ONE.mul(80).div(100).div(tenDec); // 80%
+      const borrowedInvariant = ONE.mul(1000);
+      const lpInvariant = ONE.mul(1000);
+
+      const liquidityBorrowed = ONE.mul(100);
+      const tx = await (
+        await strategy3.testCalcOriginationFee(
+          10,
+          emaUtilRate,
+          85,
+          16384,
+          liquidityBorrowed,
+          borrowedInvariant,
+          lpInvariant,
+          0
+        )
+      ).wait();
+      const event = tx.events[tx.events.length - 1];
+      expect(event.event).to.eq("DynOrigFee");
+      expect(event.args.dynOrigFee).to.eq(10);
+
+      const tx1 = await (
+        await strategy3.testCalcOriginationFee(
+          10,
+          emaUtilRate,
+          85,
+          16384,
+          liquidityBorrowed.mul(2),
+          borrowedInvariant,
+          lpInvariant,
+          0
+        )
+      ).wait();
+      const event1 = tx1.events[tx1.events.length - 1];
+      expect(event1.event).to.eq("DynOrigFee");
+      expect(event1.args.dynOrigFee).to.eq(10);
+
+      const tx2 = await (
+        await strategy3.testCalcOriginationFee(
+          10,
+          emaUtilRate,
+          85,
+          16384,
+          liquidityBorrowed.mul(5),
+          borrowedInvariant,
+          lpInvariant,
+          0
+        )
+      ).wait();
+      const event2 = tx2.events[tx2.events.length - 1];
+      expect(event2.event).to.eq("DynOrigFee");
+      expect(event2.args.dynOrigFee).to.eq(10);
+
+      const tx3 = await (
+        await strategy3.testCalcOriginationFee(
+          10,
+          emaUtilRate,
+          85,
+          16384,
+          liquidityBorrowed.mul(9),
+          borrowedInvariant,
+          lpInvariant,
+          0
+        )
+      ).wait();
+      const event3 = tx3.events[tx3.events.length - 1];
+      expect(event3.event).to.eq("DynOrigFee");
+      expect(event3.args.dynOrigFee).to.eq(635);
+
+      const tx4 = await (
+        await strategy3.testCalcOriginationFee(
+          2,
+          emaUtilRate,
+          85,
+          16384,
+          liquidityBorrowed.mul(8),
+          borrowedInvariant,
+          lpInvariant,
+          0
+        )
+      ).wait();
+      const event4 = tx4.events[tx4.events.length - 1];
+      expect(event4.event).to.eq("DynOrigFee");
+      expect(event4.args.dynOrigFee).to.eq(21);
+
+      const tx5 = await (
+        await strategy3.testCalcOriginationFee(
+          2,
+          emaUtilRate,
+          85,
+          16384,
+          liquidityBorrowed.mul(95).div(10),
+          borrowedInvariant,
+          lpInvariant,
+          0
+        )
+      ).wait();
+      const event5 = tx5.events[tx5.events.length - 1];
+      expect(event5.event).to.eq("DynOrigFee");
+      expect(event5.args.dynOrigFee).to.eq(2502);
+
+      const tx6 = await (
+        await strategy3.testCalcOriginationFee(
+          2,
+          emaUtilRate,
+          85,
+          16384,
+          liquidityBorrowed.mul(96).div(10),
+          borrowedInvariant,
+          lpInvariant,
+          0
+        )
+      ).wait();
+      const event6 = tx6.events[tx6.events.length - 1];
+      expect(event6.event).to.eq("DynOrigFee");
+      expect(event6.args.dynOrigFee).to.eq(5002);
+    });
+
+    it("Calc Orig Fee, utilRate < emaUtilRate", async function () {
+      const ONE = BigNumber.from(10).pow(18);
+      const tenDec = BigNumber.from(10).pow(10);
+      const emaUtilRate = ONE.mul(95).div(100).div(tenDec); // 80%
+      const borrowedInvariant = ONE.mul(1000);
+      const lpInvariant = ONE.mul(1000);
+
+      const liquidityBorrowed = ONE.mul(100);
+      const tx = await (
+        await strategy3.testCalcOriginationFee(
+          2,
+          emaUtilRate,
+          85,
+          16384,
+          liquidityBorrowed,
+          borrowedInvariant,
+          lpInvariant,
+          0
+        )
+      ).wait();
+      const event = tx.events[tx.events.length - 1];
+      console.log("event >> ", event.args.dynOrigFee);
+      expect(event.event).to.eq("DynOrigFee");
+      expect(event.args.dynOrigFee).to.eq(627);
     });
   });
 

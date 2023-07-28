@@ -32,16 +32,17 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
     /// @param lpInvariant - invariant amount available to be borrowed from LP tokens deposited in GammaSwap (before liquidityBorrowed is applied)
     /// @param discount - discount in basis points to apply to origination fee
     /// @return origFee - origination fee that will be applied to loan
-    function calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) internal virtual view returns(uint256 origFee) {
+    function calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) public virtual view returns(uint256 origFee) {
         origFee = originationFee(); // base fee
         uint256 utilizationRate = calcUtilizationRate(lpInvariant - liquidityBorrowed, borrowedInvariant + liquidityBorrowed) / 1e16;// convert utilizationRate to integer
         uint256 minUtilizationRate = s.minUtilRate;
         // check if the new utilizationRate is higher than ema or less than ema. If less than ema, take ema, if higher than ema take higher one
-        uint40 ema = s.emaUtilRate / 1e8; // convert ema to integer
+        uint40 ema = s.emaUtilRate / 1e6; // convert ema to integer
         utilizationRate = utilizationRate >= ema ? utilizationRate : ema; // utilization rate drops at the speed of the EMA
         if(utilizationRate > minUtilizationRate) {
             uint256 diff = utilizationRate - minUtilizationRate;
-            origFee += Math.max((2 ** diff) * 10000 / s.feeDivisor, 10000);
+            origFee += Math.min((2 ** diff) * 10000 / s.feeDivisor, 10000);
+            origFee = Math.min(origFee, 10000);
         }
         return discount > origFee ? 0 : (origFee - discount);
     }
