@@ -14,6 +14,10 @@ contract TestExternalLiquidationStrategy is TestExternalBaseRebalanceStrategy, E
     constructor(){
     }
 
+    function externalSwapFee() internal view override(TestExternalBaseRebalanceStrategy,BaseExternalStrategy) virtual returns(uint256) {
+        return swapFee;
+    }
+
     function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal virtual override {
     }
 

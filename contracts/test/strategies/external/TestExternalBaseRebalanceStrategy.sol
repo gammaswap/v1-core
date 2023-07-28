@@ -39,10 +39,6 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
         return 1e3;
     }
 
-    function originationFee() internal virtual view override returns(uint24) {
-        return 10;
-    }
-
     function validateParameters(bytes calldata _data) external override view returns(bool) {
         return false;
     }

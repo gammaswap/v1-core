@@ -35,6 +35,11 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     /// @return payee - address reserve tokens will be sent to. Address holding CFMM's reserves might be different from CFMM's address
     function calcDepositAmounts(uint256[] calldata amountsDesired, uint256[] calldata amountsMin) internal virtual view returns (uint256[] memory reserves, address payee);
 
+    /// @dev See {IShortStrategy-calcUtilRateEma}.
+    function calcUtilRateEma(uint256 utilizationRate, uint256 emaUtilRateLast, uint256 emaMultiplier) external virtual override view returns(uint256 emaUtilRate) {
+        return _calcUtilRateEma(utilizationRate, emaUtilRateLast, emaMultiplier);
+    }
+
     /// @dev See {IShortStrategy-totalAssets}.
     function totalAssets(address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply,
         uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, address pool) public virtual override view returns(uint256 lastLPBalance) {

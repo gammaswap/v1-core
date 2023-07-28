@@ -15,7 +15,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
     event LiquidityAndDeltas(uint256 liquidity, uint256 delta0, uint256 delta1, uint256 deltaLen);
     event AmountsWithFees(uint256[] amounts);
     uint80 public borrowRate = 1e18;
-    uint24 public origFee = 0;
+    uint16 public origFee = 0;
     uint16 public protocolId;
     uint256 private _minBorrow = 1e3;
     uint256 private mCurrPrice = 1e18;
@@ -247,7 +247,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
             (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST), s.lastCFMMInvariant, s.lastCFMMTotalSupply);
     }
 
-    function getPoolData() external virtual view returns(uint256 LP_TOKEN_BALANCE, uint256 LP_TOKEN_BORROWED, uint48 LAST_BLOCK_NUMBER,
+    function getPoolData() external virtual view returns(uint256 LP_TOKEN_BALANCE, uint256 LP_TOKEN_BORROWED, uint40 LAST_BLOCK_NUMBER,
         uint96 accFeeIndex, uint256 LP_TOKEN_BORROWED_PLUS_INTEREST, uint128 LP_INVARIANT, uint128 BORROWED_INVARIANT, uint128[] memory CFMM_RESERVES) {
         LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED;
@@ -259,11 +259,11 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         CFMM_RESERVES = s.CFMM_RESERVES;
     }
 
-    function setOriginationFee(uint24 _origFee) external virtual {
+    function setOriginationFee(uint16 _origFee) external virtual {
         origFee = _origFee;
     }
 
-    function originationFee() internal override virtual view returns(uint24) {
+    function originationFee() internal override virtual view returns(uint16) {
         return origFee;
     }
 
@@ -357,5 +357,10 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
     }
 
     function _repayLiquiditySetRatio(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external override virtual returns(uint256 liquidityPaid, uint256[] memory amounts){
+    }
+
+    function _calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 lowUtilRate, uint256 discount) internal virtual override view returns(uint256 _origFee) {
+        _origFee = originationFee(); // base fee
+        return discount > _origFee ? 0 : (_origFee - discount);
     }
 }

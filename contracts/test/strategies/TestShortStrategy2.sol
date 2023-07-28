@@ -91,4 +91,8 @@ contract TestShortStrategy2 is IShortStrategy{
         cfmmReserves[1] = 9;
         emit PoolUpdated(1, 2, 3, 4, 5, 6, 7, cfmmReserves, TX_TYPE.SYNC);
     }
+
+    function calcUtilRateEma(uint256 utilizationRate, uint256 emaUtilRateLast, uint256 emaMultiplier) external virtual override view returns(uint256 emaUtilRate) {
+        return 0;
+    }
 }

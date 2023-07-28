@@ -39,7 +39,7 @@ describe("BaseStrategy", function () {
     GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
 
     factory = await GammaPoolFactory.deploy(owner.address);
-    await factory.setFee(0, 0, 0);
+    await factory.setFee(0);
 
     strategy = await TestStrategy.deploy(factory.address, PROTOCOL_ID);
     await (
@@ -688,6 +688,96 @@ describe("BaseStrategy", function () {
     });
   });
 
+  describe("Update EMA Utilization Rate", function () {
+    it("Init EMA Util Rate", async function () {
+      const ONE = BigNumber.from(10).pow(18);
+      const tenDec = BigNumber.from(10).pow(10);
+      const eightDec = BigNumber.from(10).pow(8);
+      const tx = await (
+        await strategy.testUpdateUtilRateEma(ONE.div(tenDec).div(10), 0, 2)
+      ).wait();
+      const event = tx.events[tx.events.length - 1];
+      expect(event.event).to.equal("EmaUtilRate");
+      expect(event.args.emaUtilRate).to.eq(0);
+
+      const tx1 = await (
+        await strategy.testUpdateUtilRateEma(ONE.div(eightDec), 0, 2)
+      ).wait();
+      const event1 = tx1.events[tx1.events.length - 1];
+      expect(event1.event).to.equal("EmaUtilRate");
+      expect(event1.args.emaUtilRate).to.eq(1);
+
+      const tx2 = await (
+        await strategy.testUpdateUtilRateEma(ONE.div(eightDec.div(10)), 0, 2)
+      ).wait();
+      const event2 = tx2.events[tx2.events.length - 1];
+      expect(event2.event).to.equal("EmaUtilRate");
+      expect(event2.args.emaUtilRate).to.eq(10);
+
+      const pct80 = ONE.mul(80).div(100);
+      const tx3 = await (
+        await strategy.testUpdateUtilRateEma(pct80, 0, 2)
+      ).wait();
+      const event3 = tx3.events[tx3.events.length - 1];
+      expect(event3.event).to.equal("EmaUtilRate");
+      expect(event3.args.emaUtilRate).to.eq(pct80.div(tenDec));
+    });
+
+    it("Update EMA Util Rate", async function () {
+      const ONE = BigNumber.from(10).pow(18);
+      const tenDec = BigNumber.from(10).pow(10);
+      const initEmaUtilRate = ONE.mul(80).div(100).div(tenDec); // 80%
+      // EMA_1 = val * mult + EMA_0 * (1 - mult)
+      const pct85 = ONE.mul(85).div(100);
+      const tx = await (
+        await strategy.testUpdateUtilRateEma(pct85, initEmaUtilRate, 0)
+      ).wait();
+      const event = tx.events[tx.events.length - 1];
+      expect(event.event).to.equal("EmaUtilRate");
+      expect(event.args.emaUtilRate).to.eq(initEmaUtilRate);
+
+      const tx1 = await (
+        await strategy.testUpdateUtilRateEma(pct85, initEmaUtilRate, 100)
+      ).wait();
+      const event1 = tx1.events[tx1.events.length - 1];
+      expect(event1.event).to.equal("EmaUtilRate");
+      expect(event1.args.emaUtilRate).to.eq(pct85.div(tenDec));
+
+      const pct805 = ONE.mul(805).div(1000);
+      const tx2 = await (
+        await strategy.testUpdateUtilRateEma(pct85, initEmaUtilRate, 10)
+      ).wait();
+      const event2 = tx2.events[tx2.events.length - 1];
+      expect(event2.event).to.equal("EmaUtilRate");
+      expect(event2.args.emaUtilRate).to.eq(pct805.div(tenDec));
+
+      const pct8095 = ONE.mul(8095).div(10000);
+      const tx3 = await (
+        await strategy.testUpdateUtilRateEma(pct85, pct805.div(tenDec), 10)
+      ).wait();
+      const event3 = tx3.events[tx3.events.length - 1];
+      expect(event3.event).to.equal("EmaUtilRate");
+      expect(event3.args.emaUtilRate).to.eq(pct8095.div(tenDec));
+
+      const pct8176 = ONE.mul(8176).div(10000);
+      const tx4 = await (
+        await strategy.testUpdateUtilRateEma(pct85, pct8095.div(tenDec), 20)
+      ).wait();
+      const event4 = tx4.events[tx4.events.length - 1];
+      expect(event4.event).to.equal("EmaUtilRate");
+      expect(event4.args.emaUtilRate).to.eq(pct8176.div(tenDec));
+
+      const pct1 = ONE.div(100);
+      const pct65608 = ONE.mul(65608).div(100000);
+      const tx5 = await (
+        await strategy.testUpdateUtilRateEma(pct1, pct8176.div(tenDec), 20)
+      ).wait();
+      const event5 = tx5.events[tx5.events.length - 1];
+      expect(event5.event).to.equal("EmaUtilRate");
+      expect(event5.args.emaUtilRate).to.eq(pct65608.div(tenDec));
+    });
+  });
+
   describe("Update Index", function () {
     it("Update Index, check first update", async function () {
       const ONE = BigNumber.from(10).pow(18);
@@ -1154,7 +1244,7 @@ describe("BaseStrategy", function () {
 
       // set the address before minting
       await (await factory.setFeeTo(addr1.address)).wait();
-      await (await factory.setFee(10000, 0, 0)).wait();
+      await (await factory.setFee(10000)).wait();
 
       // need premint values to calculate minted amount
       const reserves = await cfmm.getReserves();

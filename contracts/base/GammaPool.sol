@@ -72,6 +72,20 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         s.initialize(factory, _cfmm, protocolId, _tokens, _decimals);
     }
 
+    /// @dev See {IGammaPool-setOrigFeeParams}
+    function setOrigFeeParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate) external virtual override {
+        if(msg.sender != factory) revert Forbidden(); // only factory is allowed to update dynamic fee parameters
+
+        require(minUtilRate <= 100, "MIN_UTIL_RATE");
+        require(maxUtilRate >= minUtilRate && maxUtilRate <= 100, "MAX_UTIL_RATE");
+
+        s.origFee = origFee;
+        s.extSwapFee = extSwapFee;
+        s.emaMultiplier = emaMultiplier;
+        s.minUtilRate = minUtilRate;
+        s.feeDivisor = uint16(2 ** (maxUtilRate - minUtilRate));
+    }
+
     /// @dev See {IGammaPool-cfmm}
     function cfmm() external virtual override view returns(address) {
         return s.cfmm;
@@ -158,6 +172,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         _data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
         _data.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         _data.accFeeIndex = s.accFeeIndex;
+        _data.emaUtilRate = s.emaUtilRate;
+        _data.emaMultiplier = s.emaMultiplier;
+        _data.minUtilRate = s.minUtilRate;
+        _data.feeDivisor = s.feeDivisor;
+        _data.origFee = s.origFee;
     }
 
     /// @dev See {IGammaPool-getPoolData}
@@ -170,7 +189,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.singleLiquidationStrategy = singleLiquidationStrategy;
         data.batchLiquidationStrategy = batchLiquidationStrategy;
         data.cfmm = s.cfmm;
-        data.currBlockNumber = uint48(block.number);
+        data.currBlockNumber = uint40(block.number);
         data.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         data.factory = s.factory;
         data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
@@ -183,10 +202,16 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
         data.LP_INVARIANT = s.LP_INVARIANT;
         data.accFeeIndex = s.accFeeIndex;
+        data.origFee = s.origFee;
+        data.extSwapFee = s.extSwapFee;
         data.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
         data.lastCFMMInvariant = s.lastCFMMInvariant;
         data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
         data.CFMM_RESERVES = s.CFMM_RESERVES;
+        data.emaUtilRate = s.emaUtilRate;
+        data.emaMultiplier = s.emaMultiplier;
+        data.minUtilRate = s.minUtilRate;
+        data.feeDivisor = s.feeDivisor;
     }
 
     /***** SHORT *****/
@@ -258,7 +283,6 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         _loanData.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         _loanData.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
         _loanData.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
-        _loanData.accFeeIndex = s.accFeeIndex;
         _loanData.lastCFMMInvariant = s.lastCFMMInvariant;
         _loanData.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
     }

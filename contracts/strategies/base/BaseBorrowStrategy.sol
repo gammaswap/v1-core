@@ -21,6 +21,45 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         return totalLiquidityPx / totalLiquidity;
     }
 
+    /// @return origFee - base origination fee charged to every new loan that is issued
+    function originationFee() internal virtual view returns(uint16) {
+        return s.origFee;
+    }
+
+    /// @dev Calculate and return dynamic origination fee in basis points
+    /// @param liquidityBorrowed - new liquidity borrowed from GammaSwap
+    /// @param borrowedInvariant - invariant amount already borrowed from GammaSwap (before liquidityBorrowed is applied)
+    /// @param lpInvariant - invariant amount available to be borrowed from LP tokens deposited in GammaSwap (before liquidityBorrowed is applied)
+    /// @param lowUtilRate - low utilization rate threshold
+    /// @param discount - discount in basis points to apply to origination fee
+    /// @return origFee - origination fee that will be applied to loan
+    function _calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 lowUtilRate, uint256 discount) internal virtual view returns(uint256 origFee) {
+        uint256 utilRate = calcUtilizationRate(lpInvariant - liquidityBorrowed, borrowedInvariant + liquidityBorrowed) / 1e16;// convert utilizationRate to integer
+        // check if the new utilizationRate is higher than lowUtilRate or less than lowUtilRate. If less than lowUtilRate, take lowUtilRate, if higher than lowUtilRate take higher one
+        lowUtilRate = lowUtilRate / 1e6; // convert lowUtilRate to integer
+
+        origFee = _calcDynamicOriginationFee(originationFee(), utilRate, lowUtilRate, s.minUtilRate, s.feeDivisor);
+
+        origFee = discount > origFee ? 0 : (origFee - discount);
+    }
+
+    /// @dev Calculate and return dynamic origination fee in basis points
+    /// @param baseOrigFee - base origination fee charge
+    /// @param utilRate - current utilization rate of GammaPool
+    /// @param lowUtilRate - low utilization rate threshold, used as a lower bound for the utilization rate
+    /// @param minUtilRate - minimum utilization rate after which utilization rate after which fee will start increasing
+    /// @param feeDivisor - fee divisor of formula for dynamic origination fee
+    /// @return origFee - origination fee that will be applied to loan
+    function _calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate, uint256 feeDivisor) internal virtual view returns(uint256) {
+        utilRate = utilRate >= lowUtilRate ? utilRate : lowUtilRate; // utilization rate not allowed to be below lowUtilRate
+        if(utilRate > minUtilRate) {
+            uint256 diff = utilRate - minUtilRate;
+            baseOrigFee += Math.min((2 ** diff) * 10000 / s.feeDivisor, 10000);
+            baseOrigFee = Math.min(baseOrigFee, 10000);
+        }
+        return baseOrigFee;
+    }
+
     /// @dev Account for newly borrowed liquidity debt
     /// @param _loan - loan that incurred debt
     /// @param lpTokens - CFMM LP tokens borrowed
@@ -39,14 +78,16 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         // Can't borrow less than minimum liquidity to avoid rounding issues
         if (liquidityBorrowedExFee < minBorrow()) revert MinBorrow();
 
+        uint256 borrowedInvariant = s.BORROWED_INVARIANT;
+
         // Calculate add loan origination fee to LP token debt
-        uint256 lpTokensPlusOrigFee = lpTokens + lpTokens * calcOriginationFee(_loan.refFee) / 10000;
+        uint256 lpTokensPlusOrigFee = lpTokens + lpTokens * _calcOriginationFee(liquidityBorrowedExFee, borrowedInvariant, s.LP_INVARIANT, s.emaUtilRate, _loan.refFee) / 10000;
 
         // Calculate borrowed liquidity invariant including origination fee
         liquidityBorrowed = convertLPToInvariant(lpTokensPlusOrigFee, lastCFMMInvariant, lastCFMMTotalSupply);
 
         // Add liquidity invariant borrowed including origination fee to total pool liquidity invariant borrowed
-        uint256 borrowedInvariant = s.BORROWED_INVARIANT + liquidityBorrowed;
+        borrowedInvariant = borrowedInvariant + liquidityBorrowed;
 
         s.BORROWED_INVARIANT = uint128(borrowedInvariant);
         s.LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED + lpTokens; // Track total CFMM LP tokens borrowed from pool (principal)

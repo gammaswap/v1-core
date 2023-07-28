@@ -434,27 +434,21 @@ describe("GammaPoolFactory", function () {
       const _feeToSetter = await factory.feeToSetter();
       expect(_feeToSetter).to.equal(owner.address);
       await expect(
-        factory.connect(addr1).setFee(1, 2, 3)
+        factory.connect(addr1).setFee(1)
       ).to.be.revertedWithCustomError(factory, "Forbidden");
       const feeTo = await factory.feeTo();
-      const res = await (await factory.connect(owner).setFee(1, 2, 3)).wait();
+      const res = await (await factory.connect(owner).setFee(1)).wait();
       expect(await factory.fee()).to.equal(1);
-      expect(await factory.origMin()).to.equal(2);
-      expect(await factory.origMax()).to.equal(3);
 
       expect(res.events[0].event).to.equal("FeeUpdate");
       expect(res.events[0].args.pool).to.equal(ethers.constants.AddressZero);
       expect(res.events[0].args.to).to.equal(feeTo);
       expect(res.events[0].args.protocolFee).to.equal(1);
-      expect(res.events[0].args.origMin).to.equal(2);
-      expect(res.events[0].args.origMax).to.equal(3);
       expect(res.events[0].args.isSet).to.equal(false);
 
       const feeInfo = await factory.connect(owner).feeInfo();
       expect(feeInfo._feeTo).to.equal(owner.address);
       expect(feeInfo._fee).to.equal(1);
-      expect(feeInfo._origMin).to.equal(2);
-      expect(feeInfo._origMax).to.equal(3);
     });
 
     it("Set Fee To", async function () {
@@ -473,74 +467,46 @@ describe("GammaPoolFactory", function () {
       expect(res.events[0].args.pool).to.equal(ethers.constants.AddressZero);
       expect(res.events[0].args.to).to.equal(addr2.address);
       expect(res.events[0].args.protocolFee).to.equal(10000);
-      expect(res.events[0].args.origMin).to.equal(10000);
-      expect(res.events[0].args.origMax).to.equal(10000);
       expect(res.events[0].args.isSet).to.equal(false);
 
       const feeInfo = await factory.connect(owner).feeInfo();
       expect(feeInfo._feeTo).to.equal(addr2.address);
       expect(feeInfo._fee).to.equal(10000);
-      expect(feeInfo._origMin).to.equal(10000);
-      expect(feeInfo._origMax).to.equal(10000);
     });
 
     it("Set Fee for Pool", async function () {
       const poolFee = await factory.getPoolFee(addr1.address);
       expect(poolFee._to).to.equal(owner.address);
       expect(poolFee._protocolFee).to.equal(10000);
-      expect(poolFee._origMinFee).to.equal(10000);
-      expect(poolFee._origMaxFee).to.equal(10000);
       expect(poolFee._isSet).to.equal(false);
       const res = await (
-        await factory.setPoolFee(
-          addr1.address,
-          addr2.address,
-          20000,
-          30000,
-          40000,
-          true
-        )
+        await factory.setPoolFee(addr1.address, addr2.address, 20000, true)
       ).wait();
 
       expect(res.events[0].event).to.equal("FeeUpdate");
       expect(res.events[0].args.pool).to.equal(addr1.address);
       expect(res.events[0].args.to).to.equal(addr2.address);
       expect(res.events[0].args.protocolFee).to.equal(20000);
-      expect(res.events[0].args.origMin).to.equal(30000);
-      expect(res.events[0].args.origMax).to.equal(40000);
       expect(res.events[0].args.isSet).to.equal(true);
 
       const poolFee1 = await factory.getPoolFee(addr1.address);
       expect(poolFee1._to).to.equal(addr2.address);
       expect(poolFee1._protocolFee).to.equal(20000);
-      expect(poolFee1._origMinFee).to.equal(30000);
-      expect(poolFee1._origMaxFee).to.equal(40000);
       expect(poolFee1._isSet).to.equal(true);
 
       const res1 = await (
-        await factory.setPoolFee(
-          addr1.address,
-          addr2.address,
-          50000,
-          60000,
-          70000,
-          false
-        )
+        await factory.setPoolFee(addr1.address, addr2.address, 50000, false)
       ).wait();
 
       expect(res1.events[0].event).to.equal("FeeUpdate");
       expect(res1.events[0].args.pool).to.equal(addr1.address);
       expect(res1.events[0].args.to).to.equal(addr2.address);
       expect(res1.events[0].args.protocolFee).to.equal(50000);
-      expect(res1.events[0].args.origMin).to.equal(60000);
-      expect(res1.events[0].args.origMax).to.equal(70000);
       expect(res1.events[0].args.isSet).to.equal(false);
 
       const poolFee2 = await factory.getPoolFee(addr1.address);
       expect(poolFee2._to).to.equal(owner.address);
       expect(poolFee2._protocolFee).to.equal(10000);
-      expect(poolFee2._origMinFee).to.equal(10000);
-      expect(poolFee2._origMaxFee).to.equal(10000);
       expect(poolFee2._isSet).to.equal(false);
     });
 
@@ -573,7 +539,7 @@ describe("GammaPoolFactory", function () {
       await expect(
         factory
           .connect(addr1)
-          .setPoolFee(addr4.address, addr2.address, 20000, 30000, 40000, false)
+          .setPoolFee(addr4.address, addr2.address, 20000, false)
       ).to.be.revertedWithCustomError(factory, "Forbidden");
 
       await factory.connect(addr2).setFeeTo(ethers.constants.AddressZero);
@@ -582,14 +548,12 @@ describe("GammaPoolFactory", function () {
       await (
         await factory
           .connect(addr2)
-          .setPoolFee(addr4.address, addr3.address, 20000, 30000, 40000, true)
+          .setPoolFee(addr4.address, addr3.address, 20000, true)
       ).wait();
 
       const poolFee = await factory.getPoolFee(addr4.address);
       expect(poolFee._to).to.equal(addr3.address);
       expect(poolFee._protocolFee).to.equal(20000);
-      expect(poolFee._origMinFee).to.equal(30000);
-      expect(poolFee._origMaxFee).to.equal(40000);
       expect(poolFee._isSet).to.equal(true);
     });
 
@@ -630,12 +594,102 @@ describe("GammaPoolFactory", function () {
     });
   });
 
+  describe("Setting Origination Fees", function () {
+    it("Forbidden Error", async function () {
+      await (await factory.addProtocol(protocol.address)).wait();
+      expect(await factory.allPoolsLength()).to.equal(0);
+
+      const params = createPoolParamsObj(addr3.address, tokenA, tokenB);
+
+      await factory.createPool(
+        params.createPoolParams.protocolId,
+        params.createPoolParams.cfmm,
+        params.createPoolParams.tokens,
+        params.data
+      );
+
+      const key = await addressCalculator.getGammaPoolKey(addr3.address, 1);
+      const pool = await factory.getPool(key);
+      expect(pool).to.not.equal(ethers.constants.AddressZero);
+      expect(key).to.equal(await factory.getKey(pool));
+
+      // Precalculated address
+      const expectedPoolAddress = await addressCalculator.calcAddress(
+        factory.address,
+        1,
+        key
+      );
+      expect(pool).to.equal(expectedPoolAddress);
+      expect(await factory.allPoolsLength()).to.equal(1);
+
+      await expect(
+        factory.connect(addr1).setPoolOrigFeeParams(pool, 1, 2, 3, 4, 5)
+      ).to.be.revertedWithCustomError(factory, "Forbidden");
+    });
+
+    it("Set Origination Fee", async function () {
+      await (await factory.addProtocol(protocol.address)).wait();
+      expect(await factory.allPoolsLength()).to.equal(0);
+
+      const params = createPoolParamsObj(addr3.address, tokenA, tokenB);
+
+      await factory.createPool(
+        params.createPoolParams.protocolId,
+        params.createPoolParams.cfmm,
+        params.createPoolParams.tokens,
+        params.data
+      );
+
+      const key = await addressCalculator.getGammaPoolKey(addr3.address, 1);
+      const pool = await factory.getPool(key);
+      expect(pool).to.not.equal(ethers.constants.AddressZero);
+      expect(key).to.equal(await factory.getKey(pool));
+
+      // Precalculated address
+      const expectedPoolAddress = await addressCalculator.calcAddress(
+        factory.address,
+        1,
+        key
+      );
+      expect(pool).to.equal(expectedPoolAddress);
+      expect(await factory.allPoolsLength()).to.equal(1);
+
+      const gammaPool = GammaPool.attach(pool);
+      const resp = await gammaPool.getPoolData();
+      expect(resp.origFee).to.equal(2);
+      expect(resp.extSwapFee).to.equal(10);
+      expect(resp.emaMultiplier).to.equal(10);
+      expect(resp.minUtilRate).to.equal(85);
+      expect(resp.feeDivisor).to.equal(16384);
+
+      const tx = await (
+        await factory.setPoolOrigFeeParams(pool, 1, 2, 20, 84, 94)
+      ).wait();
+
+      const event = tx.events[tx.events.length - 1];
+      expect(event.args.pool).to.equal(pool);
+      expect(event.args.origFee).to.equal(1);
+      expect(event.args.extSwapFee).to.equal(2);
+      expect(event.args.emaMultiplier).to.equal(20);
+      expect(event.args.minUtilRate).to.equal(84);
+      expect(event.args.maxUtilRate).to.equal(94);
+
+      const resp1 = await gammaPool.getPoolData();
+      expect(resp1.origFee).to.equal(1);
+      expect(resp1.extSwapFee).to.equal(2);
+      expect(resp1.emaMultiplier).to.equal(20);
+      expect(resp1.minUtilRate).to.equal(84);
+      expect(resp1.feeDivisor).to.equal(1024);
+    });
+  });
+
   describe("Setting Loan Observer", function () {
     it("Check Loan Observer Owner", async function () {
       expect(await factory.loanObserverStoreOwner()).to.be.equal(
         await factory.owner()
       );
     });
+
     it("Allow to be Observed Errors", async function () {
       await expect(
         factory.connect(addr1).allowToBeObserved(1, addr2.address, false)

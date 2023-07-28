@@ -8,6 +8,7 @@ import "../../TestCFMM.sol";
 contract TestBaseStrategy is BaseStrategy {
 
     event LoanCreated(address indexed caller, uint256 tokenId);
+    event EmaUtilRate(uint256 emaUtilRate);
 
     using LibStorage for LibStorage.Storage;
 
@@ -16,7 +17,7 @@ contract TestBaseStrategy is BaseStrategy {
     uint256 public invariant;
     address public _factory;
     uint80 public _lastFeeIndex;
-    uint80 public _lastCFMMFeeIndex;
+    uint64 public _lastCFMMFeeIndex;
 
     constructor(address factory, uint16 protocolId) {
         _factory = factory;
@@ -85,19 +86,19 @@ contract TestBaseStrategy is BaseStrategy {
         borrowRate = _borrowRate;
     }
 
-    function setLastBlockNumber(uint48 lastBlockNumber) public virtual {
+    function setLastBlockNumber(uint40 lastBlockNumber) public virtual {
         s.LAST_BLOCK_NUMBER = lastBlockNumber;
     }
 
     function updateLastBlockNumber() public virtual {
-        s.LAST_BLOCK_NUMBER = uint48(block.number);
+        s.LAST_BLOCK_NUMBER = uint40(block.number);
     }
 
     function getLastBlockNumber() public virtual view returns(uint256) {
         return s.LAST_BLOCK_NUMBER;
     }
 
-    function setCFMMIndex(uint80 cfmmIndex) public virtual {
+    function setCFMMIndex(uint64 cfmmIndex) public virtual {
         _lastCFMMFeeIndex = cfmmIndex;
     }
 
@@ -108,7 +109,7 @@ contract TestBaseStrategy is BaseStrategy {
     function testUpdateIndex() public virtual {
         (, uint256 lastFeeIndex, uint256 lastCFMMFeeIndex) = updateIndex();
         _lastFeeIndex = uint80(lastFeeIndex);
-        _lastCFMMFeeIndex = uint80(lastCFMMFeeIndex);
+        _lastCFMMFeeIndex = uint64(lastCFMMFeeIndex);
     }
 
     function getUpdateIndexFields() public virtual view returns(uint256 lastCFMMTotalSupply, uint256 lastCFMMInvariant, uint256 lastCFMMFeeIndex,
@@ -130,12 +131,12 @@ contract TestBaseStrategy is BaseStrategy {
 
     function testUpdateCFMMIndex() public virtual {
         (uint256 lastCFMMFeeIndex,,) = updateCFMMIndex(s.BORROWED_INVARIANT);
-        _lastCFMMFeeIndex = uint80(lastCFMMFeeIndex);
+        _lastCFMMFeeIndex = uint64(lastCFMMFeeIndex);
     }
 
     function testUpdateFeeIndex() public virtual {
-        (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, s.BORROWED_INVARIANT, s.factory, address(this));
-        _lastFeeIndex = uint80(calcFeeIndex(_lastCFMMFeeIndex, borrowRate, block.number - s.LAST_BLOCK_NUMBER));
+        (uint256 _borrowRate,) = calcBorrowRate(s.LP_INVARIANT, s.BORROWED_INVARIANT, s.factory, address(this));
+        _lastFeeIndex = uint80(calcFeeIndex(_lastCFMMFeeIndex, _borrowRate, block.number - s.LAST_BLOCK_NUMBER));
     }
 
     function testUpdateStore() public virtual {
@@ -200,4 +201,12 @@ contract TestBaseStrategy is BaseStrategy {
     function depositToCFMM(address, address, uint256[] memory) internal virtual override returns(uint256) { return 0; }
 
     function withdrawFromCFMM(address, address, uint256) internal virtual override returns(uint256[] memory amounts) { return amounts; }
+
+    function testUpdateUtilRateEma(uint256 utilizationRate, uint40 emaUtilRate, uint8 emaMultiplier) external virtual {
+        s.emaUtilRate = emaUtilRate;
+        s.emaMultiplier = emaMultiplier;
+
+        s.emaUtilRate = uint40(_calcUtilRateEma(utilizationRate, s.emaUtilRate, s.emaMultiplier));
+        emit EmaUtilRate(s.emaUtilRate);
+    }
 }

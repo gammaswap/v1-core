@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.17;
 
+import "../../../libraries/Math.sol";
 import "../../TestCFMM.sol";
 import "../../TestERC20.sol";
-import "../../../libraries/Math.sol";
 import "../../../strategies/lending/BorrowStrategy.sol";
-import "../../../strategies/rebalance/RebalanceStrategy.sol";
 
-contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
+contract TestBorrowStrategy is BorrowStrategy {
 
     using LibStorage for LibStorage.Storage;
 
+    event DynOrigFee(uint256 dynOrigFee);
     event LoanCreated(address indexed caller, uint256 tokenId);
+    event LiquidityAndDeltas(uint256 liquidity, uint256 delta0, uint256 delta1, uint256 deltaLen);
     event AmountsWithFees(uint256[] amounts);
     uint80 public borrowRate = 1e18;
     uint16 public origFee = 0;
@@ -61,6 +62,10 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
 
     function tokenBalances() public virtual view returns(uint128[] memory) {
         return s.TOKEN_BALANCE;
+    }
+
+    function testGetUnfundedAmounts(uint128[] memory amounts, uint128[] memory tokensHeld) external virtual view returns(bool hasUnfundedAmounts, uint128[] memory unfundedAmounts, uint128[] memory _tokensHeld) {
+        return getUnfundedAmounts(amounts, tokensHeld);
     }
 
     function testGetReserves(address to) external virtual view returns(uint128[] memory) {
@@ -253,10 +258,6 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
         origFee = _origFee;
     }
 
-    function originationFee() internal override virtual view returns(uint16) {
-        return origFee;
-    }
-
     function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal virtual override {
     }
 
@@ -292,28 +293,16 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
         emit AmountsWithFees(amountsWithFees);
     }
 
-    function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
-        return _calcDeltasForRatio(tokensHeld, reserves, ratio);
-    }
-
     function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
         deltas[0] = 0;
         deltas[1] = 100;
     }
 
-    function calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) external virtual override view returns(int256[] memory deltas) {
-        return _calcDeltasToClose(tokensHeld, reserves, liquidity, collateralId);
-    }
-
     function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
         deltas[0] = 0;
         deltas[1] = 0;
-    }
-
-    function calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {
-        return _calcDeltasForWithdrawal(amounts, tokensHeld, reserves, ratio);
     }
 
     function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
@@ -332,7 +321,7 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
     }
 
     function _calcCollateralPostTrade(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
-        return 0;
+        return calcInvariant(address(0), tokensHeld) + (calcInvariant(address(0), tokensHeld) / 2);
     }
 
     function _calcDeltasForMaxLP(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(int256[] memory deltas) {
@@ -344,6 +333,16 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
     function _calcDeltasToCloseSetRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256[] memory ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
         deltas[0] = 0;
-        deltas[1] = 100;
+        deltas[1] = 0;
+    }
+
+    function testCalcOriginationFee(uint16 _origFee, uint40 emaUtilRate, uint8 minUtilRate, uint16 feeDivisor, uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) external virtual {
+        s.origFee = _origFee; // 2 basis points
+        s.emaUtilRate = emaUtilRate; // 10 decimals
+        s.minUtilRate = minUtilRate; // 85 integer
+        s.feeDivisor = feeDivisor; // 16384;
+
+        uint256 dynOrigFee = _calcOriginationFee(liquidityBorrowed, borrowedInvariant, lpInvariant, s.emaUtilRate, discount);
+        emit DynOrigFee(dynOrigFee);
     }
 }

@@ -106,4 +106,8 @@ contract TestERC20Strategy is AppStorage, IShortStrategy {
 
     function _sync() external override {
     }
+
+    function calcUtilRateEma(uint256 utilizationRate, uint256 emaUtilRateLast, uint256 emaMultiplier) external virtual override view returns(uint256 emaUtilRate) {
+        return 0;
+    }
 }

@@ -2,6 +2,7 @@
 pragma solidity >=0.8.4;
 
 import "../interfaces/IGammaPoolFactory.sol";
+import "../interfaces/IGammaPool.sol";
 import "../utils/TwoStepOwnable.sol";
 
 /// @title Abstract factory contract to create more GammaPool contracts.
@@ -23,12 +24,6 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
 
     /// @dev See {IGammaPoolFactory-getKey}
     mapping(address => bytes32) public override getKey; // predetermined key maps to pool address
-
-    /// @dev See {IGammaPoolFactory-origMin}
-    uint24 public override origMin = 10000;
-
-    /// @dev See {IGammaPoolFactory-origMax}
-    uint24 public override origMax = 10000;
 
     /// @dev See {IGammaPoolFactory-fee}
     uint16 public override fee = 10000; // Default value is 10,000 basis points or 10%
@@ -61,6 +56,13 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     /// @param key - unique key used to identify GammaPool instance (e.g. salt)
     function hasPool(bytes32 key) internal virtual view {
         if(getPool[key] != address(0)) revert PoolExists();
+    }
+
+    /// @dev See {IGammaPoolFactory-setPoolOrigFeeParams}
+    function setPoolOrigFeeParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate, uint8 _maxUtilRate) external virtual override {
+        isForbidden(feeToSetter); // only feeToSetter can update origination fee parameters
+        IGammaPool(_pool).setOrigFeeParams(_origFee, _extSwapFee, _emaMultiplier, _minUtilRate, _maxUtilRate);
+        emit OrigFeeUpdate(_pool, _origFee, _extSwapFee, _emaMultiplier, _minUtilRate, _maxUtilRate);
     }
 
     /**

@@ -46,6 +46,11 @@ interface IPoolViewer {
     /// @return data - struct containing all relevant global state variables and descriptive information of GammaPool. Used to avoid making multiple calls
     function getLatestPoolData(address pool) external view returns(IGammaPool.PoolData memory data);
 
+    /// @dev Calculate origination fee that will be charged if borrowing liquidity amount
+    /// @param pool - address of GammaPool to calculate origination fee for
+    /// @param liquidity - liquidity to borrow
+    /// @return origFee - calculated origination fee, without any discounts
+    function calcDynamicOriginationFee(address pool, uint256 liquidity) external view returns(uint256 origFee);
 
     /// @dev Return pool storage data
     /// @param pool - address of pool to get pool data for

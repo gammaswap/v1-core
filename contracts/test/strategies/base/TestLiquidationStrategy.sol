@@ -230,7 +230,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
     function swapTokens(LibStorage.Loan storage, uint256[] memory, uint256[] memory) internal virtual override {
     }
 
-    function originationFee() internal virtual override view returns(uint24) {
+    function originationFee() internal virtual override view returns(uint16) {
         return 0;
     }
 
@@ -285,5 +285,10 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
         uint256 num = uint256(tokensHeld[0]) * price / (10 ** 18) + uint256(tokensHeld[1]);
         uint256 denom = 2 * Math.sqrt(price*(10**18));
         return num * (10**18)/ denom;
+    }
+
+    function _calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 lowUtilRate, uint256 discount) internal virtual override view returns(uint256 _origFee) {
+        _origFee = originationFee(); // base fee
+        return discount > _origFee ? 0 : (_origFee - discount);
     }
 }

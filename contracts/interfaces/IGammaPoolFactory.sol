@@ -16,11 +16,19 @@ interface IGammaPoolFactory {
 
     /// @dev Event emitted when a GammaPool fee is updated
     /// @param pool - address of new pool whose fee is updated (zero address is default params)
-    /// @return protocolFee - address of CFMM the GammaPool is created for
-    /// @return origMin - min origination fee
-    /// @return origMax - max origination fee
+    /// @param to - receiving address of protocol fees
+    /// @param protocolFee - address of CFMM the GammaPool is created for
     /// @param isSet - bool flag, true use fee information, false use GammaSwap default fees
-    event FeeUpdate(address indexed pool, address indexed to, uint16 protocolFee, uint24 origMin, uint24 origMax, bool isSet);
+    event FeeUpdate(address indexed pool, address indexed to, uint16 protocolFee, bool isSet);
+
+    /// @dev Event emitted when a GammaPool origination fee parameters are updated
+    /// @param pool - address of GammaPool whose origination fee parameters will be updated
+    /// @param origFee - loan opening origination fee in basis points
+    /// @param extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
+    /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
+    /// @param minUtilRate - minimum utilization rate to calculate dynamic origination fee
+    /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out
+    event OrigFeeUpdate(address indexed pool, uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate);
 
     /// @dev Check if protocol is restricted. Which means only owner of GammaPoolFactory is allowed to instantiate GammaPools using this protocol
     /// @param _protocolId - id identifier of GammaPool protocol (can be thought of as version) that is being checked
@@ -72,28 +80,27 @@ interface IGammaPoolFactory {
     /// @param _pool - pool address identifier
     /// @return _to - address receiving fee
     /// @return _protocolFee - address of CFMM the GammaPool is created for
-    /// @return _origMinFee - min origination fee
-    /// @return _origMaxFee - max origination fee
     /// @return _isSet - bool flag, true use fee information, false use GammaSwap default fees
-    function getPoolFee(address _pool) external view returns (address _to, uint256 _protocolFee, uint256 _origMinFee, uint256 _origMaxFee, bool _isSet);
+    function getPoolFee(address _pool) external view returns (address _to, uint256 _protocolFee, bool _isSet);
 
     /// @dev Set pool fee parameters used to calculate protocol fees
     /// @param _pool - id identifier of GammaPool protocol (can be thought of as version)
     /// @param _to - address receiving fee
     /// @param _protocolFee - address of CFMM the GammaPool is created for
-    /// @param _origMinFee - min origination fee
-    /// @param _origMaxFee - max origination fee
     /// @param _isSet - bool flag, true use fee information, false use GammaSwap default fees
-    function setPoolFee(address _pool, address _to, uint16 _protocolFee, uint24 _origMinFee, uint24 _origMaxFee, bool _isSet) external;
+    function setPoolFee(address _pool, address _to, uint16 _protocolFee, bool _isSet) external;
+
+    /// @dev Set parameters to calculate origination fee for GammaPool
+    /// @param _pool - address of GammaPool whose origination fee parameters function will update
+    /// @param _origFee - loan opening origination fee in basis points
+    /// @param _extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
+    /// @param _emaMultiplier - multiplier used in EMA calculation of utilization rate
+    /// @param _minUtilRate - minimum utilization rate to calculate dynamic origination fee
+    /// @param _maxUtilRate - utilization rate at which dynamic origination fee will max out
+    function setPoolOrigFeeParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate, uint8 _maxUtilRate) external;
 
     /// @return fee - protocol fee charged by GammaPool to liquidity borrowers in terms of basis points
     function fee() external view returns(uint16);
-
-    /// @return origMin - min origination fee charged by GammaPool to liquidity borrowers in terms of basis points
-    function origMin() external view returns(uint24);
-
-    /// @return origMax - max origination fee charged by GammaPool to liquidity borrowers in terms of basis points
-    function origMax() external view returns(uint24);
 
     /// @return feeTo - address that receives protocol fees
     function feeTo() external view returns(address);
@@ -103,7 +110,7 @@ interface IGammaPoolFactory {
 
     /// @return feeTo - address that receives protocol fees
     /// @return fee - protocol fee charged by GammaPool to liquidity borrowers in terms of basis points
-    function feeInfo() external view returns(address,uint256,uint256,uint256);
+    function feeInfo() external view returns(address,uint256);
 
     /// @dev Get list of pools from start index to end index. If it goes over index it returns up to the max size of allPools array
     /// @param start - start index of pools to search

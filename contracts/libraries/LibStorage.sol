@@ -51,7 +51,15 @@ library LibStorage {
         /// @dev Protocol id of the implementation contract for this GammaPool
         uint16 protocolId; // 16 bits
         /// @dev unlocked - flag used in mutex implementation (1 = unlocked, 0 = locked). Initialized at 1
-        uint80 unlocked; // 80 bits
+        uint8 unlocked; // 8 bits
+        /// @dev EMA of utilization rate
+        uint40 emaUtilRate; // 40 bits, 8 decimal number
+        /// @dev Multiplier of EMA used to calculate emaUtilRate
+        uint8 emaMultiplier; // 8 bits, 1 decimals (0 = 0%, 1 = 0.1%, max 255 = 25.5%)
+        /// @dev Minimum utilization rate at which point we start using the dynamic fee
+        uint8 minUtilRate; // 8 bits, 0 decimals (0 = 0%, 100 = 100%), default is 85. If set to 100, dynamic orig fee is disabled
+        /// @dev Dynamic origination fee divisor, to cap at 99% use 16384 = 2^(99-85)
+        uint16 feeDivisor; // 16 bits, 0 decimals, max is 5 digit integer 65535, formula is 2^(maxUtilRate - minUtilRate)
 
         //3x256 bits, LP Tokens
         /// @dev Quantity of CFMM's LP tokens deposited in GammaPool by liquidity providers
@@ -72,10 +80,14 @@ library LibStorage {
         address cfmm; // 160 bits
         /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 7.9% trillion
         uint96 accFeeIndex; // 96 bits
+        /// @dev External swap fee in basis points, max 255 basis points = 2.55%
+        uint8 extSwapFee; // 8 bits
+        /// @dev Loan opening origination fee in basis points
+        uint16 origFee; // 16 bits
         /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
-        uint48 LAST_BLOCK_NUMBER; // 48 bits
-        /// @dev percent accrual in CFMM invariant since last update
-        uint80 lastCFMMFeeIndex; // 80 bits
+        uint40 LAST_BLOCK_NUMBER; // 40 bits
+        /// @dev Percent accrual in CFMM invariant since last update in a different block, max 1,844.67%
+        uint64 lastCFMMFeeIndex; // 64 bits
         /// @dev Total liquidity invariant amount in CFMM (from GammaPool and others), read in last update to GammaPool's storage variables
         uint128 lastCFMMInvariant; // 128 bits
         /// @dev Total LP token supply from CFMM (belonging to GammaPool and others), read in last update to GammaPool's storage variables
@@ -134,10 +146,17 @@ library LibStorage {
 
         self.lastCFMMFeeIndex = 1e18;
         self.accFeeIndex = 1e18; // initialized as 1 with 18 decimal places
-        self.LAST_BLOCK_NUMBER = uint48(block.number); // first block update number is block at initialization
+        self.LAST_BLOCK_NUMBER = uint40(block.number); // first block update number is block at initialization
 
         self.nextId = 1; // loan counter starts at 1
         self.unlocked = 1; // mutex initialized as unlocked
+
+        self.origFee = 2;
+        self.extSwapFee = 10;
+
+        self.emaMultiplier = 10; // ema smoothing factor is 10/1000 = 1%
+        self.minUtilRate = 85; // min util rate is 85%
+        self.feeDivisor = 16384; // max util rate is 99% => 2^(99 - minUtilRate)
 
         self.TOKEN_BALANCE = new uint128[](_tokens.length);
         self.CFMM_RESERVES = new uint128[](_tokens.length);

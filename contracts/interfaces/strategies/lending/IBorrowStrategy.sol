@@ -7,6 +7,15 @@ import "../base/ILongStrategy.sol";
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used in strategies that borrow liquidity
 interface IBorrowStrategy is ILongStrategy {
+    /// @dev Calculate and return dynamic origination fee in basis points
+    /// @param baseOrigFee - base origination fee charge
+    /// @param utilRate - current utilization rate of GammaPool
+    /// @param lowUtilRate - low utilization rate threshold, used as a lower bound for the utilization rate
+    /// @param minUtilRate - minimum utilization rate after which utilization rate after which fee will start increasing
+    /// @param feeDivisor - fee divisor of formula for dynamic origination fee
+    /// @return origFee - origination fee that will be applied to loan
+    function calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate, uint256 feeDivisor) external view returns(uint256 origFee);
+
     /// @dev Deposit more collateral in loan identified by tokenId
     /// @param tokenId - unique id identifying loan
     /// @param ratio - ratio to rebalance collateral after increasing collateral

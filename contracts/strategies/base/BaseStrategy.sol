@@ -166,12 +166,30 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
 
         // Convert borrowed liquidity to corresponding CFMM LP tokens using current conversion rate
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(newBorrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
-        s.LP_INVARIANT = uint128(convertLPToInvariant(s.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply));
+        uint256 lpInvariant = convertLPToInvariant(s.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply);
+        s.LP_INVARIANT = uint128(lpInvariant);
 
         // Update GammaPool's interest rate index and update last block updated
         accFeeIndex = s.accFeeIndex * lastFeeIndex / 1e18;
         s.accFeeIndex = uint96(accFeeIndex);
-        s.LAST_BLOCK_NUMBER = uint48(block.number);
+        s.LAST_BLOCK_NUMBER = uint40(block.number);
+
+        s.emaUtilRate = uint40(_calcUtilRateEma(calcUtilizationRate(lpInvariant, newBorrowedInvariant), s.emaUtilRate, s.emaMultiplier));
+    }
+
+    /// @dev Update pool invariant, LP tokens borrowed plus interest, interest rate index, and last block update
+    /// @param utilizationRate - interest accrued to loans in GammaPool
+    /// @param emaUtilRateLast - interest accrued to loans in GammaPool
+    /// @param emaMultiplier - interest accrued to loans in GammaPool
+    /// @return emaUtilRate - interest accrued to loans in GammaPool
+    function _calcUtilRateEma(uint256 utilizationRate, uint256 emaUtilRateLast, uint256 emaMultiplier) internal virtual view returns(uint256) {
+        utilizationRate = utilizationRate / 1e10; // convert to 8 decimals
+        if(emaUtilRateLast == 0) {
+            return utilizationRate;
+        } else {
+            // EMA_1 = val * mult + EMA_0 * (1 - mult)
+            return utilizationRate * emaMultiplier / 100 + emaUtilRateLast * (100 - emaMultiplier) / 100;
+        }
     }
 
     /// @dev Update GammaPool's state variables and pay protocol fee
@@ -187,14 +205,14 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         if(blockDiff > 0) {
             lastCFMMFeeIndex = s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18;
             s.lastCFMMFeeIndex = 1e18;
-            (uint256 borrowRate,) = calcBorrowRate(s.LP_INVARIANT, borrowedInvariant, s.factory, address(this));
+            (uint256 borrowRate, uint256 utilizationRate) = calcBorrowRate(s.LP_INVARIANT, borrowedInvariant, s.factory, address(this));
             lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, blockDiff);
             (accFeeIndex, borrowedInvariant) = updateStore(lastFeeIndex, borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply);
             if(borrowedInvariant > 0) { // Only pay protocol fee if there are loans
                 mintToDevs(lastFeeIndex, lastCFMMFeeIndex);
             }
         } else {
-            s.lastCFMMFeeIndex = uint80(s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18);
+            s.lastCFMMFeeIndex = uint64(s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18);
             lastFeeIndex = 1e18;
             accFeeIndex = s.accFeeIndex;
             s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(borrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
@@ -206,7 +224,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param lastFeeIndex - interest accrued to loans in GammaPool
     /// @param lastCFMMIndex - liquidity invariant lpTokenBalance represents
     function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal virtual {
-        (address _to, uint256 _protocolFee,,,) = IGammaPoolFactory(s.factory).getPoolFee(address(this));
+        (address _to, uint256 _protocolFee,) = IGammaPoolFactory(s.factory).getPoolFee(address(this));
         if(_to != address(0) && _protocolFee > 0) {
             uint256 gsFeeIndex = lastFeeIndex > lastCFMMIndex ? lastFeeIndex - lastCFMMIndex : 0; // _protocolFee excludes CFMM fee yield
             uint256 denominator =  lastFeeIndex - gsFeeIndex * _protocolFee / 100000; // _protocolFee is 10000 by default (10%)

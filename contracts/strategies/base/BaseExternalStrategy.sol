@@ -12,7 +12,9 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
     error ExternalCollateralRef();
 
     /// @return feeRate - rate in basis points charged to liquidity flash loaned for external swaps
-    function externalSwapFee() internal view virtual returns(uint256);
+    function externalSwapFee() internal view virtual returns(uint256) {
+        return s.extSwapFee;
+    }
 
     /// @dev Calculate fee for liquidity swapped in excess of loan's liquidity debt
     /// @param liquiditySwapped - flash loaned collateral tokens and CFMM LP tokens in terms of liquidity invariant units
