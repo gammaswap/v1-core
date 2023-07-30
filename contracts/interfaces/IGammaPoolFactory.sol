@@ -21,14 +21,16 @@ interface IGammaPoolFactory {
     /// @param isSet - bool flag, true use fee information, false use GammaSwap default fees
     event FeeUpdate(address indexed pool, address indexed to, uint16 protocolFee, bool isSet);
 
-    /// @dev Event emitted when a GammaPool origination fee parameters are updated
+    /// @dev Event emitted when a GammaPool parameters are updated
     /// @param pool - address of GammaPool whose origination fee parameters will be updated
     /// @param origFee - loan opening origination fee in basis points
     /// @param extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
     /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
     /// @param minUtilRate - minimum utilization rate to calculate dynamic origination fee
     /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out
-    event OrigFeeUpdate(address indexed pool, uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate);
+    /// @param liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
+    /// @param ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
+    event PoolParamsUpdate(address indexed pool, uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate, uint8 liquidationFee, uint8 ltvThreshold);
 
     /// @dev Check if protocol is restricted. Which means only owner of GammaPoolFactory is allowed to instantiate GammaPools using this protocol
     /// @param _protocolId - id identifier of GammaPool protocol (can be thought of as version) that is being checked
@@ -90,14 +92,16 @@ interface IGammaPoolFactory {
     /// @param _isSet - bool flag, true use fee information, false use GammaSwap default fees
     function setPoolFee(address _pool, address _to, uint16 _protocolFee, bool _isSet) external;
 
-    /// @dev Set parameters to calculate origination fee for GammaPool
+    /// @dev Set parameters to calculate origination fee for GammaPool and set liquidation fee and ltvThreshold
     /// @param _pool - address of GammaPool whose origination fee parameters function will update
     /// @param _origFee - loan opening origination fee in basis points
     /// @param _extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
     /// @param _emaMultiplier - multiplier used in EMA calculation of utilization rate
     /// @param _minUtilRate - minimum utilization rate to calculate dynamic origination fee
     /// @param _maxUtilRate - utilization rate at which dynamic origination fee will max out
-    function setPoolOrigFeeParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate, uint8 _maxUtilRate) external;
+    /// @param _liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
+    /// @param _ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
+    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate, uint8 _maxUtilRate, uint8 _liquidationFee, uint8 _ltvThreshold) external;
 
     /// @return fee - protocol fee charged by GammaPool to liquidity borrowers in terms of basis points
     function fee() external view returns(uint16);

@@ -237,13 +237,15 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @param _data - custom struct containing additional information used to verify the `_cfmm`
     function initialize(address _cfmm, address[] calldata _tokens, uint8[] calldata _decimals, bytes calldata _data) external;
 
-    /// @dev Set parameters to calculate origination fee
+    /// @dev Set parameters to calculate origination fee, liquidation fee, and ltv threshold
     /// @param origFee - loan opening origination fee in basis points
     /// @param extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
     /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
     /// @param minUtilRate - minimum utilization rate to calculate dynamic origination fee
     /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out
-    function setOrigFeeParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate) external;
+    /// @param liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
+    /// @param ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
+    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate, uint8 liquidationFee, uint8 ltvThreshold) external;
 
     /// @dev cfmm - address of CFMM this GammaPool is for
     function cfmm() external view returns(address);
