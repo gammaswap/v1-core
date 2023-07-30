@@ -192,7 +192,7 @@ contract PoolViewer is IPoolViewer {
 
         data.BORROWED_INVARIANT = uint128(borrowedInvariant);
         data.LP_INVARIANT = uint128(data.LP_TOKEN_BALANCE * lastCFMMInvariant / lastCFMMTotalSupply);
-        data.accFeeIndex = uint96(data.accFeeIndex * data.lastFeeIndex / 1e18);
+        data.accFeeIndex = uint80(data.accFeeIndex * data.lastFeeIndex / 1e18);
 
         data.utilizationRate = _calcUtilizationRate(data.LP_INVARIANT, data.BORROWED_INVARIANT);
         data.emaUtilRate = uint40(IShortStrategy(data.shortStrategy).calcUtilRateEma(data.utilizationRate, data.emaUtilRate, data.emaMultiplier));

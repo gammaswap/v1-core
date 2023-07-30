@@ -8,7 +8,7 @@ contract TestPoolViewer is PoolViewer {
 
     event UpdatedLoan(uint256 tokenId, uint256 liquidity, uint256 collateral, bool canLiquidate, address token0, address token1);
 
-    function testGetUpdatedLoans(address pool, uint96 accFeeIndex) external virtual {
+    function testGetUpdatedLoans(address pool, uint80 accFeeIndex) external virtual {
         address liqStrat = IGammaPool(pool).singleLiquidationStrategy();
         IGammaPool.LoanData[] memory _loans = new IGammaPool.LoanData[](2);
         _loans[0].id = 1;

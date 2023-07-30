@@ -18,7 +18,7 @@ contract TestGammaPool is GammaPool {
         _singleLiquidationStrategy, _batchLiquidationStrategy, _viewer) {
     }
 
-    function setAccFeeIndex(uint96 _accFeeIndex) external virtual {
+    function setAccFeeIndex(uint80 _accFeeIndex) external virtual {
         s.accFeeIndex = _accFeeIndex;
     }
 

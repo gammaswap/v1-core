@@ -78,8 +78,12 @@ library LibStorage {
         // 3x256 bits, Rates & CFMM
         /// @dev cfmm - address of CFMM this GammaPool is for
         address cfmm; // 160 bits
-        /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 7.9% trillion
-        uint96 accFeeIndex; // 96 bits
+        /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 120.8% million
+        uint80 accFeeIndex; // 80 bits
+        /// @dev GammaPool's Margin threshold (1 - 255 => 0.1% to 25.5%) LTV = 1 - ltvThreshold
+        uint8 ltvThreshold; // 8 bits
+        /// @dev GammaPool's liquidation fee in basis points (1 - 255 => 0.01% to 2.55%)
+        uint8 liquidationFee; // 8 bits
         /// @dev External swap fee in basis points, max 255 basis points = 2.55%
         uint8 extSwapFee; // 8 bits
         /// @dev Loan opening origination fee in basis points
@@ -151,6 +155,8 @@ library LibStorage {
         self.nextId = 1; // loan counter starts at 1
         self.unlocked = 1; // mutex initialized as unlocked
 
+        self.ltvThreshold = 5; // 50 basis points
+        self.liquidationFee = 25; // 25 basis points
         self.origFee = 2;
         self.extSwapFee = 10;
 

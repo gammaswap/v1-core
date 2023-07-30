@@ -58,11 +58,11 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
         if(getPool[key] != address(0)) revert PoolExists();
     }
 
-    /// @dev See {IGammaPoolFactory-setPoolOrigFeeParams}
-    function setPoolOrigFeeParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate, uint8 _maxUtilRate) external virtual override {
+    /// @dev See {IGammaPoolFactory-setPoolParams}
+    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate, uint8 _maxUtilRate, uint8 _liquidationFee, uint8 _ltvThreshold) external virtual override {
         isForbidden(feeToSetter); // only feeToSetter can update origination fee parameters
-        IGammaPool(_pool).setOrigFeeParams(_origFee, _extSwapFee, _emaMultiplier, _minUtilRate, _maxUtilRate);
-        emit OrigFeeUpdate(_pool, _origFee, _extSwapFee, _emaMultiplier, _minUtilRate, _maxUtilRate);
+        IGammaPool(_pool).setPoolParams(_origFee, _extSwapFee, _emaMultiplier, _minUtilRate, _maxUtilRate, _liquidationFee, _ltvThreshold);
+        emit PoolParamsUpdate(_pool, _origFee, _extSwapFee, _emaMultiplier, _minUtilRate, _maxUtilRate, _liquidationFee, _ltvThreshold);
     }
 
     /**

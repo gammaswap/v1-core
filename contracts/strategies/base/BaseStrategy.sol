@@ -171,7 +171,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
 
         // Update GammaPool's interest rate index and update last block updated
         accFeeIndex = s.accFeeIndex * lastFeeIndex / 1e18;
-        s.accFeeIndex = uint96(accFeeIndex);
+        s.accFeeIndex = uint80(accFeeIndex);
         s.LAST_BLOCK_NUMBER = uint40(block.number);
 
         s.emaUtilRate = uint40(_calcUtilRateEma(calcUtilizationRate(lpInvariant, newBorrowedInvariant), s.emaUtilRate, s.emaMultiplier));

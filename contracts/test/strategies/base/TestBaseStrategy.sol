@@ -48,7 +48,7 @@ contract TestBaseStrategy is BaseStrategy {
     }
 
     function setUpdateStoreFields(uint256 accFeeIndex, uint256 lastFeeIndex, uint256 lpTokenBalance, uint256 borrowedInvariant, uint256 lastCFMMTotalSupply, uint256 lastCFMMInvariant) public virtual {
-        s.accFeeIndex = uint96(accFeeIndex);
+        s.accFeeIndex = uint80(accFeeIndex);
         _lastFeeIndex = uint80(lastFeeIndex);
         s.LP_TOKEN_BALANCE = lpTokenBalance;
         s.BORROWED_INVARIANT = uint128(borrowedInvariant);

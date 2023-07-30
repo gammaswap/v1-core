@@ -72,13 +72,17 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
         s.initialize(factory, _cfmm, protocolId, _tokens, _decimals);
     }
 
-    /// @dev See {IGammaPool-setOrigFeeParams}
-    function setOrigFeeParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate) external virtual override {
+    /// @dev See {IGammaPool-setPoolParams}
+    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate, uint8 liquidationFee, uint8 ltvThreshold) external virtual override {
         if(msg.sender != factory) revert Forbidden(); // only factory is allowed to update dynamic fee parameters
 
         require(minUtilRate <= 100, "MIN_UTIL_RATE");
         require(maxUtilRate >= minUtilRate && maxUtilRate <= 100, "MAX_UTIL_RATE");
+        require(maxUtilRate - minUtilRate <= 16, "MAX_FEE_DIVISOR");
+        require(liquidationFee <= ltvThreshold * 10, "LIQUIDATION_FEE");
 
+        s.ltvThreshold = ltvThreshold;
+        s.liquidationFee = liquidationFee;
         s.origFee = origFee;
         s.extSwapFee = extSwapFee;
         s.emaMultiplier = emaMultiplier;
@@ -181,6 +185,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
 
     /// @dev See {IGammaPool-getPoolData}
     function getPoolData() external virtual override view returns(PoolData memory data) {
+        data.poolId = address(this);
         data.protocolId = protocolId;
         data.borrowStrategy = borrowStrategy;
         data.repayStrategy = repayStrategy;
