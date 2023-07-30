@@ -46,7 +46,7 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
 
     /// @return ltvThreshold - max ltv ratio acceptable before a loan is eligible for liquidation
     function _ltvThreshold() internal virtual view returns(uint16) {
-        return 10000 - s.ltvThreshold * 10;
+        return 10000 - uint16(s.ltvThreshold) * 10;
     }
 
     /// @dev See {ILongStrategy-ltvThreshold}.
