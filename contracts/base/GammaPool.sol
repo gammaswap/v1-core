@@ -78,6 +78,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
 
         require(minUtilRate <= 100, "MIN_UTIL_RATE");
         require(maxUtilRate >= minUtilRate && maxUtilRate <= 100, "MAX_UTIL_RATE");
+        require(maxUtilRate - minUtilRate <= 16, "MAX_FEE_DIVISOR");
 
         s.origFee = origFee;
         s.extSwapFee = extSwapFee;
