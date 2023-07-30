@@ -12,6 +12,10 @@ contract TestExternalRebalanceStrategy is TestExternalBaseRebalanceStrategy, Ext
         return swapFee;
     }
 
+    function _ltvThreshold() internal virtual override(BaseLongStrategy, TestExternalBaseRebalanceStrategy) view returns(uint16) {
+        return 8000;
+    }
+
     // **** Not used **** //
     function beforeRepay(LibStorage.Loan storage _loan, uint256[] memory amounts) internal virtual override {
     }

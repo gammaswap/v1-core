@@ -154,8 +154,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         // Rates
         /// @dev cfmm - address of CFMM this GammaPool is for
         address cfmm;
-        /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 7.9% trillion
-        uint96 accFeeIndex;
+        /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 30.9% billion
+        uint80 accFeeIndex;
         /// @dev External swap fee in basis points, max 255 basis points = 2.55%
         uint8 extSwapFee; // 8 bits
         /// @dev Loan opening origination fee in basis points

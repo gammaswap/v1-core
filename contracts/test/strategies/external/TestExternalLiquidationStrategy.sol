@@ -37,6 +37,10 @@ contract TestExternalLiquidationStrategy is TestExternalBaseRebalanceStrategy, E
         if(!hasMargin(collateral, liquidity, _ltvThreshold())) revert Margin(); // Revert if loan has enough collateral
     }
 
+    function _ltvThreshold() internal virtual override(BaseLongStrategy, TestExternalBaseRebalanceStrategy) view returns(uint16) {
+        return 8000;
+    }
+
     function _liquidationFee() internal virtual override view returns(uint16) {
         return liqFee;
     }

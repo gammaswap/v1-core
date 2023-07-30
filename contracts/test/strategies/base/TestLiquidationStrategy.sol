@@ -161,7 +161,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
     function incBorrowedInvariant(uint256 invariant) external virtual {
         uint256 borrowedInvariant = s.BORROWED_INVARIANT + invariant;
         uint256 feeGrowth = borrowedInvariant * 1e18 / s.BORROWED_INVARIANT;
-        s.accFeeIndex = uint96(s.accFeeIndex * feeGrowth / 1e18);
+        s.accFeeIndex = uint80(s.accFeeIndex * feeGrowth / 1e18);
         s.BORROWED_INVARIANT = uint128(borrowedInvariant);
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(s.BORROWED_INVARIANT, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
     }

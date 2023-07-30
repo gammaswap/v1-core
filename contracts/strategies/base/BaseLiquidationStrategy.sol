@@ -50,7 +50,9 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     }
 
     /// @return - liquidationFee - threshold used to measure the liquidation fee
-    function _liquidationFee() internal virtual view returns(uint16);
+    function _liquidationFee() internal virtual view returns(uint16) {
+        return s.liquidationFee;
+    }
 
     /// @dev See {LiquidationStrategy-liquidationFee}.
     function liquidationFee() external override virtual view returns(uint256) {

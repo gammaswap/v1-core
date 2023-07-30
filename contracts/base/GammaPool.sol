@@ -181,6 +181,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
 
     /// @dev See {IGammaPool-getPoolData}
     function getPoolData() external virtual override view returns(PoolData memory data) {
+        data.poolId = address(this);
         data.protocolId = protocolId;
         data.borrowStrategy = borrowStrategy;
         data.repayStrategy = repayStrategy;

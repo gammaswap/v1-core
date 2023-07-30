@@ -45,7 +45,9 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
     function swapTokens(LibStorage.Loan storage _loan, uint256[] memory outAmts, uint256[] memory inAmts) internal virtual;
 
     /// @return ltvThreshold - max ltv ratio acceptable before a loan is eligible for liquidation
-    function _ltvThreshold() internal virtual view returns(uint16);
+    function _ltvThreshold() internal virtual view returns(uint16) {
+        return 10000 - s.ltvThreshold * 10;
+    }
 
     /// @dev See {ILongStrategy-ltvThreshold}.
     function ltvThreshold() external virtual override view returns(uint256) {
@@ -143,7 +145,7 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
         uint256 rateIndex = _loan.rateIndex;
         liquidity = rateIndex == 0 ? 0 : (_loan.liquidity * accFeeIndex) / rateIndex;
         _loan.liquidity = uint128(liquidity);
-        _loan.rateIndex = uint96(accFeeIndex);
+        _loan.rateIndex = uint80(accFeeIndex);
     }
 
     /// @dev Add transfer fees to amounts if any

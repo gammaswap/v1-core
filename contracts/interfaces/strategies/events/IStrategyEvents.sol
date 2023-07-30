@@ -35,6 +35,6 @@ interface IStrategyEvents {
     /// @param borrowedInvariant - lpTokenBorrowedPlusInterest as invariant units
     /// @param cfmmReserves - reserves in CFMM. Used to track price
     /// @param txType - transaction type. Possible values come from enum TX_TYPE
-    event PoolUpdated(uint256 lpTokenBalance, uint256 lpTokenBorrowed, uint40 lastBlockNumber, uint96 accFeeIndex,
+    event PoolUpdated(uint256 lpTokenBalance, uint256 lpTokenBorrowed, uint40 lastBlockNumber, uint80 accFeeIndex,
         uint256 lpTokenBorrowedPlusInterest, uint128 lpInvariant, uint128 borrowedInvariant, uint128[] cfmmReserves, TX_TYPE indexed txType);
 }
