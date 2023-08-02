@@ -4,11 +4,12 @@ pragma solidity >=0.8.4;
 import "../interfaces/strategies/base/IShortStrategy.sol";
 import "./GammaPoolERC20.sol";
 import "../utils/DelegateCaller.sol";
+import "../utils/Pausable.sol";
 
 /// @title ERC4626 (GS LP) implementation of GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Vault implementation of GammaPool, assets are CFMM LP tokens, shares are GS LP tokens
-abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller {
+abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Pausable {
 
     error MinShares();
 
@@ -39,7 +40,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller {
     /// @param assets - CFMM LP tokens deposited in exchange for GS LP tokens
     /// @param to - address receiving GS LP tokens
     /// @return shares - quantity of GS LP tokens sent to receiver address (`to`) for CFMM LP tokens
-    function deposit(uint256 assets, address to) external virtual returns (uint256 shares) {
+    function deposit(uint256 assets, address to) external virtual whenNotPaused(1) returns (uint256 shares) {
         return abi.decode(callStrategy(vaultImplementation(), abi.encodeWithSelector(IShortStrategy._deposit.selector, assets, to)), (uint256));
     }
 
@@ -47,7 +48,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller {
     /// @param shares - GS LP tokens minted from CFMM LP token deposits
     /// @param to - address receiving GS LP tokens
     /// @return assets - quantity of CFMM LP tokens sent to receiver address (`to`)
-    function mint(uint256 shares, address to) external virtual returns (uint256 assets) {
+    function mint(uint256 shares, address to) external virtual whenNotPaused(2) returns (uint256 assets) {
         return abi.decode(callStrategy(vaultImplementation(), abi.encodeWithSelector(IShortStrategy._mint.selector, shares, to)), (uint256));
     }
 
@@ -56,7 +57,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller {
     /// @param to - address receiving CFMM LP tokens
     /// @param from - address burning its GS LP tokens
     /// @return shares - quantity of GS LP tokens burned
-    function withdraw(uint256 assets, address to, address from) external virtual returns (uint256 shares) {
+    function withdraw(uint256 assets, address to, address from) external virtual whenNotPaused(3) returns (uint256 shares) {
         return abi.decode(callStrategy(vaultImplementation(), abi.encodeWithSelector(IShortStrategy._withdraw.selector, assets, to, from)), (uint256));
     }
 
@@ -65,7 +66,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller {
     /// @param to - address receiving CFMM LP tokens
     /// @param from - address redeeming GS LP tokens
     /// @return assets - quantity of CFMM LP tokens sent to receiver address (`to`) for GS LP tokens redeemed
-    function redeem(uint256 shares, address to, address from) external virtual returns (uint256 assets) {
+    function redeem(uint256 shares, address to, address from) external virtual whenNotPaused(4) returns (uint256 assets) {
         return abi.decode(callStrategy(vaultImplementation(), abi.encodeWithSelector(IShortStrategy._redeem.selector, shares, to, from)), (uint256));
     }
 

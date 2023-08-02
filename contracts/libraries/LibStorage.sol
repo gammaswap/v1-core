@@ -100,6 +100,9 @@ library LibStorage {
         /// @dev The ID of the next loan that will be minted. Initialized at 1
         uint256 nextId;
 
+        /// @dev Function IDs so that we can pause individual functions
+        uint256 funcIds;
+
         // ERC20 fields
         /// @dev Total supply of GammaPool's own ERC20 token representing the liquidity of depositors to the CFMM through the GammaPool
         uint256 totalSupply;
