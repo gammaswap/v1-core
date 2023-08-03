@@ -8,17 +8,8 @@ import "../interfaces/IPausable.sol";
 /// @notice Abstract implementation of IPausable interface.
 /// @dev Pauses individual functions in inherited contract through bit manipulation of a 256 bit number
 /// @dev The 256 bit number means there are at most 255 functions that can be paused by turning on the respective bit index that identifies that function
-/// @dev If the 256 bit number is set to 0, that means no function is paused. If it's not zero at least one function is paused
+/// @dev If the zeroth bit is turned on, then all pausable functions are paused
 abstract contract Pausable is IPausable {
-
-    error Paused(uint8 _functionId);
-    error NotPaused(uint8 _functionId);
-
-    /// @dev Emitted when the pause is triggered by `account`.
-    event Pause(address account, uint8 _functionId);
-
-    /// @dev Emitted when the unpause is triggered by `account`.
-    event Unpause(address account, uint8 _functionId);
 
     /// @dev Modifier to make a function callable only when the contract is not paused.
     modifier whenNotPaused(uint8 _functionId) {
@@ -41,6 +32,11 @@ abstract contract Pausable is IPausable {
     /// @dev Update 256 bit number whose indices represent the ids of pausable functions
     function _setFunctionIds(uint256 _funcIds) internal virtual;
 
+    /// @dev See {IPausable-functionIds}
+    function functionIds() external override virtual view returns(uint256) {
+        return _functionIds();
+    }
+
     // @dev Throws if the contract is paused.
     function _requireNotPaused(uint8 _functionId) internal view virtual {
         if(isPaused(_functionId)) revert Paused(_functionId);
@@ -51,18 +47,16 @@ abstract contract Pausable is IPausable {
         if(!isPaused(_functionId)) revert NotPaused(_functionId);
     }
 
-    /// @dev Returns true if the contract is paused, and false otherwise.
+    /// @dev See {IPausable-isPaused}
     function isPaused(uint8 _functionId) public override virtual view returns (bool) {
-        require(_functionId < 256, "_functionId must be less than 256");
-
+        uint256 functionIds = _functionIds();
         uint256 mask = uint256(1) << _functionId;
-        return (_functionIds() & mask) != 0;
+        return functionIds == 1 || (functionIds & mask) != 0;
     }
 
-    /// @dev Triggers stopped state. The contract must not be paused.
+    /// @dev See {IPausable-pause}
     function pause(uint8 _functionId) external override virtual returns (uint256) {
         require(msg.sender == _pauser(), "FORBIDDEN");
-        require(_functionId < 256, "_functionId must be less than 256");
 
         uint256 mask = uint256(1) << _functionId;
         uint256 functionIds = _functionIds() | mask;
@@ -74,10 +68,9 @@ abstract contract Pausable is IPausable {
         return functionIds;
     }
 
-    /// @dev Returns to normal state. The contract must be paused.
+    /// @dev See {IPausable-unpause}
     function unpause(uint8 _functionId) external override virtual returns (uint256) {
         require(msg.sender == _pauser(), "FORBIDDEN");
-        require(_functionId < 256, "_functionId must be less than 256");
 
         uint256 mask = ~(uint256(1) << _functionId);
         uint256 functionIds = _functionIds() & mask;
