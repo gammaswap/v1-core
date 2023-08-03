@@ -2,12 +2,14 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 
 const PROTOCOL_ID = 1;
+const PROTOCOL_EXTERNAL_ID = 2;
 
 describe("GammaPoolFactory", function () {
   let TestERC20: any;
   let TestAddressCalculator: any;
   let TestRateModel: any;
   let GammaPool: any;
+  let GammaPoolExternal: any;
   let PoolViewer: any;
   let GammaPoolFactory: any;
   let factory: any;
@@ -16,6 +18,7 @@ describe("GammaPoolFactory", function () {
   let rateModel: any;
   let protocol: any;
   let protocolZero: any;
+  let protocolExternal: any;
   let tokenA: any;
   let tokenB: any;
   let tokenC: any;
@@ -39,6 +42,9 @@ describe("GammaPoolFactory", function () {
     TestRateModel = await ethers.getContractFactory("TestRateModel");
     PoolViewer = await ethers.getContractFactory("PoolViewer");
     GammaPool = await ethers.getContractFactory("TestGammaPool");
+    GammaPoolExternal = await ethers.getContractFactory(
+      "TestGammaPoolExternal"
+    );
     GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
     TestAddressCalculator = await ethers.getContractFactory(
       "TestAddressCalculator"
@@ -94,11 +100,26 @@ describe("GammaPoolFactory", function () {
       poolViewer.address
     );
 
+    protocolExternal = await GammaPoolExternal.deploy(
+      PROTOCOL_EXTERNAL_ID,
+      factory.address,
+      addr1.address,
+      addr9.address,
+      addr10.address,
+      addr2.address,
+      addr5.address,
+      addr5.address,
+      poolViewer.address,
+      addr5.address,
+      addr5.address
+    );
+
     // We can interact with the contract by calling `hardhatToken.method()`
     await tokenA.deployed();
     await tokenB.deployed();
     await factory.deployed();
     await protocol.deployed();
+    await protocolExternal.deployed();
   });
 
   function createPoolParamsObj(cfmmAddress: any, tokenA: any, tokenB: any) {
@@ -840,6 +861,782 @@ describe("GammaPoolFactory", function () {
         ethers.constants.AddressZero
       );
       expect(await factory.owner()).to.equal(addr1.address);
+    });
+  });
+
+  async function createPool() {
+    await (await factory.addProtocol(protocolExternal.address)).wait();
+    expect(await factory.allPoolsLength()).to.equal(0);
+
+    const params = createPoolParamsObj(addr3.address, tokenA, tokenB);
+
+    await factory.createPool(
+      PROTOCOL_EXTERNAL_ID,
+      params.createPoolParams.cfmm,
+      params.createPoolParams.tokens,
+      params.data
+    );
+
+    expect(await factory.allPoolsLength()).to.equal(1);
+
+    const key = await addressCalculator.getGammaPoolKey(
+      addr3.address,
+      PROTOCOL_EXTERNAL_ID
+    );
+    const pool = await factory.getPool(key);
+    return pool;
+  }
+
+  describe("Pause GammaPool", function () {
+    it("Forbidden pause", async function () {
+      const pool = await createPool();
+
+      await expect(
+        factory.connect(addr1).pausePoolFunction(pool, 0)
+      ).to.be.revertedWith("Forbidden");
+
+      await expect(
+        factory.connect(addr1).pausePoolFunction(pool, 1)
+      ).to.be.revertedWith("Forbidden");
+
+      await expect(
+        factory.connect(addr1).pausePoolFunction(pool, 2)
+      ).to.be.revertedWith("Forbidden");
+
+      await expect(
+        factory.connect(addr1).pausePoolFunction(pool, 3)
+      ).to.be.revertedWith("Forbidden");
+    });
+
+    it("Forbidden unpause", async function () {
+      const pool = await createPool();
+
+      await expect(
+        factory.connect(addr1).unpausePoolFunction(pool, 0)
+      ).to.be.revertedWith("Forbidden");
+
+      await expect(
+        factory.connect(addr1).unpausePoolFunction(pool, 1)
+      ).to.be.revertedWith("Forbidden");
+
+      await expect(
+        factory.connect(addr1).unpausePoolFunction(pool, 2)
+      ).to.be.revertedWith("Forbidden");
+
+      await expect(
+        factory.connect(addr1).unpausePoolFunction(pool, 3)
+      ).to.be.revertedWith("Forbidden");
+    });
+
+    it("Pause & Unpause all functions", async function () {
+      const pool = await createPool();
+
+      const gammapool = GammaPoolExternal.attach(pool);
+
+      expect(await gammapool.isPaused(0)).to.equal(false);
+      expect(await gammapool.isPaused(1)).to.equal(false);
+      expect(await gammapool.isPaused(2)).to.equal(false);
+      expect(await gammapool.isPaused(3)).to.equal(false);
+      expect(await gammapool.isPaused(4)).to.equal(false);
+      expect(await gammapool.isPaused(5)).to.equal(false);
+      expect(await gammapool.isPaused(6)).to.equal(false);
+      expect(await gammapool.isPaused(7)).to.equal(false);
+      expect(await gammapool.isPaused(8)).to.equal(false);
+      expect(await gammapool.isPaused(9)).to.equal(false);
+      expect(await gammapool.isPaused(10)).to.equal(false);
+      expect(await gammapool.isPaused(11)).to.equal(false);
+      expect(await gammapool.isPaused(12)).to.equal(false);
+      expect(await gammapool.isPaused(13)).to.equal(false);
+      expect(await gammapool.isPaused(14)).to.equal(false);
+      expect(await gammapool.isPaused(15)).to.equal(false);
+      expect(await gammapool.isPaused(16)).to.equal(false);
+      expect(await gammapool.isPaused(17)).to.equal(false);
+      expect(await gammapool.isPaused(18)).to.equal(false);
+      expect(await gammapool.isPaused(19)).to.equal(false);
+      expect(await gammapool.isPaused(20)).to.equal(false);
+      expect(await gammapool.isPaused(21)).to.equal(false);
+      expect(await gammapool.isPaused(22)).to.equal(false);
+      expect(await gammapool.isPaused(23)).to.equal(false);
+      expect(await gammapool.isPaused(24)).to.equal(false);
+      expect(await gammapool.isPaused(25)).to.equal(false);
+
+      await (await factory.pausePoolFunction(pool, 0)).wait();
+
+      expect(await gammapool.isPaused(0)).to.equal(true);
+      expect(await gammapool.isPaused(1)).to.equal(true);
+      expect(await gammapool.isPaused(2)).to.equal(true);
+      expect(await gammapool.isPaused(3)).to.equal(true);
+      expect(await gammapool.isPaused(4)).to.equal(true);
+      expect(await gammapool.isPaused(5)).to.equal(true);
+      expect(await gammapool.isPaused(6)).to.equal(true);
+      expect(await gammapool.isPaused(7)).to.equal(true);
+      expect(await gammapool.isPaused(8)).to.equal(true);
+      expect(await gammapool.isPaused(9)).to.equal(true);
+      expect(await gammapool.isPaused(10)).to.equal(true);
+      expect(await gammapool.isPaused(11)).to.equal(true);
+      expect(await gammapool.isPaused(12)).to.equal(true);
+      expect(await gammapool.isPaused(13)).to.equal(true);
+      expect(await gammapool.isPaused(14)).to.equal(true);
+      expect(await gammapool.isPaused(15)).to.equal(true);
+      expect(await gammapool.isPaused(16)).to.equal(true);
+      expect(await gammapool.isPaused(17)).to.equal(true);
+      expect(await gammapool.isPaused(18)).to.equal(true);
+      expect(await gammapool.isPaused(19)).to.equal(true);
+      expect(await gammapool.isPaused(20)).to.equal(true);
+      expect(await gammapool.isPaused(21)).to.equal(true);
+      expect(await gammapool.isPaused(22)).to.equal(true);
+      expect(await gammapool.isPaused(23)).to.equal(true);
+      expect(await gammapool.isPaused(24)).to.equal(true);
+      expect(await gammapool.isPaused(25)).to.equal(true);
+
+      await expect(
+        gammapool.deposit(1, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.mint(2, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.withdraw(3, owner.address, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.redeem(4, owner.address, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.depositNoPull(owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.withdrawNoPull(owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.depositReserves(
+          owner.address,
+          [],
+          [],
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.withdrawReserves(owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(gammapool.createLoan(0)).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+      await expect(
+        gammapool.increaseCollateral(1, [])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.decreaseCollateral(1, [], owner.address, [])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.borrowLiquidity(1, 2, [])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.repayLiquidity(1, 2, [], 1, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.repayLiquiditySetRatio(1, 2, [], [])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.repayLiquidityWithLP(1, 2, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.rebalanceCollateral(1, [], [])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(gammapool.updatePool(1)).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+      await expect(gammapool.liquidate(1)).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+      await expect(gammapool.liquidateWithLP(1)).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+      await expect(
+        gammapool.batchLiquidations([])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(gammapool.sync()).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+      await expect(gammapool.skim(owner.address)).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+
+      await expect(
+        gammapool.clearToken(tokenA.address, owner.address, 0)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+      await expect(
+        gammapool.rebalanceExternally(
+          1,
+          [],
+          1,
+          owner.address,
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      await expect(
+        gammapool.liquidateExternally(
+          1,
+          [],
+          1,
+          owner.address,
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      await (await factory.unpausePoolFunction(pool, 0)).wait();
+
+      expect(await gammapool.isPaused(0)).to.equal(false);
+      expect(await gammapool.isPaused(1)).to.equal(false);
+      expect(await gammapool.isPaused(2)).to.equal(false);
+      expect(await gammapool.isPaused(3)).to.equal(false);
+      expect(await gammapool.isPaused(4)).to.equal(false);
+      expect(await gammapool.isPaused(5)).to.equal(false);
+      expect(await gammapool.isPaused(6)).to.equal(false);
+      expect(await gammapool.isPaused(7)).to.equal(false);
+      expect(await gammapool.isPaused(8)).to.equal(false);
+      expect(await gammapool.isPaused(9)).to.equal(false);
+      expect(await gammapool.isPaused(10)).to.equal(false);
+      expect(await gammapool.isPaused(11)).to.equal(false);
+      expect(await gammapool.isPaused(12)).to.equal(false);
+      expect(await gammapool.isPaused(13)).to.equal(false);
+      expect(await gammapool.isPaused(14)).to.equal(false);
+      expect(await gammapool.isPaused(15)).to.equal(false);
+      expect(await gammapool.isPaused(16)).to.equal(false);
+      expect(await gammapool.isPaused(17)).to.equal(false);
+      expect(await gammapool.isPaused(18)).to.equal(false);
+      expect(await gammapool.isPaused(19)).to.equal(false);
+      expect(await gammapool.isPaused(20)).to.equal(false);
+      expect(await gammapool.isPaused(21)).to.equal(false);
+      expect(await gammapool.isPaused(22)).to.equal(false);
+      expect(await gammapool.isPaused(23)).to.equal(false);
+      expect(await gammapool.isPaused(24)).to.equal(false);
+      expect(await gammapool.isPaused(25)).to.equal(false);
+
+      await expect(
+        gammapool.deposit(1, owner.address)
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.mint(2, owner.address)
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.withdraw(3, owner.address, owner.address)
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.redeem(4, owner.address, owner.address)
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.depositNoPull(owner.address)
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.withdrawNoPull(owner.address)
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.depositReserves(
+          owner.address,
+          [],
+          [],
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.withdrawReserves(owner.address)
+      ).to.be.revertedWithoutReason();
+      await expect(gammapool.createLoan(0)).to.not.be.revertedWithoutReason();
+      await expect(
+        gammapool.increaseCollateral(1, [])
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.decreaseCollateral(1, [], owner.address, [])
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.borrowLiquidity(1, 2, [])
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.repayLiquidity(1, 2, [], 1, owner.address)
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.repayLiquiditySetRatio(1, 2, [], [])
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.repayLiquidityWithLP(1, 2, owner.address)
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.rebalanceCollateral(1, [], [])
+      ).to.be.revertedWithoutReason();
+      await expect(gammapool.updatePool(1)).to.be.revertedWithoutReason();
+      await expect(gammapool.liquidate(1)).to.be.revertedWithoutReason();
+      await expect(gammapool.liquidateWithLP(1)).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.batchLiquidations([])
+      ).to.be.revertedWithoutReason();
+      await expect(gammapool.sync()).to.not.be.revertedWithoutReason();
+      await expect(gammapool.skim(owner.address)).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.clearToken(tokenA.address, owner.address, 0)
+      ).to.not.be.revertedWithoutReason();
+      await expect(
+        gammapool.rebalanceExternally(
+          1,
+          [],
+          1,
+          owner.address,
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithoutReason();
+      await expect(
+        gammapool.liquidateExternally(
+          1,
+          [],
+          1,
+          owner.address,
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithoutReason();
+    });
+
+    it("Pause & Unpause individual functions", async function () {
+      const pool = await createPool();
+
+      const gammapool = GammaPoolExternal.attach(pool);
+
+      // Pausing
+
+      expect(await gammapool.isPaused(1)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 1)).wait();
+      expect(await gammapool.isPaused(1)).to.equal(true);
+
+      await expect(
+        gammapool.deposit(1, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(2)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 2)).wait();
+      expect(await gammapool.isPaused(2)).to.equal(true);
+
+      await expect(
+        gammapool.mint(2, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(3)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 3)).wait();
+      expect(await gammapool.isPaused(3)).to.equal(true);
+
+      await expect(
+        gammapool.withdraw(3, owner.address, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(4)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 4)).wait();
+      expect(await gammapool.isPaused(4)).to.equal(true);
+
+      await expect(
+        gammapool.redeem(4, owner.address, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(5)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 5)).wait();
+      expect(await gammapool.isPaused(5)).to.equal(true);
+
+      await expect(
+        gammapool.depositNoPull(owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(6)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 6)).wait();
+      expect(await gammapool.isPaused(6)).to.equal(true);
+
+      await expect(
+        gammapool.withdrawNoPull(owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(7)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 7)).wait();
+      expect(await gammapool.isPaused(7)).to.equal(true);
+
+      await expect(
+        gammapool.depositReserves(
+          owner.address,
+          [],
+          [],
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(8)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 8)).wait();
+      expect(await gammapool.isPaused(8)).to.equal(true);
+
+      await expect(
+        gammapool.withdrawReserves(owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(9)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 9)).wait();
+      expect(await gammapool.isPaused(9)).to.equal(true);
+
+      await expect(gammapool.createLoan(0)).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+
+      expect(await gammapool.isPaused(10)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 10)).wait();
+      expect(await gammapool.isPaused(10)).to.equal(true);
+
+      await expect(
+        gammapool.increaseCollateral(1, [])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(11)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 11)).wait();
+      expect(await gammapool.isPaused(11)).to.equal(true);
+
+      await expect(
+        gammapool.decreaseCollateral(1, [], owner.address, [])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(12)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 12)).wait();
+      expect(await gammapool.isPaused(12)).to.equal(true);
+
+      await expect(
+        gammapool.borrowLiquidity(1, 2, [])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(13)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 13)).wait();
+      expect(await gammapool.isPaused(13)).to.equal(true);
+
+      await expect(
+        gammapool.repayLiquidity(1, 2, [], 1, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(14)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 14)).wait();
+      expect(await gammapool.isPaused(14)).to.equal(true);
+
+      await expect(
+        gammapool.repayLiquiditySetRatio(1, 2, [], [])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(15)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 15)).wait();
+      expect(await gammapool.isPaused(15)).to.equal(true);
+
+      await expect(
+        gammapool.repayLiquidityWithLP(1, 2, owner.address)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(16)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 16)).wait();
+      expect(await gammapool.isPaused(16)).to.equal(true);
+
+      await expect(
+        gammapool.rebalanceCollateral(1, [], [])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(17)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 17)).wait();
+      expect(await gammapool.isPaused(17)).to.equal(true);
+
+      await expect(gammapool.updatePool(1)).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+
+      expect(await gammapool.isPaused(18)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 18)).wait();
+      expect(await gammapool.isPaused(18)).to.equal(true);
+
+      await expect(gammapool.liquidate(1)).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+
+      expect(await gammapool.isPaused(19)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 19)).wait();
+      expect(await gammapool.isPaused(19)).to.equal(true);
+
+      await expect(gammapool.liquidateWithLP(1)).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+
+      expect(await gammapool.isPaused(20)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 20)).wait();
+      expect(await gammapool.isPaused(20)).to.equal(true);
+
+      await expect(
+        gammapool.batchLiquidations([])
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(21)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 21)).wait();
+      expect(await gammapool.isPaused(21)).to.equal(true);
+
+      await expect(gammapool.sync()).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+
+      expect(await gammapool.isPaused(22)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 22)).wait();
+      expect(await gammapool.isPaused(22)).to.equal(true);
+
+      await expect(gammapool.skim(owner.address)).to.be.revertedWithCustomError(
+        gammapool,
+        "Paused"
+      );
+
+      expect(await gammapool.isPaused(23)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 23)).wait();
+      expect(await gammapool.isPaused(23)).to.equal(true);
+
+      await expect(
+        gammapool.clearToken(tokenA.address, owner.address, 0)
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(24)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 24)).wait();
+      expect(await gammapool.isPaused(24)).to.equal(true);
+
+      await expect(
+        gammapool.rebalanceExternally(
+          1,
+          [],
+          1,
+          owner.address,
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      expect(await gammapool.isPaused(25)).to.equal(false);
+      await (await factory.pausePoolFunction(pool, 25)).wait();
+      expect(await gammapool.isPaused(25)).to.equal(true);
+
+      await expect(
+        gammapool.liquidateExternally(
+          1,
+          [],
+          1,
+          owner.address,
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithCustomError(gammapool, "Paused");
+
+      // Unpausing
+
+      expect(await gammapool.isPaused(1)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 1)).wait();
+      expect(await gammapool.isPaused(1)).to.equal(false);
+
+      await expect(
+        gammapool.deposit(1, owner.address)
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(2)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 2)).wait();
+      expect(await gammapool.isPaused(2)).to.equal(false);
+
+      await expect(
+        gammapool.mint(2, owner.address)
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(3)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 3)).wait();
+      expect(await gammapool.isPaused(3)).to.equal(false);
+
+      await expect(
+        gammapool.withdraw(3, owner.address, owner.address)
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(4)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 4)).wait();
+      expect(await gammapool.isPaused(4)).to.equal(false);
+
+      await expect(
+        gammapool.redeem(4, owner.address, owner.address)
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(5)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 5)).wait();
+      expect(await gammapool.isPaused(5)).to.equal(false);
+
+      await expect(
+        gammapool.depositNoPull(owner.address)
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(6)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 6)).wait();
+      expect(await gammapool.isPaused(6)).to.equal(false);
+
+      await expect(
+        gammapool.withdrawNoPull(owner.address)
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(7)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 7)).wait();
+      expect(await gammapool.isPaused(7)).to.equal(false);
+
+      await expect(
+        gammapool.depositReserves(
+          owner.address,
+          [],
+          [],
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(8)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 8)).wait();
+      expect(await gammapool.isPaused(8)).to.equal(false);
+
+      await expect(
+        gammapool.withdrawReserves(owner.address)
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(9)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 9)).wait();
+      expect(await gammapool.isPaused(9)).to.equal(false);
+
+      await expect(gammapool.createLoan(0)).to.not.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(10)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 10)).wait();
+      expect(await gammapool.isPaused(10)).to.equal(false);
+
+      await expect(
+        gammapool.increaseCollateral(1, [])
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(11)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 11)).wait();
+      expect(await gammapool.isPaused(11)).to.equal(false);
+
+      await expect(
+        gammapool.decreaseCollateral(1, [], owner.address, [])
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(12)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 12)).wait();
+      expect(await gammapool.isPaused(12)).to.equal(false);
+
+      await expect(
+        gammapool.borrowLiquidity(1, 2, [])
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(13)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 13)).wait();
+      expect(await gammapool.isPaused(13)).to.equal(false);
+
+      await expect(
+        gammapool.repayLiquidity(1, 2, [], 1, owner.address)
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(14)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 14)).wait();
+      expect(await gammapool.isPaused(14)).to.equal(false);
+
+      await expect(
+        gammapool.repayLiquiditySetRatio(1, 2, [], [])
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(15)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 15)).wait();
+      expect(await gammapool.isPaused(15)).to.equal(false);
+
+      await expect(
+        gammapool.repayLiquidityWithLP(1, 2, owner.address)
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(16)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 16)).wait();
+      expect(await gammapool.isPaused(16)).to.equal(false);
+
+      await expect(
+        gammapool.rebalanceCollateral(1, [], [])
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(17)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 17)).wait();
+      expect(await gammapool.isPaused(17)).to.equal(false);
+
+      await expect(gammapool.updatePool(1)).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(18)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 18)).wait();
+      expect(await gammapool.isPaused(18)).to.equal(false);
+
+      await expect(gammapool.liquidate(1)).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(19)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 19)).wait();
+      expect(await gammapool.isPaused(19)).to.equal(false);
+
+      await expect(gammapool.liquidateWithLP(1)).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(20)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 20)).wait();
+      expect(await gammapool.isPaused(20)).to.equal(false);
+
+      await expect(
+        gammapool.batchLiquidations([])
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(21)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 21)).wait();
+      expect(await gammapool.isPaused(21)).to.equal(false);
+
+      await expect(gammapool.sync()).to.not.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(22)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 22)).wait();
+      expect(await gammapool.isPaused(22)).to.equal(false);
+
+      await expect(gammapool.skim(owner.address)).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(23)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 23)).wait();
+      expect(await gammapool.isPaused(23)).to.equal(false);
+
+      await expect(
+        gammapool.clearToken(tokenA.address, owner.address, 0)
+      ).to.not.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(24)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 24)).wait();
+      expect(await gammapool.isPaused(24)).to.equal(false);
+
+      await expect(
+        gammapool.rebalanceExternally(
+          1,
+          [],
+          1,
+          owner.address,
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithoutReason();
+
+      expect(await gammapool.isPaused(25)).to.equal(true);
+      await (await factory.unpausePoolFunction(pool, 25)).wait();
+      expect(await gammapool.isPaused(25)).to.equal(false);
+
+      await expect(
+        gammapool.liquidateExternally(
+          1,
+          [],
+          1,
+          owner.address,
+          ethers.constants.HashZero
+        )
+      ).to.be.revertedWithoutReason();
     });
   });
 });

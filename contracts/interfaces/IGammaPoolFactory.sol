@@ -103,6 +103,18 @@ interface IGammaPoolFactory {
     /// @param _ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
     function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate, uint8 _maxUtilRate, uint8 _liquidationFee, uint8 _ltvThreshold) external;
 
+    /// @dev Pause a GammaPool's function identified by a `_functionId`
+    /// @param _pool - address of GammaPool whose functions we will pause
+    /// @param _functionId - id of function in GammaPool we want to pause
+    /// @return _functionIds - uint256 number containing all turned on (paused) function ids
+    function pausePoolFunction(address _pool, uint8 _functionId) external returns(uint256 _functionIds) ;
+
+    /// @dev Unpause a GammaPool's function identified by a `_functionId`
+    /// @param _pool - address of GammaPool whose functions we will unpause
+    /// @param _functionId - id of function in GammaPool we want to unpause
+    /// @return _functionIds - uint256 number containing all turned on (paused) function ids
+    function unpausePoolFunction(address _pool, uint8 _functionId) external returns(uint256 _functionIds) ;
+
     /// @return fee - protocol fee charged by GammaPool to liquidity borrowers in terms of basis points
     function fee() external view returns(uint16);
 
