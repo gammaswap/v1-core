@@ -2,14 +2,14 @@
 pragma solidity >=0.8.4;
 
 import "../interfaces/strategies/base/IShortStrategy.sol";
-import "./GammaPoolERC20.sol";
 import "../utils/DelegateCaller.sol";
-import "../utils/Pausable.sol";
+import "./GammaPoolERC20.sol";
+import "./PausableRefunds.sol";
 
 /// @title ERC4626 (GS LP) implementation of GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Vault implementation of GammaPool, assets are CFMM LP tokens, shares are GS LP tokens
-abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Pausable {
+abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, PausableRefunds {
 
     error MinShares();
 

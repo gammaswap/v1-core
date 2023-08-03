@@ -13,12 +13,11 @@ import "../interfaces/strategies/liquidation/ISingleLiquidationStrategy.sol";
 import "../interfaces/strategies/liquidation/IBatchLiquidationStrategy.sol";
 import "../interfaces/IPoolViewer.sol";
 import "./GammaPoolERC4626.sol";
-import "./Refunds.sol";
 
 /// @title Basic GammaPool smart contract
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used as template for building other GammaPool contract implementations for other CFMMs
-abstract contract GammaPool is IGammaPool, GammaPoolERC4626, Refunds {
+abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
     using LibStorage for LibStorage.Storage;
 

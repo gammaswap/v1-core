@@ -25,12 +25,12 @@ abstract contract GammaPoolExternal is IGammaPoolExternal, DelegateCaller, Pausa
     }
 
     /// @dev See {IGammaPoolExternal-rebalanceExternally}
-    function rebalanceExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override virtual whenNotPaused(23) returns(uint256 loanLiquidity, uint128[] memory tokensHeld) {
+    function rebalanceExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override virtual whenNotPaused(24) returns(uint256 loanLiquidity, uint128[] memory tokensHeld) {
         return abi.decode(callStrategy(externalRebalanceStrategy, abi.encodeWithSelector(IExternalRebalanceStrategy._rebalanceExternally.selector, tokenId, amounts, lpTokens, to, data)), (uint256, uint128[]));
     }
 
     /// @dev See {IGammaPoolExternal-liquidateExternally}
-    function liquidateExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override virtual whenNotPaused(24) returns(uint256 loanLiquidity, uint256[] memory refund) {
+    function liquidateExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override virtual whenNotPaused(25) returns(uint256 loanLiquidity, uint256[] memory refund) {
         return abi.decode(callStrategy(externalLiquidationStrategy, abi.encodeWithSelector(IExternalLiquidationStrategy._liquidateExternally.selector, tokenId, amounts, lpTokens, to, data)), (uint256, uint256[]));
     }
 }
