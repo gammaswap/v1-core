@@ -89,21 +89,6 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         s.feeDivisor = uint16(2 ** (maxUtilRate - minUtilRate));
     }
 
-    /// @dev See {Pausable-_pauser}
-    function _pauser() internal override virtual view returns(address) {
-        return s.factory;
-    }
-
-    /// @dev See {Pausable-_functionIds}
-    function _functionIds() internal override virtual view returns(uint256) {
-        return s.funcIds;
-    }
-
-    /// @dev See {Pausable-_setFunctionIds}
-    function _setFunctionIds(uint256 _funcIds) internal override virtual {
-        s.funcIds = _funcIds;
-    }
-
     /// @dev See {IGammaPool-cfmm}
     function cfmm() external virtual override view returns(address) {
         return s.cfmm;

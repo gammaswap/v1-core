@@ -3,6 +3,7 @@ pragma solidity >=0.8.4;
 
 import "../interfaces/IGammaPoolFactory.sol";
 import "../interfaces/IGammaPool.sol";
+import "../interfaces/IPausable.sol";
 import "../utils/TwoStepOwnable.sol";
 
 /// @title Abstract factory contract to create more GammaPool contracts.
@@ -56,6 +57,16 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     /// @param key - unique key used to identify GammaPool instance (e.g. salt)
     function hasPool(bytes32 key) internal virtual view {
         if(getPool[key] != address(0)) revert PoolExists();
+    }
+
+    /// @dev See {IGammaPoolFactory-pausePoolFunction}
+    function pausePoolFunction(address _pool, uint8 _functionId) external virtual override onlyOwner returns(uint256) {
+        return IPausable(_pool).pause(_functionId);
+    }
+
+    /// @dev See {IGammaPoolFactory-unpausePoolFunction}
+    function unpausePoolFunction(address _pool, uint8 _functionId) external virtual override onlyOwner returns(uint256) {
+        return IPausable(_pool).unpause(_functionId);
     }
 
     /// @dev See {IGammaPoolFactory-setPoolParams}

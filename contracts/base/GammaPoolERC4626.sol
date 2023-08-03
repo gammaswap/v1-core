@@ -31,6 +31,21 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, PausableRe
     /// @return lastPrice - latest token reserves in the CFMM
     function _getLastCFMMPrice() internal virtual view returns(uint256 lastPrice);
 
+    // @dev See {Pausable-_pauser}
+    function _pauser() internal override virtual view returns(address) {
+        return s.factory;
+    }
+
+    /// @dev See {Pausable-_functionIds}
+    function _functionIds() internal override virtual view returns(uint256) {
+        return s.funcIds;
+    }
+
+    /// @dev See {Pausable-_setFunctionIds}
+    function _setFunctionIds(uint256 _funcIds) internal override virtual {
+        s.funcIds = _funcIds;
+    }
+
     /// @return address - CFMM LP token address used for the Vault for accounting, depositing, and withdrawing.
     function asset() external virtual view returns(address) {
         return s.cfmm;
