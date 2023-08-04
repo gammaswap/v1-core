@@ -360,4 +360,11 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         _origFee = originationFee(); // base fee
         return discount > _origFee ? 0 : (_origFee - discount);
     }
+
+    function calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate, uint256 feeDivisor) external virtual override view returns(uint256 origFee) {
+        return 0;
+    }
+
+    function mintOrigFeeToDevs(uint256 origFeeInv, uint256 totalInvariant) internal virtual override {
+    }
 }
