@@ -304,19 +304,15 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
 
     function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
         deltas[1] = 100;
     }
 
     function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
-        deltas[1] = 0;
     }
 
     function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
         deltas[1] = 100;
     }
 
@@ -343,14 +339,11 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
 
     function _calcDeltasForMaxLP(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
         deltas[1] = 100;
     }
 
     function _calcDeltasToCloseSetRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256[] memory ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
-        deltas[1] = 0;
     }
 
     function _repayLiquidityWithLP(uint256 tokenId, uint256 collateralId, address to) external virtual override returns(uint256 liquidityPaid, uint128[] memory tokensHeld) {
@@ -362,5 +355,12 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
     function _calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 lowUtilRate, uint256 discount) internal virtual override view returns(uint256 _origFee) {
         _origFee = originationFee(); // base fee
         return discount > _origFee ? 0 : (_origFee - discount);
+    }
+
+    function calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate, uint256 feeDivisor) external virtual override view returns(uint256 origFee) {
+        return 0;
+    }
+
+    function mintOrigFeeToDevs(uint256 origFeeInv, uint256 totalInvariant) internal virtual override {
     }
 }

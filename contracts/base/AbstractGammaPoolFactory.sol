@@ -29,6 +29,9 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     /// @dev See {IGammaPoolFactory-fee}
     uint16 public override fee = 10000; // Default value is 10,000 basis points or 10%
 
+    /// @dev See {IGammaPoolFactory-origFeeShare}
+    uint16 public override origFeeShare = 600; // Default value is 600 basis points or 60%
+
     /// @dev See {IGammaPoolFactory-feeTo}
     address public override feeTo;
 
@@ -74,6 +77,33 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
         isForbidden(feeToSetter); // only feeToSetter can update origination fee parameters
         IGammaPool(_pool).setPoolParams(_origFee, _extSwapFee, _emaMultiplier, _minUtilRate, _maxUtilRate, _liquidationFee, _ltvThreshold);
         emit PoolParamsUpdate(_pool, _origFee, _extSwapFee, _emaMultiplier, _minUtilRate, _maxUtilRate, _liquidationFee, _ltvThreshold);
+    }
+
+    /// @dev See {IGammaPoolFactory-setFee}
+    function setFee(uint16 _fee) external virtual override {
+        isForbidden(feeToSetter); // only feeToSetter can set the protocol fee
+        fee = _fee;
+        emit FeeUpdate(address(0), feeTo, _fee, origFeeShare, false);
+    }
+
+    /// @dev See {IGammaPoolFactory-setFeeTo}
+    function setFeeTo(address _feeTo) external virtual override {
+        isForbidden(feeToSetter); // only feeToSetter can set which address receives protocol fees
+        feeTo = _feeTo;
+        emit FeeUpdate(address(0), _feeTo, fee, origFeeShare, false);
+    }
+
+    /// @dev See {IGammaPoolFactory-setOrigFeeShare}
+    function setOrigFeeShare(uint16 _origFeeShare) external virtual override {
+        isForbidden(feeToSetter); // only feeToSetter can set which address receives protocol fees
+        origFeeShare = _origFeeShare;
+        emit FeeUpdate(address(0), feeTo, fee, origFeeShare, false);
+    }
+
+    /// @dev See {IGammaPoolFactory-setFeeToSetter}
+    function setFeeToSetter(address _feeToSetter) external virtual override onlyOwner {
+        isZeroAddress(_feeToSetter); // protocol fee setting privileges can't be transferred to the zero address
+        feeToSetter = _feeToSetter;
     }
 
     /**

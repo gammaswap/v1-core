@@ -15,6 +15,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
 
     struct Fee {
         uint16 protocol;
+        uint16 origFeeShare;
         address to;
         bool isSet;
     }
@@ -113,49 +114,32 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
     }
 
     /// @dev See {IGammaPoolFactory-getPoolFee}
-    function getPoolFee(address _pool) external view override returns (address _to, uint256 _protocolFee, bool _isSet) {
+    function getPoolFee(address _pool) external view override returns (address _to, uint256 _protocolFee, uint256 _origFeeShare, bool _isSet) {
         Fee storage _fee = poolFee[_pool];
         _isSet = _fee.isSet;
         if(_isSet) {
             _to = _fee.to;
             _protocolFee = _fee.protocol;
+            _origFeeShare = _fee.origFeeShare;
         } else {
             _to = feeTo;
             _protocolFee = fee;
+            _origFeeShare = origFeeShare;
         }
     }
 
     /// @dev See {IGammaPoolFactory-setPoolFee}
-    function setPoolFee(address _pool, address _to, uint16 _protocolFee, bool _isSet) external virtual override {
+    function setPoolFee(address _pool, address _to, uint16 _protocolFee, uint16 _origFeeShare, bool _isSet) external virtual override {
         isForbidden(feeToSetter); // only feeToSetter can set the protocol fee
-        poolFee[_pool] = Fee({protocol: _protocolFee, to: _to, isSet: _isSet});
-        emit FeeUpdate(_pool, _to, _protocolFee, _isSet);
+        poolFee[_pool] = Fee({protocol: _protocolFee, origFeeShare: _origFeeShare, to: _to, isSet: _isSet});
+        emit FeeUpdate(_pool, _to, _protocolFee, _origFeeShare, _isSet);
     }
 
     /// @dev See {IGammaPoolFactory-feeInfo}
-    function feeInfo() external virtual override view returns(address _feeTo, uint256 _fee) {
+    function feeInfo() external virtual override view returns(address _feeTo, uint256 _fee, uint256 _origFeeShare) {
         _feeTo = feeTo;
         _fee = fee;
-    }
-
-    /// @dev See {IGammaPoolFactory-setFee}
-    function setFee(uint16 _fee) external virtual {
-        isForbidden(feeToSetter); // only feeToSetter can set the protocol fee
-        fee = _fee;
-        emit FeeUpdate(address(0), feeTo, _fee, false);
-    }
-
-    /// @dev See {IGammaPoolFactory-setFeeTo}
-    function setFeeTo(address _feeTo) external {
-        isForbidden(feeToSetter); // only feeToSetter can set which address receives protocol fees
-        feeTo = _feeTo;
-        emit FeeUpdate(address(0), feeTo, fee, false);
-    }
-
-    /// @dev See {IGammaPoolFactory-setFeeToSetter}
-    function setFeeToSetter(address _feeToSetter) external onlyOwner {
-        isZeroAddress(_feeToSetter); // protocol fee setting privileges can't be transferred to the zero address
-        feeToSetter = _feeToSetter;
+        _origFeeShare = origFeeShare;
     }
 
     /// @dev See {IGammaPoolFactory-getPools}.

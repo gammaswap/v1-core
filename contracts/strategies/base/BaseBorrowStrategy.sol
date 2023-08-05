@@ -54,10 +54,23 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         utilRate = utilRate >= lowUtilRate ? utilRate : lowUtilRate; // utilization rate not allowed to be below lowUtilRate
         if(utilRate > minUtilRate) {
             uint256 diff = utilRate - minUtilRate;
-            baseOrigFee += Math.min((2 ** diff) * 10000 / s.feeDivisor, 10000);
+            baseOrigFee += Math.min((2 ** diff) * 10000 / feeDivisor, 10000);
             baseOrigFee = Math.min(baseOrigFee, 10000);
         }
         return baseOrigFee;
+    }
+
+    /// @dev Mint GS LP tokens as origination fees payments to protocol
+    /// @param origFeeInv - origination fee in liquidity invariant terms
+    /// @param totalInvariant - total liquidity invariant in GammaPool (borrowed and in CFMM)
+    function mintOrigFeeToDevs(uint256 origFeeInv, uint256 totalInvariant) internal virtual {
+        (address _to, ,uint256 _origFeeShare,) = IGammaPoolFactory(s.factory).getPoolFee(address(this));
+        if(_to != address(0) && _origFeeShare > 0) {
+            uint256 devShares = origFeeInv * s.totalSupply * _origFeeShare / (totalInvariant * 1000);
+            if(devShares > 0) {
+                _mint(_to, devShares); // protocol fee is paid as dilution
+            }
+        }
     }
 
     /// @dev Account for newly borrowed liquidity debt
@@ -80,11 +93,15 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
 
         uint256 borrowedInvariant = s.BORROWED_INVARIANT;
 
-        // Calculate add loan origination fee to LP token debt
-        uint256 lpTokensPlusOrigFee = lpTokens + lpTokens * _calcOriginationFee(liquidityBorrowedExFee, borrowedInvariant, s.LP_INVARIANT, s.emaUtilRate, _loan.refFee) / 10000;
+        // Calculate loan origination fee
+        uint256 lpTokenOrigFee = lpTokens * _calcOriginationFee(liquidityBorrowedExFee, borrowedInvariant, s.LP_INVARIANT, s.emaUtilRate, _loan.refFee) / 10000;
+
+        // Pay origination fee share as protocol revenue
+        liquidityBorrowed = convertLPToInvariant(lpTokenOrigFee, lastCFMMInvariant, lastCFMMTotalSupply);
+        mintOrigFeeToDevs(liquidityBorrowed, borrowedInvariant + s.LP_INVARIANT);
 
         // Calculate borrowed liquidity invariant including origination fee
-        liquidityBorrowed = convertLPToInvariant(lpTokensPlusOrigFee, lastCFMMInvariant, lastCFMMTotalSupply);
+        liquidityBorrowed = liquidityBorrowed + convertLPToInvariant(lpTokens, lastCFMMInvariant, lastCFMMTotalSupply);
 
         // Add liquidity invariant borrowed including origination fee to total pool liquidity invariant borrowed
         borrowedInvariant = borrowedInvariant + liquidityBorrowed;
@@ -101,7 +118,7 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         s.LP_INVARIANT = uint128(lpInvariant);
 
         // Add CFMM LP tokens borrowed (principal) plus origination fee to pool's total CFMM LP tokens borrowed including accrued interest
-        s.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST + lpTokensPlusOrigFee;
+        s.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST + lpTokens + lpTokenOrigFee;
 
         // Update loan's total liquidity debt and principal amounts
         uint256 initLiquidity = _loan.initLiquidity;

@@ -17,7 +17,7 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
 
     /// @dev See {IBorrowStrategy-calcDynamicOriginationFee}.
     function calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate, uint256 feeDivisor) external virtual override view returns(uint256 origFee) {
-        return _calcOriginationFee(baseOrigFee, utilRate, lowUtilRate, minUtilRate, feeDivisor);
+        return _calcDynamicOriginationFee(baseOrigFee, utilRate, lowUtilRate, minUtilRate, feeDivisor);
     }
 
     /// @dev Get the amounts that do not have enough collateral to withdraw from the loan's collateral

@@ -13,8 +13,9 @@ contract TestGammaPoolFactory2 is AbstractGammaPoolFactory {
     address[] public tokens;
     address public protocol;
     uint8[] public decimals;
+    uint16 private origFeeShare2;
 
-    constructor() AbstractGammaPoolFactory(msg.sender, msg.sender, msg.sender)  {
+    constructor() AbstractGammaPoolFactory(msg.sender, msg.sender, msg.sender) {
     }
 
     function createPool2(bytes calldata _data) external virtual returns(address pool) {
@@ -46,15 +47,19 @@ contract TestGammaPoolFactory2 is AbstractGammaPoolFactory {
         return 0;
     }
 
-    function feeInfo() external override view returns(address,uint256) {
-        return(feeTo, 0);
+    function feeInfo() external override view returns(address,uint256,uint256) {
+        return(feeTo, 0, 0);
     }
 
-    function getPoolFee(address) external view override returns (address, uint256, bool) {
-        return(feeTo, 0, false);
+    function getPoolFee(address) external view override returns (address _feeTo, uint256 _protocolFee, uint256 _origFeeShare, bool _isActive) {
+        return(feeTo, 0, origFeeShare2, false);
     }
 
-    function setPoolFee(address _pool, address _to, uint16 _protocolFee, bool _isSet) external override {
+    function setOrigFeeShare2(uint16 _origFeeShare) external virtual {
+        origFeeShare2 = _origFeeShare;
+    }
+
+    function setPoolFee(address _pool, address _to, uint16 _protocolFee, uint16 _origFeeShare, bool _isSet) external override {
     }
 
     function getPools(uint256 start, uint256 end) external override view returns(address[] memory _pools) {

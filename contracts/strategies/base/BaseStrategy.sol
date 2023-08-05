@@ -224,7 +224,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param lastFeeIndex - interest accrued to loans in GammaPool
     /// @param lastCFMMIndex - liquidity invariant lpTokenBalance represents
     function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal virtual {
-        (address _to, uint256 _protocolFee,) = IGammaPoolFactory(s.factory).getPoolFee(address(this));
+        (address _to, uint256 _protocolFee,,) = IGammaPoolFactory(s.factory).getPoolFee(address(this));
         if(_to != address(0) && _protocolFee > 0) {
             uint256 gsFeeIndex = lastFeeIndex > lastCFMMIndex ? lastFeeIndex - lastCFMMIndex : 0; // _protocolFee excludes CFMM fee yield
             uint256 denominator =  lastFeeIndex - gsFeeIndex * _protocolFee / 100000; // _protocolFee is 10000 by default (10%)

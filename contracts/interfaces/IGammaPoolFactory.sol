@@ -17,9 +17,10 @@ interface IGammaPoolFactory {
     /// @dev Event emitted when a GammaPool fee is updated
     /// @param pool - address of new pool whose fee is updated (zero address is default params)
     /// @param to - receiving address of protocol fees
-    /// @param protocolFee - address of CFMM the GammaPool is created for
+    /// @param protocolFee - protocol fee share charged from interest rate accruals
+    /// @param origFeeShare - protocol fee share charged on origination fees
     /// @param isSet - bool flag, true use fee information, false use GammaSwap default fees
-    event FeeUpdate(address indexed pool, address indexed to, uint16 protocolFee, bool isSet);
+    event FeeUpdate(address indexed pool, address indexed to, uint16 protocolFee, uint16 origFeeShare, bool isSet);
 
     /// @dev Event emitted when a GammaPool parameters are updated
     /// @param pool - address of GammaPool whose origination fee parameters will be updated
@@ -81,16 +82,18 @@ interface IGammaPoolFactory {
     /// @dev Get pool fee parameters used to calculate protocol fees
     /// @param _pool - pool address identifier
     /// @return _to - address receiving fee
-    /// @return _protocolFee - address of CFMM the GammaPool is created for
+    /// @return _protocolFee - protocol fee share charged from interest rate accruals
+    /// @return _origFeeShare - protocol fee share charged on origination fees
     /// @return _isSet - bool flag, true use fee information, false use GammaSwap default fees
-    function getPoolFee(address _pool) external view returns (address _to, uint256 _protocolFee, bool _isSet);
+    function getPoolFee(address _pool) external view returns (address _to, uint256 _protocolFee, uint256 _origFeeShare, bool _isSet);
 
     /// @dev Set pool fee parameters used to calculate protocol fees
     /// @param _pool - id identifier of GammaPool protocol (can be thought of as version)
     /// @param _to - address receiving fee
-    /// @param _protocolFee - address of CFMM the GammaPool is created for
+    /// @param _protocolFee - protocol fee share charged from interest rate accruals
+    /// @param _origFeeShare - protocol fee share charged on origination fees
     /// @param _isSet - bool flag, true use fee information, false use GammaSwap default fees
-    function setPoolFee(address _pool, address _to, uint16 _protocolFee, bool _isSet) external;
+    function setPoolFee(address _pool, address _to, uint16 _protocolFee, uint16 _origFeeShare, bool _isSet) external;
 
     /// @dev Set parameters to calculate origination fee for GammaPool and set liquidation fee and ltvThreshold
     /// @param _pool - address of GammaPool whose origination fee parameters function will update
@@ -118,6 +121,9 @@ interface IGammaPoolFactory {
     /// @return fee - protocol fee charged by GammaPool to liquidity borrowers in terms of basis points
     function fee() external view returns(uint16);
 
+    /// @return origFeeShare - protocol fee share charged on origination fees
+    function origFeeShare() external view returns(uint16);
+
     /// @return feeTo - address that receives protocol fees
     function feeTo() external view returns(address);
 
@@ -126,11 +132,25 @@ interface IGammaPoolFactory {
 
     /// @return feeTo - address that receives protocol fees
     /// @return fee - protocol fee charged by GammaPool to liquidity borrowers in terms of basis points
-    function feeInfo() external view returns(address,uint256);
+    /// @return origFeeShare - protocol fee share charged on origination fees
+    function feeInfo() external view returns(address,uint256,uint256);
 
     /// @dev Get list of pools from start index to end index. If it goes over index it returns up to the max size of allPools array
     /// @param start - start index of pools to search
     /// @param end - end index of pools to search
     /// @return _pools - all pools requested
     function getPools(uint256 start, uint256 end) external view returns(address[] memory _pools);
+
+    /// @dev See {IGammaPoolFactory-setFee}
+    function setFee(uint16 _fee) external;
+
+    /// @dev See {IGammaPoolFactory-setFeeTo}
+    function setFeeTo(address _feeTo) external;
+
+    /// @dev See {IGammaPoolFactory-setOrigFeeShare}
+    function setOrigFeeShare(uint16 _origFeeShare) external;
+
+    /// @dev See {IGammaPoolFactory-setFeeToSetter}
+    function setFeeToSetter(address _feeToSetter) external;
+
 }
