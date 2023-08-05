@@ -12,7 +12,7 @@ import "../libraries/AddressCalculator.sol";
 /// @dev Abstract implementation of ILoanObserver interface, meant to be inherited by every LoanObserver implementation
 /// @dev There can be two types of loan observer implementation, type 2 (does not track external collateral) and type 3 (tracks external collateral)
 /// @notice onLoanUpdate function should perform GammaPool authentication every time it is called
-abstract contract AbstractLoanObserver is ILoanObserver, ERC165Storage { // TODO: Should have an owner? Should factory be owner?
+abstract contract AbstractLoanObserver is ILoanObserver, ERC165Storage {
 
     /// @dev See {ILoanObserver-factory}
     address immutable public override factory;
