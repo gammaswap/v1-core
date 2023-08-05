@@ -304,19 +304,15 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
 
     function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
         deltas[1] = 100;
     }
 
     function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
-        deltas[1] = 0;
     }
 
     function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
         deltas[1] = 100;
     }
 

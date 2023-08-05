@@ -28,6 +28,10 @@ contract TestBorrowStrategy is BorrowStrategy {
         s.initialize(_factory, _cfmm, _protocolId, _tokens, _decimals);
     }
 
+    function setOrigFeeParams(uint8 baseOrigFee) external virtual {
+        s.origFee = baseOrigFee;
+    }
+
     function setMinBorrow(uint256 _newMinBorrow) external virtual {
         _minBorrow = _newMinBorrow;
     }
@@ -101,7 +105,7 @@ contract TestBorrowStrategy is BorrowStrategy {
         _loan.tokensHeld = heldAmounts;
     }
 
-    function _ltvThreshold() internal virtual override view returns(uint16){
+    function _ltvThreshold() internal virtual override view returns(uint16) {
         return 8000;
     }
 
@@ -192,6 +196,10 @@ contract TestBorrowStrategy is BorrowStrategy {
         return updateLoanLiquidity(_loan, rateIndex);
     }
 
+    function balanceOf(address _address) external virtual view returns(uint256) {
+        return s.balanceOf[_address];
+    }
+
     function setLPTokenLoanBalance(uint256 tokenId, uint256 lpInvariant, uint256 lpTokenBalance, uint256 liquidity, uint256 lpTokens, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) public virtual {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
@@ -218,6 +226,7 @@ contract TestBorrowStrategy is BorrowStrategy {
         s.LP_INVARIANT = uint128(lpInvariant);
         s.lastCFMMInvariant = uint128(lastCFMMInvariant);
         s.lastCFMMTotalSupply = lastCFMMTotalSupply;
+        _mint(msg.sender, lpTokenBalance);
     }
 
     function chargeLPTokenInterest(uint256 tokenId, uint256 lpTokenInterest) public virtual {
@@ -295,19 +304,15 @@ contract TestBorrowStrategy is BorrowStrategy {
 
     function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
         deltas[1] = 100;
     }
 
     function _calcDeltasToClose(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256 collateralId) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
-        deltas[1] = 0;
     }
 
     function _calcDeltasForWithdrawal(uint128[] memory amounts, uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
         deltas[1] = 100;
     }
 
@@ -326,14 +331,11 @@ contract TestBorrowStrategy is BorrowStrategy {
 
     function _calcDeltasForMaxLP(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
         deltas[1] = 100;
     }
 
     function _calcDeltasToCloseSetRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256 liquidity, uint256[] memory ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
-        deltas[0] = 0;
-        deltas[1] = 0;
     }
 
     function testCalcOriginationFee(uint16 _origFee, uint40 emaUtilRate, uint8 minUtilRate, uint16 feeDivisor, uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) external virtual {

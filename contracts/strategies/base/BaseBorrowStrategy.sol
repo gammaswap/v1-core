@@ -66,8 +66,7 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
     function mintOrigFeeToDevs(uint256 origFeeInv, uint256 totalInvariant) internal virtual {
         (address _to, ,uint256 _origFeeShare,) = IGammaPoolFactory(s.factory).getPoolFee(address(this));
         if(_to != address(0) && _origFeeShare > 0) {
-            //devShares = origFeeInv * s.totalSupply * feePct / (totalInvariant * 1000);
-            uint256 devShares = origFeeInv * s.totalSupply * _origFeeShare / (totalInvariant * 1000); // 60% fee
+            uint256 devShares = origFeeInv * s.totalSupply * _origFeeShare / (totalInvariant * 1000);
             if(devShares > 0) {
                 _mint(_to, devShares); // protocol fee is paid as dilution
             }

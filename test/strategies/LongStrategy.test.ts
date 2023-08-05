@@ -1441,13 +1441,15 @@ describe("LongStrategy", function () {
     });
 
     it("Open Loan with Origination Fee", async function () {
+      strategy = strategy3;
+      await (await strategy.setOrigFeeParams(10)).wait();
       const res1 = await (await strategy.createLoan()).wait();
       const tokenId = res1.events[0].args.tokenId;
 
       await strategy.setOriginationFee(10);
       const ONE = BigNumber.from(10).pow(18);
-      const startLiquidity = ONE.mul(800);
-      const startLpTokens = ONE.mul(400);
+      const startLiquidity = ONE.mul(1000);
+      const startLpTokens = ONE.mul(500);
       const lastCFMMInvariant = startLiquidity.mul(2);
       const lastCFMMTotalSupply = startLpTokens.mul(2);
       await (
@@ -1523,6 +1525,65 @@ describe("LongStrategy", function () {
       // );
       // expect(res3.lastCFMMTotalSupply).to.equal(
       //   lastCFMMTotalSupply.sub(lpTokens.add(lpTokens1))
+      // );
+    });
+
+    it("Open Loan with Origination Fee, Mint to Devs", async function () {
+      strategy = strategy3;
+      await (await strategy.setOrigFeeParams(10)).wait();
+      const res1 = await (await strategy.createLoan()).wait();
+      const tokenId = res1.events[0].args.tokenId;
+
+      await (await factory.setOrigFeeShare2(500)).wait();
+      await strategy.setOriginationFee(10);
+      const ONE = BigNumber.from(10).pow(18);
+      const startLiquidity = ONE.mul(1000);
+      const startLpTokens = ONE.mul(500);
+      const lastCFMMInvariant = startLiquidity.mul(2);
+      const lastCFMMTotalSupply = startLpTokens.mul(2);
+      await (
+        await strategy.setLPTokenBalance(
+          startLiquidity,
+          startLpTokens,
+          lastCFMMInvariant,
+          lastCFMMTotalSupply
+        )
+      ).wait();
+
+      expect(await strategy.balanceOf(owner.address)).to.equal(startLpTokens);
+
+      const poolFeeInfo = await factory.getPoolFee(strategy.address);
+
+      const devBalance0 = await strategy.balanceOf(poolFeeInfo._feeTo);
+
+      await (await cfmm.mint(startLpTokens, strategy.address)).wait();
+
+      const lpTokens = ONE.mul(100);
+      const liquidity = ONE.mul(200);
+      await (await cfmm.burn(lpTokens, strategy.address)).wait();
+      await (await strategy.testOpenLoan(tokenId, lpTokens)).wait();
+      const res2 = await strategy.getLoanChangeData(tokenId);
+
+      const devBalance1 = await strategy.balanceOf(poolFeeInfo._feeTo);
+      expect(devBalance1).to.equal(
+        devBalance0.add(lpTokens.mul(10).div(10000).div(2))
+      );
+
+      const fee = liquidity.mul(10).div(10000);
+      const feeLP = lpTokens.mul(10).div(10000);
+      expect(res2.loanPx).to.equal(ONE);
+      expect(res2.loanLiquidity).to.equal(liquidity.add(fee));
+      expect(res2.loanLpTokens).to.equal(lpTokens);
+      expect(res2.borrowedInvariant).to.equal(liquidity.add(fee));
+      expect(res2.lpInvariant).to.equal(startLiquidity.sub(liquidity));
+      expect(res2.totalInvariant).to.equal(startLiquidity.add(fee));
+      expect(res2.lpTokenBorrowed).to.equal(lpTokens);
+      expect(res2.lpTokenBalance).to.equal(startLpTokens.sub(lpTokens));
+      expect(res2.lpTokenBorrowedPlusInterest).to.equal(lpTokens.add(feeLP));
+      expect(res2.lpTokenTotal).to.equal(startLpTokens.add(feeLP));
+      // expect(res2.lastCFMMInvariant).to.equal(lastCFMMInvariant.sub(liquidity));
+      // expect(res2.lastCFMMTotalSupply).to.equal(
+      //   lastCFMMTotalSupply.sub(lpTokens)
       // );
     });
 
