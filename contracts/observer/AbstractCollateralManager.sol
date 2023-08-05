@@ -9,12 +9,9 @@ import "../interfaces/observer/ICollateralManager.sol";
 /// @dev Abstract implementation of ILoanObserver interface, meant to be inherited by every LoanObserver implementation
 /// @dev There can be two types of loan observer implementation, type 2 (does not track external collateral) and type 3 (tracks external collateral)
 /// @notice onLoanUpdate function should perform GammaPool authentication every time it is called
+/// @notice This contract is supposed to serve many GammaPools
 abstract contract AbstractCollateralManager is ICollateralManager, AbstractLoanObserver {
 
-    // TODO: Should it be ERC721? probably not, but must have a way to register the loan so that we can deposit/withdraw collateral
-
-    // TODO: Has to determine how to check whether CollateralManager has collateral support for specific GammaPool
-    // This contract is supposed to serve many GammaPools
     /// @dev Set `factory`, and `refId`
     constructor(address _factory, uint16 _refId) AbstractLoanObserver(_factory, _refId, 3) {
         _registerInterface(type(ICollateralManager).interfaceId);
