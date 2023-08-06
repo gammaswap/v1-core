@@ -28,8 +28,8 @@ interface IGammaPoolFactory {
     /// @param extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
     /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
     /// @param minUtilRate - minimum utilization rate to calculate dynamic origination fee
-    /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out
-    /// @param feeDivisor - fee divisor for calculating origination fee
+    /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out (only used if feeDivisor is set to 0)
+    /// @param feeDivisor - fee divisor for calculating origination fee, if set to 0 then calculate feeDivisor from maxUtilRate
     /// @param liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
     /// @param ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
     event PoolParamsUpdate(address indexed pool, uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold);
@@ -102,8 +102,8 @@ interface IGammaPoolFactory {
     /// @param _extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
     /// @param _emaMultiplier - multiplier used in EMA calculation of utilization rate
     /// @param _minUtilRate - minimum utilization rate to calculate dynamic origination fee
-    /// @param _maxUtilRate - utilization rate at which dynamic origination fee will max out
-    /// @param _feeDivisor - fee divisor for calculating origination fee
+    /// @param _maxUtilRate - utilization rate at which dynamic origination fee will max out (only used if feeDivisor is set to 0)
+    /// @param _feeDivisor - fee divisor for calculating origination fee, if set to 0 then calculate feeDivisor from maxUtilRate
     /// @param _liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
     /// @param _ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
     function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate, uint8 _maxUtilRate, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold) external;
