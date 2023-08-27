@@ -7,7 +7,7 @@ import "../libraries/LibStorage.sol";
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @notice This pattern is based on Nick Mudge's App Storage implementation (https://dev.to/mudgen/appstorage-pattern-for-state-variables-in-solidity-3lki)
 /// @dev This contract has to be inherited as the root contract in an inheritance hierarchy
-contract AppStorage {
+abstract contract AppStorage {
 
     /// @notice Global storage variables of GammaPool according to App Storage pattern
     /// @dev No other state variable should be defined before this state variable
