@@ -4,7 +4,6 @@ pragma solidity 0.8.21;
 import "../../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "../../interfaces/strategies/liquidation/ISingleLiquidationStrategy.sol";
 import "../../interfaces/strategies/liquidation/IBatchLiquidationStrategy.sol";
-import "../../libraries/Math.sol";
 
 contract TestLiquidationStrategy2 is ILiquidationStrategy, ISingleLiquidationStrategy, IBatchLiquidationStrategy  {
 

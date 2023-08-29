@@ -112,7 +112,7 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
     }
 
     function calcInvariant(address, uint128[] memory amounts) internal virtual override view returns(uint256) {
-        return Math.sqrt(uint256(amounts[0]) * amounts[1]);
+        return GSMath.sqrt(uint256(amounts[0]) * amounts[1]);
     }
 
     function getReserves(address cfmm) internal virtual override view returns(uint128[] memory reserves) {

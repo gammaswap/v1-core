@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 /// @title Math Library
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Library for performing various math operations
-library Math {
+library GSMath {
     function max(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x > y ? x : y;
     }

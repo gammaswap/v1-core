@@ -87,7 +87,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
         deltas = _calcDeltasForMaxLP(_liqLoan.tokensHeld, s.CFMM_RESERVES);
         _liqLoan.internalCollateral = _calcCollateralPostTrade(deltas, _liqLoan.tokensHeld, s.CFMM_RESERVES); // if external collateral has to rebalance too, that will affect the variables
 
-        _liqLoan.payableInternalLiquidity = Math.min(_liqLoan.loanLiquidity, _liqLoan.internalCollateral);
+        _liqLoan.payableInternalLiquidity = GSMath.min(_liqLoan.loanLiquidity, _liqLoan.internalCollateral);
         _liqLoan.remainderLiquidity = _liqLoan.loanLiquidity > _liqLoan.payableInternalLiquidity ? _liqLoan.loanLiquidity - _liqLoan.payableInternalLiquidity : 0;// Pay remainder
 
         _liqLoan.internalFee = _liqLoan.payableInternalLiquidity * _liquidationFee() / 10000;
