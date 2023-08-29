@@ -71,7 +71,7 @@ contract TestExternalLiquidationStrategy is TestExternalBaseRebalanceStrategy, E
     }
 
     function _calcCollateralPostTrade(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
-        return Math.sqrt(uint256(tokensHeld[0]) * tokensHeld[1]);
+        return GSMath.sqrt(uint256(tokensHeld[0]) * tokensHeld[1]);
     }
 
     function _calcDeltasForMaxLP(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(int256[] memory deltas) {

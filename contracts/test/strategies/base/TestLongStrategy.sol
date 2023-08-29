@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.21;
 
-import "../../../libraries/Math.sol";
 import "../../TestCFMM.sol";
 import "../../TestERC20.sol";
 import "../../../strategies/lending/RepayStrategy.sol";
@@ -140,7 +139,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
     }
 
     function squareRoot(uint256 num) public virtual pure returns(uint256) {
-        return Math.sqrt(num * 1e18);
+        return GSMath.sqrt(num * 1e18);
     }
 
     function beforeSwapTokens(LibStorage.Loan storage, int256[] memory deltas, uint128[] memory) internal virtual override view returns(uint256[] memory outAmts, uint256[] memory inAmts){
@@ -173,7 +172,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
     }
 
     function calcInvariant(address, uint128[] memory amounts) internal virtual override view returns(uint256) {
-        return Math.sqrt(uint256(amounts[0]) * amounts[1]);
+        return GSMath.sqrt(uint256(amounts[0]) * amounts[1]);
     }
 
     function withdrawFromCFMM(address, address, uint256 amount) internal virtual override returns(uint256[] memory amounts) {

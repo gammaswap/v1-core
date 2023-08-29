@@ -203,7 +203,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
     }
 
     function calcInvariant(address, uint128[] memory amounts) internal virtual override view returns(uint256) {
-        return Math.sqrt(uint256(amounts[0]) * amounts[1]);
+        return GSMath.sqrt(uint256(amounts[0]) * amounts[1]);
     }
 
     function depositToCFMM(address, address, uint256[] memory) internal virtual override returns(uint256) {
@@ -248,7 +248,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
     }
 
     function _calcCollateralPostTrade(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
-        return Math.sqrt(uint256(tokensHeld[0]) * tokensHeld[1]);
+        return GSMath.sqrt(uint256(tokensHeld[0]) * tokensHeld[1]);
     }
 
     function _calcDeltasForMaxLP(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(int256[] memory deltas) {
@@ -283,7 +283,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
     function _calcMaxCollateralNotMktImpact(uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override returns(uint256) {
         uint256 price = uint256(reserves[1]) * (10**18) / uint256(reserves[0]);
         uint256 num = uint256(tokensHeld[0]) * price / (10 ** 18) + uint256(tokensHeld[1]);
-        uint256 denom = 2 * Math.sqrt(price*(10**18));
+        uint256 denom = 2 * GSMath.sqrt(price*(10**18));
         return num * (10**18)/ denom;
     }
 

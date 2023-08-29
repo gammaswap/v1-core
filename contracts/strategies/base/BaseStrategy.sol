@@ -4,7 +4,7 @@ pragma solidity >=0.8.4;
 import "../../interfaces/IGammaPoolFactory.sol";
 import "../../storage/AppStorage.sol";
 import "../../libraries/GammaSwapLibrary.sol";
-import "../../libraries/Math.sol";
+import "../../libraries/GSMath.sol";
 import "../../rates/AbstractRateModel.sol";
 
 /// @title Base Strategy abstract contract
@@ -102,7 +102,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         uint256 _maxTotalApy = 1e18 + (blockDiff * maxTotalApy()) / _blocksPerYear; // De-annualized APY cap
 
         // Minimum of max de-annualized APY or CFMM fee yield + de-annualized borrow yield
-        return Math.min(_maxTotalApy, lastCFMMFeeIndex + adjBorrowRate);
+        return GSMath.min(_maxTotalApy, lastCFMMFeeIndex + adjBorrowRate);
     }
 
     /// @dev Calculate total interest rate charged by GammaPool since last update

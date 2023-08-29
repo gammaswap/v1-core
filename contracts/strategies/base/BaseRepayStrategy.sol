@@ -25,7 +25,7 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
 
         (uint256 paidLiquidity, uint256 newLPBalance) = getLpTokenBalance(lastCFMMInvariant, lastCFMMTotalSupply);
         // Take the lowest, if actually paid less liquidity than expected. Only way is there was a transfer fee.
-        liquidityPaid = paidLiquidity < liquidity ? Math.min(loanLiquidity, paidLiquidity) : liquidity;
+        liquidityPaid = paidLiquidity < liquidity ? GSMath.min(loanLiquidity, paidLiquidity) : liquidity;
         // If more liquidity than stated was actually paid, that goes to liquidity providers
         uint256 lpTokenPrincipal;
         (lpTokenPrincipal, remainingLiquidity) = payLoanLiquidity(liquidityPaid, loanLiquidity, _loan);

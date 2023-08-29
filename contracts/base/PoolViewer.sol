@@ -9,7 +9,7 @@ import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
 import "../interfaces/strategies/lending/IBorrowStrategy.sol";
-import "../libraries/Math.sol";
+import "../libraries/GSMath.sol";
 
 /// @title Implementation of Viewer Contract for GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)

@@ -51,7 +51,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         uint256 tokenCount = tokensHeld.length;
         bool skipFees = tokenCount != fees.length;
         for(uint256 i = 0; i < tokenCount;) {
-            tokensHeld[i] = uint128(Math.min(((tokensHeld[i] * liquidity * 10000 - (skipFees ? 0 : tokensHeld[i] * liquidity * fees[i])) / (totalLiquidityDebt * 10000)), uint256(tokensHeld[i])));
+            tokensHeld[i] = uint128(GSMath.min(((tokensHeld[i] * liquidity * 10000 - (skipFees ? 0 : tokensHeld[i] * liquidity * fees[i])) / (totalLiquidityDebt * 10000)), uint256(tokensHeld[i])));
             unchecked {
                 ++i;
             }

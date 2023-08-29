@@ -54,8 +54,8 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         utilRate = utilRate >= lowUtilRate ? utilRate : lowUtilRate; // utilization rate not allowed to be below lowUtilRate
         if(utilRate > minUtilRate) {
             uint256 diff = utilRate - minUtilRate;
-            baseOrigFee += Math.min((2 ** diff) * 10000 / feeDivisor, 10000);
-            baseOrigFee = Math.min(baseOrigFee, 10000);
+            baseOrigFee += GSMath.min((2 ** diff) * 10000 / feeDivisor, 10000);
+            baseOrigFee = GSMath.min(baseOrigFee, 10000);
         }
         return baseOrigFee;
     }
