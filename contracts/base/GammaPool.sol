@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity >=0.8.4;
+pragma solidity >=0.8.13;
 
 import "../libraries/GammaSwapLibrary.sol";
 import "../interfaces/IGammaPool.sol";
@@ -224,22 +224,22 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
     /// @dev See {IGammaPool-depositNoPull}
     function depositNoPull(address to) external virtual override whenNotPaused(5) returns(uint256 shares) {
-        return abi.decode(callStrategy(shortStrategy, abi.encodeWithSelector(IShortStrategy._depositNoPull.selector, to)), (uint256));
+        return abi.decode(callStrategy(shortStrategy, abi.encodeCall(IShortStrategy._depositNoPull, to)), (uint256));
     }
 
     /// @dev See {IGammaPool-withdrawNoPull}
     function withdrawNoPull(address to) external virtual override whenNotPaused(6) returns(uint256 assets) {
-        return abi.decode(callStrategy(shortStrategy, abi.encodeWithSelector(IShortStrategy._withdrawNoPull.selector, to)), (uint256));
+        return abi.decode(callStrategy(shortStrategy, abi.encodeCall(IShortStrategy._withdrawNoPull, to)), (uint256));
     }
 
     /// @dev See {IGammaPool-depositReserves}
     function depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external virtual override whenNotPaused(7) returns(uint256[] memory reserves, uint256 shares){
-        return abi.decode(callStrategy(shortStrategy, abi.encodeWithSelector(IShortStrategy._depositReserves.selector, to, amountsDesired, amountsMin, data)), (uint256[],uint256));
+        return abi.decode(callStrategy(shortStrategy, abi.encodeCall(IShortStrategy._depositReserves, (to, amountsDesired, amountsMin, data))), (uint256[],uint256));
     }
 
     /// @dev See {IGammaPool-withdrawReserves}
     function withdrawReserves(address to) external virtual override whenNotPaused(8) returns (uint256[] memory reserves, uint256 assets) {
-        return abi.decode(callStrategy(shortStrategy, abi.encodeWithSelector(IShortStrategy._withdrawReserves.selector, to)), (uint256[],uint256));
+        return abi.decode(callStrategy(shortStrategy, abi.encodeCall(IShortStrategy._withdrawReserves, to)), (uint256[],uint256));
     }
 
     /***** LONG *****/
@@ -360,64 +360,64 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
     /// @dev See {IGammaPool-increaseCollateral}
     function increaseCollateral(uint256 tokenId, uint256[] calldata ratio) external virtual override whenNotPaused(10) returns(uint128[] memory tokensHeld) {
-        return abi.decode(callStrategy(borrowStrategy, abi.encodeWithSelector(IBorrowStrategy._increaseCollateral.selector, tokenId, ratio)), (uint128[]));
+        return abi.decode(callStrategy(borrowStrategy, abi.encodeCall(IBorrowStrategy._increaseCollateral, (tokenId, ratio))), (uint128[]));
     }
 
     /// @dev See {IGammaPool-decreaseCollateral}
     function decreaseCollateral(uint256 tokenId, uint128[] memory amounts, address to, uint256[] calldata ratio) external virtual override whenNotPaused(11) returns(uint128[] memory tokensHeld) {
-        return abi.decode(callStrategy(borrowStrategy, abi.encodeWithSelector(IBorrowStrategy._decreaseCollateral.selector, tokenId, amounts, to, ratio)), (uint128[]));
+        return abi.decode(callStrategy(borrowStrategy, abi.encodeCall(IBorrowStrategy._decreaseCollateral, (tokenId, amounts, to, ratio))), (uint128[]));
     }
 
     /// @dev See {IGammaPool-borrowLiquidity}
     function borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external virtual override whenNotPaused(12) returns(uint256 liquidityBorrowed, uint256[] memory amounts) {
-        return abi.decode(callStrategy(borrowStrategy, abi.encodeWithSelector(IBorrowStrategy._borrowLiquidity.selector, tokenId, lpTokens, ratio)), (uint256, uint256[]));
+        return abi.decode(callStrategy(borrowStrategy, abi.encodeCall(IBorrowStrategy._borrowLiquidity, (tokenId, lpTokens, ratio))), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-repayLiquidity}
     function repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external virtual override whenNotPaused(13) returns(uint256 liquidityPaid, uint256[] memory amounts) {
-        return abi.decode(callStrategy(repayStrategy, abi.encodeWithSelector(IRepayStrategy._repayLiquidity.selector, tokenId, liquidity, fees, collateralId, to)), (uint256, uint256[]));
+        return abi.decode(callStrategy(repayStrategy, abi.encodeCall(IRepayStrategy._repayLiquidity, (tokenId, liquidity, fees, collateralId, to))), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-repayLiquiditySetRatio}
     function repayLiquiditySetRatio(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external virtual override whenNotPaused(14) returns(uint256 liquidityPaid, uint256[] memory amounts) {
-        return abi.decode(callStrategy(repayStrategy, abi.encodeWithSelector(IRepayStrategy._repayLiquiditySetRatio.selector, tokenId, liquidity, fees, ratio)), (uint256, uint256[]));
+        return abi.decode(callStrategy(repayStrategy, abi.encodeCall(IRepayStrategy._repayLiquiditySetRatio, (tokenId, liquidity, fees, ratio))), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-repayLiquidityWithLP}
     function repayLiquidityWithLP(uint256 tokenId, uint256 collateralId, address to) external virtual override whenNotPaused(15) returns(uint256 liquidityPaid, uint128[] memory tokensHeld) {
-        return abi.decode(callStrategy(repayStrategy, abi.encodeWithSelector(IRepayStrategy._repayLiquidityWithLP.selector, tokenId, collateralId, to)), (uint256, uint128[]));
+        return abi.decode(callStrategy(repayStrategy, abi.encodeCall(IRepayStrategy._repayLiquidityWithLP, (tokenId, collateralId, to))), (uint256, uint128[]));
     }
 
     /// @dev See {IGammaPool-rebalanceCollateral}
     function rebalanceCollateral(uint256 tokenId, int256[] memory deltas, uint256[] calldata ratio) external virtual override whenNotPaused(16) returns(uint128[] memory tokensHeld) {
-        return abi.decode(callStrategy(rebalanceStrategy, abi.encodeWithSelector(IRebalanceStrategy._rebalanceCollateral.selector, tokenId, deltas, ratio)), (uint128[]));
+        return abi.decode(callStrategy(rebalanceStrategy, abi.encodeCall(IRebalanceStrategy._rebalanceCollateral, (tokenId, deltas, ratio))), (uint128[]));
     }
 
     /// @dev See {IGammaPool-updatePool}
     function updatePool(uint256 tokenId) external virtual override whenNotPaused(17) returns(uint256 loanLiquidityDebt, uint256 poolLiquidityDebt) {
-        return abi.decode(callStrategy(rebalanceStrategy, abi.encodeWithSelector(IRebalanceStrategy._updatePool.selector, tokenId)), (uint256, uint256));
+        return abi.decode(callStrategy(rebalanceStrategy, abi.encodeCall(IRebalanceStrategy._updatePool, tokenId)), (uint256, uint256));
     }
 
     /// @dev See {IGammaPool-liquidate}
     function liquidate(uint256 tokenId) external virtual override whenNotPaused(18) returns(uint256 loanLiquidity, uint256 refund) {
-        return abi.decode(callStrategy(singleLiquidationStrategy, abi.encodeWithSelector(ISingleLiquidationStrategy._liquidate.selector, tokenId)), (uint256, uint256));
+        return abi.decode(callStrategy(singleLiquidationStrategy, abi.encodeCall(ISingleLiquidationStrategy._liquidate, tokenId)), (uint256, uint256));
     }
 
     /// @dev See {IGammaPool-liquidateWithLP}
     function liquidateWithLP(uint256 tokenId) external virtual override whenNotPaused(19) returns(uint256 loanLiquidity, uint256[] memory refund) {
-        return abi.decode(callStrategy(singleLiquidationStrategy, abi.encodeWithSelector(ISingleLiquidationStrategy._liquidateWithLP.selector, tokenId)), (uint256, uint256[]));
+        return abi.decode(callStrategy(singleLiquidationStrategy, abi.encodeCall(ISingleLiquidationStrategy._liquidateWithLP, tokenId)), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-batchLiquidations}
     function batchLiquidations(uint256[] calldata tokenIds) external virtual override whenNotPaused(20) returns(uint256 totalLoanLiquidity, uint256[] memory refund) {
-        return abi.decode(callStrategy(batchLiquidationStrategy, abi.encodeWithSelector(IBatchLiquidationStrategy._batchLiquidations.selector, tokenIds)), (uint256, uint256[]));
+        return abi.decode(callStrategy(batchLiquidationStrategy, abi.encodeCall(IBatchLiquidationStrategy._batchLiquidations, tokenIds)), (uint256, uint256[]));
     }
 
     /***** SYNC POOL *****/
 
     /// @dev See {IGammaPool-sync}
     function sync() external virtual override lock whenNotPaused(21) {
-        callStrategy(shortStrategy, abi.encodeWithSelector(IShortStrategy._sync.selector));
+        callStrategy(shortStrategy, abi.encodeCall(IShortStrategy._sync, ()));
     }
 
     /// @dev See {IGammaPool-skim}
