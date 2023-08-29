@@ -3,7 +3,7 @@ pragma solidity >=0.8.4;
 
 /// @title Abstract DelegateCaller contract.
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
-/// @dev Parent contract to contracts perform delegate calls. Delegate call logic handled here
+/// @dev Parent contract to contracts that perform delegate calls. All delegate call logic handled here
 abstract contract DelegateCaller {
 
     /// @dev Implement contract logic via delegate calls of implementation contracts
