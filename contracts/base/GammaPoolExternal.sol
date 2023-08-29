@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity >=0.8.4;
+pragma solidity >=0.8.13;
 
 import "../interfaces/IGammaPoolExternal.sol";
 import "../interfaces/strategies/rebalance/IExternalRebalanceStrategy.sol";
@@ -26,11 +26,11 @@ abstract contract GammaPoolExternal is IGammaPoolExternal, DelegateCaller, Pausa
 
     /// @dev See {IGammaPoolExternal-rebalanceExternally}
     function rebalanceExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override virtual whenNotPaused(24) returns(uint256 loanLiquidity, uint128[] memory tokensHeld) {
-        return abi.decode(callStrategy(externalRebalanceStrategy, abi.encodeWithSelector(IExternalRebalanceStrategy._rebalanceExternally.selector, tokenId, amounts, lpTokens, to, data)), (uint256, uint128[]));
+        return abi.decode(callStrategy(externalRebalanceStrategy, abi.encodeCall(IExternalRebalanceStrategy._rebalanceExternally, (tokenId, amounts, lpTokens, to, data))), (uint256, uint128[]));
     }
 
     /// @dev See {IGammaPoolExternal-liquidateExternally}
     function liquidateExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override virtual whenNotPaused(25) returns(uint256 loanLiquidity, uint256[] memory refund) {
-        return abi.decode(callStrategy(externalLiquidationStrategy, abi.encodeWithSelector(IExternalLiquidationStrategy._liquidateExternally.selector, tokenId, amounts, lpTokens, to, data)), (uint256, uint256[]));
+        return abi.decode(callStrategy(externalLiquidationStrategy, abi.encodeCall(IExternalLiquidationStrategy._liquidateExternally, (tokenId, amounts, lpTokens, to, data))), (uint256, uint256[]));
     }
 }

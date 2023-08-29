@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity >=0.8.4;
+pragma solidity >=0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -18,7 +18,7 @@ library GammaSwapLibrary {
     /// @param _address - Ethereum address we're checking for balance of ERC20 token
     /// @return balanceOf - amount of _token held in _address
     function balanceOf(address _token, address _address) internal view returns (uint256) {
-        (bool success, bytes memory data) = _token.staticcall(abi.encodeWithSelector(IERC20(_token).balanceOf.selector, _address));
+        (bool success, bytes memory data) = _token.staticcall(abi.encodeCall(IERC20.balanceOf, _address));
 
         require(success && data.length >= 32);
 
@@ -29,7 +29,7 @@ library GammaSwapLibrary {
     /// @param _token - address of ERC20 token we're checking the total minted amount of
     /// @return totalSupply - total amount of _token that is in existence (minted and not burned)
     function totalSupply(address _token) internal view returns (uint256) {
-        (bool success, bytes memory data) = _token.staticcall(abi.encodeWithSelector(IERC20(_token).totalSupply.selector));
+        (bool success, bytes memory data) = _token.staticcall(abi.encodeCall(IERC20.totalSupply,()));
 
         require(success && data.length >= 32);
 
@@ -74,7 +74,7 @@ library GammaSwapLibrary {
     /// @param _to - destination address where ERC20 token will be sent to
     /// @param _amount - quantity of ERC20 token to be transferred
     function safeTransfer(address _token, address _to, uint256 _amount) internal {
-        (bool success, bytes memory data) = _token.call(abi.encodeWithSelector(IERC20(_token).transfer.selector, _to, _amount));
+        (bool success, bytes memory data) = _token.call(abi.encodeCall(IERC20.transfer, (_to, _amount)));
 
         if(!(success && (data.length == 0 || abi.decode(data, (bool))))) revert ST_Fail();
     }
@@ -85,7 +85,7 @@ library GammaSwapLibrary {
     /// @param _to - address receiving _token
     /// @param _amount - amount of _token being sent
     function safeTransferFrom(address _token, address _from, address _to, uint256 _amount) internal {
-        (bool success, bytes memory data) = _token.call(abi.encodeWithSelector(IERC20(_token).transferFrom.selector, _from, _to, _amount));
+        (bool success, bytes memory data) = _token.call(abi.encodeCall(IERC20.transferFrom, (_from, _to, _amount)));
 
         if(!(success && (data.length == 0 || abi.decode(data, (bool))))) revert STF_Fail();
     }
@@ -95,7 +95,7 @@ library GammaSwapLibrary {
     /// @param _spender - address that will be granted approval to spend msg.sender tokens
     /// @param _amount - quantity of ERC20 token that `_spender` will be approved to spend
     function safeApprove(address _token, address _spender, uint256 _amount) internal {
-        (bool success, bytes memory data) = _token.call(abi.encodeWithSelector(IERC20(_token).approve.selector, _spender, _amount));
+        (bool success, bytes memory data) = _token.call(abi.encodeCall(IERC20.approve, (_spender, _amount)));
 
         if(!(success && (data.length == 0 || abi.decode(data, (bool))))) revert SA_Fail();
     }

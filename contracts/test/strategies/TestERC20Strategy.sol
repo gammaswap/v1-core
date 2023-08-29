@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.17;
+pragma solidity 0.8.21;
 
 import "../../storage/AppStorage.sol";
 import "../../interfaces/strategies/base/IShortStrategy.sol";
