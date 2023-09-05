@@ -10,7 +10,7 @@ contract FaucetERC20 is ERC20 {
     uint256 public airdropAmount;
     uint256 public AIRDROP_BLOCK;
 
-    uint256 constant public tokenAmount = 10*(10**18);
+    uint256 public tokenAmount;
     uint256 constant public waitTime = 30 minutes;
 
     mapping(address => uint256) lastAccessTime;
@@ -19,6 +19,12 @@ contract FaucetERC20 is ERC20 {
         owner = msg.sender;
         _mint(msg.sender, 1000000000 * (1e18));
         isFaucetOpen = true;
+        tokenAmount = 10;
+    }
+
+    function setFaucetIssueAmount(uint256 _amount) public {
+        require(msg.sender == owner, "FORBIDDEN");
+        tokenAmount = _amount;
     }
 
     function setAirdropAmount(uint256 amount) public virtual {
@@ -89,7 +95,7 @@ contract FaucetERC20 is ERC20 {
     function requestTokens() public {
         require(isFaucetOpen, "CLOSED_FAUCET");
         require(allowedToWithdraw(msg.sender), "WAIT");
-        _mint(msg.sender, tokenAmount);
+        _mint(msg.sender, tokenAmount * (10 ** decimals()));
         lastAccessTime[msg.sender] = block.timestamp + waitTime;
     }
 
