@@ -1390,6 +1390,7 @@ describe("LongStrategy", function () {
       await (await strategy.testOpenLoan(tokenId, lpTokens)).wait();
       const res2 = await strategy.getLoanChangeData(tokenId);
       expect(res2.loanPx).to.equal(ONE);
+      expect(res2.initLiquidity).to.equal(liquidity);
       expect(res2.loanLiquidity).to.equal(liquidity);
       expect(res2.loanLpTokens).to.equal(lpTokens);
       expect(res2.borrowedInvariant).to.equal(liquidity);
@@ -1413,10 +1414,11 @@ describe("LongStrategy", function () {
       const expNewPx = updateLoanPrice(
         liquidity1,
         ONE.mul(2),
-        res2.loanLiquidity,
+        res2.initLiquidity,
         res2.loanPx
       );
       expect(res3.loanPx).to.equal(expNewPx);
+      expect(res3.initLiquidity).to.equal(liquidity.add(liquidity1));
       expect(res3.loanLiquidity).to.equal(liquidity.add(liquidity1));
       expect(res3.loanLpTokens).to.equal(lpTokens.add(lpTokens1));
       expect(res3.borrowedInvariant).to.equal(liquidity.add(liquidity1));
@@ -1472,6 +1474,7 @@ describe("LongStrategy", function () {
       const fee = liquidity.mul(10).div(10000);
       const feeLP = lpTokens.mul(10).div(10000);
       expect(res2.loanPx).to.equal(ONE);
+      expect(res2.initLiquidity).to.equal(liquidity);
       expect(res2.loanLiquidity).to.equal(liquidity.add(fee));
       expect(res2.loanLpTokens).to.equal(lpTokens);
       expect(res2.borrowedInvariant).to.equal(liquidity.add(fee));
@@ -1497,12 +1500,13 @@ describe("LongStrategy", function () {
       const feeLP1 = feeLP.add(lpTokens1.mul(10).div(10000));
 
       const expNewPx = updateLoanPrice(
-        liquidity1.add(fee1).sub(fee),
+        liquidity1,
         ONE.mul(3),
-        res2.loanLiquidity,
+        res2.initLiquidity,
         res2.loanPx
       );
       expect(res3.loanPx).to.equal(expNewPx);
+      expect(res3.initLiquidity).to.equal(liquidity.add(liquidity1));
       expect(res3.loanLiquidity).to.equal(liquidity.add(liquidity1).add(fee1));
       expect(res3.loanLpTokens).to.equal(lpTokens.add(lpTokens1));
       expect(res3.borrowedInvariant).to.equal(
@@ -1572,6 +1576,7 @@ describe("LongStrategy", function () {
       const fee = liquidity.mul(10).div(10000);
       const feeLP = lpTokens.mul(10).div(10000);
       expect(res2.loanPx).to.equal(ONE);
+      expect(res2.initLiquidity).to.equal(liquidity);
       expect(res2.loanLiquidity).to.equal(liquidity.add(fee));
       expect(res2.loanLpTokens).to.equal(lpTokens);
       expect(res2.borrowedInvariant).to.equal(liquidity.add(fee));
@@ -1614,6 +1619,7 @@ describe("LongStrategy", function () {
       await (await strategy.testOpenLoan(tokenId, lpTokens)).wait();
       const res2 = await strategy.getLoanChangeData(tokenId);
       expect(res2.loanPx).to.equal(ONE.mul(5));
+      expect(res2.initLiquidity).to.equal(liquidity);
       expect(res2.loanLiquidity).to.equal(liquidity);
       expect(res2.loanLpTokens).to.equal(lpTokens);
       expect(res2.borrowedInvariant).to.equal(liquidity);
@@ -1637,10 +1643,11 @@ describe("LongStrategy", function () {
       const expNewPx = updateLoanPrice(
         liquidity1,
         ONE.mul(7),
-        res2.loanLiquidity,
+        res2.initLiquidity,
         res2.loanPx
       );
       expect(res3.loanPx).to.equal(expNewPx);
+      expect(res3.initLiquidity).to.equal(liquidity.add(liquidity1));
       expect(res3.loanLiquidity).to.equal(liquidity.add(liquidity1));
       expect(res3.loanLpTokens).to.equal(lpTokens.add(lpTokens1));
       expect(res3.borrowedInvariant).to.equal(liquidity.add(liquidity1));
@@ -1693,6 +1700,7 @@ describe("LongStrategy", function () {
       await (await strategy.testOpenLoan(tokenId, lpTokens)).wait();
       const res2 = await strategy.getLoanChangeData(tokenId);
       expect(res2.loanPx).to.equal(ONE.mul(9));
+      expect(res2.initLiquidity).to.equal(liquidity);
       expect(res2.loanLiquidity).to.equal(liquidity);
       expect(res2.loanLpTokens).to.equal(lpTokens);
       expect(res2.borrowedInvariant).to.equal(liquidity);
@@ -1712,6 +1720,7 @@ describe("LongStrategy", function () {
       await (await strategy.testPayLoan(tokenId, liquidity.div(2))).wait();
       const res4 = await strategy.getLoanChangeData(tokenId);
       expect(res4.loanPx).to.equal(ONE.mul(9));
+      expect(res4.initLiquidity).to.equal(liquidity.div(2));
       expect(res4.loanLiquidity).to.equal(liquidity.div(2));
       expect(res4.loanLpTokens).to.equal(lpTokens.div(2));
       expect(res4.borrowedInvariant).to.equal(liquidity.div(2));
@@ -1734,6 +1743,7 @@ describe("LongStrategy", function () {
       await (await strategy.testPayLoan(tokenId, liquidity.div(2))).wait();
       const res5 = await strategy.getLoanChangeData(tokenId);
       expect(res5.loanPx).to.equal(0);
+      expect(res5.initLiquidity).to.equal(0);
       expect(res5.loanLiquidity).to.equal(0);
       expect(res5.loanLpTokens).to.equal(0);
       expect(res5.borrowedInvariant).to.equal(0);
@@ -1774,6 +1784,7 @@ describe("LongStrategy", function () {
       await (await strategy.testOpenLoan(tokenId, lpTokens)).wait();
       const res2 = await strategy.getLoanChangeData(tokenId);
       expect(res2.loanPx).to.equal(ONE.mul(11));
+      expect(res2.initLiquidity).to.equal(liquidity);
       expect(res2.loanLiquidity).to.equal(liquidity);
       expect(res2.loanLpTokens).to.equal(lpTokens);
       expect(res2.borrowedInvariant).to.equal(liquidity);
@@ -1794,6 +1805,7 @@ describe("LongStrategy", function () {
       await (await strategy.testPayLoan(tokenId, liquidity.div(2))).wait();
       const res4 = await strategy.getLoanChangeData(tokenId);
       expect(res4.loanPx).to.equal(ONE.mul(11));
+      expect(res4.initLiquidity).to.equal(liquidity.div(2));
       expect(res4.loanLiquidity).to.equal(liquidity.div(2));
       expect(res4.loanLpTokens).to.equal(lpTokens.div(2));
       expect(res4.borrowedInvariant).to.equal(liquidity.div(2));
@@ -1994,6 +2006,7 @@ describe("LongStrategy", function () {
       );
 
       const res2 = await strategy.getLoanChangeData(tokenId);
+      expect(res2.initLiquidity).to.equal(ONE.mul(2));
       expect(res2.loanLiquidity).to.equal(ONE.mul(2));
       expect(res2.loanLpTokens).to.equal(lpTokens);
       expect(res2.borrowedInvariant).to.equal(expectedLiquidity);

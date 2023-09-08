@@ -238,13 +238,13 @@ contract TestBorrowStrategy is BorrowStrategy {
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST + lpTokenInterest;
     }
 
-    function getLoanChangeData(uint256 tokenId) public virtual view returns(uint256 loanLiquidity, uint256 loanLpTokens,
-        uint256 loanPx, uint256 borrowedInvariant, uint256 lpInvariant, uint256 totalInvariant,
+    function getLoanChangeData(uint256 tokenId) public virtual view returns(uint256 loanLiquidity, uint256 initLiquidity,
+        uint256 loanLpTokens, uint256 loanPx, uint256 borrowedInvariant, uint256 lpInvariant, uint256 totalInvariant,
         uint256 lpTokenBorrowed, uint256 lpTokenBalance, uint256 lpTokenBorrowedPlusInterest,
         uint256 lpTokenTotal, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) {
         LibStorage.Loan storage _loan = _getLoan(tokenId);
 
-        return(_loan.liquidity, _loan.lpTokens, _loan.px,
+        return(_loan.liquidity, _loan.initLiquidity, _loan.lpTokens, _loan.px,
         s.BORROWED_INVARIANT, s.LP_INVARIANT, (s.BORROWED_INVARIANT + s.LP_INVARIANT),
         s.LP_TOKEN_BORROWED, s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED_PLUS_INTEREST,
         (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST), s.lastCFMMInvariant, s.lastCFMMTotalSupply);

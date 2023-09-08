@@ -101,7 +101,7 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         mintOrigFeeToDevs(liquidityBorrowed, borrowedInvariant + s.LP_INVARIANT);
 
         // Calculate borrowed liquidity invariant including origination fee
-        liquidityBorrowed = liquidityBorrowed + convertLPToInvariant(lpTokens, lastCFMMInvariant, lastCFMMTotalSupply);
+        liquidityBorrowed = liquidityBorrowed + liquidityBorrowedExFee;
 
         // Add liquidity invariant borrowed including origination fee to total pool liquidity invariant borrowed
         borrowedInvariant = borrowedInvariant + liquidityBorrowed;
@@ -122,10 +122,10 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
 
         // Update loan's total liquidity debt and principal amounts
         uint256 initLiquidity = _loan.initLiquidity;
-        _loan.px = updateLoanPrice(liquidityBorrowed, getCurrentCFMMPrice(), initLiquidity, _loan.px);
+        _loan.px = updateLoanPrice(liquidityBorrowedExFee, getCurrentCFMMPrice(), initLiquidity, _loan.px);
         liquidity = _loan.liquidity + liquidityBorrowed;
         _loan.liquidity = uint128(liquidity);
-        _loan.initLiquidity = uint128(initLiquidity + liquidityBorrowed);
+        _loan.initLiquidity = uint128(initLiquidity + liquidityBorrowedExFee);
         _loan.lpTokens = _loan.lpTokens + lpTokens;
     }
 
