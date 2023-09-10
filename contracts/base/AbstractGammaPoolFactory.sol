@@ -73,10 +73,10 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     }
 
     /// @dev See {IGammaPoolFactory-setPoolParams}
-    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate1, uint8 _minUtilRate2, uint8 _maxUtilRate, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold) external virtual override {
+    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate1, uint8 _minUtilRate2, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold) external virtual override {
         isForbidden(feeToSetter); // only feeToSetter can update origination fee parameters
-        IGammaPool(_pool).setPoolParams(_origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _maxUtilRate, _feeDivisor, _liquidationFee, _ltvThreshold);
-        emit PoolParamsUpdate(_pool, _origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _maxUtilRate, _feeDivisor, _liquidationFee, _ltvThreshold);
+        IGammaPool(_pool).setPoolParams(_origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _feeDivisor, _liquidationFee, _ltvThreshold);
+        emit PoolParamsUpdate(_pool, _origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _feeDivisor, _liquidationFee, _ltvThreshold);
     }
 
     /// @dev See {IGammaPoolFactory-setFee}

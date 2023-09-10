@@ -106,15 +106,19 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         /// @dev Quantity of CFMM's liquidity invariant held in GammaPool as LP tokens, maps to LP_TOKEN_BALANCE
         uint256 LP_INVARIANT;//Invariant from LP Tokens, TOTAL_INVARIANT = BORROWED_INVARIANT + LP_INVARIANT
         /// @dev EMA of utilization Rate
-        uint40 emaUtilRate;
+        uint256 emaUtilRate;
         /// @dev Minimum Utilization Rate 1
-        uint8 minUtilRate1;
+        uint256 minUtilRate1;
         /// @dev Minimum Utilization Rate 2
-        uint8 minUtilRate2;
+        uint256 minUtilRate2;
         /// @dev Dynamic origination fee divisor
-        uint16 feeDivisor;
+        uint256 feeDivisor;
         /// @dev Loan opening origination fee in basis points
-        uint16 origFee; // 16 bits
+        uint256 origFee; // 16 bits
+        /// @dev LTV liquidation threshold
+        uint256 ltvThreshold;
+        /// @dev Liquidation fee
+        uint256 liquidationFee;
     }
 
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
@@ -200,9 +204,9 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         /// @dev Current block number when requesting pool data
         uint40 currBlockNumber;
         /// @dev LTV liquidation threshold
-        uint256 ltvThreshold;
+        uint8 ltvThreshold;
         /// @dev Liquidation fee
-        uint256 liquidationFee;
+        uint8 liquidationFee;
         /// @dev Supply APR of LP tokens in GammaPool
         uint256 supplyRate;
         /// @dev EMA of utilization Rate
@@ -227,12 +231,14 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         uint256 lastCFMMTotalSupply;
         uint256 LAST_BLOCK_NUMBER;
         uint256 accFeeIndex;
-        uint40 emaUtilRate;
-        uint8 emaMultiplier;
-        uint8 minUtilRate1;
-        uint8 minUtilRate2;
-        uint16 feeDivisor;
-        uint16 origFee;
+        uint256 emaUtilRate;
+        uint256 emaMultiplier;
+        uint256 minUtilRate1;
+        uint256 minUtilRate2;
+        uint256 feeDivisor;
+        uint256 origFee;
+        uint256 ltvThreshold;
+        uint256 liquidationFee;
     }
 
     /// @dev Function to initialize state variables GammaPool, called usually from GammaPoolFactory contract right after GammaPool instantiation
@@ -248,11 +254,10 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
     /// @param minUtilRate1 - minimum utilization rate to calculate dynamic origination fee in exponential model
     /// @param minUtilRate2 - minimum utilization rate to calculate dynamic origination fee in linear model
-    /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out
-    /// @param feeDivisor - fee divisor for calculating origination fee
+    /// @param feeDivisor - fee divisor for calculating origination fee, based on 2^(maxUtilRate - minUtilRate1)
     /// @param liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
     /// @param ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
-    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint8 maxUtilRate, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external;
+    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external;
 
     /// @dev cfmm - address of CFMM this GammaPool is for
     function cfmm() external view returns(address);

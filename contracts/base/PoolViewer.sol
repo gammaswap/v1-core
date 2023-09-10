@@ -59,6 +59,14 @@ contract PoolViewer is IPoolViewer {
         return _loans;
     }
 
+    /*function canLiquidate(uint256 liquidity, uint256 collateral, uint256 ltvThreshold) internal virtual override view returns(bool) {
+        return !hasMargin(collateral, liquidity, ltvThreshold);
+    }
+
+    function hasMargin(uint256 collateral, uint256 liquidity, uint256 limit) internal virtual pure returns(bool) {
+        return collateral * limit / 1e4 >= liquidity;
+    }/**/
+
     /// @dev See {IPoolViewer-loan}
     function loan(address pool, uint256 tokenId) external virtual override view returns(IGammaPool.LoanData memory _loanData) {
         _loanData = IGammaPool(pool).getLoanData(tokenId);
@@ -156,6 +164,9 @@ contract PoolViewer is IPoolViewer {
         data.origFee = params.origFee;
         data.feeDivisor = params.feeDivisor;
         data.minUtilRate1 = params.minUtilRate1;
+        data.minUtilRate2 = params.minUtilRate2;
+        data.ltvThreshold = params.ltvThreshold;
+        data.liquidationFee = params.liquidationFee;
 
         data.accFeeIndex = params.accFeeIndex * data.lastFeeIndex / 1e18;
         data.lastBlockNumber = params.LAST_BLOCK_NUMBER;
@@ -205,8 +216,6 @@ contract PoolViewer is IPoolViewer {
     /// @dev See {IPoolViewer-getPoolData}
     function getPoolData(address pool) public virtual override view returns(IGammaPool.PoolData memory data) {
         data = IGammaPool(pool).getPoolData();
-        data.ltvThreshold = ILongStrategy(data.borrowStrategy).ltvThreshold();
-        data.liquidationFee = ILiquidationStrategy(data.singleLiquidationStrategy).liquidationFee();
         (data.symbols, data.names,) = getTokensMetaData(data.tokens);
     }
 

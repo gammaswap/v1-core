@@ -29,11 +29,10 @@ interface IGammaPoolFactory {
     /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
     /// @param minUtilRate1 - minimum utilization rate to calculate dynamic origination fee using exponential model
     /// @param minUtilRate2 - minimum utilization rate to calculate dynamic origination fee using linear model
-    /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out (only used if feeDivisor is set to 0)
-    /// @param feeDivisor - fee divisor for calculating origination fee, if set to 0 then calculate feeDivisor from maxUtilRate
+    /// @param feeDivisor - fee divisor for calculating origination fee, based on 2^(maxUtilRate - minUtilRate1)
     /// @param liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
     /// @param ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
-    event PoolParamsUpdate(address indexed pool, uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint8 maxUtilRate, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold);
+    event PoolParamsUpdate(address indexed pool, uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold);
 
     /// @dev Check if protocol is restricted. Which means only owner of GammaPoolFactory is allowed to instantiate GammaPools using this protocol
     /// @param _protocolId - id identifier of GammaPool protocol (can be thought of as version) that is being checked
@@ -104,11 +103,10 @@ interface IGammaPoolFactory {
     /// @param _emaMultiplier - multiplier used in EMA calculation of utilization rate
     /// @param _minUtilRate1 - minimum utilization rate to calculate dynamic origination fee in exponential model
     /// @param _minUtilRate2 - minimum utilization rate to calculate dynamic origination fee in linear model
-    /// @param _maxUtilRate - utilization rate at which dynamic origination fee will max out (only used if feeDivisor is set to 0)
-    /// @param _feeDivisor - fee divisor for calculating origination fee, if set to 0 then calculate feeDivisor from maxUtilRate
+    /// @param _feeDivisor - fee divisor for calculating origination fee, based on 2^(maxUtilRate - minUtilRate1)
     /// @param _liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
     /// @param _ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
-    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate1, uint8 _minUtilRate2, uint8 _maxUtilRate, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold) external;
+    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate1, uint8 _minUtilRate2, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold) external;
 
     /// @dev Pause a GammaPool's function identified by a `_functionId`
     /// @param _pool - address of GammaPool whose functions we will pause

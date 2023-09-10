@@ -656,7 +656,7 @@ describe("GammaPoolFactory", function () {
       expect(await factory.allPoolsLength()).to.equal(1);
 
       await expect(
-        factory.connect(addr1).setPoolParams(pool, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+        factory.connect(addr1).setPoolParams(pool, 1, 2, 3, 4, 5, 6, 7, 8)
       ).to.be.revertedWithCustomError(factory, "Forbidden");
     });
 
@@ -688,24 +688,24 @@ describe("GammaPoolFactory", function () {
       expect(await factory.allPoolsLength()).to.equal(1);
 
       await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 101, 60, 94, 0, 11, 1)
+        factory.setPoolParams(pool, 1, 2, 3, 101, 60, 0, 11, 1)
       ).to.be.revertedWith("MIN_UTIL_RATE");
 
       await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 95, 60, 94, 0, 11, 1)
-      ).to.be.revertedWith("MAX_UTIL_RATE");
+        factory.setPoolParams(pool, 1, 2, 3, 95, 60, 0, 11, 1)
+      ).to.be.revertedWith("FEE_DIVISOR");
 
       await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 94, 60, 101, 0, 11, 1)
-      ).to.be.revertedWith("MAX_UTIL_RATE");
+        factory.setPoolParams(pool, 1, 2, 3, 94, 60, 0, 11, 1)
+      ).to.be.revertedWith("FEE_DIVISOR");
 
       await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 78, 60, 94, 0, 11, 1)
+        factory.setPoolParams(pool, 1, 2, 3, 78, 60, 1, 11, 1)
       ).to.be.revertedWith("LIQUIDATION_FEE");
 
       await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 77, 60, 94, 0, 6, 7)
-      ).to.be.revertedWith("MAX_FEE_DIVISOR");
+        factory.setPoolParams(pool, 1, 2, 3, 77, 60, 100, 51, 5)
+      ).to.be.revertedWith("LIQUIDATION_FEE");
     });
 
     it("Set Origination Fee", async function () {
@@ -744,7 +744,7 @@ describe("GammaPoolFactory", function () {
       expect(resp.feeDivisor).to.equal(16384);
 
       const tx = await (
-        await factory.setPoolParams(pool, 1, 2, 20, 84, 60, 94, 0, 50, 10)
+        await factory.setPoolParams(pool, 1, 2, 20, 84, 60, 1, 50, 10)
       ).wait();
 
       const event = tx.events[tx.events.length - 1];
@@ -754,8 +754,7 @@ describe("GammaPoolFactory", function () {
       expect(event.args.emaMultiplier).to.equal(20);
       expect(event.args.minUtilRate1).to.equal(84);
       expect(event.args.minUtilRate2).to.equal(60);
-      expect(event.args.maxUtilRate).to.equal(94);
-      expect(event.args.feeDivisor).to.equal(0);
+      expect(event.args.feeDivisor).to.equal(1);
       expect(event.args.liquidationFee).to.equal(50);
       expect(event.args.ltvThreshold).to.equal(10);
 
@@ -764,10 +763,13 @@ describe("GammaPoolFactory", function () {
       expect(resp1.extSwapFee).to.equal(2);
       expect(resp1.emaMultiplier).to.equal(20);
       expect(resp1.minUtilRate1).to.equal(84);
-      expect(resp1.feeDivisor).to.equal(1024);
+      expect(resp1.minUtilRate2).to.equal(60);
+      expect(resp1.feeDivisor).to.equal(1);
+      expect(resp1.liquidationFee).to.equal(50);
+      expect(resp1.ltvThreshold).to.equal(10);
 
       const tx1 = await (
-        await factory.setPoolParams(pool, 1, 2, 20, 84, 64, 94, 65535, 50, 10)
+        await factory.setPoolParams(pool, 1, 2, 20, 84, 64, 65535, 50, 5)
       ).wait();
 
       const event1 = tx1.events[tx.events.length - 1];
@@ -777,17 +779,19 @@ describe("GammaPoolFactory", function () {
       expect(event1.args.emaMultiplier).to.equal(20);
       expect(event1.args.minUtilRate1).to.equal(84);
       expect(event1.args.minUtilRate2).to.equal(64);
-      expect(event1.args.maxUtilRate).to.equal(94);
       expect(event1.args.feeDivisor).to.equal(65535);
       expect(event1.args.liquidationFee).to.equal(50);
-      expect(event1.args.ltvThreshold).to.equal(10);
+      expect(event1.args.ltvThreshold).to.equal(5);
 
       const resp2 = await gammaPool.getPoolData();
       expect(resp2.origFee).to.equal(1);
       expect(resp2.extSwapFee).to.equal(2);
       expect(resp2.emaMultiplier).to.equal(20);
       expect(resp2.minUtilRate1).to.equal(84);
+      expect(resp2.minUtilRate2).to.equal(64);
       expect(resp2.feeDivisor).to.equal(65535);
+      expect(resp2.liquidationFee).to.equal(50);
+      expect(resp2.ltvThreshold).to.equal(5);
     });
   });
 
