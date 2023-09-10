@@ -53,7 +53,7 @@ library LibStorage {
         /// @dev unlocked - flag used in mutex implementation (1 = unlocked, 0 = locked). Initialized at 1
         uint8 unlocked; // 8 bits
         /// @dev EMA of utilization rate
-        uint40 emaUtilRate; // 40 bits, 8 decimal number
+        uint32 emaUtilRate; // 32 bits, 6 decimal number
         /// @dev Multiplier of EMA used to calculate emaUtilRate
         uint8 emaMultiplier; // 8 bits, 1 decimals (0 = 0%, 1 = 0.1%, max 255 = 25.5%)
         /// @dev Minimum utilization rate at which point we start using the dynamic fee
@@ -61,7 +61,7 @@ library LibStorage {
         /// @dev Dynamic origination fee divisor, to cap at 99% use 16384 = 2^(99-85)
         uint16 feeDivisor; // 16 bits, 0 decimals, max is 5 digit integer 65535, formula is 2^(maxUtilRate - minUtilRate)
 
-        //3x256 bits, LP Tokens
+        // 3x256 bits, LP Tokens
         /// @dev Quantity of CFMM's LP tokens deposited in GammaPool by liquidity providers
         uint256 LP_TOKEN_BALANCE;
         /// @dev Quantity of CFMM's LP tokens that have been borrowed by liquidity borrowers excluding accrued interest (principal)

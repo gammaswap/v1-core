@@ -36,7 +36,7 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
     function _calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 lowUtilRate, uint256 discount) internal virtual view returns(uint256 origFee) {
         uint256 utilRate = calcUtilizationRate(lpInvariant - liquidityBorrowed, borrowedInvariant + liquidityBorrowed) / 1e16;// convert utilizationRate to integer
         // check if the new utilizationRate is higher than lowUtilRate or less than lowUtilRate. If less than lowUtilRate, take lowUtilRate, if higher than lowUtilRate take higher one
-        lowUtilRate = lowUtilRate / 1e6; // convert lowUtilRate to integer
+        lowUtilRate = lowUtilRate / 1e4; // convert lowUtilRate to integer
 
         origFee = _calcDynamicOriginationFee(originationFee(), utilRate, lowUtilRate, s.minUtilRate, s.feeDivisor);
 

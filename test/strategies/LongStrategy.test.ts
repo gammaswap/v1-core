@@ -1099,8 +1099,8 @@ describe("LongStrategy", function () {
   describe("Calculate Origination Fee", function () {
     it("Calc Orig Fee, utilRate > emaUtilRate, discount > 0", async function () {
       const ONE = BigNumber.from(10).pow(18);
-      const tenDec = BigNumber.from(10).pow(10);
-      const emaUtilRate = ONE.mul(80).div(100).div(tenDec); // 80%
+      const twelveDec = BigNumber.from(10).pow(12);
+      const emaUtilRate = ONE.mul(80).div(100).div(twelveDec); // 80%
       const borrowedInvariant = ONE.mul(1000);
       const lpInvariant = ONE.mul(1000);
 
@@ -1124,8 +1124,8 @@ describe("LongStrategy", function () {
 
     it("Calc Orig Fee, utilRate > emaUtilRate", async function () {
       const ONE = BigNumber.from(10).pow(18);
-      const tenDec = BigNumber.from(10).pow(10);
-      const emaUtilRate = ONE.mul(80).div(100).div(tenDec); // 80%
+      const twelveDec = BigNumber.from(10).pow(12);
+      const emaUtilRate = ONE.mul(80).div(100).div(twelveDec); // 80%
       const borrowedInvariant = ONE.mul(1000);
       const lpInvariant = ONE.mul(1000);
 
@@ -1245,8 +1245,8 @@ describe("LongStrategy", function () {
 
     it("Calc Orig Fee, utilRate < emaUtilRate", async function () {
       const ONE = BigNumber.from(10).pow(18);
-      const tenDec = BigNumber.from(10).pow(10);
-      const emaUtilRate = ONE.mul(95).div(100).div(tenDec); // 80%
+      const twelveDec = BigNumber.from(10).pow(12);
+      const emaUtilRate = ONE.mul(95).div(100).div(twelveDec); // 80%
       const borrowedInvariant = ONE.mul(1000);
       const lpInvariant = ONE.mul(1000);
 

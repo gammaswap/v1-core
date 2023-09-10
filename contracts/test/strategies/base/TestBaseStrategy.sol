@@ -201,11 +201,11 @@ contract TestBaseStrategy is BaseStrategy {
 
     function withdrawFromCFMM(address, address, uint256) internal virtual override returns(uint256[] memory amounts) { return amounts; }
 
-    function testUpdateUtilRateEma(uint256 utilizationRate, uint40 emaUtilRate, uint8 emaMultiplier) external virtual {
+    function testUpdateUtilRateEma(uint256 utilizationRate, uint32 emaUtilRate, uint8 emaMultiplier) external virtual {
         s.emaUtilRate = emaUtilRate;
         s.emaMultiplier = emaMultiplier;
 
-        s.emaUtilRate = uint40(_calcUtilRateEma(utilizationRate, s.emaUtilRate, s.emaMultiplier));
+        s.emaUtilRate = uint32(_calcUtilRateEma(utilizationRate, s.emaUtilRate, s.emaMultiplier));
         emit EmaUtilRate(s.emaUtilRate);
     }
 }
