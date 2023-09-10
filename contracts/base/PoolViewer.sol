@@ -114,9 +114,9 @@ contract PoolViewer is IPoolViewer {
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
 
         uint256 utilRate = _calcUtilizationRate(data.LP_INVARIANT - liquidity, data.BORROWED_INVARIANT + liquidity) / 1e16;// convert utilizationRate to integer
-        uint256 emaUtilRate = data.emaUtilRate / 1e6; // convert ema to integer
+        uint256 emaUtilRate = data.emaUtilRate / 1e4; // convert ema to integer
 
-        origFee = IBorrowStrategy(IGammaPool(pool).borrowStrategy()).calcDynamicOriginationFee(data.origFee, utilRate, emaUtilRate, data.minUtilRate1, data.feeDivisor);
+        origFee = IBorrowStrategy(IGammaPool(pool).borrowStrategy()).calcDynamicOriginationFee(data.origFee, utilRate, emaUtilRate, data.minUtilRate1, data.minUtilRate2, data.feeDivisor);
     }
 
     /// @dev Calculate utilization rate from borrowed invariant and invariant from LP tokens in GammaPool

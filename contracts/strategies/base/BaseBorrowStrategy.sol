@@ -38,7 +38,7 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         // check if the new utilizationRate is higher than lowUtilRate or less than lowUtilRate. If less than lowUtilRate, take lowUtilRate, if higher than lowUtilRate take higher one
         lowUtilRate = lowUtilRate / 1e4; // convert lowUtilRate to integer
 
-        origFee = _calcDynamicOriginationFee(originationFee(), utilRate, lowUtilRate, s.minUtilRate1, s.feeDivisor);
+        origFee = _calcDynamicOriginationFee(originationFee(), utilRate, lowUtilRate, s.minUtilRate1, s.minUtilRate2, s.feeDivisor);
 
         origFee = discount > origFee ? 0 : (origFee - discount);
     }
@@ -47,10 +47,11 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
     /// @param baseOrigFee - base origination fee charge
     /// @param utilRate - current utilization rate of GammaPool
     /// @param lowUtilRate - low utilization rate threshold, used as a lower bound for the utilization rate
-    /// @param minUtilRate1 - minimum utilization rate after which utilization rate after which fee will start increasing
+    /// @param minUtilRate1 - minimum utilization rate 1 after which origination fee will start increasing exponentially
+    /// @param minUtilRate2 - minimum utilization rate 2 after which origination fee will start increasing linearly
     /// @param feeDivisor - fee divisor of formula for dynamic origination fee
     /// @return origFee - origination fee that will be applied to loan
-    function _calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate1, uint256 feeDivisor) internal virtual view returns(uint256) {
+    function _calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate1, uint256 minUtilRate2, uint256 feeDivisor) internal virtual view returns(uint256) {
         utilRate = utilRate >= lowUtilRate ? utilRate : lowUtilRate; // utilization rate not allowed to be below lowUtilRate
         if(utilRate > minUtilRate1) {
             uint256 diff = utilRate - minUtilRate1;

@@ -9,7 +9,7 @@ contract TestBorrowStrategy2 is IBorrowStrategy {
         return 8000;
     }
 
-    function calcDynamicOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 lowUtilRate, uint256 discount) external virtual override view returns(uint256) {
+    function calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate1, uint256 minUtilRate2, uint256 feeDivisor) external virtual override view returns(uint256) {
         return 0;
     }
 
