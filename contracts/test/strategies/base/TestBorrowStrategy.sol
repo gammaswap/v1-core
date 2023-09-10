@@ -337,10 +337,10 @@ contract TestBorrowStrategy is BorrowStrategy {
         deltas = new int256[](2);
     }
 
-    function testCalcOriginationFee(uint16 _origFee, uint32 emaUtilRate, uint8 minUtilRate, uint16 feeDivisor, uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) external virtual {
+    function testCalcOriginationFee(uint16 _origFee, uint32 emaUtilRate, uint8 minUtilRate1, uint16 feeDivisor, uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 discount) external virtual {
         s.origFee = _origFee; // 2 basis points
         s.emaUtilRate = emaUtilRate; // 8 decimals
-        s.minUtilRate = minUtilRate; // 85 integer
+        s.minUtilRate1 = minUtilRate1; // 85 integer
         s.feeDivisor = feeDivisor; // 16384;
 
         uint256 dynOrigFee = _calcOriginationFee(liquidityBorrowed, borrowedInvariant, lpInvariant, s.emaUtilRate, discount);

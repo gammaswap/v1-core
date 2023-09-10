@@ -301,7 +301,7 @@ describe("GammaPool", function () {
 
       expect(res4.emaUtilRate).to.equal(0);
       expect(res4.emaMultiplier).to.equal(10);
-      expect(res4.minUtilRate).to.equal(85);
+      expect(res4.minUtilRate1).to.equal(85);
       expect(res4.feeDivisor).to.equal(16384);
       expect(res4.origFee).to.equal(2);
       expect(res4.extSwapFee).to.equal(10);
@@ -357,7 +357,7 @@ describe("GammaPool", function () {
       expect(res5.BORROWED_INVARIANT).to.equal(6);
       expect(res5.emaUtilRate).to.equal(0);
       expect(res5.emaMultiplier).to.equal(10);
-      expect(res5.minUtilRate).to.equal(85);
+      expect(res5.minUtilRate1).to.equal(85);
       expect(res5.feeDivisor).to.equal(16384);
       expect(res5.origFee).to.equal(2);
       expect(res5.extSwapFee).to.equal(10);
@@ -372,7 +372,7 @@ describe("GammaPool", function () {
       expect(res6.supplyRate).to.equal(res5.borrowRate);
       expect(res6.lastBlockNumber).to.eq(res5.LAST_BLOCK_NUMBER);
       expect(res6.emaUtilRate).to.equal(0);
-      expect(res6.minUtilRate).to.equal(85);
+      expect(res6.minUtilRate1).to.equal(85);
       expect(res6.feeDivisor).to.equal(16384);
       expect(res6.origFee).to.equal(2);
 
@@ -388,7 +388,7 @@ describe("GammaPool", function () {
       expect(res7.accFeeIndex).to.equal(res4.accFeeIndex);
       expect(res7.emaUtilRate).to.equal(0);
       expect(res7.emaMultiplier).to.equal(10);
-      expect(res7.minUtilRate).to.equal(85);
+      expect(res7.minUtilRate1).to.equal(85);
       expect(res7.feeDivisor).to.equal(16384);
       expect(res7.origFee).to.equal(2);
 

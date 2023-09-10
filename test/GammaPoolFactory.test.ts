@@ -740,7 +740,7 @@ describe("GammaPoolFactory", function () {
       expect(resp.origFee).to.equal(2);
       expect(resp.extSwapFee).to.equal(10);
       expect(resp.emaMultiplier).to.equal(10);
-      expect(resp.minUtilRate).to.equal(85);
+      expect(resp.minUtilRate1).to.equal(85);
       expect(resp.feeDivisor).to.equal(16384);
 
       const tx = await (
@@ -752,7 +752,7 @@ describe("GammaPoolFactory", function () {
       expect(event.args.origFee).to.equal(1);
       expect(event.args.extSwapFee).to.equal(2);
       expect(event.args.emaMultiplier).to.equal(20);
-      expect(event.args.minUtilRate).to.equal(84);
+      expect(event.args.minUtilRate1).to.equal(84);
       expect(event.args.maxUtilRate).to.equal(94);
       expect(event.args.feeDivisor).to.equal(0);
       expect(event.args.liquidationFee).to.equal(50);
@@ -762,7 +762,7 @@ describe("GammaPoolFactory", function () {
       expect(resp1.origFee).to.equal(1);
       expect(resp1.extSwapFee).to.equal(2);
       expect(resp1.emaMultiplier).to.equal(20);
-      expect(resp1.minUtilRate).to.equal(84);
+      expect(resp1.minUtilRate1).to.equal(84);
       expect(resp1.feeDivisor).to.equal(1024);
 
       const tx1 = await (
@@ -774,7 +774,7 @@ describe("GammaPoolFactory", function () {
       expect(event1.args.origFee).to.equal(1);
       expect(event1.args.extSwapFee).to.equal(2);
       expect(event1.args.emaMultiplier).to.equal(20);
-      expect(event1.args.minUtilRate).to.equal(84);
+      expect(event1.args.minUtilRate1).to.equal(84);
       expect(event1.args.maxUtilRate).to.equal(94);
       expect(event1.args.feeDivisor).to.equal(65535);
       expect(event1.args.liquidationFee).to.equal(50);
@@ -784,7 +784,7 @@ describe("GammaPoolFactory", function () {
       expect(resp2.origFee).to.equal(1);
       expect(resp2.extSwapFee).to.equal(2);
       expect(resp2.emaMultiplier).to.equal(20);
-      expect(resp2.minUtilRate).to.equal(84);
+      expect(resp2.minUtilRate1).to.equal(84);
       expect(resp2.feeDivisor).to.equal(65535);
     });
   });

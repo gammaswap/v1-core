@@ -108,7 +108,7 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         /// @dev EMA of utilization Rate
         uint40 emaUtilRate;
         /// @dev Minimum Utilization Rate
-        uint8 minUtilRate;
+        uint8 minUtilRate1;
         /// @dev Dynamic origination fee divisor
         uint16 feeDivisor;
         /// @dev Loan opening origination fee in basis points
@@ -208,7 +208,7 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         /// @dev Multiplier of EMA Utilization Rate
         uint8 emaMultiplier;
         /// @dev Minimum Utilization Rate
-        uint8 minUtilRate;
+        uint8 minUtilRate1;
         /// @dev Dynamic origination fee divisor
         uint16 feeDivisor;
     }
@@ -225,7 +225,7 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         uint256 accFeeIndex;
         uint40 emaUtilRate;
         uint8 emaMultiplier;
-        uint8 minUtilRate;
+        uint8 minUtilRate1;
         uint16 feeDivisor;
         uint16 origFee;
     }
@@ -241,12 +241,12 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @param origFee - loan opening origination fee in basis points
     /// @param extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
     /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
-    /// @param minUtilRate - minimum utilization rate to calculate dynamic origination fee
+    /// @param minUtilRate1 - minimum utilization rate to calculate dynamic origination fee
     /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out
     /// @param feeDivisor - fee divisor for calculating origination fee
     /// @param liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
     /// @param ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
-    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external;
+    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 maxUtilRate, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external;
 
     /// @dev cfmm - address of CFMM this GammaPool is for
     function cfmm() external view returns(address);

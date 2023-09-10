@@ -57,9 +57,11 @@ library LibStorage {
         /// @dev Multiplier of EMA used to calculate emaUtilRate
         uint8 emaMultiplier; // 8 bits, 1 decimals (0 = 0%, 1 = 0.1%, max 255 = 25.5%)
         /// @dev Minimum utilization rate at which point we start using the dynamic fee
-        uint8 minUtilRate; // 8 bits, 0 decimals (0 = 0%, 100 = 100%), default is 85. If set to 100, dynamic orig fee is disabled
+        uint8 minUtilRate1; // 8 bits, 0 decimals (0 = 0%, 100 = 100%), default is 85. If set to 100, dynamic orig fee is disabled
+        /// @dev Minimum utilization rate at which point we start using the dynamic fee
+        uint8 minUtilRate2; // 8 bits, 0 decimals (0 = 0%, 100 = 100%), default is 65. If set to 100, dynamic orig fee is disabled
         /// @dev Dynamic origination fee divisor, to cap at 99% use 16384 = 2^(99-85)
-        uint16 feeDivisor; // 16 bits, 0 decimals, max is 5 digit integer 65535, formula is 2^(maxUtilRate - minUtilRate)
+        uint16 feeDivisor; // 16 bits, 0 decimals, max is 5 digit integer 65535, formula is 2^(maxUtilRate - minUtilRate1)
 
         // 3x256 bits, LP Tokens
         /// @dev Quantity of CFMM's LP tokens deposited in GammaPool by liquidity providers
@@ -164,8 +166,8 @@ library LibStorage {
         self.extSwapFee = 10;
 
         self.emaMultiplier = 10; // ema smoothing factor is 10/1000 = 1%
-        self.minUtilRate = 85; // min util rate is 85%
-        self.feeDivisor = 16384; // max util rate is 99% => 2^(99 - minUtilRate)
+        self.minUtilRate1 = 85; // min util rate is 85%
+        self.feeDivisor = 16384; // max util rate is 99% => 2^(99 - minUtilRate1)
 
         self.TOKEN_BALANCE = new uint128[](_tokens.length);
         self.CFMM_RESERVES = new uint128[](_tokens.length);

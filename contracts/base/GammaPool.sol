@@ -72,13 +72,13 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     /// @dev See {IGammaPool-setPoolParams}
-    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external virtual override {
+    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 maxUtilRate, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external virtual override {
         if(msg.sender != factory) revert Forbidden(); // only factory is allowed to update dynamic fee parameters
 
-        require(minUtilRate <= 100, "MIN_UTIL_RATE");
+        require(minUtilRate1 <= 100, "MIN_UTIL_RATE");
         if(feeDivisor == 0) {
-            require(maxUtilRate >= minUtilRate && maxUtilRate <= 100, "MAX_UTIL_RATE");
-            require(maxUtilRate - minUtilRate <= 16, "MAX_FEE_DIVISOR");
+            require(maxUtilRate >= minUtilRate1 && maxUtilRate <= 100, "MAX_UTIL_RATE");
+            require(maxUtilRate - minUtilRate1 <= 16, "MAX_FEE_DIVISOR");
         }
         require(liquidationFee <= uint256(ltvThreshold) * 10, "LIQUIDATION_FEE");
 
@@ -87,8 +87,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         s.origFee = origFee;
         s.extSwapFee = extSwapFee;
         s.emaMultiplier = emaMultiplier;
-        s.minUtilRate = minUtilRate;
-        s.feeDivisor = feeDivisor > 0 ? feeDivisor : uint16(2 ** (maxUtilRate - minUtilRate));
+        s.minUtilRate1 = minUtilRate1;
+        s.feeDivisor = feeDivisor > 0 ? feeDivisor : uint16(2 ** (maxUtilRate - minUtilRate1));
     }
 
     /// @dev See {IGammaPool-cfmm}
@@ -179,7 +179,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         _data.accFeeIndex = s.accFeeIndex;
         _data.emaUtilRate = s.emaUtilRate;
         _data.emaMultiplier = s.emaMultiplier;
-        _data.minUtilRate = s.minUtilRate;
+        _data.minUtilRate1 = s.minUtilRate1;
         _data.feeDivisor = s.feeDivisor;
         _data.origFee = s.origFee;
     }
@@ -216,7 +216,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         data.CFMM_RESERVES = s.CFMM_RESERVES;
         data.emaUtilRate = s.emaUtilRate;
         data.emaMultiplier = s.emaMultiplier;
-        data.minUtilRate = s.minUtilRate;
+        data.minUtilRate1 = s.minUtilRate1;
         data.feeDivisor = s.feeDivisor;
     }
 

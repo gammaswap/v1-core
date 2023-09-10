@@ -27,12 +27,12 @@ interface IGammaPoolFactory {
     /// @param origFee - loan opening origination fee in basis points
     /// @param extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
     /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
-    /// @param minUtilRate - minimum utilization rate to calculate dynamic origination fee
+    /// @param minUtilRate1 - minimum utilization rate to calculate dynamic origination fee
     /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out (only used if feeDivisor is set to 0)
     /// @param feeDivisor - fee divisor for calculating origination fee, if set to 0 then calculate feeDivisor from maxUtilRate
     /// @param liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
     /// @param ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
-    event PoolParamsUpdate(address indexed pool, uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold);
+    event PoolParamsUpdate(address indexed pool, uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 maxUtilRate, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold);
 
     /// @dev Check if protocol is restricted. Which means only owner of GammaPoolFactory is allowed to instantiate GammaPools using this protocol
     /// @param _protocolId - id identifier of GammaPool protocol (can be thought of as version) that is being checked
