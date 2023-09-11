@@ -168,7 +168,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     function getFeeIndexUpdateParams() external virtual override view returns(FeeIndexUpdateParams memory _data) {
         _data.pool = address(this);
         _data.shortStrategy = shortStrategy;
-        _data.factory = s.factory;
+        _data.paramsStore = s.factory;
         _data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
         _data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         _data.lastCFMMInvariant = s.lastCFMMInvariant;
@@ -199,6 +199,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         data.currBlockNumber = uint40(block.number);
         data.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         data.factory = s.factory;
+        data.paramsStore = s.factory;
         data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         data.LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED;
         data.totalSupply = s.totalSupply;
@@ -286,15 +287,16 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         _loanData = _getLoanData(_tokenId);
         _loanData.tokens = s.tokens;
         _loanData.decimals = s.decimals;
-        _loanData.factory = factory;
+        _loanData.paramsStore = s.factory;
         _loanData.shortStrategy = shortStrategy;
-        _loanData.liquidationStrategy = singleLiquidationStrategy;
         _loanData.accFeeIndex = s.accFeeIndex;
         _loanData.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         _loanData.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
         _loanData.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         _loanData.lastCFMMInvariant = s.lastCFMMInvariant;
         _loanData.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
+        _loanData.ltvThreshold = s.ltvThreshold;
+        _loanData.liquidationFee = s.liquidationFee;
     }
 
     /// @dev See {IGammaPool-getLoans}
