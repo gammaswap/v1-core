@@ -61,7 +61,7 @@ contract PoolViewer is IPoolViewer {
         return _loans;
     }
 
-    // check if collateral is below loan-to-value threshold
+    /// @dev check if collateral is below loan-to-value threshold
     function _canLiquidate(uint256 liquidity, uint256 collateral, uint256 ltvThreshold) internal virtual view returns(bool) {
         return collateral * (10000 - ltvThreshold * 10) / 1e4 < liquidity;
     }
