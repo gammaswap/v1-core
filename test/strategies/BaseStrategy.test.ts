@@ -691,24 +691,24 @@ describe("BaseStrategy", function () {
   describe("Update EMA Utilization Rate", function () {
     it("Init EMA Util Rate", async function () {
       const ONE = BigNumber.from(10).pow(18);
-      const tenDec = BigNumber.from(10).pow(10);
-      const eightDec = BigNumber.from(10).pow(8);
+      const twelveDec = BigNumber.from(10).pow(12);
+      const sixDec = BigNumber.from(10).pow(6);
       const tx = await (
-        await strategy.testUpdateUtilRateEma(ONE.div(tenDec).div(10), 0, 2)
+        await strategy.testUpdateUtilRateEma(ONE.div(twelveDec).div(10), 0, 2)
       ).wait();
       const event = tx.events[tx.events.length - 1];
       expect(event.event).to.equal("EmaUtilRate");
       expect(event.args.emaUtilRate).to.eq(0);
 
       const tx1 = await (
-        await strategy.testUpdateUtilRateEma(ONE.div(eightDec), 0, 2)
+        await strategy.testUpdateUtilRateEma(ONE.div(sixDec), 0, 2)
       ).wait();
       const event1 = tx1.events[tx1.events.length - 1];
       expect(event1.event).to.equal("EmaUtilRate");
       expect(event1.args.emaUtilRate).to.eq(1);
 
       const tx2 = await (
-        await strategy.testUpdateUtilRateEma(ONE.div(eightDec.div(10)), 0, 2)
+        await strategy.testUpdateUtilRateEma(ONE.div(sixDec.div(10)), 0, 2)
       ).wait();
       const event2 = tx2.events[tx2.events.length - 1];
       expect(event2.event).to.equal("EmaUtilRate");
@@ -720,13 +720,13 @@ describe("BaseStrategy", function () {
       ).wait();
       const event3 = tx3.events[tx3.events.length - 1];
       expect(event3.event).to.equal("EmaUtilRate");
-      expect(event3.args.emaUtilRate).to.eq(pct80.div(tenDec));
+      expect(event3.args.emaUtilRate).to.eq(pct80.div(twelveDec));
     });
 
     it("Update EMA Util Rate", async function () {
       const ONE = BigNumber.from(10).pow(18);
-      const tenDec = BigNumber.from(10).pow(10);
-      const initEmaUtilRate = ONE.mul(80).div(100).div(tenDec); // 80%
+      const twelveDec = BigNumber.from(10).pow(12);
+      const initEmaUtilRate = ONE.mul(80).div(100).div(twelveDec); // 80%
       // EMA_1 = val * mult + EMA_0 * (1 - mult)
       const pct85 = ONE.mul(85).div(100);
       const tx = await (
@@ -741,7 +741,7 @@ describe("BaseStrategy", function () {
       ).wait();
       const event1 = tx1.events[tx1.events.length - 1];
       expect(event1.event).to.equal("EmaUtilRate");
-      expect(event1.args.emaUtilRate).to.eq(pct85.div(tenDec));
+      expect(event1.args.emaUtilRate).to.eq(pct85.div(twelveDec));
 
       const pct805 = ONE.mul(805).div(1000);
       const tx2 = await (
@@ -749,32 +749,32 @@ describe("BaseStrategy", function () {
       ).wait();
       const event2 = tx2.events[tx2.events.length - 1];
       expect(event2.event).to.equal("EmaUtilRate");
-      expect(event2.args.emaUtilRate).to.eq(pct805.div(tenDec));
+      expect(event2.args.emaUtilRate).to.eq(pct805.div(twelveDec));
 
       const pct8095 = ONE.mul(8095).div(10000);
       const tx3 = await (
-        await strategy.testUpdateUtilRateEma(pct85, pct805.div(tenDec), 10)
+        await strategy.testUpdateUtilRateEma(pct85, pct805.div(twelveDec), 10)
       ).wait();
       const event3 = tx3.events[tx3.events.length - 1];
       expect(event3.event).to.equal("EmaUtilRate");
-      expect(event3.args.emaUtilRate).to.eq(pct8095.div(tenDec));
+      expect(event3.args.emaUtilRate).to.eq(pct8095.div(twelveDec));
 
       const pct8176 = ONE.mul(8176).div(10000);
       const tx4 = await (
-        await strategy.testUpdateUtilRateEma(pct85, pct8095.div(tenDec), 20)
+        await strategy.testUpdateUtilRateEma(pct85, pct8095.div(twelveDec), 20)
       ).wait();
       const event4 = tx4.events[tx4.events.length - 1];
       expect(event4.event).to.equal("EmaUtilRate");
-      expect(event4.args.emaUtilRate).to.eq(pct8176.div(tenDec));
+      expect(event4.args.emaUtilRate).to.eq(pct8176.div(twelveDec));
 
       const pct1 = ONE.div(100);
       const pct65608 = ONE.mul(65608).div(100000);
       const tx5 = await (
-        await strategy.testUpdateUtilRateEma(pct1, pct8176.div(tenDec), 20)
+        await strategy.testUpdateUtilRateEma(pct1, pct8176.div(twelveDec), 20)
       ).wait();
       const event5 = tx5.events[tx5.events.length - 1];
       expect(event5.event).to.equal("EmaUtilRate");
-      expect(event5.args.emaUtilRate).to.eq(pct65608.div(tenDec));
+      expect(event5.args.emaUtilRate).to.eq(pct65608.div(twelveDec));
     });
   });
 

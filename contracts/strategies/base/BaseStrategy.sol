@@ -174,7 +174,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         s.accFeeIndex = uint80(accFeeIndex);
         s.LAST_BLOCK_NUMBER = uint40(block.number);
 
-        s.emaUtilRate = uint40(_calcUtilRateEma(calcUtilizationRate(lpInvariant, newBorrowedInvariant), s.emaUtilRate, s.emaMultiplier));
+        s.emaUtilRate = uint32(_calcUtilRateEma(calcUtilizationRate(lpInvariant, newBorrowedInvariant), s.emaUtilRate, s.emaMultiplier));
     }
 
     /// @dev Update pool invariant, LP tokens borrowed plus interest, interest rate index, and last block update
@@ -183,7 +183,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param emaMultiplier - interest accrued to loans in GammaPool
     /// @return emaUtilRate - interest accrued to loans in GammaPool
     function _calcUtilRateEma(uint256 utilizationRate, uint256 emaUtilRateLast, uint256 emaMultiplier) internal virtual view returns(uint256) {
-        utilizationRate = utilizationRate / 1e10; // convert to 8 decimals
+        utilizationRate = utilizationRate / 1e12; // convert to 6 decimals
         if(emaUtilRateLast == 0) {
             return utilizationRate;
         } else {

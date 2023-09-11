@@ -5,7 +5,6 @@ import "../libraries/GammaSwapLibrary.sol";
 import "../interfaces/IPoolViewer.sol";
 import "../interfaces/IGammaPool.sol";
 import "../interfaces/observer/ICollateralManager.sol";
-import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
 import "../interfaces/strategies/lending/IBorrowStrategy.sol";
@@ -36,7 +35,6 @@ contract PoolViewer is IPoolViewer {
         address[] memory _tokens = IGammaPool(pool).tokens();
         (string[] memory _symbols, string[] memory _names, uint8[] memory _decimals) = getTokensMetaData(_tokens);
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
-        address liquidationStrategy = IGammaPool(pool).singleLiquidationStrategy();
         uint256 _size = _loans.length;
         IGammaPool.LoanData memory _loan;
         for(uint256 i = 0; i < _size;) {
@@ -51,12 +49,21 @@ contract PoolViewer is IPoolViewer {
             _loan.liquidity = _updateLiquidity(_loan.liquidity, _loan.rateIndex, data.accFeeIndex);
             address refAddr = _loan.refType == 3 ? _loan.refAddr : address(0);
             _loan.collateral = _collateral(pool, _loan.tokenId, _loan.tokensHeld, refAddr);
-            _loan.canLiquidate = ILiquidationStrategy(liquidationStrategy).canLiquidate(_loan.liquidity, _loan.collateral);
+            _loan.shortStrategy = data.shortStrategy;
+            _loan.paramsStore = data.paramsStore;
+            _loan.ltvThreshold = data.ltvThreshold;
+            _loan.liquidationFee = data.liquidationFee;
+            _loan.canLiquidate = _canLiquidate(_loan.liquidity, _loan.collateral, _loan.ltvThreshold);
             unchecked {
                 ++i;
             }
         }
         return _loans;
+    }
+
+    /// @dev check if collateral is below loan-to-value threshold
+    function _canLiquidate(uint256 liquidity, uint256 collateral, uint256 ltvThreshold) internal virtual view returns(bool) {
+        return collateral * (10000 - ltvThreshold * 10) / 1e4 < liquidity;
     }
 
     /// @dev See {IPoolViewer-loan}
@@ -66,19 +73,18 @@ contract PoolViewer is IPoolViewer {
         _loanData.liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, _loanData.accFeeIndex);
         address refAddr = _loanData.refType == 3 ? _loanData.refAddr : address(0);
         _loanData.collateral = _collateral(pool, tokenId, _loanData.tokensHeld, refAddr);
-        _loanData.canLiquidate = ILiquidationStrategy(_loanData.liquidationStrategy).canLiquidate(_loanData.liquidity, _loanData.collateral);
+        _loanData.canLiquidate = _canLiquidate(_loanData.liquidity, _loanData.collateral, _loanData.ltvThreshold);
         (_loanData.symbols, _loanData.names, _loanData.decimals) = getTokensMetaData(_loanData.tokens);
         return _loanData;
     }
 
-    /// @dev See {IGammaPool-canLiquidate}
+    /// @dev See {IPoolViewer-canLiquidate}
     function canLiquidate(address pool, uint256 tokenId) external virtual override view returns(bool) {
         IGammaPool.LoanData memory _loanData = IGammaPool(pool).getLoanData(tokenId);
-        uint256 accFeeIndex = _getLoanLastFeeIndex(_loanData);
-        uint256 liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, accFeeIndex);
+        uint256 liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, _getLoanLastFeeIndex(_loanData));
         address refAddr = _loanData.refType == 3 ? _loanData.refAddr : address(0);
         uint256 collateral = _collateral(pool, tokenId, _loanData.tokensHeld, refAddr);
-        return ILiquidationStrategy(_loanData.liquidationStrategy).canLiquidate(liquidity, collateral);
+        return _canLiquidate(liquidity, collateral, _loanData.ltvThreshold);
     }
 
     /// @dev Get interest rate changes per source, utilization rate, and borrowing and supply APR charged to users
@@ -89,7 +95,7 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMTotalSupply;
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(_loanData.poolId).getLatestCFMMBalances();
 
-        (,uint256 lastFeeIndex,,) = IShortStrategy(_loanData.shortStrategy).getLastFees(_loanData.factory,
+        (,uint256 lastFeeIndex,,) = IShortStrategy(_loanData.shortStrategy).getLastFees(_loanData.paramsStore,
             _loanData.BORROWED_INVARIANT, _loanData.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply,
             _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply, _loanData.LAST_BLOCK_NUMBER, _loanData.poolId);
 
@@ -114,9 +120,9 @@ contract PoolViewer is IPoolViewer {
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
 
         uint256 utilRate = _calcUtilizationRate(data.LP_INVARIANT - liquidity, data.BORROWED_INVARIANT + liquidity) / 1e16;// convert utilizationRate to integer
-        uint256 emaUtilRate = data.emaUtilRate / 1e6; // convert ema to integer
+        uint256 emaUtilRate = data.emaUtilRate / 1e4; // convert ema to integer
 
-        origFee = IBorrowStrategy(IGammaPool(pool).borrowStrategy()).calcDynamicOriginationFee(data.origFee, utilRate, emaUtilRate, data.minUtilRate, data.feeDivisor);
+        origFee = IBorrowStrategy(IGammaPool(pool).borrowStrategy()).calcDynamicOriginationFee(data.origFee, utilRate, emaUtilRate, data.minUtilRate1, data.minUtilRate2, data.feeDivisor);
     }
 
     /// @dev Calculate utilization rate from borrowed invariant and invariant from LP tokens in GammaPool
@@ -142,7 +148,7 @@ contract PoolViewer is IPoolViewer {
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(pool).getLatestCFMMBalances();
 
         (data.lastCFMMFeeIndex,data.lastFeeIndex,data.borrowRate,data.utilizationRate) = IShortStrategy(params.shortStrategy)
-        .getLastFees(params.factory, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply,
+        .getLastFees(params.paramsStore, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply,
             params.lastCFMMInvariant, params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.pool);
 
         (,, data.BORROWED_INVARIANT) = IShortStrategy(params.shortStrategy)
@@ -155,7 +161,12 @@ contract PoolViewer is IPoolViewer {
         data.emaUtilRate = uint40(IShortStrategy(params.shortStrategy).calcUtilRateEma(data.utilizationRate, params.emaUtilRate, params.emaMultiplier));
         data.origFee = params.origFee;
         data.feeDivisor = params.feeDivisor;
-        data.minUtilRate = params.minUtilRate;
+        data.minUtilRate1 = params.minUtilRate1;
+        data.minUtilRate2 = params.minUtilRate2;
+        data.ltvThreshold = params.ltvThreshold;
+        data.liquidationFee = params.liquidationFee;
+        data.shortStrategy = params.shortStrategy;
+        data.paramsStore = params.paramsStore;
 
         data.accFeeIndex = params.accFeeIndex * data.lastFeeIndex / 1e18;
         data.lastBlockNumber = params.LAST_BLOCK_NUMBER;
@@ -180,7 +191,7 @@ contract PoolViewer is IPoolViewer {
 
         uint256 lastCFMMFeeIndex;
         (lastCFMMFeeIndex, data.lastFeeIndex, data.borrowRate, data.utilizationRate) = IShortStrategy(data.shortStrategy)
-        .getLastFees(data.factory, borrowedInvariant, data.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply,
+        .getLastFees(data.paramsStore, borrowedInvariant, data.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply,
             data.lastCFMMInvariant, data.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER, pool);
 
         data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
@@ -205,8 +216,6 @@ contract PoolViewer is IPoolViewer {
     /// @dev See {IPoolViewer-getPoolData}
     function getPoolData(address pool) public virtual override view returns(IGammaPool.PoolData memory data) {
         data = IGammaPool(pool).getPoolData();
-        data.ltvThreshold = ILongStrategy(data.borrowStrategy).ltvThreshold();
-        data.liquidationFee = ILiquidationStrategy(data.singleLiquidationStrategy).liquidationFee();
         (data.symbols, data.names,) = getTokensMetaData(data.tokens);
     }
 

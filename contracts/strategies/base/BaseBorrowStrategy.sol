@@ -36,9 +36,9 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
     function _calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 lowUtilRate, uint256 discount) internal virtual view returns(uint256 origFee) {
         uint256 utilRate = calcUtilizationRate(lpInvariant - liquidityBorrowed, borrowedInvariant + liquidityBorrowed) / 1e16;// convert utilizationRate to integer
         // check if the new utilizationRate is higher than lowUtilRate or less than lowUtilRate. If less than lowUtilRate, take lowUtilRate, if higher than lowUtilRate take higher one
-        lowUtilRate = lowUtilRate / 1e6; // convert lowUtilRate to integer
+        lowUtilRate = lowUtilRate / 1e4; // convert lowUtilRate to integer
 
-        origFee = _calcDynamicOriginationFee(originationFee(), utilRate, lowUtilRate, s.minUtilRate, s.feeDivisor);
+        origFee = _calcDynamicOriginationFee(originationFee(), utilRate, lowUtilRate, s.minUtilRate1, s.minUtilRate2, s.feeDivisor);
 
         origFee = discount > origFee ? 0 : (origFee - discount);
     }
@@ -47,15 +47,18 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
     /// @param baseOrigFee - base origination fee charge
     /// @param utilRate - current utilization rate of GammaPool
     /// @param lowUtilRate - low utilization rate threshold, used as a lower bound for the utilization rate
-    /// @param minUtilRate - minimum utilization rate after which utilization rate after which fee will start increasing
+    /// @param minUtilRate1 - minimum utilization rate 1 after which origination fee will start increasing exponentially
+    /// @param minUtilRate2 - minimum utilization rate 2 after which origination fee will start increasing linearly
     /// @param feeDivisor - fee divisor of formula for dynamic origination fee
     /// @return origFee - origination fee that will be applied to loan
-    function _calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate, uint256 feeDivisor) internal virtual view returns(uint256) {
+    function _calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate1, uint256 minUtilRate2, uint256 feeDivisor) internal virtual view returns(uint256) {
         utilRate = utilRate >= lowUtilRate ? utilRate : lowUtilRate; // utilization rate not allowed to be below lowUtilRate
-        if(utilRate > minUtilRate) {
-            uint256 diff = utilRate - minUtilRate;
-            baseOrigFee += GSMath.min((2 ** diff) * 10000 / feeDivisor, 10000);
-            baseOrigFee = GSMath.min(baseOrigFee, 10000);
+        if(utilRate > minUtilRate2) {
+            baseOrigFee = GSMath.max(utilRate - minUtilRate2, baseOrigFee);
+        }
+        if(utilRate > minUtilRate1) {
+            uint256 diff = utilRate - minUtilRate1;
+            baseOrigFee = GSMath.min(GSMath.max(baseOrigFee, (2 ** diff) * 10000 / feeDivisor), 10000);
         }
         return baseOrigFee;
     }

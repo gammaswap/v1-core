@@ -64,21 +64,23 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         /// @dev names of ERC20 tokens of CFMM
         string[] names;
 
-        /// @dev factory contract of pool
-        address factory;
-        /// @dev names of ERC20 tokens of CFMM
+        /// @dev interest rate model parameter store
+        address paramsStore;
+        /// @dev address of short strategy
         address shortStrategy;
-        /// @dev names of ERC20 tokens of CFMM
-        address liquidationStrategy;
 
-        /// @dev names of ERC20 tokens of CFMM
+        /// @dev borrowed liquidity invariant of the pool
         uint256 BORROWED_INVARIANT;
-        /// @dev names of ERC20 tokens of CFMM
+        /// @dev balance of CFMM LP tokens in the pool
         uint256 LP_TOKEN_BALANCE;
-        /// @dev names of ERC20 tokens of CFMM
+        /// @dev last CFMM liquidity invariant
         uint256 lastCFMMInvariant;
-        /// @dev names of ERC20 tokens of CFMM
+        /// @dev last CFMM total supply of LP tokens
         uint256 lastCFMMTotalSupply;
+        /// @dev LTV liquidation threshold
+        uint256 ltvThreshold;
+        /// @dev Liquidation fee
+        uint256 liquidationFee;
     }
 
     /// @dev Struct returned in getLatestRates function. Contains all relevant global state variables
@@ -106,13 +108,23 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         /// @dev Quantity of CFMM's liquidity invariant held in GammaPool as LP tokens, maps to LP_TOKEN_BALANCE
         uint256 LP_INVARIANT;//Invariant from LP Tokens, TOTAL_INVARIANT = BORROWED_INVARIANT + LP_INVARIANT
         /// @dev EMA of utilization Rate
-        uint40 emaUtilRate;
-        /// @dev Minimum Utilization Rate
-        uint8 minUtilRate;
+        uint256 emaUtilRate;
+        /// @dev Minimum Utilization Rate 1
+        uint256 minUtilRate1;
+        /// @dev Minimum Utilization Rate 2
+        uint256 minUtilRate2;
         /// @dev Dynamic origination fee divisor
-        uint16 feeDivisor;
+        uint256 feeDivisor;
         /// @dev Loan opening origination fee in basis points
-        uint16 origFee; // 16 bits
+        uint256 origFee; // 16 bits
+        /// @dev LTV liquidation threshold
+        uint256 ltvThreshold;
+        /// @dev Liquidation fee
+        uint256 liquidationFee;
+        /// @dev Short Strategy implementation address
+        address shortStrategy;
+        /// @dev Interest Rate Parameters Store contract
+        address paramsStore;
     }
 
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
@@ -136,10 +148,12 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
 
         /// @dev factory - address of factory contract that instantiated this GammaPool
         address factory;
+        /// @dev paramsStore - interest rate model parameters store contract
+        address paramsStore;
 
         // LP Tokens
         /// @dev Quantity of CFMM's LP tokens deposited in GammaPool by liquidity providers
-        uint256 LP_TOKEN_BALANCE;//LP Tokens in GS, LP_TOKEN_TOTAL = LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST
+        uint256 LP_TOKEN_BALANCE;// LP Tokens in GS, LP_TOKEN_TOTAL = LP_TOKEN_BALANCE + LP_TOKEN_BORROWED_PLUS_INTEREST
         /// @dev Quantity of CFMM's LP tokens that have been borrowed by liquidity borrowers excluding accrued interest (principal)
         uint256 LP_TOKEN_BORROWED;//LP Tokens that have been borrowed (Principal)
         /// @dev Quantity of CFMM's LP tokens that have been borrowed by liquidity borrowers including accrued interest
@@ -198,36 +212,60 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         /// @dev Current block number when requesting pool data
         uint40 currBlockNumber;
         /// @dev LTV liquidation threshold
-        uint256 ltvThreshold;
+        uint8 ltvThreshold;
         /// @dev Liquidation fee
-        uint256 liquidationFee;
+        uint8 liquidationFee;
         /// @dev Supply APR of LP tokens in GammaPool
         uint256 supplyRate;
         /// @dev EMA of utilization Rate
         uint40 emaUtilRate;
         /// @dev Multiplier of EMA Utilization Rate
         uint8 emaMultiplier;
-        /// @dev Minimum Utilization Rate
-        uint8 minUtilRate;
+        /// @dev Minimum Utilization Rate 1
+        uint8 minUtilRate1;
+        /// @dev Minimum Utilization Rate 2
+        uint8 minUtilRate2;
         /// @dev Dynamic origination fee divisor
         uint16 feeDivisor;
     }
 
+    /// @dev Struct returned in getFeeIndexUpdateParams function. Contains all relevant global state variables to calculate accFeeIndex
+    /// @dev as well as emaUtilRate, utilizationRate, and origination fees
     struct FeeIndexUpdateParams {
+        /// @dev Short Strategy implementation address
         address shortStrategy;
-        address factory;
+        /// @dev paramsStore - interest rate model parameters store contract
+        address paramsStore;
+        /// @dev GammaPool address
         address pool;
+        /// @dev Quantity of CFMM's liquidity invariant that has been borrowed including accrued interest, maps to LP_TOKEN_BORROWED_PLUS_INTEREST
         uint256 BORROWED_INVARIANT;
+        /// @dev Quantity of CFMM's LP tokens deposited in GammaPool by liquidity providers
         uint256 LP_TOKEN_BALANCE;
+        /// @dev Total liquidity invariant amount in CFMM (from GammaPool and others), read in last update to GammaPool's storage variables
         uint256 lastCFMMInvariant;
+        /// @dev Total LP token supply from CFMM (belonging to GammaPool and others), read in last update to GammaPool's storage variables
         uint256 lastCFMMTotalSupply;
+        /// @dev LAST_BLOCK_NUMBER - last block an update to the GammaPool's global storage variables happened
         uint256 LAST_BLOCK_NUMBER;
+        /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 30.9% billion
         uint256 accFeeIndex;
-        uint40 emaUtilRate;
-        uint8 emaMultiplier;
-        uint8 minUtilRate;
-        uint16 feeDivisor;
-        uint16 origFee;
+        /// @dev EMA of utilization Rate
+        uint256 emaUtilRate;
+        /// @dev Multiplier of EMA Utilization Rate
+        uint256 emaMultiplier;
+        /// @dev Minimum Utilization Rate 1
+        uint256 minUtilRate1;
+        /// @dev Minimum Utilization Rate 2
+        uint256 minUtilRate2;
+        /// @dev Dynamic origination fee divisor
+        uint256 feeDivisor;
+        /// @dev Loan opening origination fee in basis points
+        uint256 origFee;
+        /// @dev LTV liquidation threshold
+        uint256 ltvThreshold;
+        /// @dev Liquidation fee
+        uint256 liquidationFee;
     }
 
     /// @dev Function to initialize state variables GammaPool, called usually from GammaPoolFactory contract right after GammaPool instantiation
@@ -241,12 +279,12 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @param origFee - loan opening origination fee in basis points
     /// @param extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
     /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
-    /// @param minUtilRate - minimum utilization rate to calculate dynamic origination fee
-    /// @param maxUtilRate - utilization rate at which dynamic origination fee will max out
-    /// @param feeDivisor - fee divisor for calculating origination fee
+    /// @param minUtilRate1 - minimum utilization rate to calculate dynamic origination fee in exponential model
+    /// @param minUtilRate2 - minimum utilization rate to calculate dynamic origination fee in linear model
+    /// @param feeDivisor - fee divisor for calculating origination fee, based on 2^(maxUtilRate - minUtilRate1)
     /// @param liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
     /// @param ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
-    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external;
+    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external;
 
     /// @dev cfmm - address of CFMM this GammaPool is for
     function cfmm() external view returns(address);

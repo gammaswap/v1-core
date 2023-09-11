@@ -72,14 +72,11 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     /// @dev See {IGammaPool-setPoolParams}
-    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate, uint8 maxUtilRate, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external virtual override {
+    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external virtual override {
         if(msg.sender != factory) revert Forbidden(); // only factory is allowed to update dynamic fee parameters
 
-        require(minUtilRate <= 100, "MIN_UTIL_RATE");
-        if(feeDivisor == 0) {
-            require(maxUtilRate >= minUtilRate && maxUtilRate <= 100, "MAX_UTIL_RATE");
-            require(maxUtilRate - minUtilRate <= 16, "MAX_FEE_DIVISOR");
-        }
+        require(minUtilRate1 <= 100, "MIN_UTIL_RATE");
+        require(feeDivisor > 0, "FEE_DIVISOR");
         require(liquidationFee <= uint256(ltvThreshold) * 10, "LIQUIDATION_FEE");
 
         s.ltvThreshold = ltvThreshold;
@@ -87,8 +84,9 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         s.origFee = origFee;
         s.extSwapFee = extSwapFee;
         s.emaMultiplier = emaMultiplier;
-        s.minUtilRate = minUtilRate;
-        s.feeDivisor = feeDivisor > 0 ? feeDivisor : uint16(2 ** (maxUtilRate - minUtilRate));
+        s.minUtilRate1 = minUtilRate1;
+        s.minUtilRate2 = minUtilRate2;
+        s.feeDivisor = feeDivisor;
     }
 
     /// @dev See {IGammaPool-cfmm}
@@ -170,7 +168,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     function getFeeIndexUpdateParams() external virtual override view returns(FeeIndexUpdateParams memory _data) {
         _data.pool = address(this);
         _data.shortStrategy = shortStrategy;
-        _data.factory = s.factory;
+        _data.paramsStore = s.factory;
         _data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
         _data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         _data.lastCFMMInvariant = s.lastCFMMInvariant;
@@ -179,9 +177,12 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         _data.accFeeIndex = s.accFeeIndex;
         _data.emaUtilRate = s.emaUtilRate;
         _data.emaMultiplier = s.emaMultiplier;
-        _data.minUtilRate = s.minUtilRate;
+        _data.minUtilRate1 = s.minUtilRate1;
+        _data.minUtilRate2 = s.minUtilRate2;
         _data.feeDivisor = s.feeDivisor;
         _data.origFee = s.origFee;
+        _data.ltvThreshold = s.ltvThreshold;
+        _data.liquidationFee = s.liquidationFee;
     }
 
     /// @dev See {IGammaPool-getPoolData}
@@ -198,6 +199,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         data.currBlockNumber = uint40(block.number);
         data.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         data.factory = s.factory;
+        data.paramsStore = s.factory;
         data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         data.LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED;
         data.totalSupply = s.totalSupply;
@@ -208,6 +210,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
         data.LP_INVARIANT = s.LP_INVARIANT;
         data.accFeeIndex = s.accFeeIndex;
+        data.ltvThreshold = s.ltvThreshold;
+        data.liquidationFee = s.liquidationFee;
         data.origFee = s.origFee;
         data.extSwapFee = s.extSwapFee;
         data.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
@@ -216,7 +220,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         data.CFMM_RESERVES = s.CFMM_RESERVES;
         data.emaUtilRate = s.emaUtilRate;
         data.emaMultiplier = s.emaMultiplier;
-        data.minUtilRate = s.minUtilRate;
+        data.minUtilRate1 = s.minUtilRate1;
+        data.minUtilRate2 = s.minUtilRate2;
         data.feeDivisor = s.feeDivisor;
     }
 
@@ -282,15 +287,16 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         _loanData = _getLoanData(_tokenId);
         _loanData.tokens = s.tokens;
         _loanData.decimals = s.decimals;
-        _loanData.factory = factory;
+        _loanData.paramsStore = s.factory;
         _loanData.shortStrategy = shortStrategy;
-        _loanData.liquidationStrategy = singleLiquidationStrategy;
         _loanData.accFeeIndex = s.accFeeIndex;
         _loanData.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         _loanData.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
         _loanData.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         _loanData.lastCFMMInvariant = s.lastCFMMInvariant;
         _loanData.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
+        _loanData.ltvThreshold = s.ltvThreshold;
+        _loanData.liquidationFee = s.liquidationFee;
     }
 
     /// @dev See {IGammaPool-getLoans}
