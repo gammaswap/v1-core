@@ -752,7 +752,6 @@ describe("GammaPool", function () {
       expect(await gammaPool.getLoanCount()).to.equal(1);
 
       const loanData = await gammaPool.getLoanData(tokenId);
-      console.log("loanData >> ", loanData);
       expect(loanData.id).to.eq(1);
       expect(loanData.poolId).to.eq(gammaPool.address);
       expect(loanData.tokensHeld.length).to.eq(tokens.length);

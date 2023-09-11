@@ -53,10 +53,12 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
     /// @return origFee - origination fee that will be applied to loan
     function _calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate1, uint256 minUtilRate2, uint256 feeDivisor) internal virtual view returns(uint256) {
         utilRate = utilRate >= lowUtilRate ? utilRate : lowUtilRate; // utilization rate not allowed to be below lowUtilRate
+        if(utilRate > minUtilRate2) {
+            baseOrigFee = GSMath.max(utilRate - minUtilRate2, baseOrigFee);
+        }
         if(utilRate > minUtilRate1) {
             uint256 diff = utilRate - minUtilRate1;
-            baseOrigFee += GSMath.min((2 ** diff) * 10000 / feeDivisor, 10000);
-            baseOrigFee = GSMath.min(baseOrigFee, 10000);
+            baseOrigFee = GSMath.min(GSMath.max(baseOrigFee, (2 ** diff) * 10000 / feeDivisor), 10000);
         }
         return baseOrigFee;
     }

@@ -1119,7 +1119,7 @@ describe("LongStrategy", function () {
       ).wait();
       const event = tx.events[tx.events.length - 1];
       expect(event.event).to.eq("DynOrigFee");
-      expect(event.args.dynOrigFee).to.eq(4002);
+      expect(event.args.dynOrigFee).to.eq(4000);
     });
 
     it("Calc Orig Fee, utilRate > emaUtilRate", async function () {
@@ -1144,7 +1144,7 @@ describe("LongStrategy", function () {
       ).wait();
       const event = tx.events[tx.events.length - 1];
       expect(event.event).to.eq("DynOrigFee");
-      expect(event.args.dynOrigFee).to.eq(10);
+      expect(event.args.dynOrigFee).to.eq(15);
 
       const tx1 = await (
         await strategy3.testCalcOriginationFee(
@@ -1160,7 +1160,7 @@ describe("LongStrategy", function () {
       ).wait();
       const event1 = tx1.events[tx1.events.length - 1];
       expect(event1.event).to.eq("DynOrigFee");
-      expect(event1.args.dynOrigFee).to.eq(10);
+      expect(event1.args.dynOrigFee).to.eq(15);
 
       const tx2 = await (
         await strategy3.testCalcOriginationFee(
@@ -1176,7 +1176,7 @@ describe("LongStrategy", function () {
       ).wait();
       const event2 = tx2.events[tx2.events.length - 1];
       expect(event2.event).to.eq("DynOrigFee");
-      expect(event2.args.dynOrigFee).to.eq(10);
+      expect(event2.args.dynOrigFee).to.eq(15);
 
       const tx3 = await (
         await strategy3.testCalcOriginationFee(
@@ -1192,7 +1192,7 @@ describe("LongStrategy", function () {
       ).wait();
       const event3 = tx3.events[tx3.events.length - 1];
       expect(event3.event).to.eq("DynOrigFee");
-      expect(event3.args.dynOrigFee).to.eq(635);
+      expect(event3.args.dynOrigFee).to.eq(625);
 
       const tx4 = await (
         await strategy3.testCalcOriginationFee(
@@ -1208,7 +1208,7 @@ describe("LongStrategy", function () {
       ).wait();
       const event4 = tx4.events[tx4.events.length - 1];
       expect(event4.event).to.eq("DynOrigFee");
-      expect(event4.args.dynOrigFee).to.eq(21);
+      expect(event4.args.dynOrigFee).to.eq(25);
 
       const tx5 = await (
         await strategy3.testCalcOriginationFee(
@@ -1224,7 +1224,7 @@ describe("LongStrategy", function () {
       ).wait();
       const event5 = tx5.events[tx5.events.length - 1];
       expect(event5.event).to.eq("DynOrigFee");
-      expect(event5.args.dynOrigFee).to.eq(2502);
+      expect(event5.args.dynOrigFee).to.eq(2500);
 
       const tx6 = await (
         await strategy3.testCalcOriginationFee(
@@ -1240,7 +1240,7 @@ describe("LongStrategy", function () {
       ).wait();
       const event6 = tx6.events[tx6.events.length - 1];
       expect(event6.event).to.eq("DynOrigFee");
-      expect(event6.args.dynOrigFee).to.eq(5002);
+      expect(event6.args.dynOrigFee).to.eq(5000);
     });
 
     it("Calc Orig Fee, utilRate < emaUtilRate", async function () {
@@ -1265,7 +1265,7 @@ describe("LongStrategy", function () {
       ).wait();
       const event = tx.events[tx.events.length - 1];
       expect(event.event).to.eq("DynOrigFee");
-      expect(event.args.dynOrigFee).to.eq(627);
+      expect(event.args.dynOrigFee).to.eq(625);
     });
   });
 
@@ -1496,8 +1496,8 @@ describe("LongStrategy", function () {
       await (await strategy.testOpenLoan(tokenId, lpTokens1)).wait();
       const res3 = await strategy.getLoanChangeData(tokenId);
 
-      const fee1 = fee.add(liquidity1.mul(10).div(10000));
-      const feeLP1 = feeLP.add(lpTokens1.mul(10).div(10000));
+      const fee1 = fee.add(liquidity1.mul(15).div(10000));
+      const feeLP1 = feeLP.add(lpTokens1.mul(15).div(10000));
 
       const expNewPx = updateLoanPrice(
         liquidity1,
