@@ -9,7 +9,7 @@
     "fuzz": "forge test"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/@gammaswap"
@@ -21,8 +21,7 @@
   "files": [
     "artifacts",
     "contracts",
-    "typechain",
-    "typechain-types"
+    "typechain"
   ],
   "keywords": [
     "gammaswap",
@@ -31,7 +30,7 @@
     "v1",
     "gammaswap-v1"
   ],
-  "author": "GammaSwap Labs",
+  "author": "Daniel Alcarraz (https://github.com/0xDanr)",
   "license": "BUSL-1.1",
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
