@@ -22,7 +22,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{secrets.GS_TOKEN}}
       - run: yarn run test
       - run: yarn run fuzz
-      - name: Publish Package1
+      - name: Publish Package
         if: "!(contains(github.event.pull_request.title, 'skip publish'))"
         run: npm publish
         env:
