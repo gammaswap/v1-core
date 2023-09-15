@@ -27,6 +27,8 @@ To deploy contracts to local live network use v1-deployment repository
 ### Note
 To install foundry locally go to [getfoundry.sh](https://getfoundry.sh/)
 
+Add 'skip publish' to the comment section of a commit to the main branch to avoid publishing a package
+
 ## Solidity Versions
 Code is tested with solidity version 0.8.19.
 
