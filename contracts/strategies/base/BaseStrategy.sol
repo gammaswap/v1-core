@@ -172,9 +172,9 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         // Update GammaPool's interest rate index and update last block updated
         accFeeIndex = s.accFeeIndex * lastFeeIndex / 1e18;
         s.accFeeIndex = uint80(accFeeIndex);
+        s.emaUtilRate = uint32(_calcUtilRateEma(calcUtilizationRate(lpInvariant, newBorrowedInvariant), s.emaUtilRate,
+            GSMath.max(block.number - s.LAST_BLOCK_NUMBER, s.emaMultiplier)));
         s.LAST_BLOCK_NUMBER = uint40(block.number);
-
-        s.emaUtilRate = uint32(_calcUtilRateEma(calcUtilizationRate(lpInvariant, newBorrowedInvariant), s.emaUtilRate, s.emaMultiplier));
     }
 
     /// @dev Update pool invariant, LP tokens borrowed plus interest, interest rate index, and last block update
@@ -187,6 +187,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         if(emaUtilRateLast == 0) {
             return utilizationRate;
         } else {
+            emaMultiplier = GSMath.min(100, emaMultiplier);
             // EMA_1 = val * mult + EMA_0 * (1 - mult)
             return utilizationRate * emaMultiplier / 100 + emaUtilRateLast * (100 - emaMultiplier) / 100;
         }
