@@ -6,6 +6,8 @@
   </a>
 </p>
 
+<h1 align="center">V1-Core</h1>
+
 ## Description
 This is the repository for the core smart contracts of the GammaSwap V1 protocol. 
 
