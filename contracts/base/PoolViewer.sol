@@ -158,7 +158,8 @@ contract PoolViewer is IPoolViewer {
         data.LP_INVARIANT = uint128(params.LP_TOKEN_BALANCE * lastCFMMInvariant / lastCFMMTotalSupply);
 
         data.utilizationRate = _calcUtilizationRate(data.LP_INVARIANT, data.BORROWED_INVARIANT);
-        data.emaUtilRate = uint40(IShortStrategy(params.shortStrategy).calcUtilRateEma(data.utilizationRate, params.emaUtilRate, params.emaMultiplier));
+        data.emaUtilRate = uint40(IShortStrategy(params.shortStrategy).calcUtilRateEma(data.utilizationRate, params.emaUtilRate,
+            GSMath.max(block.number - params.LAST_BLOCK_NUMBER, params.emaMultiplier)));
         data.origFee = params.origFee;
         data.feeDivisor = params.feeDivisor;
         data.minUtilRate1 = params.minUtilRate1;
@@ -206,7 +207,8 @@ contract PoolViewer is IPoolViewer {
         data.accFeeIndex = uint80(data.accFeeIndex * data.lastFeeIndex / 1e18);
 
         data.utilizationRate = _calcUtilizationRate(data.LP_INVARIANT, data.BORROWED_INVARIANT);
-        data.emaUtilRate = uint40(IShortStrategy(data.shortStrategy).calcUtilRateEma(data.utilizationRate, data.emaUtilRate, data.emaMultiplier));
+        data.emaUtilRate = uint40(IShortStrategy(data.shortStrategy).calcUtilRateEma(data.utilizationRate, data.emaUtilRate,
+            GSMath.max(block.number - data.LAST_BLOCK_NUMBER, data.emaMultiplier)));
 
         data.lastPrice = IGammaPool(pool).getLastCFMMPrice();
         data.lastCFMMInvariant = uint128(lastCFMMInvariant);
