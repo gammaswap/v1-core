@@ -13,6 +13,7 @@ This repository does not contain implementations of GammaPools but rather abstra
 
 The only implemented contract in this repository is the GammaPoolFactory which instantiates new GammaPools to enable the borrowing of liquidity from CFMMs and the PoolViewer which views storage data from GammaPools
 
+
 ## Steps to Run GammaSwap Tests Locally
 
 1. Run `yarn` to install GammaSwap dependencies
@@ -23,3 +24,14 @@ To deploy contracts to local live network use v1-deployment repository
 
 ### Note
 To install foundry locally go to [getfoundry.sh](https://getfoundry.sh/)
+
+## Solidity Versions
+Code is tested with solidity version 0.8.19.
+
+Concrete contracts support only solidity version 0.8.19.
+
+Abstract contracts support solidity version 0.8.4 and up.
+
+Interfaces support solidity version 0.8.0 and up.
+
+GammaPool.sol, GammaPoolERC4626, and GammaSwapLibrary.sol support solidity version 0.8.13 and up due to [abi.encodecall bug](https://soliditylang.org/blog/2022/03/16/encodecall-bug/).
