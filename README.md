@@ -37,3 +37,16 @@ Abstract contracts support solidity version 0.8.4 and up.
 Interfaces support solidity version 0.8.0 and up.
 
 GammaPool.sol, GammaPoolERC4626, and GammaSwapLibrary.sol support solidity version 0.8.13 and up due to [abi.encodecall bug](https://soliditylang.org/blog/2022/03/16/encodecall-bug/).
+
+## Publishing NPM Packages
+
+To publish an npm package follow the following steps
+
+1. Bump the package.json version to the next level (either major, minor, or patch version)
+2. commit to the main branch adding 'publish package' in the comment section of the commit (e.g. when merging a pull request)
+
+### Rules for updating package.json version
+
+1. If change does not break interface, then it's a patch version update
+2. If change breaks interface, then it's a minor version update
+3. If change is for a new product release to public, it's a major version update
