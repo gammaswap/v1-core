@@ -4,8 +4,7 @@
   "description": "Core smart contracts for the GammaSwapV1 protocol",
   "homepage": "https://gammaswap.com",
   "scripts": {
-    "hardhat": "hardhat",
-    "test": "yarn hardhat test",
+    "test": "hardhat test",
     "fuzz": "forge test"
   },
   "engines": {

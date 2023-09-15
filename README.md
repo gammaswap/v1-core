@@ -27,8 +27,6 @@ To deploy contracts to local live network use v1-deployment repository
 ### Note
 To install foundry locally go to [getfoundry.sh](https://getfoundry.sh/)
 
-Add 'skip publish' to the comment section of a commit to the main branch to avoid publishing a package
-
 ## Solidity Versions
 Code is tested with solidity version 0.8.19.
 
@@ -39,3 +37,9 @@ Abstract contracts support solidity version 0.8.4 and up.
 Interfaces support solidity version 0.8.0 and up.
 
 GammaPool.sol, GammaPoolERC4626, and GammaSwapLibrary.sol support solidity version 0.8.13 and up due to [abi.encodecall bug](https://soliditylang.org/blog/2022/03/16/encodecall-bug/).
+
+## Publishing NPM Packages
+
+Commits to main branch trigger an npm package publishing event
+
+To avoid publishing a package, add 'skip publish' to the comment section of a commit to the main branch (e.g. when merging a pull request)
