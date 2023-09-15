@@ -40,6 +40,13 @@ GammaPool.sol, GammaPoolERC4626, and GammaSwapLibrary.sol support solidity versi
 
 ## Publishing NPM Packages
 
-Commits to main branch trigger an npm package publishing event
+To publish an npm package follow the following steps
 
-To avoid publishing a package, add 'skip publish' to the comment section of a commit to the main branch (e.g. when merging a pull request)
+1. Bump the package.json version to the next level (either major, minor, or patch version)
+2. commit to the main branch adding 'publish package' in the comment section of the commit (e.g. when merging a pull request)
+
+### Rules for updating package.json version
+
+1. If change does not break interface, then it's a patch version update
+2. If change breaks interface, then it's a minor version update
+3. If change is for a new product release to public, it's a major version update
