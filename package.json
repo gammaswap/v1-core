@@ -1,7 +1,7 @@
 {
   "name": "@gammaswap/v1-core",
   "version": "0.5.37",
-  "description": "Core smart contracts for the GammaSwapV1 protocol",
+  "description": "Core smart contracts for the GammaSwap V1 protocol",
   "homepage": "https://gammaswap.com",
   "scripts": {
     "test": "hardhat test",
