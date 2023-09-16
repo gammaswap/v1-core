@@ -30,6 +30,7 @@
     "gammaswap-v1"
   ],
   "author": "Daniel D. Alcarraz (https://github.com/0xDanr)",
+  "contributors": ["Simon Mall"],
   "license": "BUSL-1.1",
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
