@@ -58,7 +58,7 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         lastBlockNum = s.LAST_BLOCK_NUMBER;
         lpTokenBorrowedPlusInterest = s.LP_TOKEN_BORROWED_PLUS_INTEREST;
         lpTokenTotal = lpBalance + lpTokenBorrowedPlusInterest;
-        //lastCFMMFeeIndex = s.lastCFMMFeeIndex;
+        lastCFMMFeeIndex = s.lastCFMMFeeIndex;
     }
 
     function setLPTokenBalAndBorrowedInv(uint256 lpTokenBal, uint128 borrowedInv) public virtual {

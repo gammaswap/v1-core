@@ -4,6 +4,7 @@ pragma solidity >=0.8.4;
 import "../interfaces/strategies/base/IShortStrategy.sol";
 import "../interfaces/periphery/ISendTokensCallback.sol";
 import "./base/BaseStrategy.sol";
+import "hardhat/console.sol";
 
 /// @title Short Strategy abstract contract implementation of IShortStrategy
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
@@ -49,7 +50,13 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         //lastCFMMFeeIndex = block.number - lastBlockNum > 0 ? calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply) * lastCFMMFeeIndex / 1e18 : 1e18;
         lastCFMMFeeIndex = block.number - lastBlockNum > 0 ? calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply) : 1e18;
 
+        console.log("lastCFMMFeeIndex");
+        console.log(lastCFMMFeeIndex);
         (lastFeeIndex, borrowRate,) = getLastFees(paramsStore, borrowedInvariant, lpBalance, prevCFMMInvariant, prevCFMMTotalSupply, lastBlockNum, pool, lastCFMMFeeIndex);
+        console.log("lastFeeIndex");
+        console.log(lastFeeIndex);
+        console.log("borrowRate");
+        console.log(borrowRate);
         // Return CFMM LP tokens depositedin GammaPool plus borrowed liquidity invariant with accrued interest in terms of CFMM LP tokens
         (lastLPBalance,,) = getLatestBalances(lastFeeIndex, borrowedInvariant, lpBalance, lastCFMMInvariant, lastCFMMTotalSupply);
     }

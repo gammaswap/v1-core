@@ -777,7 +777,6 @@ describe("ShortStrategy", function () {
           params0.lastCFMMFeeIndex
         );
 
-        console.log("params0.lastCFMMFeeIndex >> ", params0.lastCFMMFeeIndex.toString())
         await (await cfmm.trade(tradeYield)).wait();
 
         const cfmmTotalSupply1 = await cfmm.totalSupply();
@@ -796,7 +795,25 @@ describe("ShortStrategy", function () {
           strategy.address,
           params1.lastCFMMFeeIndex
         );
-        console.log("params1.lastCFMMFeeIndex >> ", params1.lastCFMMFeeIndex.toString())
+
+        console.log("params0.borrowedInvariant: ", params0.borrowedInvariant.toString())
+        console.log("params1.borrowedInvariant: ", params1.borrowedInvariant.toString())
+        console.log("params0.lpBalance: ", params0.lpBalance.toString())
+        console.log("params1.lpBalance: ", params1.lpBalance.toString())
+        console.log("params0.prevCFMMInvariant: ", params0.prevCFMMInvariant.toString())
+        console.log("params1.prevCFMMInvariant: ", params1.prevCFMMInvariant.toString())
+        console.log("params0.prevCFMMTotalSupply: ", params0.prevCFMMTotalSupply.toString())
+        console.log("params1.prevCFMMTotalSupply: ", params1.prevCFMMTotalSupply.toString())
+        console.log("params0.lastBlockNum: ", params0.lastBlockNum.toString())
+        console.log("params1.lastBlockNum: ", params1.lastBlockNum.add(1).toString())
+        console.log("params0.lastCFMMFeeIndex: ", params0.lastCFMMFeeIndex.toString())
+        console.log("params1.lastCFMMFeeIndex: ", params1.lastCFMMFeeIndex.toString())
+        console.log("cfmmInvariant0: ", cfmmInvariant0.toString())
+        console.log("cfmmInvariant1: ", cfmmInvariant1.toString())
+        console.log("cfmmTotalSupply0: ", cfmmTotalSupply0.toString())
+        console.log("cfmmTotalSupply1: ", cfmmTotalSupply1.toString())
+        console.log("totalAssets0: ", totalAssets0.toString())
+        console.log("totalAssets1: ", totalAssets1.toString())
 
         const expTotAssets = params1.lpBalance.add(
           params1.borrowedInvariant.mul(cfmmTotalSupply1).div(cfmmInvariant1)
