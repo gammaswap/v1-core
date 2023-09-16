@@ -89,7 +89,8 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, PausableRe
     /// @return totalAssets - current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
     function totalAssets() public view virtual returns(uint256) {
         return IShortStrategy(vaultImplementation()).totalAssets(s.factory, s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE,
-            _getLatestCFMMInvariant(), _getLatestCFMMTotalSupply(), s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER, address(this), s.lastCFMMFeeIndex);
+            _getLatestCFMMInvariant(), _getLatestCFMMTotalSupply(), s.lastCFMMInvariant, s.lastCFMMTotalSupply,
+            s.LAST_BLOCK_NUMBER, address(this), s.lastCFMMFeeIndex);
     }
 
     /// @dev Convert CFMM LP tokens to GS LP tokens

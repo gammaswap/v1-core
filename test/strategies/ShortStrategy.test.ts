@@ -733,7 +733,7 @@ describe("ShortStrategy", function () {
         expect(assets).to.equal(expectedGSShares);
       });
 
-      it.only("Total Assets Ignore CFMM Fee if Same Block", async function () {
+      it("Total Assets Ignore CFMM Fee if Same Block", async function () {
         const ONE = BigNumber.from(10).pow(18);
         const shares = ONE.mul(200);
         const tradeYield = ONE.mul(10);
@@ -796,25 +796,6 @@ describe("ShortStrategy", function () {
           params1.lastCFMMFeeIndex
         );
 
-        console.log("params0.borrowedInvariant: ", params0.borrowedInvariant.toString())
-        console.log("params1.borrowedInvariant: ", params1.borrowedInvariant.toString())
-        console.log("params0.lpBalance: ", params0.lpBalance.toString())
-        console.log("params1.lpBalance: ", params1.lpBalance.toString())
-        console.log("params0.prevCFMMInvariant: ", params0.prevCFMMInvariant.toString())
-        console.log("params1.prevCFMMInvariant: ", params1.prevCFMMInvariant.toString())
-        console.log("params0.prevCFMMTotalSupply: ", params0.prevCFMMTotalSupply.toString())
-        console.log("params1.prevCFMMTotalSupply: ", params1.prevCFMMTotalSupply.toString())
-        console.log("params0.lastBlockNum: ", params0.lastBlockNum.toString())
-        console.log("params1.lastBlockNum: ", params1.lastBlockNum.add(1).toString())
-        console.log("params0.lastCFMMFeeIndex: ", params0.lastCFMMFeeIndex.toString())
-        console.log("params1.lastCFMMFeeIndex: ", params1.lastCFMMFeeIndex.toString())
-        console.log("cfmmInvariant0: ", cfmmInvariant0.toString())
-        console.log("cfmmInvariant1: ", cfmmInvariant1.toString())
-        console.log("cfmmTotalSupply0: ", cfmmTotalSupply0.toString())
-        console.log("cfmmTotalSupply1: ", cfmmTotalSupply1.toString())
-        console.log("totalAssets0: ", totalAssets0.toString())
-        console.log("totalAssets1: ", totalAssets1.toString())
-
         const expTotAssets = params1.lpBalance.add(
           params1.borrowedInvariant.mul(cfmmTotalSupply1).div(cfmmInvariant1)
         );
@@ -825,7 +806,7 @@ describe("ShortStrategy", function () {
         expect(totalAssets1).to.equal(expTotAssets);
       });
 
-      it.skip("More Deposit Assets/LP Tokens", async function () {
+      it("More Deposit Assets/LP Tokens", async function () {
         const ONE = BigNumber.from(10).pow(18);
         const shares = ONE.mul(200);
         const tradeYield = ONE.mul(10);
@@ -1221,7 +1202,7 @@ describe("ShortStrategy", function () {
         expect(assets).to.equal(expectedGSShares);
       });
 
-      it.skip("More Deposit Reserves", async function () {
+      it("More Deposit Reserves", async function () {
         const ONE = BigNumber.from(10).pow(18);
         const shares = ONE.mul(200);
         const tradeYield = ONE.mul(10);

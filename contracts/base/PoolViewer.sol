@@ -123,9 +123,8 @@ contract PoolViewer is IPoolViewer {
             lastCFMMInvariant, lastCFMMTotalSupply, _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply) * _loanData.lastCFMMFeeIndex / 1e18 : 1e18;
 
         (uint256 lastFeeIndex,,) = IShortStrategy(_loanData.shortStrategy).getLastFees(_loanData.paramsStore,
-            _loanData.BORROWED_INVARIANT, _loanData.LP_TOKEN_BALANCE,
-            _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply, _loanData.LAST_BLOCK_NUMBER, _loanData.poolId,
-            lastCFMMFeeIndex);
+            _loanData.BORROWED_INVARIANT, _loanData.LP_TOKEN_BALANCE, _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply,
+            _loanData.LAST_BLOCK_NUMBER, _loanData.poolId, lastCFMMFeeIndex);
 
         accFeeIndex = _loanData.accFeeIndex * lastFeeIndex / 1e18;
     }
@@ -179,12 +178,11 @@ contract PoolViewer is IPoolViewer {
             lastCFMMInvariant, lastCFMMTotalSupply, params.lastCFMMInvariant, params.lastCFMMTotalSupply) * params.lastCFMMFeeIndex / 1e18 : 1e18;
 
         (data.lastFeeIndex,data.borrowRate,data.utilizationRate) = IShortStrategy(params.shortStrategy)
-        .getLastFees(params.paramsStore, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE,
-            params.lastCFMMInvariant, params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.pool, data.lastCFMMFeeIndex);
+            .getLastFees(params.paramsStore, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, params.lastCFMMInvariant,
+            params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.pool, data.lastCFMMFeeIndex);
 
-        (,, data.BORROWED_INVARIANT) = IShortStrategy(params.shortStrategy)
-        .getLatestBalances(data.lastFeeIndex, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE,
-            lastCFMMInvariant, lastCFMMTotalSupply);
+        (,, data.BORROWED_INVARIANT) = IShortStrategy(params.shortStrategy).getLatestBalances(data.lastFeeIndex,
+            params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply);
 
         data.LP_INVARIANT = uint128(params.LP_TOKEN_BALANCE * lastCFMMInvariant / lastCFMMTotalSupply);
 
@@ -225,8 +223,8 @@ contract PoolViewer is IPoolViewer {
             lastCFMMInvariant, lastCFMMTotalSupply, data.lastCFMMInvariant, data.lastCFMMTotalSupply) * data.lastCFMMFeeIndex / 1e18 : 1e18;
 
         (data.lastFeeIndex, data.borrowRate, data.utilizationRate) = IShortStrategy(data.shortStrategy)
-        .getLastFees(data.paramsStore, borrowedInvariant, data.LP_TOKEN_BALANCE,
-            data.lastCFMMInvariant, data.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER, pool, lastCFMMFeeIndex);
+            .getLastFees(data.paramsStore, borrowedInvariant, data.LP_TOKEN_BALANCE, data.lastCFMMInvariant,
+            data.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER, pool, lastCFMMFeeIndex);
 
         data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
 
