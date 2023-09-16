@@ -683,7 +683,8 @@ describe("ShortStrategyERC4626", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(1), // to account for the next block update
-          strategy.address
+          strategy.address,
+          params1.lastCFMMFeeIndex
         );
         const expectedGSShares3 = assets3
           .mul(await strategy.totalSupply())
@@ -947,7 +948,8 @@ describe("ShortStrategyERC4626", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(1), // to account for the next block update
-          strategy.address
+          strategy.address,
+          params1.lastCFMMFeeIndex
         );
         const expectedAssets2 = shares2
           .mul(currTotalAssets)
@@ -989,7 +991,8 @@ describe("ShortStrategyERC4626", function () {
           params2.prevCFMMInvariant,
           params2.prevCFMMTotalSupply,
           params2.lastBlockNum.sub(1), // to account for the next block update
-          strategy.address
+          strategy.address,
+          params2.lastCFMMFeeIndex
         );
         const expectedAssets3 = shares3
           .mul(currTotalAssets2)
@@ -1216,7 +1219,8 @@ describe("ShortStrategyERC4626", function () {
         params.prevCFMMInvariant,
         params.prevCFMMTotalSupply,
         params.lastBlockNum.sub(1), // to account for the next block update
-        strategy.address
+        strategy.address,
+        params.lastCFMMFeeIndex
       );
       expect(currTotalAssets).to.equal(0);
 
@@ -1241,7 +1245,8 @@ describe("ShortStrategyERC4626", function () {
         params1.prevCFMMInvariant,
         params1.prevCFMMTotalSupply,
         params1.lastBlockNum.sub(1), // to account for the next block update
-        strategy.address
+        strategy.address,
+        params1.lastCFMMFeeIndex
       );
       expect(currTotalAssets1).to.equal(0);
 
@@ -1290,7 +1295,8 @@ describe("ShortStrategyERC4626", function () {
         params.prevCFMMInvariant,
         params.prevCFMMTotalSupply,
         params.lastBlockNum.sub(1), // to account for the next block update
-        strategy.address
+        strategy.address,
+        params.lastCFMMFeeIndex
       );
 
       await (await strategy.testUpdateIndex()).wait();

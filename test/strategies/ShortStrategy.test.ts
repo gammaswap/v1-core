@@ -773,7 +773,8 @@ describe("ShortStrategy", function () {
           params0.prevCFMMInvariant,
           params0.prevCFMMTotalSupply,
           params0.lastBlockNum,
-          strategy.address
+          strategy.address,
+          params0.lastCFMMFeeIndex
         );
 
         await (await cfmm.trade(tradeYield)).wait();
@@ -791,7 +792,8 @@ describe("ShortStrategy", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.add(1),
-          strategy.address
+          strategy.address,
+          params1.lastCFMMFeeIndex
         );
 
         const expTotAssets = params1.lpBalance.add(
@@ -892,7 +894,8 @@ describe("ShortStrategy", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(2), // to account for the next 2 blocks update
-          strategy.address
+          strategy.address,
+          params1.lastCFMMFeeIndex
         );
 
         const expectedGSShares3 = assets3
@@ -1294,7 +1297,8 @@ describe("ShortStrategy", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(1), // to account for the next 1 block update
-          strategy.address
+          strategy.address,
+          params1.lastCFMMFeeIndex
         );
 
         const expectedGSShares3 = assets3

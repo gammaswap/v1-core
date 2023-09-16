@@ -357,7 +357,7 @@ describe("GammaPool", function () {
       expect(_cfmmReser[0]).to.equal(1);
       expect(_cfmmReser[1]).to.equal(2);
 
-      expect(res5.lastCFMMFeeIndex).to.equal(1);
+      expect(res5.lastCFMMFeeIndex).to.equal(ONE);
       expect(res5.lastFeeIndex).to.equal(2);
       expect(res5.borrowRate).to.equal(3);
       expect(res5.supplyRate).to.equal(0);
@@ -592,7 +592,7 @@ describe("GammaPool", function () {
 
       const res1 = await gammaPool.getFeeIndexUpdateParams();
       expect(res0.accFeeIndex).to.eq(4);
-      expect(res0.lastCFMMFeeIndex).to.eq(1);
+      expect(res0.lastCFMMFeeIndex).to.eq(ONE);
       expect(res0.lastFeeIndex).to.eq(2);
       expect(res0.borrowRate).to.eq(3);
       expect(res0.utilizationRate).to.eq(ONE);

@@ -41,10 +41,13 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     }
 
     /// @dev See {IShortStrategy-totalAssets}.
-    function totalAssets(address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply,
-        uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, address pool) public virtual override view returns(uint256 lastLPBalance) {
-        (uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate,) = getLastFees(paramsStore, borrowedInvariant, lpBalance, lastCFMMInvariant,
-            lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply, lastBlockNum, pool);
+    function totalAssets(address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant,
+        uint256 prevCFMMTotalSupply, uint256 lastBlockNum, address pool, uint256 lastCFMMFeeIndex) public virtual override view returns(uint256 lastLPBalance) {
+        // Get fee growth in CFMM since last update
+        lastCFMMFeeIndex = block.number - lastBlockNum > 0 ? calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply) * lastCFMMFeeIndex / 1e18 : 1e18;
+
+        (uint256 lastFeeIndex, uint256 borrowRate,) = getLastFees(paramsStore, borrowedInvariant, lpBalance, prevCFMMInvariant, prevCFMMTotalSupply, lastBlockNum, pool, lastCFMMFeeIndex);
+
         // Return CFMM LP tokens depositedin GammaPool plus borrowed liquidity invariant with accrued interest in terms of CFMM LP tokens
         (lastLPBalance,,) = getLatestBalances(lastFeeIndex, borrowedInvariant, lpBalance, lastCFMMInvariant, lastCFMMTotalSupply);
     }
@@ -58,13 +61,8 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     }
 
     /// @dev See {IShortStrategy-getLastFees}.
-    function getLastFees(address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply,
-        uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, address pool) public virtual override view
-        returns(uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 borrowRate, uint256 utilizationRate) {
-
-        // Get fee growth in CFMM since last update
-        lastCFMMFeeIndex = block.number - lastBlockNum > 0 ? calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply) : 1e18;
-
+    function getLastFees(address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum,
+        address pool, uint256 lastCFMMFeeIndex) public virtual override view returns(uint256 lastFeeIndex, uint256 borrowRate, uint256 utilizationRate) {
         // Calculate borrow rate
         (borrowRate, utilizationRate) = calcBorrowRate(convertLPToInvariant(lpBalance, prevCFMMInvariant, prevCFMMTotalSupply), borrowedInvariant, paramsStore, pool);
 

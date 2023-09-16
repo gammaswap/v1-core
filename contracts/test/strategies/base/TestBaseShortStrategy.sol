@@ -49,7 +49,7 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
     }
 
     function getTotalAssetsParams() public virtual view returns(uint256 borrowedInvariant, uint256 lpBalance, uint256 lpBorrowed, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum,
-        uint256 lpTokenTotal, uint256 lpTokenBorrowedPlusInterest) {
+        uint256 lpTokenTotal, uint256 lpTokenBorrowedPlusInterest, uint256 lastCFMMFeeIndex) {
         borrowedInvariant = s.BORROWED_INVARIANT;
         lpBalance = s.LP_TOKEN_BALANCE;
         lpBorrowed = s.LP_TOKEN_BORROWED;
@@ -58,6 +58,7 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         lastBlockNum = s.LAST_BLOCK_NUMBER;
         lpTokenBorrowedPlusInterest = s.LP_TOKEN_BORROWED_PLUS_INTEREST;
         lpTokenTotal = lpBalance + lpTokenBorrowedPlusInterest;
+        lastCFMMFeeIndex = s.lastCFMMFeeIndex;
     }
 
     function setLPTokenBalAndBorrowedInv(uint256 lpTokenBal, uint128 borrowedInv) public virtual {

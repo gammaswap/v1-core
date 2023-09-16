@@ -175,6 +175,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         _data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
         _data.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         _data.accFeeIndex = s.accFeeIndex;
+        _data.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
         _data.emaUtilRate = s.emaUtilRate;
         _data.emaMultiplier = s.emaMultiplier;
         _data.minUtilRate1 = s.minUtilRate1;
@@ -297,6 +298,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         _loanData.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
         _loanData.ltvThreshold = s.ltvThreshold;
         _loanData.liquidationFee = s.liquidationFee;
+        _loanData.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
     }
 
     /// @dev See {IGammaPool-getLoans}
