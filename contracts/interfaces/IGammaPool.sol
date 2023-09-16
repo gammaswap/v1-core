@@ -52,6 +52,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
 
         /// @dev names of ERC20 tokens of CFMM
         uint256 accFeeIndex;
+        /// @dev Percent accrual in CFMM invariant since last update
+        uint256 lastCFMMFeeIndex;
         /// @dev names of ERC20 tokens of CFMM
         uint256 LAST_BLOCK_NUMBER;
 
@@ -250,6 +252,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         uint256 LAST_BLOCK_NUMBER;
         /// @dev GammaPool's ever increasing interest rate index, tracks interest accrued through CFMM and liquidity loans, max 30.9% billion
         uint256 accFeeIndex;
+        /// @dev Percent accrual in CFMM invariant since last update
+        uint256 lastCFMMFeeIndex;
         /// @dev EMA of utilization Rate
         uint256 emaUtilRate;
         /// @dev Multiplier of EMA Utilization Rate

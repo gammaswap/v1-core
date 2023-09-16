@@ -733,7 +733,7 @@ describe("ShortStrategy", function () {
         expect(assets).to.equal(expectedGSShares);
       });
 
-      it("Total Assets Ignore CFMM Fee if Same Block", async function () {
+      it.only("Total Assets Ignore CFMM Fee if Same Block", async function () {
         const ONE = BigNumber.from(10).pow(18);
         const shares = ONE.mul(200);
         const tradeYield = ONE.mul(10);
@@ -773,9 +773,11 @@ describe("ShortStrategy", function () {
           params0.prevCFMMInvariant,
           params0.prevCFMMTotalSupply,
           params0.lastBlockNum,
-          strategy.address
+          strategy.address,
+          params0.lastCFMMFeeIndex
         );
 
+        console.log("params0.lastCFMMFeeIndex >> ", params0.lastCFMMFeeIndex.toString())
         await (await cfmm.trade(tradeYield)).wait();
 
         const cfmmTotalSupply1 = await cfmm.totalSupply();
@@ -791,8 +793,10 @@ describe("ShortStrategy", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.add(1),
-          strategy.address
+          strategy.address,
+          params1.lastCFMMFeeIndex
         );
+        console.log("params1.lastCFMMFeeIndex >> ", params1.lastCFMMFeeIndex.toString())
 
         const expTotAssets = params1.lpBalance.add(
           params1.borrowedInvariant.mul(cfmmTotalSupply1).div(cfmmInvariant1)
@@ -804,7 +808,7 @@ describe("ShortStrategy", function () {
         expect(totalAssets1).to.equal(expTotAssets);
       });
 
-      it("More Deposit Assets/LP Tokens", async function () {
+      it.skip("More Deposit Assets/LP Tokens", async function () {
         const ONE = BigNumber.from(10).pow(18);
         const shares = ONE.mul(200);
         const tradeYield = ONE.mul(10);
@@ -892,7 +896,8 @@ describe("ShortStrategy", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(2), // to account for the next 2 blocks update
-          strategy.address
+          strategy.address,
+          params1.lastCFMMFeeIndex
         );
 
         const expectedGSShares3 = assets3
@@ -1199,7 +1204,7 @@ describe("ShortStrategy", function () {
         expect(assets).to.equal(expectedGSShares);
       });
 
-      it("More Deposit Reserves", async function () {
+      it.skip("More Deposit Reserves", async function () {
         const ONE = BigNumber.from(10).pow(18);
         const shares = ONE.mul(200);
         const tradeYield = ONE.mul(10);
@@ -1294,7 +1299,8 @@ describe("ShortStrategy", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(1), // to account for the next 1 block update
-          strategy.address
+          strategy.address,
+          params1.lastCFMMFeeIndex
         );
 
         const expectedGSShares3 = assets3

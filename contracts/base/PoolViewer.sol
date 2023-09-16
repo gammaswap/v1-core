@@ -66,6 +66,30 @@ contract PoolViewer is IPoolViewer {
         return collateral * (10000 - ltvThreshold * 10) / 1e4 < liquidity;
     }
 
+    /// @dev Calculate fees accrued from fees in CFMM
+    /// @param borrowedInvariant - liquidity invariant borrowed from CFMM
+    /// @param lastCFMMInvariant - current liquidity invariant in CFMM
+    /// @param lastCFMMTotalSupply - current CFMM LP token supply
+    /// @param prevCFMMInvariant - liquidity invariant in CFMM in previous GammaPool update
+    /// @param prevCFMMTotalSupply - CFMM LP token supply in previous GammaPool update
+    /// @return cfmmFeeIndex - index tracking accrued fees from CFMM since last GammaPool update
+    ///
+    /// CFMM Fee Index = 1 + CFMM Yield = (cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1)
+    ///
+    /// Deleveraged CFMM Fee Index = 1 + Deleveraged CFMM Yield
+    ///
+    /// Deleveraged CFMM Fee Index = 1 + [(cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1) - 1] * (cfmmInvariant0 / borrowedInvariant)
+    ///
+    /// Deleveraged CFMM Fee Index = [cfmmInvariant1 * cfmmTotalSupply0 + (borrowedInvariant - cfmmInvariant0) * cfmmTotalSupply1] / (borrowedInvariant * cfmmTotalSupply1)
+    function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply) internal virtual view returns(uint256) {
+        if(lastCFMMInvariant > 0 && lastCFMMTotalSupply > 0 && prevCFMMInvariant > 0 && prevCFMMTotalSupply > 0) {
+            uint256 prevInvariant = borrowedInvariant > prevCFMMInvariant ? borrowedInvariant : prevCFMMInvariant; // Deleverage CFMM Yield
+            uint256 denominator = prevInvariant * lastCFMMTotalSupply;
+            return (lastCFMMInvariant * prevCFMMTotalSupply + lastCFMMTotalSupply * (prevInvariant - prevCFMMInvariant)) * 1e18 / denominator;
+        }
+        return 1e18; // first update
+    }
+
     /// @dev See {IPoolViewer-loan}
     function loan(address pool, uint256 tokenId) external virtual override view returns(IGammaPool.LoanData memory _loanData) {
         _loanData = IGammaPool(pool).getLoanData(tokenId);
@@ -95,9 +119,13 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMTotalSupply;
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(_loanData.poolId).getLatestCFMMBalances();
 
-        (,uint256 lastFeeIndex,,) = IShortStrategy(_loanData.shortStrategy).getLastFees(_loanData.paramsStore,
-            _loanData.BORROWED_INVARIANT, _loanData.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply,
-            _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply, _loanData.LAST_BLOCK_NUMBER, _loanData.poolId);
+        uint256 lastCFMMFeeIndex = block.number - _loanData.LAST_BLOCK_NUMBER > 0 ? calcCFMMFeeIndex(_loanData.BORROWED_INVARIANT,
+            lastCFMMInvariant, lastCFMMTotalSupply, _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply) * _loanData.lastCFMMFeeIndex / 1e18 : 1e18;
+
+        (uint256 lastFeeIndex,,) = IShortStrategy(_loanData.shortStrategy).getLastFees(_loanData.paramsStore,
+            _loanData.BORROWED_INVARIANT, _loanData.LP_TOKEN_BALANCE,
+            _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply, _loanData.LAST_BLOCK_NUMBER, _loanData.poolId,
+            lastCFMMFeeIndex);
 
         accFeeIndex = _loanData.accFeeIndex * lastFeeIndex / 1e18;
     }
@@ -147,9 +175,12 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMTotalSupply;
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(pool).getLatestCFMMBalances();
 
-        (data.lastCFMMFeeIndex,data.lastFeeIndex,data.borrowRate,data.utilizationRate) = IShortStrategy(params.shortStrategy)
-        .getLastFees(params.paramsStore, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply,
-            params.lastCFMMInvariant, params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.pool);
+        data.lastCFMMFeeIndex = block.number - params.LAST_BLOCK_NUMBER > 0 ? calcCFMMFeeIndex(params.BORROWED_INVARIANT,
+            lastCFMMInvariant, lastCFMMTotalSupply, params.lastCFMMInvariant, params.lastCFMMTotalSupply) * params.lastCFMMFeeIndex / 1e18 : 1e18;
+
+        (data.lastFeeIndex,data.borrowRate,data.utilizationRate) = IShortStrategy(params.shortStrategy)
+        .getLastFees(params.paramsStore, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE,
+            params.lastCFMMInvariant, params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.pool, data.lastCFMMFeeIndex);
 
         (,, data.BORROWED_INVARIANT) = IShortStrategy(params.shortStrategy)
         .getLatestBalances(data.lastFeeIndex, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE,
@@ -190,10 +221,12 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMTotalSupply;
         (data.CFMM_RESERVES, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(pool).getLatestCFMMBalances();
 
-        uint256 lastCFMMFeeIndex;
-        (lastCFMMFeeIndex, data.lastFeeIndex, data.borrowRate, data.utilizationRate) = IShortStrategy(data.shortStrategy)
-        .getLastFees(data.paramsStore, borrowedInvariant, data.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply,
-            data.lastCFMMInvariant, data.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER, pool);
+        uint256 lastCFMMFeeIndex = block.number - data.LAST_BLOCK_NUMBER > 0 ? calcCFMMFeeIndex(borrowedInvariant,
+            lastCFMMInvariant, lastCFMMTotalSupply, data.lastCFMMInvariant, data.lastCFMMTotalSupply) * data.lastCFMMFeeIndex / 1e18 : 1e18;
+
+        (data.lastFeeIndex, data.borrowRate, data.utilizationRate) = IShortStrategy(data.shortStrategy)
+        .getLastFees(data.paramsStore, borrowedInvariant, data.LP_TOKEN_BALANCE,
+            data.lastCFMMInvariant, data.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER, pool, lastCFMMFeeIndex);
 
         data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
 
