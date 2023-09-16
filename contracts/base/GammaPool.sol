@@ -75,7 +75,6 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external virtual override {
         if(msg.sender != factory) revert Forbidden(); // only factory is allowed to update dynamic fee parameters
 
-        require(minUtilRate1 <= 100, "MIN_UTIL_RATE");
         require(feeDivisor > 0, "FEE_DIVISOR");
         require(liquidationFee <= uint256(ltvThreshold) * 10, "LIQUIDATION_FEE");
 

@@ -689,7 +689,7 @@ describe("GammaPoolFactory", function () {
 
       await expect(
         factory.setPoolParams(pool, 1, 2, 3, 101, 60, 0, 11, 1)
-      ).to.be.revertedWith("MIN_UTIL_RATE");
+      ).to.be.revertedWith("FEE_DIVISOR");
 
       await expect(
         factory.setPoolParams(pool, 1, 2, 3, 95, 60, 0, 11, 1)
