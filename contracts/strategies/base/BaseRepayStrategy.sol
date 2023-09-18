@@ -140,9 +140,12 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
         // Write down pool liquidity debt
         uint256 borrowedInvariant = s.BORROWED_INVARIANT; // Save gas
 
-        // Shouldn't overflow because borrowedInvariant = sum(loanLiquidity of all loans)
-        assert(borrowedInvariant >= writeDownAmt);
-        borrowedInvariant = borrowedInvariant - writeDownAmt;
+        // Will always write down
+        if(writeDownAmt > borrowedInvariant) {
+            borrowedInvariant = 0;
+        } else {
+            borrowedInvariant = borrowedInvariant - writeDownAmt;
+        }
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(borrowedInvariant, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
         s.BORROWED_INVARIANT = uint128(borrowedInvariant);
 
