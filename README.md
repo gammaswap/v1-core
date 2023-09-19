@@ -13,8 +13,10 @@ This is the repository for the core smart contracts of the GammaSwap V1 protocol
 
 This repository does not contain implementations of GammaPools but rather abstract contracts that can be used to implement GammaPools for different types of CFMMs
 
-The only implemented contract in this repository is the GammaPoolFactory which instantiates new GammaPools to enable the borrowing of liquidity from CFMMs and the PoolViewer which views storage data from GammaPools
+The only implemented contract in this repository is the GammaPoolFactory which instantiates new GammaPools to enable the borrowing of liquidity from CFMMs,
+the PoolViewer which views storage data from GammaPools, and storage contracts to track loans and store price information.
 
+The storage contracts to track loans and store price information are not necessary if a subgraph exists to do the same.
 
 ## Steps to Run GammaSwap Tests Locally
 
@@ -37,6 +39,8 @@ Abstract contracts support solidity version 0.8.4 and up.
 Interfaces support solidity version 0.8.0 and up.
 
 GammaPool.sol, GammaPoolERC4626, and GammaSwapLibrary.sol support solidity version 0.8.13 and up due to [abi.encodecall bug](https://soliditylang.org/blog/2022/03/16/encodecall-bug/).
+
+We used solidity version 0.8.19 because at the time arbitrum only works with up to solidity version 0.8.19
 
 ## Publishing NPM Packages
 
