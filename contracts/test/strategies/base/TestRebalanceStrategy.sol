@@ -11,7 +11,6 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
     using LibStorage for LibStorage.Storage;
 
     event LoanCreated(address indexed caller, uint256 tokenId);
-    event AmountsWithFees(uint256[] amounts);
     uint80 public borrowRate = 1e18;
     uint16 public origFee = 0;
     uint16 public protocolId;
@@ -284,11 +283,6 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
     function testUpdateLoan(uint256 tokenId) public virtual {
         LibStorage.Loan storage _loan = s.loans[tokenId];
         super.updateLoan(_loan);
-    }
-
-    function testAddFees(uint256[] memory amounts, uint256[] calldata fees) public virtual {
-        uint256[] memory amountsWithFees = addFees(amounts, fees);
-        emit AmountsWithFees(amountsWithFees);
     }
 
     function calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) public virtual override view returns(int256[] memory deltas) {

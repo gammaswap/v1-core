@@ -381,13 +381,13 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     /// @dev See {IGammaPool-repayLiquidity}
-    function repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external virtual override whenNotPaused(13) returns(uint256 liquidityPaid, uint256[] memory amounts) {
-        return abi.decode(callStrategy(repayStrategy, abi.encodeCall(IRepayStrategy._repayLiquidity, (tokenId, liquidity, fees, collateralId, to))), (uint256, uint256[]));
+    function repayLiquidity(uint256 tokenId, uint256 liquidity, uint256 collateralId, address to) external virtual override whenNotPaused(13) returns(uint256 liquidityPaid, uint256[] memory amounts) {
+        return abi.decode(callStrategy(repayStrategy, abi.encodeCall(IRepayStrategy._repayLiquidity, (tokenId, liquidity, collateralId, to))), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-repayLiquiditySetRatio}
-    function repayLiquiditySetRatio(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external virtual override whenNotPaused(14) returns(uint256 liquidityPaid, uint256[] memory amounts) {
-        return abi.decode(callStrategy(repayStrategy, abi.encodeCall(IRepayStrategy._repayLiquiditySetRatio, (tokenId, liquidity, fees, ratio))), (uint256, uint256[]));
+    function repayLiquiditySetRatio(uint256 tokenId, uint256 liquidity, uint256[] calldata ratio) external virtual override whenNotPaused(14) returns(uint256 liquidityPaid, uint256[] memory amounts) {
+        return abi.decode(callStrategy(repayStrategy, abi.encodeCall(IRepayStrategy._repayLiquiditySetRatio, (tokenId, liquidity, ratio))), (uint256, uint256[]));
     }
 
     /// @dev See {IGammaPool-repayLiquidityWithLP}
@@ -423,7 +423,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     /***** SYNC POOL *****/
 
     /// @dev See {IGammaPool-sync}
-    function sync() external virtual override lock whenNotPaused(21) {
+    function sync() external virtual override whenNotPaused(21) {
         callStrategy(shortStrategy, abi.encodeCall(IShortStrategy._sync, ()));
     }
 
@@ -438,6 +438,18 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
             }
         }
         skim(s.cfmm, s.LP_TOKEN_BALANCE, to); // skim cfmm LP tokens
+    }
+
+    /// @dev See {ITransfers-clearToken}
+    function clearToken(address token, address to, uint256 minAmt) external override virtual lock whenNotPaused(23) {
+        // Can't clear CFMM LP tokens or collateral tokens
+        if(isCFMMToken(token) || isCollateralToken(token)) revert RestrictedToken();
+
+        uint256 tokenBal = IERC20(token).balanceOf(address(this));
+        if(tokenBal < minAmt) revert NotEnoughTokens(); // Only clear if past threshold
+
+        // If not CFMM LP token or collateral token send entire amount
+        if (tokenBal > 0) GammaSwapLibrary.safeTransfer(token, to, tokenBal);
     }
 
     /// @dev See {Transfers-isCFMMToken}

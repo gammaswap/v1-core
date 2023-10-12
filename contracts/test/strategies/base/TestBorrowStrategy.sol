@@ -12,7 +12,6 @@ contract TestBorrowStrategy is BorrowStrategy {
     event DynOrigFee(uint256 dynOrigFee);
     event LoanCreated(address indexed caller, uint256 tokenId);
     event LiquidityAndDeltas(uint256 liquidity, uint256 delta0, uint256 delta1, uint256 deltaLen);
-    event AmountsWithFees(uint256[] amounts);
     uint80 public borrowRate = 1e18;
     uint16 public origFee = 0;
     uint16 public protocolId;
@@ -294,11 +293,6 @@ contract TestBorrowStrategy is BorrowStrategy {
     function testUpdateLoan(uint256 tokenId) public virtual {
         LibStorage.Loan storage _loan = s.loans[tokenId];
         super.updateLoan(_loan);
-    }
-
-    function testAddFees(uint256[] memory amounts, uint256[] calldata fees) public virtual {
-        uint256[] memory amountsWithFees = addFees(amounts, fees);
-        emit AmountsWithFees(amountsWithFees);
     }
 
     function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {

@@ -1051,7 +1051,6 @@ describe("GammaPool", function () {
         await gammaPool.repayLiquidity(
           tokenId,
           400,
-          [43, 44],
           0,
           ethers.constants.AddressZero,
           []
@@ -1085,7 +1084,7 @@ describe("GammaPool", function () {
       expect(res4.events[0].args.txType).to.eq(10);
 
       const res5 = await (
-        await gammaPool.repayLiquiditySetRatio(tokenId, 400, [43, 44], [])
+        await gammaPool.repayLiquiditySetRatio(tokenId, 400, [])
       ).wait();
       expect(res5.events[0].args.tokenId).to.eq(tokenId);
       expect(res5.events[0].args.tokensHeld.length).to.eq(2);

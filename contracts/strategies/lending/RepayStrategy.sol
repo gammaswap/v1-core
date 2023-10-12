@@ -45,13 +45,11 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
     /// @param tokensHeld - loan total collateral available to pay loan
     /// @param liquidity - liquidity that we'll pay using loan collateral
     /// @param totalLiquidityDebt - total liquidity debt of loan
-    /// @param fees - fees to transfer during payment in case token has transfer fees
     /// @return collateral - collateral portion of total collateral that will be used to pay `liquidity`
-    function proRataCollateral(uint128[] memory tokensHeld, uint256 liquidity, uint256 totalLiquidityDebt, uint256[] memory fees) internal virtual view returns(uint128[] memory) {
+    function proRataCollateral(uint128[] memory tokensHeld, uint256 liquidity, uint256 totalLiquidityDebt) internal virtual view returns(uint128[] memory) {
         uint256 tokenCount = tokensHeld.length;
-        bool skipFees = tokenCount != fees.length;
         for(uint256 i = 0; i < tokenCount;) {
-            tokensHeld[i] = uint128(GSMath.min(((tokensHeld[i] * liquidity * 10000 - (skipFees ? 0 : tokensHeld[i] * liquidity * fees[i])) / (totalLiquidityDebt * 10000)), uint256(tokensHeld[i])));
+            tokensHeld[i] = uint128(GSMath.min(tokensHeld[i] * liquidity / totalLiquidityDebt, uint256(tokensHeld[i])));
             unchecked {
                 ++i;
             }
@@ -105,7 +103,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
     }
 
     /// @dev See {IRepayStrategy-_repayLiquiditySetRatio}.
-    function _repayLiquiditySetRatio(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, uint256[] calldata ratio) external virtual lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
+    function _repayLiquiditySetRatio(uint256 tokenId, uint256 payLiquidity, uint256[] calldata ratio) external virtual lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
         if(payLiquidity == 0) revert ZeroRepayLiquidity();
 
         // Get loan for tokenId, revert if not loan creator
@@ -130,7 +128,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                 rebalanceCollateral(_loan, _calcDeltasToCloseSetRatio(tokensHeld, s.CFMM_RESERVES, liquidityToCalculate,
                     tokensHeld.length != ratio.length ? GammaSwapLibrary.convertUint128ToUint256Array(tokensHeld) : ratio), s.CFMM_RESERVES);
                 updateIndex();
-                amounts = addFees(calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate),fees);
+                amounts = calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate);
             }
         }
 
@@ -158,7 +156,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
     }
 
     /// @dev See {IRepayStrategy-_repayLiquidity}.
-    function _repayLiquidity(uint256 tokenId, uint256 payLiquidity, uint256[] calldata fees, uint256 collateralId, address to) external virtual lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
+    function _repayLiquidity(uint256 tokenId, uint256 payLiquidity, uint256 collateralId, address to) external virtual lock returns(uint256 liquidityPaid, uint256[] memory amounts) {
         if(payLiquidity == 0) revert ZeroRepayLiquidity();
 
         // Get loan for tokenId, revert if not loan creator
@@ -182,11 +180,11 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                 updateIndex();
             } else {
                 if(collateralId > 0) {
-                    collateral = proRataCollateral(_loan.tokensHeld, liquidityToCalculate, loanLiquidity, fees); // discount fees because they will be added later
+                    collateral = proRataCollateral(_loan.tokensHeld, liquidityToCalculate, loanLiquidity);
                     collateral = remainingCollateral(collateral, _rebalanceCollateralToClose(_loan, collateral, collateralId, liquidityToCalculate));
                     updateIndex();
                 }
-                amounts = addFees(calcTokensToRepay(getReserves(s.cfmm), liquidityToCalculate),fees);
+                amounts = calcTokensToRepay(getReserves(s.cfmm), liquidityToCalculate);
             }
         }
 
@@ -236,7 +234,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         tokensHeld = _loan.tokensHeld;
         if(to != address(0)) {
             // Get pro rata collateral of liquidity paid to withdraw
-            tokensHeld = proRataCollateral(tokensHeld, liquidityPaid, loanLiquidity, new uint256[](0));
+            tokensHeld = proRataCollateral(tokensHeld, liquidityPaid, loanLiquidity);
             if(collateralId > 0) { // If collateralId was chosen, rebalance to one of the amounts and withdraw
                 // Swap the one amount to get the other one
                 int256[] memory deltas = new int256[](tokensHeld.length);
