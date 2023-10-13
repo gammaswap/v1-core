@@ -11,7 +11,6 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
     using LibStorage for LibStorage.Storage;
 
     event LoanCreated(address indexed caller, uint256 tokenId);
-    event AmountsWithFees(uint256[] amounts);
     uint80 public borrowRate = 1e18;
     uint16 public origFee = 0;
     uint16 public protocolId;
@@ -291,11 +290,6 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
         super.updateLoan(_loan);
     }
 
-    function testAddFees(uint256[] memory amounts, uint256[] calldata fees) public virtual {
-        uint256[] memory amountsWithFees = addFees(amounts, fees);
-        emit AmountsWithFees(amountsWithFees);
-    }
-
     function _calcDeltasForRatio(uint128[] memory tokensHeld, uint128[] memory reserves, uint256[] calldata ratio) internal virtual override view returns(int256[] memory deltas) {
         deltas = new int256[](2);
         deltas[0] = 0;
@@ -339,10 +333,10 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
         deltas[1] = 100;
     }
 
-    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256 collateralId, address to) external override virtual returns(uint256 liquidityPaid, uint256[] memory amounts){
+    function _repayLiquidity(uint256 tokenId, uint256 liquidity, uint256 collateralId, address to) external override virtual returns(uint256 liquidityPaid, uint256[] memory amounts){
     }
 
-    function _repayLiquiditySetRatio(uint256 tokenId, uint256 liquidity, uint256[] calldata fees, uint256[] calldata ratio) external override virtual returns(uint256 liquidityPaid, uint256[] memory amounts){
+    function _repayLiquiditySetRatio(uint256 tokenId, uint256 liquidity, uint256[] calldata ratio) external override virtual returns(uint256 liquidityPaid, uint256[] memory amounts){
     }
 
     function _calcOriginationFee(uint256 liquidityBorrowed, uint256 borrowedInvariant, uint256 lpInvariant, uint256 lowUtilRate, uint256 discount) internal virtual override view returns(uint256 _origFee) {

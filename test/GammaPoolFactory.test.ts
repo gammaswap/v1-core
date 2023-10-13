@@ -1073,10 +1073,10 @@ describe("GammaPoolFactory", function () {
         gammapool.borrowLiquidity(1, 2, [])
       ).to.be.revertedWithCustomError(gammapool, "Paused");
       await expect(
-        gammapool.repayLiquidity(1, 2, [], 1, owner.address)
+        gammapool.repayLiquidity(1, 2, 1, owner.address)
       ).to.be.revertedWithCustomError(gammapool, "Paused");
       await expect(
-        gammapool.repayLiquiditySetRatio(1, 2, [], [])
+        gammapool.repayLiquiditySetRatio(1, 2, [])
       ).to.be.revertedWithCustomError(gammapool, "Paused");
       await expect(
         gammapool.repayLiquidityWithLP(1, 2, owner.address)
@@ -1200,10 +1200,10 @@ describe("GammaPoolFactory", function () {
         gammapool.borrowLiquidity(1, 2, [])
       ).to.be.revertedWithoutReason();
       await expect(
-        gammapool.repayLiquidity(1, 2, [], 1, owner.address)
+        gammapool.repayLiquidity(1, 2, 1, owner.address)
       ).to.be.revertedWithoutReason();
       await expect(
-        gammapool.repayLiquiditySetRatio(1, 2, [], [])
+        gammapool.repayLiquiditySetRatio(1, 2, [])
       ).to.be.revertedWithoutReason();
       await expect(
         gammapool.repayLiquidityWithLP(1, 2, owner.address)
@@ -1356,7 +1356,7 @@ describe("GammaPoolFactory", function () {
       expect(await gammapool.isPaused(13)).to.equal(true);
 
       await expect(
-        gammapool.repayLiquidity(1, 2, [], 1, owner.address)
+        gammapool.repayLiquidity(1, 2, 1, owner.address)
       ).to.be.revertedWithCustomError(gammapool, "Paused");
 
       expect(await gammapool.isPaused(14)).to.equal(false);
@@ -1364,7 +1364,7 @@ describe("GammaPoolFactory", function () {
       expect(await gammapool.isPaused(14)).to.equal(true);
 
       await expect(
-        gammapool.repayLiquiditySetRatio(1, 2, [], [])
+        gammapool.repayLiquiditySetRatio(1, 2, [])
       ).to.be.revertedWithCustomError(gammapool, "Paused");
 
       expect(await gammapool.isPaused(15)).to.equal(false);
@@ -1578,7 +1578,7 @@ describe("GammaPoolFactory", function () {
       expect(await gammapool.isPaused(13)).to.equal(false);
 
       await expect(
-        gammapool.repayLiquidity(1, 2, [], 1, owner.address)
+        gammapool.repayLiquidity(1, 2, 1, owner.address)
       ).to.be.revertedWithoutReason();
 
       expect(await gammapool.isPaused(14)).to.equal(true);
@@ -1586,7 +1586,7 @@ describe("GammaPoolFactory", function () {
       expect(await gammapool.isPaused(14)).to.equal(false);
 
       await expect(
-        gammapool.repayLiquiditySetRatio(1, 2, [], [])
+        gammapool.repayLiquiditySetRatio(1, 2, [])
       ).to.be.revertedWithoutReason();
 
       expect(await gammapool.isPaused(15)).to.equal(true);
