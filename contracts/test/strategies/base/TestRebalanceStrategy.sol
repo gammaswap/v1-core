@@ -41,6 +41,9 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
         return 2252571;
     }
 
+    function syncCFMM(address cfmm) internal override virtual {
+    }
+
     function tokens() public virtual view returns(address[] memory) {
         return s.tokens;
     }

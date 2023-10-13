@@ -45,6 +45,9 @@ contract TestExternalLiquidationStrategy is TestExternalBaseRebalanceStrategy, E
         return liqFee;
     }
 
+    function syncCFMM(address cfmm) internal override virtual {
+    }
+
     function beforeRepay(LibStorage.Loan storage _loan, uint256[] memory amounts) internal virtual override {
     }
 
