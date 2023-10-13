@@ -13,8 +13,12 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+          registry-url: https://npm.pkg.github.com/
+          scope: '@gammaswap'
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
       - run: yarn install
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GS_TOKEN}}
       - run: yarn run test
       - run: yarn run fuzz
