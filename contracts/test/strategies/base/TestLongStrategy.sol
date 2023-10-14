@@ -321,14 +321,6 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         return false;
     }
 
-    function testUpdatePayableLoan(uint256 tokenId, uint256 payLiquidity) external virtual {
-        LibStorage.Loan storage _loan = _getLoan(tokenId);
-        (uint256 loanLiquidity, int256[] memory deltas) = updatePayableLoan(_loan, payLiquidity);
-        uint256 delta0 = deltas.length > 0 ? uint256(deltas[0]) : 0;
-        uint256 delta1 = deltas.length > 1 ? uint256(deltas[1]) : 0;
-        emit LiquidityAndDeltas(loanLiquidity, delta0, delta1, deltas.length);
-    }
-
     function _calcCollateralPostTrade(int256[] memory deltas, uint128[] memory tokensHeld, uint128[] memory reserves) internal virtual override view returns(uint256 collateral) {
         return calcInvariant(address(0), tokensHeld) + (calcInvariant(address(0), tokensHeld) / 2);
     }
