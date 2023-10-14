@@ -25,6 +25,10 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param amount - amount of GS LP tokens transferred
     event Transfer(address indexed from, address indexed to, uint256 amount);
 
+    /// @dev Update token balances in CFMM
+    /// @param cfmm - address of GammaPool's CFMM
+    function syncCFMM(address cfmm) internal virtual;
+
     /// @dev Get reserves token quantities from CFMM
     /// @param cfmm - address of GammaPool's CFMM
     /// @return reserves - amounts that will be deposited in CFMM
@@ -64,6 +68,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @dev Update CFMM_RESERVES with reserve quantities in CFMM
     /// @param cfmm - address of CFMM
     function updateReserves(address cfmm) internal virtual {
+        syncCFMM(cfmm);
         s.CFMM_RESERVES = getReserves(cfmm);
     }
 

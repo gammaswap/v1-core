@@ -39,6 +39,9 @@ contract TestBaseStrategy is BaseStrategy {
         return false;
     }
 
+    function syncCFMM(address cfmm) internal override virtual {
+    }
+
     function getParameters() public virtual view returns(address factory, address cfmm, address[] memory tokens, uint16 protocolId) {
         factory = _factory;
         cfmm = s.cfmm;

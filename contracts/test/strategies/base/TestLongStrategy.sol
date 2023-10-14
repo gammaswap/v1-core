@@ -42,6 +42,9 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         return 2252571;
     }
 
+    function syncCFMM(address cfmm) internal override virtual {
+    }
+
     function tokens() public virtual view returns(address[] memory) {
         return s.tokens;
     }

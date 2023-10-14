@@ -53,6 +53,9 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
         return 2252571;
     }
 
+    function syncCFMM(address cfmm) internal override virtual {
+    }
+
     function getStaticParams() external virtual view returns(address factory, address cfmm, address[] memory tokens, uint128[] memory tokenBalances) {
         factory = s.factory;
         cfmm = s.cfmm;

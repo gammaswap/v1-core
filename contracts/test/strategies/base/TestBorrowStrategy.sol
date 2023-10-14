@@ -34,6 +34,9 @@ contract TestBorrowStrategy is BorrowStrategy {
         _minBorrow = _newMinBorrow;
     }
 
+    function syncCFMM(address cfmm) internal override virtual {
+    }
+
     function minBorrow() internal virtual override view returns(uint256) {
         return _minBorrow;
     }

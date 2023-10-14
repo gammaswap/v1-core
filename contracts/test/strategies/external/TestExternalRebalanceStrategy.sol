@@ -20,6 +20,9 @@ contract TestExternalRebalanceStrategy is TestExternalBaseRebalanceStrategy, Ext
     function beforeRepay(LibStorage.Loan storage _loan, uint256[] memory amounts) internal virtual override {
     }
 
+    function syncCFMM(address cfmm) internal override virtual {
+    }
+
     function beforeSwapTokens(LibStorage.Loan storage _loan, int256[] memory deltas, uint128[] memory reserves) internal virtual override returns(uint256[] memory outAmts, uint256[] memory inAmts) {
     }
 

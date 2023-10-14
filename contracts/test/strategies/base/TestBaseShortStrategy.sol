@@ -25,6 +25,9 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         return 2252571;
     }
 
+    function syncCFMM(address cfmm) internal override virtual {
+    }
+
     function validateParameters(bytes calldata _data) external override view returns(bool) {
         return false;
     }
