@@ -28,6 +28,7 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
     /// @return _tokensHeld - amount requested to withdraw for which there isn't enough collateral to withdraw
     function getUnfundedAmounts(uint128[] memory amounts, uint128[] memory tokensHeld) internal virtual view returns(bool, uint128[] memory, uint128[] memory){
         uint256 len = tokensHeld.length;
+        if(amounts.length != len) revert InvalidAmountsLength();
         uint128[] memory unfundedAmounts = new uint128[](len);
         bool hasUnfundedAmounts = false;
         for(uint256 i = 0; i < len;) {
@@ -67,7 +68,7 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
         // Update liquidity debt to include accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
 
-        if(ratio.length > 0) {
+        if(isRatioValid(ratio)) {
             (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
             // Check that loan is not undercollateralized after swap
             checkMargin(calcInvariant(s.cfmm, tokensHeld) + onLoanUpdate(_loan, tokenId), loanLiquidity);
@@ -91,7 +92,7 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
 
         // Update liquidity debt with accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
-        if(ratio.length > 0) {
+        if(isRatioValid(ratio)) {
             tokensHeld = _loan.tokensHeld;
             bool hasUnfundedAmounts;
             uint128[] memory unfundedAmounts;
@@ -144,8 +145,7 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
         // Add liquidity debt to total pool debt and start tracking loan
         (liquidityBorrowed, loanLiquidity) = openLoan(_loan, lpTokens);
 
-        if(ratio.length > 0) {
-            if(ratio.length != tokensHeld.length) revert InvalidRatioLength();
+        if(isRatioValid(ratio)) {
             //get current reserves without updating
             uint128[] memory _reserves = getReserves(s.cfmm);
             (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);

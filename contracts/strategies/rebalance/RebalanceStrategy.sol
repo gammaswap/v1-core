@@ -39,8 +39,7 @@ abstract contract RebalanceStrategy is IRebalanceStrategy, BaseRebalanceStrategy
         uint256 loanLiquidity = updateLoan(_loan);
 
         tokensHeld = _loan.tokensHeld;
-        if(ratio.length > 0) {
-            if(ratio.length != tokensHeld.length) revert InvalidRatioLength();
+        if(isRatioValid(ratio)) {
             deltas = _calcDeltasForRatio(tokensHeld, s.CFMM_RESERVES, ratio);
         }
 
