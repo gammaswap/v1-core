@@ -125,4 +125,14 @@ library GammaSwapLibrary {
             }
         }
     }
+
+    function convertUint128ToRatio(uint128[] memory arr) internal pure returns(uint256[] memory res) {
+        res = new uint256[](arr.length);
+        for(uint256 i = 0; i < arr.length;) {
+            res[i] = uint256(arr[i]) * 1000;
+            unchecked {
+                ++i;
+            }
+        }
+    }
 }

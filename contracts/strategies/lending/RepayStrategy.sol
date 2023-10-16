@@ -88,7 +88,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
 
             tokensHeld = _loan.tokensHeld;
             int256[] memory deltas = _calcDeltasToCloseSetRatio(tokensHeld, s.CFMM_RESERVES, liquidityToCalculate,
-                isRatioValid(ratio) ? ratio : GammaSwapLibrary.convertUint128ToUint256Array(tokensHeld));
+                isRatioValid(ratio) ? ratio : GammaSwapLibrary.convertUint128ToRatio(tokensHeld));
             if(isDeltasValid(deltas)) {
                 rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
                 updateIndex();
