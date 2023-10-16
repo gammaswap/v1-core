@@ -69,7 +69,10 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
         uint256 loanLiquidity = updateLoan(_loan);
 
         if(isRatioValid(ratio)) {
-            (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
+            int256[] memory deltas = _calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio);
+            if(isDeltasValid(deltas)) {
+                (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
+            }
             // Check that loan is not undercollateralized after swap
             checkMargin(calcInvariant(s.cfmm, tokensHeld) + onLoanUpdate(_loan, tokenId), loanLiquidity);
         } else {
@@ -104,10 +107,16 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
 
                 // rebalance to ratio
                 uint128[] memory _reserves = _getReserves(to);
-                (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);
+                int256[] memory deltas = _calcDeltasForRatio(tokensHeld, _reserves, ratio);
+                if(isDeltasValid(deltas)) {
+                    (tokensHeld,) = rebalanceCollateral(_loan, deltas, _reserves);
+                }
             } else {
                 // rebalance to match ratio after withdrawal
-                rebalanceCollateral(_loan, _calcDeltasForWithdrawal(unfundedAmounts, tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
+                int256[] memory deltas = _calcDeltasForWithdrawal(unfundedAmounts, tokensHeld, s.CFMM_RESERVES, ratio);
+                if(isDeltasValid(deltas)) {
+                    rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
+                }
                 // Withdraw collateral tokens from loan
                 tokensHeld = withdrawCollateral(_loan, amounts, to);
             }
@@ -148,7 +157,10 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
         if(isRatioValid(ratio)) {
             //get current reserves without updating
             uint128[] memory _reserves = getReserves(s.cfmm);
-            (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);
+            int256[] memory deltas = _calcDeltasForRatio(tokensHeld, _reserves, ratio);
+            if(isDeltasValid(deltas)) {
+                (tokensHeld,) = rebalanceCollateral(_loan, deltas, _reserves);
+            }
         }
 
         // Check that loan is not undercollateralized

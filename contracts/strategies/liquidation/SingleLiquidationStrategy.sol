@@ -20,8 +20,10 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
         {
             int256[] memory deltas;
             (_liqLoan, deltas) = getLiquidatableLoan(_loan, tokenId);
-            rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES); // the rebalancing trade will increase the cfmmLiquidityInvariant, which means I'll actually get less LP tokens
-            updateIndex();
+            if(isDeltasValid(deltas)) {
+                rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES); // the rebalancing trade will increase the cfmmLiquidityInvariant, which means I'll actually get less LP tokens
+                updateIndex();
+            }
         }
 
         loanLiquidity = _liqLoan.loanLiquidity;

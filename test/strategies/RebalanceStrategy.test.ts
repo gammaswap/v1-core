@@ -329,7 +329,7 @@ describe("RebalanceStrategy", function () {
       expect(res1b.lpTokens).to.equal(loanLPTokens);
 
       const rebalAmt1 = ONE.mul(10);
-      const rebalAmt2 = ethers.constants.Zero.sub(ONE.mul(19));
+      const rebalAmt2 = ethers.constants.Zero;
 
       let res = await (
         await strategy._rebalanceCollateral(tokenId, [rebalAmt1, rebalAmt2], [])
@@ -374,7 +374,7 @@ describe("RebalanceStrategy", function () {
         await strategy._rebalanceCollateral(
           tokenId,
           [rebalAmt1, rebalAmt2],
-          [0, 1]
+          [1000, 100000]
         )
       ).wait();
       expAmtA = expAmtA.add(0);

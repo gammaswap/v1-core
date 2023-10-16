@@ -64,7 +64,10 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
     /// @param payLiquidity - liquidity that will be paid with the rebalanced collateral
     /// @return deltas - array of collateral amounts that changed in collateral array (<0 means collateral was sold, >0 means collateral was bought)
     function _rebalanceCollateralToClose(LibStorage.Loan storage _loan, uint128[] memory collateral, uint256 collateralId, uint256 payLiquidity) internal virtual returns(int256[] memory deltas) {
-        (, deltas) = rebalanceCollateral(_loan, _calcDeltasToClose(collateral, s.CFMM_RESERVES, payLiquidity, collateralId - 1), s.CFMM_RESERVES);
+        int256[] memory _deltas = _calcDeltasToClose(collateral, s.CFMM_RESERVES, payLiquidity, collateralId - 1);
+        if(isDeltasValid(_deltas)) {
+            (, deltas) = rebalanceCollateral(_loan, _deltas, s.CFMM_RESERVES);
+        }
     }
 
     /// @dev See {IRepayStrategy-_repayLiquiditySetRatio}.
@@ -84,9 +87,12 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
             (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minBorrow() * 10) : (payLiquidity, payLiquidity);
 
             tokensHeld = _loan.tokensHeld;
-            rebalanceCollateral(_loan, _calcDeltasToCloseSetRatio(tokensHeld, s.CFMM_RESERVES, liquidityToCalculate,
-                isRatioValid(ratio) ? ratio : GammaSwapLibrary.convertUint128ToUint256Array(tokensHeld)), s.CFMM_RESERVES);
-            updateIndex();
+            int256[] memory deltas = _calcDeltasToCloseSetRatio(tokensHeld, s.CFMM_RESERVES, liquidityToCalculate,
+                isRatioValid(ratio) ? ratio : GammaSwapLibrary.convertUint128ToUint256Array(tokensHeld));
+            if(isDeltasValid(deltas)) {
+                rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
+                updateIndex();
+            }
             amounts = calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate);
         }
 

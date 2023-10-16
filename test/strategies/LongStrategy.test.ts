@@ -1860,7 +1860,7 @@ describe("LongStrategy", function () {
 
       await (await cfmm.burn(lpTokens, strategy.address)).wait();
       const res = await (
-        await strategy._borrowLiquidity(tokenId, lpTokens, [1, 1])
+        await strategy._borrowLiquidity(tokenId, lpTokens, [1000, 1000])
       ).wait();
 
       checkEventData(

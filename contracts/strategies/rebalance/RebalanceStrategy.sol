@@ -43,9 +43,9 @@ abstract contract RebalanceStrategy is IRebalanceStrategy, BaseRebalanceStrategy
             deltas = _calcDeltasForRatio(tokensHeld, s.CFMM_RESERVES, ratio);
         }
 
-        if(deltas.length != tokensHeld.length) revert InvalidDeltasLength();
-
-        (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
+        if(isDeltasValid(deltas)) {
+            (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
+        }
 
         // Check that loan is not undercollateralized after swap
         checkMargin(calcInvariant(s.cfmm, tokensHeld) + onLoanUpdate(_loan, tokenId), loanLiquidity);
