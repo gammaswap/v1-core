@@ -12,8 +12,11 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
 
     function _calcLiquidationTokensToRepay(uint128[] memory tokensHeld, uint256 liquidityToPay) internal virtual returns(uint256[] memory amounts) {
         amounts = calcTokensToRepay(getReserves(s.cfmm), liquidityToPay);
-        for(uint256 i = 0; i < amounts.length; i++) {
+        for(uint256 i = 0; i < amounts.length;) {
             amounts[i] = GSMath.min(tokensHeld[i], amounts[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 

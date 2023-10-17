@@ -68,9 +68,12 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
         if(ratio.length != len) {
             return false;
         }
-        for(uint256 i = 0; i < len; i++) {
+        for(uint256 i = 0; i < len;) {
             if(ratio[i] < 1000) {
                 return false;
+            }
+            unchecked {
+                ++i;
             }
         }
         return true;
@@ -85,9 +88,12 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
             return false;
         }
         uint256 nonZeroCount = 0;
-        for(uint256 i = 0; i < len; i++) {
+        for(uint256 i = 0; i < len;) {
             if(deltas[i] != 0) {
                 ++nonZeroCount;
+            }
+            unchecked {
+                ++i;
             }
         }
         return nonZeroCount == 1;
