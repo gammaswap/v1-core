@@ -9,9 +9,6 @@ import "./BaseLongStrategy.sol";
 /// @dev This contract inherits from BaseLongStrategy and should be inherited by strategies that need to rebalance collateral
 abstract contract BaseRebalanceStrategy is BaseLongStrategy {
 
-    error InvalidDeltasLength();
-    error InvalidRatioLength();
-
     /// @dev Calculate quantities to trade to rebalance collateral to desired `ratio`
     /// @param deltas - amount of collateral to trade to achieve desired final collateral amount
     /// @param tokensHeld - loan collateral to rebalance
@@ -61,6 +58,45 @@ abstract contract BaseRebalanceStrategy is BaseLongStrategy {
     /// @param liquidity - liquidity invariant debt
     function checkMargin(uint256 collateral, uint256 liquidity) internal override virtual view {
         if(!hasMargin(collateral, liquidity, _ltvThreshold())) revert Margin(); // revert if collateral below ltvThreshold
+    }
+
+    /// @dev Check if ratio parameter is valid
+    /// @param ratio - ratio parameter to rebalance collateral
+    /// @return isValid - true if ratio parameter is valid, false otherwise
+    function isRatioValid(uint256[] memory ratio) internal virtual view returns(bool) {
+        uint256 len = s.tokens.length;
+        if(ratio.length != len) {
+            return false;
+        }
+        for(uint256 i = 0; i < len;) {
+            if(ratio[i] < 1000) {
+                return false;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+        return true;
+    }
+
+    /// @dev Check if deltas parameter is valid
+    /// @param deltas - deltas parameter to rebalance collateral
+    /// @return isValid - true if ratio parameter is valid, false otherwise
+    function isDeltasValid(int256[] memory deltas) internal virtual view returns(bool) {
+        uint256 len = s.tokens.length;
+        if(deltas.length != len) {
+            return false;
+        }
+        uint256 nonZeroCount = 0;
+        for(uint256 i = 0; i < len;) {
+            if(deltas[i] != 0) {
+                ++nonZeroCount;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+        return nonZeroCount == 1;
     }
 
     /// @dev Rebalance loan collateral through a swap with the CFMM

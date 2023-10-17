@@ -28,6 +28,7 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
     /// @return _tokensHeld - amount requested to withdraw for which there isn't enough collateral to withdraw
     function getUnfundedAmounts(uint128[] memory amounts, uint128[] memory tokensHeld) internal virtual view returns(bool, uint128[] memory, uint128[] memory){
         uint256 len = tokensHeld.length;
+        if(amounts.length != len) revert InvalidAmountsLength();
         uint128[] memory unfundedAmounts = new uint128[](len);
         bool hasUnfundedAmounts = false;
         for(uint256 i = 0; i < len;) {
@@ -67,8 +68,11 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
         // Update liquidity debt to include accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
 
-        if(ratio.length > 0) {
-            (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
+        if(isRatioValid(ratio)) {
+            int256[] memory deltas = _calcDeltasForRatio(_loan.tokensHeld, s.CFMM_RESERVES, ratio);
+            if(isDeltasValid(deltas)) {
+                (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
+            }
             // Check that loan is not undercollateralized after swap
             checkMargin(calcInvariant(s.cfmm, tokensHeld) + onLoanUpdate(_loan, tokenId), loanLiquidity);
         } else {
@@ -91,7 +95,7 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
 
         // Update liquidity debt with accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
-        if(ratio.length > 0) {
+        if(isRatioValid(ratio)) {
             tokensHeld = _loan.tokensHeld;
             bool hasUnfundedAmounts;
             uint128[] memory unfundedAmounts;
@@ -103,10 +107,16 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
 
                 // rebalance to ratio
                 uint128[] memory _reserves = _getReserves(to);
-                (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);
+                int256[] memory deltas = _calcDeltasForRatio(tokensHeld, _reserves, ratio);
+                if(isDeltasValid(deltas)) {
+                    (tokensHeld,) = rebalanceCollateral(_loan, deltas, _reserves);
+                }
             } else {
                 // rebalance to match ratio after withdrawal
-                rebalanceCollateral(_loan, _calcDeltasForWithdrawal(unfundedAmounts, tokensHeld, s.CFMM_RESERVES, ratio), s.CFMM_RESERVES);
+                int256[] memory deltas = _calcDeltasForWithdrawal(unfundedAmounts, tokensHeld, s.CFMM_RESERVES, ratio);
+                if(isDeltasValid(deltas)) {
+                    rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
+                }
                 // Withdraw collateral tokens from loan
                 tokensHeld = withdrawCollateral(_loan, amounts, to);
             }
@@ -144,11 +154,13 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
         // Add liquidity debt to total pool debt and start tracking loan
         (liquidityBorrowed, loanLiquidity) = openLoan(_loan, lpTokens);
 
-        if(ratio.length > 0) {
-            if(ratio.length != tokensHeld.length) revert InvalidRatioLength();
+        if(isRatioValid(ratio)) {
             //get current reserves without updating
             uint128[] memory _reserves = getReserves(s.cfmm);
-            (tokensHeld,) = rebalanceCollateral(_loan, _calcDeltasForRatio(tokensHeld, _reserves, ratio), _reserves);
+            int256[] memory deltas = _calcDeltasForRatio(tokensHeld, _reserves, ratio);
+            if(isDeltasValid(deltas)) {
+                (tokensHeld,) = rebalanceCollateral(_loan, deltas, _reserves);
+            }
         }
 
         // Check that loan is not undercollateralized

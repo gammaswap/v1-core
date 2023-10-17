@@ -110,7 +110,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
         address[] memory tokens = s.tokens;
         uint128[] memory refund = new uint128[](tokens.length);
         for(uint256 i = 0; i < tokens.length;) {
-            refund[i] = uint128(loanLiquidity * tokensHeld[i] / collateral);
+            refund[i] = uint128(GSMath.min(tokensHeld[i], loanLiquidity * tokensHeld[i] / collateral));
             s.TOKEN_BALANCE[i] = s.TOKEN_BALANCE[i] - refund[i];
             tokensHeld[i] = tokensHeld[i] - refund[i];
             GammaSwapLibrary.safeTransfer(tokens[i], msg.sender, refund[i]);
@@ -162,7 +162,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
         uint256 lastCFMMTotalSupply = s.lastCFMMTotalSupply;
         uint256 currLpBalance = s.LP_TOKEN_BALANCE;
 
-        (uint256 liquidityDeposit, uint256 lpDeposit) = calcDeposit(_liqLoan.payableInternalLiquidity, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, true && fullPayment);
+        (uint256 liquidityDeposit, uint256 lpDeposit) = calcDeposit(_liqLoan.payableInternalLiquidity, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, fullPayment);
 
         if(_liqLoan.isObserved) {
             liquidateWithObserver(_liqLoan, msg.sender);

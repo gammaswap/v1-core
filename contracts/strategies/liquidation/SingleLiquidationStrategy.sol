@@ -10,24 +10,37 @@ import "../base/BaseLiquidationStrategy.sol";
 /// @dev Only defines common functions that would be used by all concrete contracts that liquidate loans
 abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseLiquidationStrategy {
 
+    function _calcLiquidationTokensToRepay(uint128[] memory tokensHeld, uint256 liquidityToPay) internal virtual returns(uint256[] memory amounts) {
+        amounts = calcTokensToRepay(getReserves(s.cfmm), liquidityToPay);
+        for(uint256 i = 0; i < amounts.length;) {
+            amounts[i] = GSMath.min(tokensHeld[i], amounts[i]);
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     /// @dev See {LiquidationStrategy-_liquidate}.
     function _liquidate(uint256 tokenId) external override lock virtual returns(uint256 loanLiquidity, uint256 refund) {
         // Check can liquidate loan and get loan with updated loan liquidity
         // No need to check if msg.sender has permission
         LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
 
+        uint128[] memory tokensHeld = _loan.tokensHeld;
         LiquidatableLoan memory _liqLoan;
         {
             int256[] memory deltas;
             (_liqLoan, deltas) = getLiquidatableLoan(_loan, tokenId);
-            rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES); // the rebalancing trade will increase the cfmmLiquidityInvariant, which means I'll actually get less LP tokens
-            updateIndex();
+            if(isDeltasValid(deltas)) {
+                (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES); // the rebalancing trade will increase the cfmmLiquidityInvariant, which means I'll actually get less LP tokens
+                updateIndex();
+            }
         }
 
         loanLiquidity = _liqLoan.loanLiquidity;
 
         if(_liqLoan.payableInternalLiquidityPlusFee > 0) {
-            uint256 lpDeposit = repayTokens(_loan, calcTokensToRepay(getReserves(s.cfmm), _liqLoan.payableInternalLiquidityPlusFee));
+            uint256 lpDeposit = repayTokens(_loan, _calcLiquidationTokensToRepay(tokensHeld, _liqLoan.payableInternalLiquidityPlusFee));
             refund = lpDeposit * _liqLoan.internalFee / _liqLoan.payableInternalLiquidityPlusFee;
             if(refund <= minBorrow()) {
                 refund = 0;
@@ -39,7 +52,7 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
             }
         }
 
-        (uint128[] memory tokensHeld,) = updateCollateral(_loan); // Update remaining collateral
+        (tokensHeld,) = updateCollateral(_loan); // Update remaining collateral
 
         _liqLoan.writeDownAmt = payLiquidatableLoan(_liqLoan, 0, false);
 
