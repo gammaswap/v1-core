@@ -118,7 +118,7 @@ abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiq
 
             // Aggregate collateral tokens
             for(uint256 j; j < refund.length;) {
-                uint128 refundAmt = uint128(tokensHeld[j] * (liquidity + fee) / collateral);
+                uint128 refundAmt = uint128(GSMath.min(tokensHeld[j], tokensHeld[j] * (liquidity + fee) / collateral));
                 tokensHeld[j] = tokensHeld[j] - refundAmt;
                 refund[j] = refund[j] + refundAmt;
                 unchecked {
