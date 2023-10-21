@@ -40,7 +40,9 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
 
         origFee = _calcDynamicOriginationFee(originationFee(), utilRate, lowUtilRate, s.minUtilRate1, s.minUtilRate2, s.feeDivisor);
 
-        origFee = discount > origFee ? 0 : (origFee - discount);
+        unchecked {
+            origFee = origFee - GSMath.min(origFee, discount);
+        }
     }
 
     /// @dev Calculate and return dynamic origination fee in basis points
@@ -52,12 +54,17 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
     /// @param feeDivisor - fee divisor of formula for dynamic origination fee
     /// @return origFee - origination fee that will be applied to loan
     function _calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate1, uint256 minUtilRate2, uint256 feeDivisor) internal virtual view returns(uint256) {
-        utilRate = utilRate >= lowUtilRate ? utilRate : lowUtilRate; // utilization rate not allowed to be below lowUtilRate
+        utilRate = GSMath.max(utilRate, lowUtilRate);
         if(utilRate > minUtilRate2) {
-            baseOrigFee = GSMath.max(utilRate - minUtilRate2, baseOrigFee);
+            unchecked {
+                baseOrigFee = GSMath.max(utilRate - minUtilRate2, baseOrigFee);
+            }
         }
         if(utilRate > minUtilRate1) {
-            uint256 diff = utilRate - minUtilRate1;
+            uint256 diff;
+            unchecked {
+                diff = utilRate - minUtilRate1;
+            }
             baseOrigFee = GSMath.min(GSMath.max(baseOrigFee, (2 ** diff) * 10000 / feeDivisor), 10000);
         }
         return baseOrigFee;

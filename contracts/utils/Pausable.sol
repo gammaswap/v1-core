@@ -49,9 +49,9 @@ abstract contract Pausable is IPausable {
 
     /// @dev See {IPausable-isPaused}
     function isPaused(uint8 _functionId) public override virtual view returns (bool) {
-        uint256 functionIds = _functionIds();
+        uint256 funcIds = _functionIds();
         uint256 mask = uint256(1) << _functionId;
-        return functionIds == 1 || (functionIds & mask) != 0;
+        return funcIds == 1 || (funcIds & mask) != 0;
     }
 
     /// @dev See {IPausable-pause}
@@ -59,13 +59,13 @@ abstract contract Pausable is IPausable {
         require(msg.sender == _pauser(), "FORBIDDEN");
 
         uint256 mask = uint256(1) << _functionId;
-        uint256 functionIds = _functionIds() | mask;
+        uint256 funcIds = _functionIds() | mask;
 
-        _setFunctionIds(functionIds);
+        _setFunctionIds(funcIds);
 
         emit Pause(msg.sender, _functionId);
 
-        return functionIds;
+        return funcIds;
     }
 
     /// @dev See {IPausable-unpause}
@@ -73,12 +73,12 @@ abstract contract Pausable is IPausable {
         require(msg.sender == _pauser(), "FORBIDDEN");
 
         uint256 mask = ~(uint256(1) << _functionId);
-        uint256 functionIds = _functionIds() & mask;
+        uint256 funcIds = _functionIds() & mask;
 
-        _setFunctionIds(functionIds);
+        _setFunctionIds(funcIds);
 
         emit Unpause(msg.sender, _functionId);
 
-        return functionIds;
+        return funcIds;
     }
 }
