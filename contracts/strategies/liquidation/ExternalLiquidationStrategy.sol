@@ -22,7 +22,7 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, B
         (LiquidatableLoan memory _liqLoan,) = getLiquidatableLoan(_loan, tokenId);
 
         uint256 liquiditySwapped;
-        (liquiditySwapped, _liqLoan.tokensHeld) = externalSwap(_loan, s.cfmm, amounts, lpTokens, to, data); // of the CFMM LP Tokens that we pulled out, more have to come back
+        (liquiditySwapped,) = externalSwap(_loan, s.cfmm, amounts, lpTokens, to, data); // of the CFMM LP Tokens that we pulled out, more have to come back
 
         for(uint256 i = 0; i < _liqLoan.tokensHeld.length;) {
             if(_liqLoan.tokensHeld[i] > _loan.tokensHeld[i]) revert CollateralShortfall();
