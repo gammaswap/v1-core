@@ -13,6 +13,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     error NoLiquidityDebt();
     error NoLiquidityProvided();
     error NotFullLiquidation();
+    error LPBalanceShortfall();
     error InsufficientDeposit();
     error InvalidTokenIdsLength();
     error HasMargin();
@@ -202,7 +203,11 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     /// @return liquidityDeposit - loan liquidity that will be repaid after refunding excess CFMM LP tokens
     /// @return lpDeposit - CFMM LP tokens that will be used to repay liquidity after refunding excess CFMM LP tokens
     function calcDeposit(uint256 loanLiquidity, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 currLpBalance, bool fullPayment) internal virtual returns(uint256 liquidityDeposit, uint256 lpDeposit){
-        lpDeposit = GammaSwapLibrary.balanceOf(s.cfmm, address(this)) - currLpBalance;
+        lpDeposit = GammaSwapLibrary.balanceOf(s.cfmm, address(this));
+        if(lpDeposit < currLpBalance) revert LPBalanceShortfall();
+        unchecked {
+            lpDeposit = lpDeposit - currLpBalance;
+        }
         liquidityDeposit = convertLPToInvariant(lpDeposit, lastCFMMInvariant, lastCFMMTotalSupply);
         uint256 excessInvariant = calcExcessLiquidity(liquidityDeposit, loanLiquidity, fullPayment);
         if(excessInvariant > 0) {

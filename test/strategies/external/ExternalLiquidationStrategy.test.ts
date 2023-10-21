@@ -1341,7 +1341,7 @@ describe("ExternalLiquidationStrategy", function () {
           callee2.address,
           data
         )
-      ).to.be.revertedWithPanic();
+      ).to.be.revertedWithCustomError(strategy, "LPBalanceShortfall");
     });
   });
 });
