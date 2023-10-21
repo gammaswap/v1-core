@@ -36,7 +36,9 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
                 hasUnfundedAmounts = true; // we don't have enough collateral of at least one token to withdraw
                 unfundedAmounts[i] = amounts[i]; // amount we are requesting to withdraw for which there isn't enough collateral
             } else {
-                tokensHeld[i] -= amounts[i];
+                unchecked {
+                    tokensHeld[i] -= amounts[i];
+                }
             }
             unchecked {
                 ++i;

@@ -46,7 +46,9 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
 
     /// @return ltvThreshold - max ltv ratio acceptable before a loan is eligible for liquidation
     function _ltvThreshold() internal virtual view returns(uint16) {
-        return 10000 - uint16(s.ltvThreshold) * 10;
+        unchecked {
+            return 10000 - uint16(s.ltvThreshold) * 10;
+        }
     }
 
     /// @dev See {ILongStrategy-ltvThreshold}.
@@ -176,11 +178,15 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
             uint128 newTokenBalance = uint128(GammaSwapLibrary.balanceOf(tokens[i], address(this)));
             tokenBalance[i] = newTokenBalance;
             if(newTokenBalance > oldTokenBalance) { // If balance increased
-                balanceChange = newTokenBalance - oldTokenBalance;
+                unchecked {
+                    balanceChange = newTokenBalance - oldTokenBalance;
+                }
                 tokensHeld[i] += balanceChange;
                 tokenChange[i] = int256(uint256(balanceChange));
             } else if(newTokenBalance < oldTokenBalance) { // If balance decreased
-                balanceChange = oldTokenBalance - newTokenBalance;
+                unchecked {
+                    balanceChange = oldTokenBalance - newTokenBalance;
+                }
                 if(balanceChange > oldTokenBalance) revert NotEnoughBalance(); // Withdrew more than expected tracked balance, must synchronize
                 if(balanceChange > tokensHeld[i]) revert NotEnoughCollateral(); // Withdrew more than available collateral
                 unchecked {

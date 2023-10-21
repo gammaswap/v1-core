@@ -31,7 +31,9 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                 if(_delta > collateral[i]) { // in case rounding issue
                     collateral[i] = 0;
                 } else {
-                    collateral[i] -= _delta;
+                    unchecked {
+                        collateral[i] -= _delta;
+                    }
                 }
             }
             unchecked {
@@ -189,9 +191,12 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
             // Get pro rata collateral of liquidity paid to withdraw
             tokensHeld = proRataCollateral(tokensHeld, liquidityPaid, loanLiquidity);
             if(collateralId > 0) { // If collateralId was chosen, rebalance to one of the amounts and withdraw
+                unchecked {
+                    collateralId -= 1;
+                }
                 // Swap the one amount to get the other one
                 int256[] memory deltas = new int256[](tokensHeld.length);
-                deltas[collateralId - 1] = -int256(uint256(tokensHeld[collateralId - 1]));
+                deltas[collateralId] = -int256(uint256(tokensHeld[collateralId]));
                 (, deltas) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
                 tokensHeld = remainingCollateral(tokensHeld, deltas);
             }

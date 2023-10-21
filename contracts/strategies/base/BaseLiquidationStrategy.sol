@@ -13,6 +13,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     error NoLiquidityDebt();
     error NoLiquidityProvided();
     error NotFullLiquidation();
+    error LPBalanceShortfall();
     error InsufficientDeposit();
     error InvalidTokenIdsLength();
     error HasMargin();
@@ -111,8 +112,10 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
         uint128[] memory refund = new uint128[](tokens.length);
         for(uint256 i = 0; i < tokens.length;) {
             refund[i] = uint128(GSMath.min(tokensHeld[i], loanLiquidity * tokensHeld[i] / collateral));
+            unchecked {
+                tokensHeld[i] = tokensHeld[i] - refund[i];
+            }
             s.TOKEN_BALANCE[i] = s.TOKEN_BALANCE[i] - refund[i];
-            tokensHeld[i] = tokensHeld[i] - refund[i];
             GammaSwapLibrary.safeTransfer(tokens[i], msg.sender, refund[i]);
             unchecked{
                 ++i;
@@ -129,7 +132,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     function calcExcessLiquidity(uint256 liquidityDeposit, uint256 loanLiquidity, bool fullDeposit) internal virtual returns(uint256 excessLiquidity){
         if(fullDeposit && liquidityDeposit < loanLiquidity) {
             revert InsufficientDeposit();
-        } else if(liquidityDeposit > (loanLiquidity + minBorrow())) {
+        } else if(liquidityDeposit > (loanLiquidity + minBorrow() * 10)) { // multiply by 10 to cover rounding issues
             unchecked {
                 excessLiquidity = liquidityDeposit - loanLiquidity;
             }
@@ -185,6 +188,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
         } else {
             // Check if must be full liquidation
             if(liquidityDeposit < _liqLoan.loanLiquidity) revert NotFullLiquidation();
+            liquidityDeposit = _liqLoan.loanLiquidity;
         }
         payPoolDebt(liquidityDeposit, lpTokensPaid, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance);
         return _liqLoan.writeDownAmt;
@@ -199,13 +203,17 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     /// @return liquidityDeposit - loan liquidity that will be repaid after refunding excess CFMM LP tokens
     /// @return lpDeposit - CFMM LP tokens that will be used to repay liquidity after refunding excess CFMM LP tokens
     function calcDeposit(uint256 loanLiquidity, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 currLpBalance, bool fullPayment) internal virtual returns(uint256 liquidityDeposit, uint256 lpDeposit){
-        lpDeposit = GammaSwapLibrary.balanceOf(s.cfmm, address(this)) - currLpBalance;
+        lpDeposit = GammaSwapLibrary.balanceOf(s.cfmm, address(this));
+        if(lpDeposit < currLpBalance) revert LPBalanceShortfall();
+        unchecked {
+            lpDeposit = lpDeposit - currLpBalance;
+        }
         liquidityDeposit = convertLPToInvariant(lpDeposit, lastCFMMInvariant, lastCFMMTotalSupply);
         uint256 excessInvariant = calcExcessLiquidity(liquidityDeposit, loanLiquidity, fullPayment);
         if(excessInvariant > 0) {
             uint256 lpRefund = convertInvariantToLP(excessInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
             GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, lpRefund);
-            lpDeposit -= lpRefund;
+            lpDeposit = lpDeposit - lpRefund;
             liquidityDeposit = convertLPToInvariant(lpDeposit, lastCFMMInvariant, lastCFMMTotalSupply);
         }
     }

@@ -48,7 +48,6 @@ abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiq
         _liqLoan.loanLiquidity = totalLoanLiquidity;
 
         // Pay total liquidity debts in full with previously deposited CFMM LP tokens and refund remaining collateral to liquidator
-        //payLiquidatableLoan(0, totalLoanLiquidity, summedLoans.lpTokensTotal);
         payLiquidatableLoan(_liqLoan, summedLoans.lpTokensTotal, true);
 
         (refund,) = refundLiquidator(totalLoanLiquidity, totalLoanLiquidity, refund);
@@ -98,10 +97,12 @@ abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiq
             uint256 fee = collateral * liqFee / 10000;
             summedLoans.feeTotal += fee;
 
-            uint256 writeDownAmt = collateral - fee < liquidity ? liquidity - collateral + fee : 0;
+            uint256 writeDownAmt;
+            unchecked {
+                writeDownAmt = collateral < (liquidity + fee) ? liquidity + fee - collateral : 0;
+                liquidity -= writeDownAmt;
+            }
             summedLoans.writeDownAmtTotal += writeDownAmt;
-
-            liquidity -= writeDownAmt;
 
             // Aggregate liquidity debts
             summedLoans.liquidityTotal += liquidity;
@@ -119,9 +120,9 @@ abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiq
             // Aggregate collateral tokens
             for(uint256 j; j < refund.length;) {
                 uint128 refundAmt = uint128(GSMath.min(tokensHeld[j], tokensHeld[j] * (liquidity + fee) / collateral));
-                tokensHeld[j] = tokensHeld[j] - refundAmt;
                 refund[j] = refund[j] + refundAmt;
                 unchecked {
+                    tokensHeld[j] = tokensHeld[j] - refundAmt;
                     ++j;
                 }
             }

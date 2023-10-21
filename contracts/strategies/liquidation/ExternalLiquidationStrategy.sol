@@ -10,6 +10,8 @@ import "../base/BaseExternalStrategy.sol";
 /// @dev Used to liquidate loans with an external swap (flash loan)
 abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, BaseLiquidationStrategy, BaseExternalStrategy {
 
+    error CollateralShortfall();
+
     /// @dev See {IExternalLiquidationStrategy-_liquidateExternally}.
     function _liquidateExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock virtual
         returns(uint256, uint128[] memory) {
@@ -21,6 +23,13 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, B
 
         uint256 liquiditySwapped;
         (liquiditySwapped, _liqLoan.tokensHeld) = externalSwap(_loan, s.cfmm, amounts, lpTokens, to, data); // of the CFMM LP Tokens that we pulled out, more have to come back
+
+        for(uint256 i = 0; i < _liqLoan.tokensHeld.length;) {
+            if(_liqLoan.tokensHeld[i] > _loan.tokensHeld[i]) revert CollateralShortfall();
+            unchecked {
+                ++i;
+            }
+        }
 
         uint256 loanLiquidity = _liqLoan.loanLiquidity;
         if(liquiditySwapped > loanLiquidity) {
@@ -48,7 +57,7 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, B
 
         emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex, s.LP_TOKEN_BORROWED_PLUS_INTEREST, s.LP_INVARIANT, s.BORROWED_INVARIANT, s.CFMM_RESERVES, TX_TYPE.EXTERNAL_LIQUIDATION);
 
-        return(_liqLoan.loanLiquidity, refund);
+        return(loanLiquidity, refund);
     }
 
     /// @dev See {ExternalBaseStrategy-checkLPTokens}.

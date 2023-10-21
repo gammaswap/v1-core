@@ -91,7 +91,10 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         if(lastCFMMInvariant > 0 && lastCFMMTotalSupply > 0 && prevCFMMInvariant > 0 && prevCFMMTotalSupply > 0) {
             uint256 prevInvariant = borrowedInvariant > prevCFMMInvariant ? borrowedInvariant : prevCFMMInvariant; // Deleverage CFMM Yield
             uint256 denominator = prevInvariant * lastCFMMTotalSupply;
-            return (lastCFMMInvariant * prevCFMMTotalSupply + lastCFMMTotalSupply * (prevInvariant - prevCFMMInvariant)) * 1e18 / denominator;
+            unchecked {
+                prevInvariant = prevInvariant - prevCFMMInvariant;
+            }
+            return (lastCFMMInvariant * prevCFMMTotalSupply + lastCFMMTotalSupply * prevInvariant) * 1e18 / denominator;
         }
         return 1e18; // first update
     }
@@ -192,9 +195,12 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         if(emaUtilRateLast == 0) {
             return utilizationRate;
         } else {
-            emaMultiplier = GSMath.min(100, emaMultiplier);
+            uint256 prevWeight;
+            unchecked {
+                prevWeight = 100 - GSMath.min(100, emaMultiplier);
+            }
             // EMA_1 = val * mult + EMA_0 * (1 - mult)
-            return utilizationRate * emaMultiplier / 100 + emaUtilRateLast * (100 - emaMultiplier) / 100;
+            return utilizationRate * emaMultiplier / 100 + emaUtilRateLast * prevWeight / 100;
         }
     }
 
@@ -232,10 +238,20 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal virtual {
         (address _to, uint256 _protocolFee,,) = IGammaPoolFactory(s.factory).getPoolFee(address(this));
         if(_to != address(0) && _protocolFee > 0) {
-            uint256 gsFeeIndex = lastFeeIndex > lastCFMMIndex ? lastFeeIndex - lastCFMMIndex : 0; // _protocolFee excludes CFMM fee yield
-            uint256 denominator =  lastFeeIndex - gsFeeIndex * _protocolFee / 100000; // _protocolFee is 10000 by default (10%)
-            uint256 pctToPrint = lastFeeIndex * 1e18 / denominator - 1e18; // Result always is percentage as 18 decimals number or zero
-            uint256 devShares = pctToPrint > 0 ? s.totalSupply * pctToPrint / 1e18 : 0;
+            uint256 denominator;
+            uint256 pctToPrint;
+            uint256 devShares;
+            if(lastFeeIndex > lastCFMMIndex) {
+                unchecked {
+                    denominator = lastFeeIndex - (lastFeeIndex - lastCFMMIndex) * GSMath.min(_protocolFee, 100000) / 100000; // _protocolFee is 10000 by default (10%)
+                    pctToPrint = GSMath.max(lastFeeIndex * 1e18 / denominator, 1e18) - 1e18;// Result always is percentage as 18 decimals number or zero
+                }
+                devShares = s.totalSupply * pctToPrint / 1e18;
+            } else {
+                denominator = lastFeeIndex;
+                pctToPrint = 0;
+                devShares = 0;
+            }
             if(devShares > 0) {
                 _mint(_to, devShares); // protocol fee is paid as dilution
             }

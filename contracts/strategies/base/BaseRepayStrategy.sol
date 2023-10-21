@@ -49,7 +49,10 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
         // Total CFMM LP tokens in existence, updated at start of transaction that opens loan. Understated after loan repayment
         // Irrelevant that lastCFMMInvariant and lastCFMMTotalSupply are outdated because their conversion rate did not change
         // Hence the original lastCFMMTotalSupply and lastCFMMInvariant is still useful for conversions
-        paidLiquidity = convertLPToInvariant(newLPBalance - lpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply);
+        unchecked {
+            paidLiquidity = newLPBalance - lpTokenBalance;
+        }
+        paidLiquidity = convertLPToInvariant(paidLiquidity, lastCFMMInvariant, lastCFMMTotalSupply);
     }
 
     /// @dev Account for paid liquidity debt in pool
@@ -61,6 +64,7 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
     function payPoolDebt(uint256 liquidity, uint256 lpTokenPrincipal, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 newLPBalance) internal virtual {
         uint256 borrowedInvariant = s.BORROWED_INVARIANT; // saves gas
         uint256 lpTokenBorrowedPlusInterest = s.LP_TOKEN_BORROWED_PLUS_INTEREST; // saves gas
+        uint256 lpTokenBorrowed = s.LP_TOKEN_BORROWED; // saves gas
 
         // Calculate CFMM LP tokens that were intended to be repaid
         uint256 _lpTokenPaid = convertInvariantToLP(liquidity, lastCFMMTotalSupply, lastCFMMInvariant);
@@ -68,8 +72,11 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
         // Not need to update lastCFMMInvariant and lastCFMMTotalSupply to account for actual repaid amounts which can be greater than what was intended to be repaid
         // That is because they're only used for conversions and repayment does not update their conversion rate.
 
-        // Won't overflow because liquidity paid <= loan's liquidity debt and borrowedInvariant = sum(liquidity debt of all loans)
-        borrowedInvariant = borrowedInvariant - liquidity;
+        // liquidity paid <= loan's liquidity debt and borrowedInvariant = sum(liquidity debt of all loans)
+        unchecked {
+            borrowedInvariant = borrowedInvariant - GSMath.min(borrowedInvariant, liquidity);
+        }
+
         s.BORROWED_INVARIANT = uint128(borrowedInvariant);
 
         // Update CFMM LP tokens deposited in GammaPool, this could be higher than expected. Excess CFMM LP tokens accrue to GS LPs
@@ -79,11 +86,13 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
         uint256 lpInvariant = convertLPToInvariant(newLPBalance, lastCFMMInvariant, lastCFMMTotalSupply);
         s.LP_INVARIANT = uint128(lpInvariant);
 
-        // Won't overflow because _lpTokenPaid is derived from lpTokenBorrowedPlusInterest
-        s.LP_TOKEN_BORROWED_PLUS_INTEREST = lpTokenBorrowedPlusInterest - _lpTokenPaid;
+        unchecked {
+            // _lpTokenPaid is derived from lpTokenBorrowedPlusInterest
+            s.LP_TOKEN_BORROWED_PLUS_INTEREST = lpTokenBorrowedPlusInterest - GSMath.min(lpTokenBorrowedPlusInterest, _lpTokenPaid);
 
-        // Won't overflow because LP_TOKEN_BORROWED = sum(lpTokenPrincipal of all loans)
-        s.LP_TOKEN_BORROWED = s.LP_TOKEN_BORROWED - lpTokenPrincipal;
+            // LP_TOKEN_BORROWED = sum(lpTokenPrincipal of all loans)
+            s.LP_TOKEN_BORROWED = lpTokenBorrowed - GSMath.min(lpTokenBorrowed, lpTokenPrincipal);
+        }
     }
 
     /// @dev Account for paid liquidity debt in loan
@@ -98,16 +107,20 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
         uint256 loanInitLiquidity = _loan.initLiquidity; // Loan's liquidity invariant principal
 
         // Calculate loan's CFMM LP token principal repaid
-        lpTokenPrincipal = convertInvariantToLP(liquidity, loanLpTokens, loanLiquidity);
+        lpTokenPrincipal = GSMath.min(loanLpTokens, convertInvariantToLP(liquidity, loanLpTokens, loanLiquidity));
 
-        // Calculate loan's outstanding liquidity invariant principal after liquidity payment
-        _loan.initLiquidity = uint128(loanInitLiquidity - (liquidity * loanInitLiquidity / loanLiquidity));
+        uint256 initLiquidityPaid = GSMath.min(loanInitLiquidity, liquidity * loanInitLiquidity / loanLiquidity);
 
-        // Update loan's outstanding CFMM LP token principal
-        _loan.lpTokens = loanLpTokens - lpTokenPrincipal;
+        unchecked {
+            // Calculate loan's outstanding liquidity invariant principal after liquidity payment
+            _loan.initLiquidity = uint128(loanInitLiquidity - initLiquidityPaid);
 
-        // Calculate loan's outstanding liquidity invariant after liquidity payment
-        remainingLiquidity = loanLiquidity - liquidity;
+            // Update loan's outstanding CFMM LP token principal
+            _loan.lpTokens = loanLpTokens - lpTokenPrincipal;
+
+            // Calculate loan's outstanding liquidity invariant after liquidity payment
+            remainingLiquidity = loanLiquidity - GSMath.min(loanLiquidity, liquidity);
+        }
 
         // Can't be less than min liquidity to avoid rounding issues
         if (remainingLiquidity > 0 && remainingLiquidity < minBorrow()) revert MinBorrow();
@@ -115,7 +128,7 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
         _loan.liquidity = uint128(remainingLiquidity);
 
         // If fully paid, free memory to save gas
-        if(remainingLiquidity == 0) {
+        if(remainingLiquidity == 0) { // lpTokens should be zero
             _loan.rateIndex = 0;
             _loan.px = 0;
         }
@@ -131,21 +144,18 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
             return(0,loanLiquidity); // Enough collateral to cover liquidity debt
         }
 
-        // Not enough collateral to cover liquidity loan
-        uint256 writeDownAmt;
-        unchecked{
-            writeDownAmt = loanLiquidity - collateralAsLiquidity; // Liquidity shortfall
-        }
-
         // Write down pool liquidity debt
         uint256 borrowedInvariant = s.BORROWED_INVARIANT; // Save gas
 
+        // Not enough collateral to cover liquidity loan
+        uint256 writeDownAmt;
+
         // Will always write down
-        if(writeDownAmt > borrowedInvariant) {
-            borrowedInvariant = 0;
-        } else {
-            borrowedInvariant = borrowedInvariant - writeDownAmt;
+        unchecked {
+            writeDownAmt = loanLiquidity - collateralAsLiquidity; // Liquidity shortfall
+            borrowedInvariant = borrowedInvariant - GSMath.min(borrowedInvariant, writeDownAmt);
         }
+
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(borrowedInvariant, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
         s.BORROWED_INVARIANT = uint128(borrowedInvariant);
 
