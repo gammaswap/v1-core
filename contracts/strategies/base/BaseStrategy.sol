@@ -197,7 +197,8 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         } else {
             uint256 prevWeight;
             unchecked {
-                prevWeight = 100 - GSMath.min(100, emaMultiplier);
+                emaMultiplier = GSMath.min(100, emaMultiplier);
+                prevWeight = 100 - emaMultiplier;
             }
             // EMA_1 = val * mult + EMA_0 * (1 - mult)
             return utilizationRate * emaMultiplier / 100 + emaUtilRateLast * prevWeight / 100;
