@@ -352,7 +352,7 @@ describe("ExternalLiquidationStrategy", function () {
         loan0.tokensHeld[1]
       );
 
-      const amounts = [amount0.mul(2), amount1.mul(2)];
+      const amounts = [amount0.mul(2), amount1.mul(0)];
       const lpTokens = 0;
       const strategyBalanceA0 = await tokenA.balanceOf(strategy.address);
       const strategyBalanceB0 = await tokenB.balanceOf(strategy.address);
@@ -363,8 +363,8 @@ describe("ExternalLiquidationStrategy", function () {
         cfmm: cfmm.address,
         token0: tokenA.address,
         token1: tokenB.address,
-        amount0: amount0.add(amount0.div(2)),
-        amount1: amount1,
+        amount0: amounts[0],
+        amount1: amounts[1],
         lpTokens: lpTokens,
       };
       const data = ethers.utils.defaultAbiCoder.encode(
@@ -444,7 +444,7 @@ describe("ExternalLiquidationStrategy", function () {
         loan0.tokensHeld[1]
       );
 
-      const amounts = [amount0.mul(2), amount1.mul(2)];
+      const amounts = [amount0.mul(0), amount1.mul(2)];
       const lpTokens = 0;
       const strategyBalanceA0 = await tokenA.balanceOf(strategy.address);
       const strategyBalanceB0 = await tokenB.balanceOf(strategy.address);
@@ -455,8 +455,8 @@ describe("ExternalLiquidationStrategy", function () {
         cfmm: cfmm.address,
         token0: tokenA.address,
         token1: tokenB.address,
-        amount0: amount0,
-        amount1: amount1.add(amount1.div(2)),
+        amount0: amounts[0],
+        amount1: amounts[1],
         lpTokens: lpTokens,
       };
       const data = ethers.utils.defaultAbiCoder.encode(
@@ -547,8 +547,8 @@ describe("ExternalLiquidationStrategy", function () {
         cfmm: cfmm.address,
         token0: tokenA.address,
         token1: tokenB.address,
-        amount0: amount0.add(amount0.div(2)),
-        amount1: amount1.add(amount1.div(2)),
+        amount0: amounts[0],
+        amount1: amounts[1],
         lpTokens: lpTokens,
       };
       const data = ethers.utils.defaultAbiCoder.encode(
@@ -639,8 +639,8 @@ describe("ExternalLiquidationStrategy", function () {
         cfmm: cfmm.address,
         token0: tokenA.address,
         token1: tokenB.address,
-        amount0: amount0.add(amount0.div(2)),
-        amount1: amount1.add(amount1.div(2)),
+        amount0: amounts[0],
+        amount1: amounts[1],
         lpTokens: lpTokens,
       };
       const data = ethers.utils.defaultAbiCoder.encode(
@@ -699,7 +699,7 @@ describe("ExternalLiquidationStrategy", function () {
       expect(strategyCfmmBalance1).gt(strategyCfmmBalance0);
     });
 
-    it("Deposit LP tokens, withdraw both tokens and CFMM LP tokens, don't return collateral tokens", async function () {
+    it("Deposit LP tokens, withdraw both tokens and CFMM LP tokens, don't return all collateral tokens", async function () {
       expect(await strategy.swapFee()).to.equal(0);
       await strategy.setExternalSwapFee(10);
       expect(await strategy.swapFee()).to.equal(10);
@@ -731,8 +731,8 @@ describe("ExternalLiquidationStrategy", function () {
         cfmm: cfmm.address,
         token0: tokenA.address,
         token1: tokenB.address,
-        amount0: 0,
-        amount1: 0,
+        amount0: amounts[0].sub(1),
+        amount1: amounts[1],
         lpTokens: lpTokens,
       };
       const data = ethers.utils.defaultAbiCoder.encode(
@@ -743,13 +743,54 @@ describe("ExternalLiquidationStrategy", function () {
       );
 
       await (await cfmm.transfer(strategy.address, amount0.mul(20))).wait();
+
+      await expect(
+        strategy._liquidateExternally(
+          tokenId,
+          amounts,
+          lpTokens,
+          callee2.address,
+          data
+        )
+      ).to.be.revertedWithCustomError(strategy, "CollateralShortfall");
+
+      swapData.amount0 = amounts[0];
+      swapData.amount1 = amounts[1].sub(1);
+
+      const data1 = ethers.utils.defaultAbiCoder.encode(
+        [
+          "tuple(address strategy, address cfmm, address token0, address token1, uint256 amount0, uint256 amount1, uint256 lpTokens)",
+        ],
+        [swapData]
+      );
+
+      await expect(
+        strategy._liquidateExternally(
+          tokenId,
+          amounts,
+          lpTokens,
+          callee2.address,
+          data1
+        )
+      ).to.be.revertedWithCustomError(strategy, "CollateralShortfall");
+
+      swapData.amount0 = amounts[0];
+      swapData.amount1 = amounts[1];
+
+      const data2 = ethers.utils.defaultAbiCoder.encode(
+        [
+          "tuple(address strategy, address cfmm, address token0, address token1, uint256 amount0, uint256 amount1, uint256 lpTokens)",
+        ],
+        [swapData]
+      );
+
       await (
         await strategy._liquidateExternally(
           tokenId,
           amounts,
           lpTokens,
           callee2.address,
-          data
+          data2
         )
       ).wait();
 
@@ -823,8 +864,8 @@ describe("ExternalLiquidationStrategy", function () {
         cfmm: cfmm.address,
         token0: tokenA.address,
         token1: tokenB.address,
-        amount0: 0,
-        amount1: 0,
+        amount0: amounts[0],
+        amount1: amounts[1],
         lpTokens: 0,
       };
       const data = ethers.utils.defaultAbiCoder.encode(
@@ -915,8 +956,8 @@ describe("ExternalLiquidationStrategy", function () {
         cfmm: cfmm.address,
         token0: tokenA.address,
         token1: tokenB.address,
-        amount0: 0,
-        amount1: 0,
+        amount0: amounts[0],
+        amount1: amounts[1],
         lpTokens: lpTokens.add(ONE),
       };
       const data = ethers.utils.defaultAbiCoder.encode(
@@ -1269,8 +1310,8 @@ describe("ExternalLiquidationStrategy", function () {
         cfmm: cfmm.address,
         token0: tokenA.address,
         token1: tokenB.address,
-        amount0: 0,
-        amount1: 0,
+        amount0: amounts[0],
+        amount1: amounts[1],
         lpTokens: 0,
       };
       const data = ethers.utils.defaultAbiCoder.encode(
@@ -1321,8 +1362,8 @@ describe("ExternalLiquidationStrategy", function () {
         cfmm: cfmm.address,
         token0: tokenA.address,
         token1: tokenB.address,
-        amount0: 0,
-        amount1: 0,
+        amount0: amounts[0],
+        amount1: amounts[1],
         lpTokens: 0,
       };
       const data = ethers.utils.defaultAbiCoder.encode(

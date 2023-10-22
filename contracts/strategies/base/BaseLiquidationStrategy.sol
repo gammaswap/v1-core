@@ -132,7 +132,7 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
     function calcExcessLiquidity(uint256 liquidityDeposit, uint256 loanLiquidity, bool fullDeposit) internal virtual returns(uint256 excessLiquidity){
         if(fullDeposit && liquidityDeposit < loanLiquidity) {
             revert InsufficientDeposit();
-        } else if(liquidityDeposit > (loanLiquidity + minBorrow() * 10)) { // multiply by 10 to cover rounding issues
+        } else if(liquidityDeposit > (loanLiquidity + minBorrow())) {
             unchecked {
                 excessLiquidity = liquidityDeposit - loanLiquidity;
             }
