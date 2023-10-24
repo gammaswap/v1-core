@@ -22,6 +22,6 @@ contract TestExternalCallee2 is IExternalCallee {
         SwapData memory decoded = abi.decode(data, (SwapData));
         if(decoded.lpTokens > 0) GammaSwapLibrary.safeTransfer(decoded.cfmm, decoded.strategy, decoded.lpTokens);
         if(decoded.amount0 > 0) GammaSwapLibrary.safeTransfer(decoded.token0, decoded.strategy, decoded.amount0);
-        if(decoded.amount1 > 1) GammaSwapLibrary.safeTransfer(decoded.token1, decoded.strategy, decoded.amount1);
+        if(decoded.amount1 > 0) GammaSwapLibrary.safeTransfer(decoded.token1, decoded.strategy, decoded.amount1);
     }
 }

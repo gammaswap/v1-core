@@ -128,12 +128,10 @@ describe("ExternalBaseStrategy", function () {
     for (let i = 0; i < amounts.length; i++) {
       const tmpLpShares = getLPShare(
         amounts[i],
-        lastCFMMTotalSupply,
+        lastCFMMTotalSupply.div(amounts.length),
         reserve[i]
       );
-      if (tmpLpShares.gt(lpShares)) {
-        lpShares = tmpLpShares;
-      }
+      lpShares = lpShares.add(tmpLpShares);
     }
     return lpShares;
   }
@@ -377,18 +375,12 @@ describe("ExternalBaseStrategy", function () {
       const addr1BalanceA0 = await tokenA.balanceOf(addr1.address);
       const addr1BalanceB0 = await tokenB.balanceOf(addr1.address);
       const reserves = poolBalances.cfmmReserves;
+      const amounts = [amount0.div(2), amount1.div(2)];
       const collateralAsLPTokens = calcCollateralAsLPTokens(
-        [amount0.div(2), amount1.div(2)],
-        poolBalances.lastCFMMTotalSupply,
-        reserves
-      );
-      const amounts = [amount0.div(2), amount1.div(3)];
-      const collateralAsLPTokens1 = calcCollateralAsLPTokens(
         amounts,
         poolBalances.lastCFMMTotalSupply,
         reserves
       );
-      expect(collateralAsLPTokens).to.equal(collateralAsLPTokens1);
       const res = await (
         await strategy.testSendAndCalcCollateralLPTokens(
           addr1.address,
@@ -424,18 +416,12 @@ describe("ExternalBaseStrategy", function () {
       const addr1BalanceA0 = await tokenA.balanceOf(addr1.address);
       const addr1BalanceB0 = await tokenB.balanceOf(addr1.address);
       const reserves = poolBalances.cfmmReserves;
+      const amounts = [amount0.div(2), amount1.div(2)];
       const collateralAsLPTokens = calcCollateralAsLPTokens(
-        [amount0.div(2), amount1.div(2)],
-        poolBalances.lastCFMMTotalSupply,
-        reserves
-      );
-      const amounts = [amount0.div(3), amount1.div(2)];
-      const collateralAsLPTokens1 = calcCollateralAsLPTokens(
         amounts,
         poolBalances.lastCFMMTotalSupply,
         reserves
       );
-      expect(collateralAsLPTokens).to.equal(collateralAsLPTokens1);
       const res = await (
         await strategy.testSendAndCalcCollateralLPTokens(
           addr1.address,
