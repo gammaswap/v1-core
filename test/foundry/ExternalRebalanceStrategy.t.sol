@@ -47,7 +47,6 @@ contract ExternalRebalanceStrategyTest is Test {
     cfmm.transfer(address(strategy), 100 * 1e18);
 
     strategy.updatePoolBalances();
-    console.log("******");
   }
 
   function test_rebalance_externally(uint256 amt0, uint256 amt1, uint256 lpAmt) public {
@@ -60,9 +59,7 @@ contract ExternalRebalanceStrategyTest is Test {
     // another loan
     _createLoan(amount0, amount1, liquidity);
 
-    (uint128[] memory tokenBalances, uint128[] memory reserves,,,
-      uint256 lpTokenBalance,) = strategy.getPoolBalances();
-    console.log("@@@", tokenA.balanceOf(address(strategy)));
+    (uint128[] memory tokenBalances,,,, uint256 lpTokenBalance,) = strategy.getPoolBalances();
     assertEq(tokenBalances[0] - amount0, tokensHeld[0]);
 
     amt0 = bound(amt0, 0, tokenBalances[0]);
@@ -105,7 +102,6 @@ contract ExternalRebalanceStrategyTest is Test {
     _createLoan(amount0, amount1, liquidity);
 
     (uint128[] memory tokenBalances,,,,uint256 lpTokenBalance,) = strategy.getPoolBalances();
-    console.log("@@@", tokenA.balanceOf(address(strategy)));
     assertEq(tokenBalances[0] - amount0, tokensHeld[0]);
 
     amt0 = bound(amt0, 0, tokensHeld[0]);
