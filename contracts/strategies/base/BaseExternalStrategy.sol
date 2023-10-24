@@ -41,7 +41,7 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
 
         for(uint256 i; i < amounts.length;) {
             // Collateral sent is measured as max of LP token equivalent if requested proportionally at current CFMM pool price
-            swappedCollateralAsLPTokens = GSMath.max(swappedCollateralAsLPTokens, amounts[i] * lastCFMMTotalSupply / s.CFMM_RESERVES[i]);
+            swappedCollateralAsLPTokens += amounts[i] * (lastCFMMTotalSupply / amounts.length) / s.CFMM_RESERVES[i];
             sendToken(tokens[i], to, amounts[i], s.TOKEN_BALANCE[i], type(uint128).max);
             unchecked {
                 ++i;
