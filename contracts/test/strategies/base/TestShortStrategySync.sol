@@ -12,7 +12,7 @@ contract TestShortStrategySync is TestBaseShortStrategy, ShortStrategySync {
         cfmmReserves[1] = 2;
     }
 
-    function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal override(BaseStrategy, TestBaseShortStrategy) virtual {
+    function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex, uint256 utilizationRate) internal override(BaseStrategy, TestBaseShortStrategy) virtual {
     }
 
     function _deposit(uint256, address) external override(IShortStrategy, ShortStrategyERC4626) pure returns (uint256){

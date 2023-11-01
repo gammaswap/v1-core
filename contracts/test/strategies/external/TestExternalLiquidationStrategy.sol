@@ -18,7 +18,7 @@ contract TestExternalLiquidationStrategy is TestExternalBaseRebalanceStrategy, E
         return swapFee;
     }
 
-    function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal virtual override {
+    function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex, uint256 utilizationRate) internal virtual override {
     }
 
     // create loan

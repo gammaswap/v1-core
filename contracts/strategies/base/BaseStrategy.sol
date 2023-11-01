@@ -222,7 +222,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
             lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, blockDiff);
             (accFeeIndex, borrowedInvariant) = updateStore(lastFeeIndex, borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply);
             if(borrowedInvariant > 0) { // Only pay protocol fee if there are loans
-                mintToDevs(lastFeeIndex, lastCFMMFeeIndex);
+                mintToDevs(lastFeeIndex, lastCFMMFeeIndex, utilizationRate);
             }
         } else {
             s.lastCFMMFeeIndex = uint64(s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18);
@@ -233,26 +233,35 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         }
     }
 
+    /// @dev Calculate amount to dilute GS LP tokens as protocol revenue payment
+    /// @param lastFeeIndex - interest accrued to loans in GammaPool
+    /// @param lastCFMMIndex - liquidity invariant lpTokenBalance represents
+    /// @param utilizationRate - utilization rate of the pool (borrowedInvariant/totalInvariant)
+    /// @param protocolFee - fee to charge as protocol revenue from interest growth in GammaSwap
+    /// @return pctToPrint - percent of total GS LP token shares to print as dilution to pay protocol revenue
+    function _calcProtocolDilution(uint256 lastFeeIndex, uint256 lastCFMMIndex, uint256 utilizationRate, uint256 protocolFee) internal virtual view returns(uint256 pctToPrint) {
+        if(lastFeeIndex <= lastCFMMIndex || protocolFee == 0) {
+            return 0;
+        }
+
+        uint256 lastFeeIndexAdj;
+        uint256 lastCFMMIndexWeighted = lastCFMMIndex * (1e18 > utilizationRate ? (1e18 - utilizationRate) : 0);
+        unchecked {
+            lastFeeIndexAdj = lastFeeIndex - (lastFeeIndex - lastCFMMIndex) * GSMath.min(protocolFee, 100000) / 100000; // _protocolFee is 10000 by default (10%)
+        }
+        uint256 numerator = (lastFeeIndex * utilizationRate + lastCFMMIndexWeighted) / 1e18;
+        uint256 denominator = (lastFeeIndexAdj * utilizationRate + lastCFMMIndexWeighted)/ 1e18;
+        pctToPrint = GSMath.max(numerator * 1e18 / denominator, 1e18) - 1e18;// Result always is percentage as 18 decimals number or zero
+    }
+
     /// @dev Mint GS LP tokens as protocol fee payment
     /// @param lastFeeIndex - interest accrued to loans in GammaPool
     /// @param lastCFMMIndex - liquidity invariant lpTokenBalance represents
-    function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal virtual {
+    /// @param utilizationRate - utilization rate of the pool (borrowedInvariant/totalInvariant)
+    function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex, uint256 utilizationRate) internal virtual {
         (address _to, uint256 _protocolFee,,) = IGammaPoolFactory(s.factory).getPoolFee(address(this));
         if(_to != address(0) && _protocolFee > 0) {
-            uint256 denominator;
-            uint256 pctToPrint;
-            uint256 devShares;
-            if(lastFeeIndex > lastCFMMIndex) {
-                unchecked {
-                    denominator = lastFeeIndex - (lastFeeIndex - lastCFMMIndex) * GSMath.min(_protocolFee, 100000) / 100000; // _protocolFee is 10000 by default (10%)
-                    pctToPrint = GSMath.max(lastFeeIndex * 1e18 / denominator, 1e18) - 1e18;// Result always is percentage as 18 decimals number or zero
-                }
-                devShares = s.totalSupply * pctToPrint / 1e18;
-            } else {
-                denominator = lastFeeIndex;
-                pctToPrint = 0;
-                devShares = 0;
-            }
+            uint256 devShares = s.totalSupply * _calcProtocolDilution(lastFeeIndex, lastCFMMIndex, utilizationRate, _protocolFee) / 1e18;
             if(devShares > 0) {
                 _mint(_to, devShares); // protocol fee is paid as dilution
             }

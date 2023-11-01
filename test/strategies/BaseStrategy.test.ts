@@ -1271,13 +1271,23 @@ describe("BaseStrategy", function () {
       const gsFeeIndex = fields1.lastFeeIndex.gt(fields1.lastCFMMFeeIndex)
         ? fields1.lastFeeIndex.sub(fields1.lastCFMMFeeIndex)
         : ethers.constants.Zero;
-      const denominator = fields1.lastFeeIndex.sub(
-        gsFeeIndex.mul(devFee).div(100000)
-      );
-      const pctToPrint = fields1.lastFeeIndex
-        .mul(ONE)
-        .div(denominator)
-        .sub(ONE);
+      const protFee = gsFeeIndex.mul(devFee).div(100000);
+      const lastFeeIndexAdj = fields1.lastFeeIndex.sub(protFee);
+      const utilrate = ONE.div(2);
+      const utilRateComplement = ONE.sub(utilrate);
+
+      const lastCFMMIndexWeighted =
+        fields1.lastCFMMFeeIndex.mul(utilRateComplement);
+      const numerator = fields1.lastFeeIndex
+        .mul(utilrate)
+        .add(lastCFMMIndexWeighted)
+        .div(ONE);
+      const denominator = lastFeeIndexAdj
+        .mul(utilrate)
+        .add(lastCFMMIndexWeighted)
+        .div(ONE);
+
+      const pctToPrint = numerator.mul(ONE).div(denominator).sub(ONE);
       const devShares = pctToPrint.gt(0)
         ? totalPoolSharesSupply0.mul(pctToPrint).div(ONE)
         : ethers.constants.Zero;
