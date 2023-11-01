@@ -239,7 +239,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param utilizationRate - utilization rate of the pool (borrowedInvariant/totalInvariant)
     /// @param protocolFee - fee to charge as protocol revenue from interest growth in GammaSwap
     /// @return pctToPrint - percent of total GS LP token shares to print as dilution to pay protocol revenue
-    function _calcProtocolDilution(uint256 lastFeeIndex, uint256 lastCFMMIndex, uint256 utilizationRate, uint256 protocolFee) internal virtual returns(uint256 pctToPrint) {
+    function _calcProtocolDilution(uint256 lastFeeIndex, uint256 lastCFMMIndex, uint256 utilizationRate, uint256 protocolFee) internal virtual view returns(uint256 pctToPrint) {
         if(lastFeeIndex <= lastCFMMIndex || protocolFee == 0) {
             return 0;
         }
