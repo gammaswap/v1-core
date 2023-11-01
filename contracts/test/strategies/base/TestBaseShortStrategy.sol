@@ -32,7 +32,7 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         return false;
     }
 
-    function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal override virtual {
+    function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex, uint256 utilizationRate) internal override virtual {
     }
 
     function setTotalSupply(uint256 _totalSupply) public virtual {

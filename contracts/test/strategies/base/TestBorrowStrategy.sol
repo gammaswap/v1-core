@@ -268,7 +268,7 @@ contract TestBorrowStrategy is BorrowStrategy {
         origFee = _origFee;
     }
 
-    function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex) internal virtual override {
+    function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex, uint256 utilizationRate) internal virtual override {
     }
 
     function testUpdateIndex() public virtual {
