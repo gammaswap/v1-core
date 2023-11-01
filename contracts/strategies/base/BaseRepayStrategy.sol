@@ -91,8 +91,12 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
             s.LP_TOKEN_BORROWED_PLUS_INTEREST = lpTokenBorrowedPlusInterest - GSMath.min(lpTokenBorrowedPlusInterest, _lpTokenPaid);
 
             // LP_TOKEN_BORROWED = sum(lpTokenPrincipal of all loans)
-            s.LP_TOKEN_BORROWED = lpTokenBorrowed - GSMath.min(lpTokenBorrowed, lpTokenPrincipal);
+            lpTokenBorrowed = lpTokenBorrowed - GSMath.min(lpTokenBorrowed, lpTokenPrincipal);
         }
+
+        s.LP_TOKEN_BORROWED = lpTokenBorrowed;
+
+        if(lpTokenBorrowed == 0) s.BORROWED_INVARIANT = 0;
     }
 
     /// @dev Account for paid liquidity debt in loan
@@ -113,10 +117,10 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
 
         unchecked {
             // Calculate loan's outstanding liquidity invariant principal after liquidity payment
-            _loan.initLiquidity = uint128(loanInitLiquidity - initLiquidityPaid);
+            loanInitLiquidity = loanInitLiquidity - initLiquidityPaid;
 
             // Update loan's outstanding CFMM LP token principal
-            _loan.lpTokens = loanLpTokens - lpTokenPrincipal;
+            loanLpTokens = loanLpTokens - lpTokenPrincipal;
 
             // Calculate loan's outstanding liquidity invariant after liquidity payment
             remainingLiquidity = loanLiquidity - GSMath.min(loanLiquidity, liquidity);
@@ -125,12 +129,18 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
         // Can't be less than min liquidity to avoid rounding issues
         if (remainingLiquidity > 0 && remainingLiquidity < minBorrow()) revert MinBorrow();
 
-        _loan.liquidity = uint128(remainingLiquidity);
-
         // If fully paid, free memory to save gas
         if(remainingLiquidity == 0) { // lpTokens should be zero
             _loan.rateIndex = 0;
             _loan.px = 0;
+            _loan.lpTokens = 0;
+            _loan.initLiquidity = 0;
+            _loan.liquidity = 0;
+            if(loanLpTokens > 0) lpTokenPrincipal += loanLpTokens; // cover rounding issues
+        } else {
+            _loan.lpTokens = uint128(loanLpTokens);
+            _loan.initLiquidity = uint128(loanInitLiquidity);
+            _loan.liquidity = uint128(remainingLiquidity);
         }
     }
 
