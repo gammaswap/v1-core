@@ -11,7 +11,6 @@ import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/ILiquidationStrategy.sol";
 import "../interfaces/strategies/liquidation/ISingleLiquidationStrategy.sol";
 import "../interfaces/strategies/liquidation/IBatchLiquidationStrategy.sol";
-import "../interfaces/IPoolViewer.sol";
 import "./GammaPoolERC4626.sol";
 
 /// @title Basic GammaPool smart contract
@@ -47,13 +46,10 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     /// @dev See {IGammaPool-batchLiquidationStrategy}
     address immutable public override batchLiquidationStrategy;
 
-    /// @dev See {IGammaPool-viewer}
-    address immutable public override viewer;
-
     /// @dev Initializes the contract by setting `protocolId`, `factory`, `borrowStrategy`, `repayStrategy`, `rebalanceStrategy`,
     /// @dev shortStrategy`, `singleLiquidationStrategy`, `batchLiquidationStrategy`, and `viewer`.
     constructor(uint16 protocolId_, address factory_,  address borrowStrategy_, address repayStrategy_, address rebalanceStrategy_,
-        address shortStrategy_, address singleLiquidationStrategy_, address batchLiquidationStrategy_, address viewer_) {
+        address shortStrategy_, address singleLiquidationStrategy_, address batchLiquidationStrategy_, address viewer_) GammaPoolERC4626(viewer_) {
         protocolId = protocolId_;
         factory = factory_;
         borrowStrategy = borrowStrategy_;
@@ -62,7 +58,6 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         shortStrategy = shortStrategy_;
         singleLiquidationStrategy = singleLiquidationStrategy_;
         batchLiquidationStrategy = batchLiquidationStrategy_;
-        viewer = viewer_;
     }
 
     /// @dev See {IGammaPool-initialize}
@@ -111,6 +106,10 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     /// @dev See {IRateModel-rateParamsStore}
     function rateParamsStore() external view returns(address) {
         return s.factory;
+    }
+
+    function viewer() public view returns (address) {
+        return poolViewer;
     }
 
     /***** CFMM Data *****/

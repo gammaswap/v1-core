@@ -43,7 +43,6 @@ interface IShortStrategy is IShortStrategyEvents {
     function _getLatestCFMMInvariant(bytes memory cfmmData) external view returns(uint256 cfmmInvariant);
 
     /// @dev Calculate current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
-    /// @param paramsStore - address containing rate model parameters
     /// @param borrowedInvariant - invariant amount borrowed in GammaPool including accrued interest calculated in last update to GammaPool
     /// @param lpBalance - amount of LP tokens deposited in GammaPool
     /// @param lastCFMMInvariant - invariant amount in CFMM
@@ -51,10 +50,20 @@ interface IShortStrategy is IShortStrategyEvents {
     /// @param prevCFMMInvariant - invariant amount in CFMM in last update to GammaPool
     /// @param prevCFMMTotalSupply - total supply in CFMM in last update to GammaPool
     /// @param lastBlockNum - last block GammaPool was updated
+    /// @param lastCFMMFeeIndex - accrued CFMM Fees in storage
+    /// @param lastFeeIndex - last fees charged by GammaPool since last update
+    /// @return totalAssets - total CFMM LP tokens in existence in the pool (real and virtual) including accrued interest
+    function totalAssets(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex) external view returns(uint256);
+
+    /// @dev Calculate current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
+    /// @param paramsStore - address containing rate model parameters
     /// @param pool - address of pool to get interest rate calculations for
     /// @param lastCFMMFeeIndex - accrued CFMM Fees in storage
-    /// @return totalAssets - total CFMM LP tokens in existence in the pool (real and virtual) including accrued interest
-    function totalAssets(address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, address pool, uint256 lastCFMMFeeIndex) external view returns(uint256);
+    /// @param lastFeeIndex - last fees charged by GammaPool since last update
+    /// @param utilizationRate - current utilization rate of GammaPool
+    /// @param supply - actual GS LP total supply available in the pool
+    /// @return totalSupply - total GS LP tokens in the pool including accrued interest
+    function totalSupply(address paramsStore, address pool, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 utilizationRate, uint256 supply) external view returns (uint256);
 
     /// @dev Calculate fees charged by GammaPool since last update to liquidity loans and current borrow rate
     /// @param paramsStore - address containing rate model parameters

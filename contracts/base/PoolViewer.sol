@@ -15,13 +15,13 @@ import "../libraries/GSMath.sol";
 /// @dev Used make complex view function calls from GammaPool's storage data (e.g. updated loan and pool debt)
 contract PoolViewer is IPoolViewer {
 
-    /// @dev See {IPoolViewer-getLoans}
+    /// @inheritdoc IPoolViewer
     function getLoans(address pool, uint256 start, uint256 end, bool active) external virtual override view returns(IGammaPool.LoanData[] memory _loans) {
         _loans = IGammaPool(pool).getLoans(start, end, active);
         return _getUpdatedLoans(pool, _loans);
     }
 
-    /// @dev See {IPoolViewer-getLoansById}
+    /// @inheritdoc IPoolViewer
     function getLoansById(address pool, uint256[] calldata tokenIds, bool active) external virtual override view returns(IGammaPool.LoanData[] memory _loans) {
         _loans = IGammaPool(pool).getLoansById(tokenIds, active);
         return _getUpdatedLoans(pool, _loans);
@@ -90,7 +90,7 @@ contract PoolViewer is IPoolViewer {
         return 1e18; // first update
     }
 
-    /// @dev See {IPoolViewer-loan}
+    /// @inheritdoc IPoolViewer
     function loan(address pool, uint256 tokenId) external virtual override view returns(IGammaPool.LoanData memory _loanData) {
         _loanData = IGammaPool(pool).getLoanData(tokenId);
         _loanData.accFeeIndex = _getLoanLastFeeIndex(_loanData);
@@ -102,7 +102,7 @@ contract PoolViewer is IPoolViewer {
         return _loanData;
     }
 
-    /// @dev See {IPoolViewer-canLiquidate}
+    /// @inheritdoc IPoolViewer
     function canLiquidate(address pool, uint256 tokenId) external virtual override view returns(bool) {
         IGammaPool.LoanData memory _loanData = IGammaPool(pool).getLoanData(tokenId);
         uint256 liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, _getLoanLastFeeIndex(_loanData));
@@ -142,7 +142,7 @@ contract PoolViewer is IPoolViewer {
         }
     }
 
-    /// @dev See {IPoolViewer-calcDynamicOriginationFee}
+    /// @inheritdoc IPoolViewer
     function calcDynamicOriginationFee(address pool, uint256 liquidity) external virtual override view returns(uint256 origFee) {
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
 
@@ -203,7 +203,7 @@ contract PoolViewer is IPoolViewer {
         data.currBlockNumber = block.number;
     }
 
-    /// @dev See {IPoolViewer-getLatestRates}
+    /// @inheritdoc IPoolViewer
     function getLatestRates(address pool) external virtual override view returns(IGammaPool.RateData memory data) {
         data = _getLastFeeIndex(pool);
         data.currBlockNumber = block.number;
@@ -211,7 +211,7 @@ contract PoolViewer is IPoolViewer {
         data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
     }
 
-    /// @dev See {IPoolViewer-getLatestPoolData}
+    /// @inheritdoc IPoolViewer
     function getLatestPoolData(address pool) external virtual override view returns(IGammaPool.PoolData memory data) {
         data = getPoolData(pool);
         uint256 borrowedInvariant = data.BORROWED_INVARIANT;
@@ -246,13 +246,13 @@ contract PoolViewer is IPoolViewer {
         data.lastCFMMTotalSupply = lastCFMMTotalSupply;
     }
 
-    /// @dev See {IPoolViewer-getPoolData}
+    /// @inheritdoc IPoolViewer
     function getPoolData(address pool) public virtual override view returns(IGammaPool.PoolData memory data) {
         data = IGammaPool(pool).getPoolData();
         (data.symbols, data.names,) = getTokensMetaData(data.tokens);
     }
 
-    /// dev See {IPoolViewer-getTokensMetaData}
+    /// @inheritdoc IPoolViewer
     function getTokensMetaData(address[] memory _tokens) public virtual override view returns(string[] memory _symbols,
         string[] memory _names, uint8[] memory _decimals) {
         _symbols = new string[](_tokens.length);
@@ -266,6 +266,12 @@ contract PoolViewer is IPoolViewer {
                 ++i;
             }
         }
+    }
+
+    /// @inheritdoc IPoolViewer
+    function getLastFees(address shortStrategy, address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum,
+        address pool, uint256 lastCFMMFeeIndex) public virtual override view returns(uint256, uint256, uint256) {
+        return IShortStrategy(shortStrategy).getLastFees(paramsStore, borrowedInvariant, lpBalance, prevCFMMInvariant, prevCFMMTotalSupply, lastBlockNum, pool, lastCFMMFeeIndex);
     }
 
     /// @dev Update liquidity to current debt level

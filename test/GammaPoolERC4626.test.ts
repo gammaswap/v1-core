@@ -43,7 +43,7 @@ describe("GammaPoolERC4626", function () {
       "TestGammaPoolFactory"
     );
     PoolViewer = await ethers.getContractFactory("PoolViewer");
-    GammaPool = await ethers.getContractFactory("TestGammaPool");
+    GammaPool = await ethers.getContractFactory("TestGammaPool4626");
     [owner, addr1, addr2, addr3, addr4, addr5, addr6] =
       await ethers.getSigners();
 

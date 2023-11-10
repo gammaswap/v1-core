@@ -77,12 +77,12 @@ describe("ShortStrategyERC4626", function () {
       _totalAssets.add(assets)
     );
 
-    const _totalSupply = await strategy.totalSupply();
+    const _totalSupply = await strategy.totalSupply0();
 
     if (shares.gt(0))
       await (await strategy.setTotalSupply(_totalSupply.add(shares))).wait(); // increase totalSupply of gammaPool
 
-    expect(await strategy.totalSupply()).to.be.equal(_totalSupply.add(shares));
+    expect(await strategy.totalSupply0()).to.be.equal(_totalSupply.add(shares));
   }
 
   async function testConvertToShares(
@@ -90,7 +90,7 @@ describe("ShortStrategyERC4626", function () {
     convert2Shares: Function,
     convert2Assets: Function
   ): Promise<BigNumber> {
-    const totalSupply = await strategy.totalSupply();
+    const totalSupply = await strategy.totalSupply0();
     const totalAssets = await strategy.getTotalAssets();
     const convertedToShares = await convertToShares(
       assets,
@@ -113,7 +113,7 @@ describe("ShortStrategyERC4626", function () {
     convert2Assets: Function,
     convert2Shares: Function
   ): Promise<BigNumber> {
-    const totalSupply = await strategy.totalSupply();
+    const totalSupply = await strategy.totalSupply0();
     const totalAssets = await strategy.getTotalAssets();
     const convertedToAssets = await convertToAssets(
       shares,
@@ -154,7 +154,7 @@ describe("ShortStrategyERC4626", function () {
     cfmmTotalInvariant: BigNumber
   ) {
     expect(await strategy.getTotalAssets()).to.equal(0);
-    expect(await strategy.totalSupply()).to.equal(0);
+    expect(await strategy.totalSupply0()).to.equal(0);
     const params = await strategy.getTotalAssetsParams();
     expect(params.borrowedInvariant).to.equal(0);
     expect(params.lpBalance).to.equal(0);
@@ -176,7 +176,7 @@ describe("ShortStrategyERC4626", function () {
     expOwnerCFMMBalance: BigNumber,
     expReceiverCFMMBalance: BigNumber
   ) {
-    const totalSupply = await strategy.totalSupply();
+    const totalSupply = await strategy.totalSupply0();
     expect(totalSupply).to.equal(expTotalSupply);
 
     const ownerBalance = await strategy.balanceOf(ownerAddr);
@@ -220,7 +220,7 @@ describe("ShortStrategyERC4626", function () {
   ) {
     const resp = await strategy.getLPTokenBalAndBorrowedInv();
 
-    const totalSupply = await strategy.totalSupply();
+    const totalSupply = await strategy.totalSupply0();
     const ownerBalance = await strategy.balanceOf(from);
     const receiverBalance = await strategy.balanceOf(to);
     const totalCFMMSupply = await cfmm.totalSupply();
@@ -283,7 +283,7 @@ describe("ShortStrategyERC4626", function () {
   ) {
     const resp = await strategy.getLPTokenBalAndBorrowedInv();
 
-    const totalSupply = await strategy.totalSupply();
+    const totalSupply = await strategy.totalSupply0();
     const ownerBalance = await strategy.balanceOf(from);
     const receiverBalance = await strategy.balanceOf(to);
     const totalCFMMSupply = await cfmm.totalSupply();
@@ -323,9 +323,9 @@ describe("ShortStrategyERC4626", function () {
       );
 
       const shares = ONE.mul(100);
-      const _totalSupply = await strategy.totalSupply();
+      const _totalSupply = await strategy.totalSupply0();
       await (await strategy.setTotalSupply(_totalSupply.add(shares))).wait(); // increase totalSupply of gammaPool
-      expect(await strategy.totalSupply()).to.equal(_totalSupply.add(shares));
+      expect(await strategy.totalSupply0()).to.equal(_totalSupply.add(shares));
     });
 
     it("Check Allowance", async function () {
@@ -390,7 +390,7 @@ describe("ShortStrategyERC4626", function () {
       const cfmmTotalSupply = await cfmm.totalSupply();
       expect(ownerBalance).to.equal(cfmmTotalSupply.div(2));
       const cfmmInvariant = await cfmm.invariant();
-      const gsTotalSupply = await strategy.totalSupply();
+      const gsTotalSupply = await strategy.totalSupply0();
       const ownerGSBalance = await strategy.balanceOf(owner.address);
       expect(gsTotalSupply).to.equal(ownerGSBalance);
       const params = await strategy.getTotalAssetsParams();
@@ -591,7 +591,7 @@ describe("ShortStrategyERC4626", function () {
         expect(poolUpdatedEvent.args.cfmmReserves[1]).to.equal(cfmmReserves[1]);
         expect(poolUpdatedEvent.args.txType).to.equal(0);
 
-        expect(await strategy.totalSupply()).to.equal(expectedGSShares);
+        expect(await strategy.totalSupply0()).to.equal(expectedGSShares);
         expect(await strategy.balanceOf(owner.address)).to.equal(
           expectedGSShares.sub(minShares)
         );
@@ -637,7 +637,7 @@ describe("ShortStrategyERC4626", function () {
           expectedGSShares.sub(minShares)
         );
 
-        expect(await strategy.totalSupply()).to.equal(expectedGSShares);
+        expect(await strategy.totalSupply0()).to.equal(expectedGSShares);
         expect(await strategy.balanceOf(owner.address)).to.equal(
           expectedGSShares.sub(minShares)
         );
@@ -671,11 +671,20 @@ describe("ShortStrategyERC4626", function () {
 
         const assets3 = assets2.div(2);
         const params1 = await strategy.getTotalAssetsParams();
+        const lastFees = await strategy.getLastFees(
+          paramsStore.address,
+          params1.borrowedInvariant,
+          params1.lpBalance,
+          params1.prevCFMMInvariant,
+          params1.prevCFMMTotalSupply,
+          params1.lastBlockNum.sub(1),
+          strategy.address,
+          params1.lastCFMMFeeIndex
+        );
 
         const cfmmTotalSupply1 = await cfmm.totalSupply();
         const cfmmInvariant1 = await cfmm.invariant();
         const currTotalAssets = await strategy.totalAssets(
-          paramsStore.address,
           params1.borrowedInvariant,
           params1.lpBalance,
           cfmmInvariant1,
@@ -683,11 +692,11 @@ describe("ShortStrategyERC4626", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(1), // to account for the next block update
-          strategy.address,
-          params1.lastCFMMFeeIndex
+          params1.lastCFMMFeeIndex,
+          lastFees.lastFeeIndex
         );
         const expectedGSShares3 = assets3
-          .mul(await strategy.totalSupply())
+          .mul(await strategy.totalSupply0())
           .div(currTotalAssets);
 
         const resp1 = await (
@@ -881,7 +890,7 @@ describe("ShortStrategyERC4626", function () {
         expect(poolUpdatedEvent.args.cfmmReserves[1]).to.equal(cfmmReserves[1]);
         expect(poolUpdatedEvent.args.txType).to.equal(0);
 
-        expect(await strategy.totalSupply()).to.equal(shares);
+        expect(await strategy.totalSupply0()).to.equal(shares);
         expect(await strategy.balanceOf(owner.address)).to.equal(
           shares.sub(minShares)
         );
@@ -927,7 +936,7 @@ describe("ShortStrategyERC4626", function () {
         );
         expect(depositEvent.args.shares).to.equal(shares.sub(minShares));
 
-        expect(await strategy.totalSupply()).to.equal(shares);
+        expect(await strategy.totalSupply0()).to.equal(shares);
         expect(await strategy.balanceOf(owner.address)).to.equal(
           shares.sub(minShares)
         );
@@ -936,11 +945,20 @@ describe("ShortStrategyERC4626", function () {
 
         const shares2 = shares.div(2);
         const params1 = await strategy.getTotalAssetsParams();
+        let lastFees = await strategy.getLastFees(
+          paramsStore.address,
+          params1.borrowedInvariant,
+          params1.lpBalance,
+          params1.prevCFMMInvariant,
+          params1.prevCFMMTotalSupply,
+          params1.lastBlockNum.sub(1),
+          strategy.address,
+          params1.lastCFMMFeeIndex
+        );
 
         const cfmmTotalSupply1 = await cfmm.totalSupply();
         const cfmmInvariant1 = await cfmm.invariant();
         const currTotalAssets = await strategy.totalAssets(
-          paramsStore.address,
           params1.borrowedInvariant,
           params1.lpBalance,
           cfmmInvariant1,
@@ -948,12 +966,12 @@ describe("ShortStrategyERC4626", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(1), // to account for the next block update
-          strategy.address,
-          params1.lastCFMMFeeIndex
+          params1.lastCFMMFeeIndex,
+          lastFees.lastFeeIndex
         );
         const expectedAssets2 = shares2
           .mul(currTotalAssets)
-          .div(await strategy.totalSupply());
+          .div(await strategy.totalSupply0());
 
         // time passes by
         // mine 256 blocks
@@ -979,11 +997,20 @@ describe("ShortStrategyERC4626", function () {
 
         const shares3 = shares2.div(2);
         const params2 = await strategy.getTotalAssetsParams();
+        lastFees = await strategy.getLastFees(
+          paramsStore.address,
+          params2.borrowedInvariant,
+          params2.lpBalance,
+          params2.prevCFMMInvariant,
+          params2.prevCFMMTotalSupply,
+          params2.lastBlockNum.sub(1),
+          strategy.address,
+          params2.lastCFMMFeeIndex
+        );
 
         const cfmmTotalSupply2 = await cfmm.totalSupply();
         const cfmmInvariant2 = await cfmm.invariant();
         const currTotalAssets2 = await strategy.totalAssets(
-          paramsStore.address,
           params2.borrowedInvariant,
           params2.lpBalance,
           cfmmInvariant2,
@@ -991,12 +1018,12 @@ describe("ShortStrategyERC4626", function () {
           params2.prevCFMMInvariant,
           params2.prevCFMMTotalSupply,
           params2.lastBlockNum.sub(1), // to account for the next block update
-          strategy.address,
-          params2.lastCFMMFeeIndex
+          params2.lastCFMMFeeIndex,
+          lastFees.lastFeeIndex
         );
         const expectedAssets3 = shares3
           .mul(currTotalAssets2)
-          .div(await strategy.totalSupply());
+          .div(await strategy.totalSupply0());
 
         const resp1 = await (
           await strategy._mint(shares3, owner.address)
@@ -1208,19 +1235,29 @@ describe("ShortStrategyERC4626", function () {
 
       const params = await strategy.getTotalAssetsParams();
 
+      let lastFees = await strategy.getLastFees(
+        paramsStore.address,
+        params.borrowedInvariant,
+        params.lpBalance,
+        params.prevCFMMInvariant,
+        params.prevCFMMTotalSupply,
+        params.lastBlockNum.sub(1),
+        strategy.address,
+        params.lastCFMMFeeIndex
+      );
+
       const cfmmInvariant = await cfmm.invariant();
       const cfmmTotalSupply = await cfmm.totalSupply();
       const currTotalAssets = await strategy.totalAssets(
-        paramsStore.address,
         params.borrowedInvariant,
         params.lpBalance,
         cfmmInvariant,
         cfmmTotalSupply,
         params.prevCFMMInvariant,
         params.prevCFMMTotalSupply,
-        params.lastBlockNum.sub(1), // to account for the next block update
-        strategy.address,
-        params.lastCFMMFeeIndex
+        params.lastBlockNum.sub(1),
+        params.lastCFMMFeeIndex,
+        lastFees.lastFeeIndex
       );
       expect(currTotalAssets).to.equal(0);
 
@@ -1233,11 +1270,20 @@ describe("ShortStrategyERC4626", function () {
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
       const params1 = await strategy.getTotalAssetsParams();
+      lastFees = await strategy.getLastFees(
+        paramsStore.address,
+        params1.borrowedInvariant,
+        params1.lpBalance,
+        params1.prevCFMMInvariant,
+        params1.prevCFMMTotalSupply,
+        params1.lastBlockNum.sub(1),
+        strategy.address,
+        params1.lastCFMMFeeIndex
+      );
 
       const cfmmInvariant1 = await cfmm.invariant();
       const cfmmTotalSupply1 = await cfmm.totalSupply();
       const currTotalAssets1 = await strategy.totalAssets(
-        paramsStore.address,
         params1.borrowedInvariant,
         params1.lpBalance,
         cfmmInvariant1,
@@ -1245,8 +1291,8 @@ describe("ShortStrategyERC4626", function () {
         params1.prevCFMMInvariant,
         params1.prevCFMMTotalSupply,
         params1.lastBlockNum.sub(1), // to account for the next block update
-        strategy.address,
-        params1.lastCFMMFeeIndex
+        params1.lastCFMMFeeIndex,
+        lastFees.lastFeeIndex
       );
       expect(currTotalAssets1).to.equal(0);
 
@@ -1284,10 +1330,20 @@ describe("ShortStrategyERC4626", function () {
 
       const params = await strategy.getTotalAssetsParams();
 
+      const lastFees = await strategy.getLastFees(
+        paramsStore.address,
+        params.borrowedInvariant,
+        params.lpBalance,
+        params.prevCFMMInvariant,
+        params.prevCFMMTotalSupply,
+        params.lastBlockNum.sub(1),
+        strategy.address,
+        params.lastCFMMFeeIndex
+      );
+
       const cfmmInvariant1 = await cfmm.invariant();
       const cfmmTotalSupply1 = await cfmm.totalSupply();
       const currTotalAssets = await strategy.totalAssets(
-        paramsStore.address,
         params.borrowedInvariant,
         params.lpBalance,
         cfmmInvariant1,
@@ -1295,8 +1351,8 @@ describe("ShortStrategyERC4626", function () {
         params.prevCFMMInvariant,
         params.prevCFMMTotalSupply,
         params.lastBlockNum.sub(1), // to account for the next block update
-        strategy.address,
-        params.lastCFMMFeeIndex
+        params.lastCFMMFeeIndex,
+        lastFees.lastFeeIndex
       );
 
       await (await strategy.testUpdateIndex()).wait();

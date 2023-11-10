@@ -39,7 +39,7 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         s.totalSupply = _totalSupply;
     }
 
-    function totalSupply() public virtual view returns (uint256) {
+    function totalSupply0() public virtual view returns (uint256) {
         return s.totalSupply;
     }
 
