@@ -41,11 +41,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     }
 
     /// @inheritdoc IShortStrategy
-    function totalAssets(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant,
-        uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex) public virtual override view returns(uint256 lastLPBalance) {
-        // Get fee growth in CFMM since last update
-        lastCFMMFeeIndex = block.number - lastBlockNum > 0 ? calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply) * lastCFMMFeeIndex / 1e18 : 1e18;
-
+    function totalAssets(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 lastFeeIndex) public virtual override view returns(uint256 lastLPBalance) {
         // Return CFMM LP tokens depositedin GammaPool plus borrowed liquidity invariant with accrued interest in terms of CFMM LP tokens
         (lastLPBalance,,) = getLatestBalances(lastFeeIndex, borrowedInvariant, lpBalance, lastCFMMInvariant, lastCFMMTotalSupply);
     }

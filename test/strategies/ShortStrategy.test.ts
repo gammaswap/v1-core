@@ -780,10 +780,6 @@ describe("ShortStrategy", function () {
           params0.lpBalance,
           cfmmInvariant0,
           cfmmTotalSupply0,
-          params0.prevCFMMInvariant,
-          params0.prevCFMMTotalSupply,
-          params0.lastBlockNum,
-          params0.lastCFMMFeeIndex,
           lastFees.lastFeeIndex
         );
 
@@ -799,7 +795,7 @@ describe("ShortStrategy", function () {
           params1.lpBalance,
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
-          params1.lastBlockNum,
+          params1.lastBlockNum.add(1),
           strategy.address,
           params1.lastCFMMFeeIndex
         );
@@ -808,10 +804,6 @@ describe("ShortStrategy", function () {
           params1.lpBalance,
           cfmmInvariant1,
           cfmmTotalSupply1,
-          params1.prevCFMMInvariant,
-          params1.prevCFMMTotalSupply,
-          params1.lastBlockNum.add(1),
-          params1.lastCFMMFeeIndex,
           lastFees.lastFeeIndex
         );
 
@@ -920,10 +912,6 @@ describe("ShortStrategy", function () {
           params1.lpBalance,
           cfmmInvariant1,
           cfmmTotalSupply1,
-          params1.prevCFMMInvariant,
-          params1.prevCFMMTotalSupply,
-          params1.lastBlockNum.sub(2), // to account for the next 2 blocks update
-          params1.lastCFMMFeeIndex,
           lastFees.lastFeeIndex
         );
 
@@ -1323,7 +1311,7 @@ describe("ShortStrategy", function () {
           params1.lpBalance,
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
-          params1.lastBlockNum,
+          params1.lastBlockNum.sub(1),
           strategy.address,
           params1.lastCFMMFeeIndex
         );
@@ -1333,10 +1321,6 @@ describe("ShortStrategy", function () {
           params1.lpBalance,
           cfmmInvariant1,
           cfmmTotalSupply1,
-          params1.prevCFMMInvariant,
-          params1.prevCFMMTotalSupply,
-          params1.lastBlockNum.sub(1), // to account for the next 1 block update
-          params1.lastCFMMFeeIndex,
           lastFees.lastFeeIndex
         );
 

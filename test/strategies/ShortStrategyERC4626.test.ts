@@ -689,10 +689,6 @@ describe("ShortStrategyERC4626", function () {
           params1.lpBalance,
           cfmmInvariant1,
           cfmmTotalSupply1,
-          params1.prevCFMMInvariant,
-          params1.prevCFMMTotalSupply,
-          params1.lastBlockNum.sub(1), // to account for the next block update
-          params1.lastCFMMFeeIndex,
           lastFees.lastFeeIndex
         );
         const expectedGSShares3 = assets3
@@ -963,10 +959,6 @@ describe("ShortStrategyERC4626", function () {
           params1.lpBalance,
           cfmmInvariant1,
           cfmmTotalSupply1,
-          params1.prevCFMMInvariant,
-          params1.prevCFMMTotalSupply,
-          params1.lastBlockNum.sub(1), // to account for the next block update
-          params1.lastCFMMFeeIndex,
           lastFees.lastFeeIndex
         );
         const expectedAssets2 = shares2
@@ -1015,10 +1007,6 @@ describe("ShortStrategyERC4626", function () {
           params2.lpBalance,
           cfmmInvariant2,
           cfmmTotalSupply2,
-          params2.prevCFMMInvariant,
-          params2.prevCFMMTotalSupply,
-          params2.lastBlockNum.sub(1), // to account for the next block update
-          params2.lastCFMMFeeIndex,
           lastFees.lastFeeIndex
         );
         const expectedAssets3 = shares3
@@ -1253,10 +1241,6 @@ describe("ShortStrategyERC4626", function () {
         params.lpBalance,
         cfmmInvariant,
         cfmmTotalSupply,
-        params.prevCFMMInvariant,
-        params.prevCFMMTotalSupply,
-        params.lastBlockNum.sub(1),
-        params.lastCFMMFeeIndex,
         lastFees.lastFeeIndex
       );
       expect(currTotalAssets).to.equal(0);
@@ -1288,10 +1272,6 @@ describe("ShortStrategyERC4626", function () {
         params1.lpBalance,
         cfmmInvariant1,
         cfmmTotalSupply1,
-        params1.prevCFMMInvariant,
-        params1.prevCFMMTotalSupply,
-        params1.lastBlockNum.sub(1), // to account for the next block update
-        params1.lastCFMMFeeIndex,
         lastFees.lastFeeIndex
       );
       expect(currTotalAssets1).to.equal(0);
@@ -1348,10 +1328,6 @@ describe("ShortStrategyERC4626", function () {
         params.lpBalance,
         cfmmInvariant1,
         cfmmTotalSupply1,
-        params.prevCFMMInvariant,
-        params.prevCFMMTotalSupply,
-        params.lastBlockNum.sub(1), // to account for the next block update
-        params.lastCFMMFeeIndex,
         lastFees.lastFeeIndex
       );
 

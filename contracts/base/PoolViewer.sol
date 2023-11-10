@@ -66,22 +66,8 @@ contract PoolViewer is IPoolViewer {
         return collateral * (10000 - ltvThreshold * 10) / 1e4 < liquidity;
     }
 
-    /// @dev Calculate fees accrued from fees in CFMM
-    /// @param borrowedInvariant - liquidity invariant borrowed from CFMM
-    /// @param lastCFMMInvariant - current liquidity invariant in CFMM
-    /// @param lastCFMMTotalSupply - current CFMM LP token supply
-    /// @param prevCFMMInvariant - liquidity invariant in CFMM in previous GammaPool update
-    /// @param prevCFMMTotalSupply - CFMM LP token supply in previous GammaPool update
-    /// @return cfmmFeeIndex - index tracking accrued fees from CFMM since last GammaPool update
-    ///
-    /// CFMM Fee Index = 1 + CFMM Yield = (cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1)
-    ///
-    /// Deleveraged CFMM Fee Index = 1 + Deleveraged CFMM Yield
-    ///
-    /// Deleveraged CFMM Fee Index = 1 + [(cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1) - 1] * (cfmmInvariant0 / borrowedInvariant)
-    ///
-    /// Deleveraged CFMM Fee Index = [cfmmInvariant1 * cfmmTotalSupply0 + (borrowedInvariant - cfmmInvariant0) * cfmmTotalSupply1] / (borrowedInvariant * cfmmTotalSupply1)
-    function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply) internal virtual view returns(uint256) {
+    /// @inheritdoc IPoolViewer
+    function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply) public virtual view returns(uint256) {
         if(lastCFMMInvariant > 0 && lastCFMMTotalSupply > 0 && prevCFMMInvariant > 0 && prevCFMMTotalSupply > 0) {
             uint256 prevInvariant = borrowedInvariant > prevCFMMInvariant ? borrowedInvariant : prevCFMMInvariant; // Deleverage CFMM Yield
             uint256 denominator = prevInvariant * lastCFMMTotalSupply;
@@ -266,12 +252,6 @@ contract PoolViewer is IPoolViewer {
                 ++i;
             }
         }
-    }
-
-    /// @inheritdoc IPoolViewer
-    function getLastFees(address shortStrategy, address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum,
-        address pool, uint256 lastCFMMFeeIndex) public virtual override view returns(uint256, uint256, uint256) {
-        return IShortStrategy(shortStrategy).getLastFees(paramsStore, borrowedInvariant, lpBalance, prevCFMMInvariant, prevCFMMTotalSupply, lastBlockNum, pool, lastCFMMFeeIndex);
     }
 
     /// @dev Update liquidity to current debt level

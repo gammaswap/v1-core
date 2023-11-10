@@ -46,7 +46,7 @@ contract TestShortStrategy2 is IShortStrategy{
         cfmmInvariant = 100;
     }
 
-    function totalAssets(uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256) external override pure returns(uint256) {
+    function totalAssets(uint256, uint256, uint256, uint256, uint256) external override pure returns(uint256) {
         return 1000*(10**18);
     }
 

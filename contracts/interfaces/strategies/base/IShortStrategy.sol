@@ -47,13 +47,9 @@ interface IShortStrategy is IShortStrategyEvents {
     /// @param lpBalance - amount of LP tokens deposited in GammaPool
     /// @param lastCFMMInvariant - invariant amount in CFMM
     /// @param lastCFMMTotalSupply - total supply in CFMM
-    /// @param prevCFMMInvariant - invariant amount in CFMM in last update to GammaPool
-    /// @param prevCFMMTotalSupply - total supply in CFMM in last update to GammaPool
-    /// @param lastBlockNum - last block GammaPool was updated
-    /// @param lastCFMMFeeIndex - accrued CFMM Fees in storage
     /// @param lastFeeIndex - last fees charged by GammaPool since last update
     /// @return totalAssets - total CFMM LP tokens in existence in the pool (real and virtual) including accrued interest
-    function totalAssets(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex) external view returns(uint256);
+    function totalAssets(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 lastFeeIndex) external view returns(uint256);
 
     /// @dev Calculate current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
     /// @param paramsStore - address containing rate model parameters
