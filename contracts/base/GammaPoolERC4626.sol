@@ -7,6 +7,7 @@ import "../utils/DelegateCaller.sol";
 import "../utils/Pausable.sol";
 import "./Refunds.sol";
 import "./GammaPoolERC20.sol";
+import "../rates/AbstractRateModel.sol";
 
 /// @title ERC4626 (GS LP) implementation of GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
@@ -215,23 +216,17 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
         address factory = s.factory;
         address shortStrategy = vaultImplementation();
         uint256 borrowedInvariant = s.BORROWED_INVARIANT;
-        uint256 lpBalance = s.LP_TOKEN_BALANCE;
-        uint256 cfmmInvariant = s.lastCFMMInvariant;
-        uint256 cfmmTotalSupply = s.lastCFMMTotalSupply;
-        uint256 cfmmFeeIndex = s.lastCFMMFeeIndex;
-        uint256 blockNumber = s.LAST_BLOCK_NUMBER;
         uint256 latestCfmmInvariant = _getLatestCFMMInvariant();
         uint256 latestCfmmTotalSupply = _getLatestCFMMTotalSupply();
 
-        cfmmFeeIndex = block.number - blockNumber > 0 ?
-            IPoolViewer(poolViewer).calcCFMMFeeIndex(borrowedInvariant, latestCfmmInvariant, latestCfmmTotalSupply, cfmmInvariant, cfmmTotalSupply) * cfmmFeeIndex / 1e18
-            : 1e18;
-        (uint256 lastFeeIndex,, uint256 utilizationRate) = IShortStrategy(shortStrategy).getLastFees(
-            factory, borrowedInvariant, lpBalance, cfmmInvariant, cfmmTotalSupply, blockNumber, address(this), cfmmFeeIndex
-        );
+        (uint256 borrowRate, uint256 utilizationRate) = AbstractRateModel(shortStrategy).calcBorrowRate(s.LP_INVARIANT,
+            borrowedInvariant, factory, address(this));
+
+        (uint256 lastFeeIndex, uint256 cfmmFeeIndex) = IShortStrategy(shortStrategy).getLastFees(borrowRate, borrowedInvariant,
+            latestCfmmInvariant, latestCfmmTotalSupply, s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER, s.lastCFMMFeeIndex);
 
         // Total amount of GS LP tokens issued
-        assets = IShortStrategy(shortStrategy).totalAssets(borrowedInvariant, lpBalance, latestCfmmInvariant, latestCfmmTotalSupply, lastFeeIndex);
+        assets = IShortStrategy(shortStrategy).totalAssets(borrowedInvariant, s.LP_TOKEN_BALANCE, latestCfmmInvariant, latestCfmmTotalSupply, lastFeeIndex);
 
         // Calculates total CFMM LP tokens, including accrued interest, using state variables
         supply = IShortStrategy(shortStrategy).totalSupply(factory, address(this), cfmmFeeIndex, lastFeeIndex, utilizationRate, s.totalSupply);

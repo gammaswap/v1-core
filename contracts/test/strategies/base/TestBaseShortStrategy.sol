@@ -51,9 +51,10 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         _totalAssets = s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST;
     }
 
-    function getTotalAssetsParams() public virtual view returns(uint256 borrowedInvariant, uint256 lpBalance, uint256 lpBorrowed, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum,
+    function getTotalAssetsParams() public virtual view returns(uint256 lpInvariant, uint256 borrowedInvariant, uint256 lpBalance, uint256 lpBorrowed, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum,
         uint256 lpTokenTotal, uint256 lpTokenBorrowedPlusInterest, uint256 lastCFMMFeeIndex) {
         borrowedInvariant = s.BORROWED_INVARIANT;
+        lpInvariant = s.LP_INVARIANT;
         lpBalance = s.LP_TOKEN_BALANCE;
         lpBorrowed = s.LP_TOKEN_BORROWED;
         prevCFMMInvariant = s.lastCFMMInvariant;
@@ -144,10 +145,10 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         return convertToAssets(shares);
     }
 
-    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) internal virtual override view returns(uint256, uint256) {
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual override view returns(uint256 borrowRate, uint256 utilizationRate) {
         uint256 totalInvariant = lpInvariant + borrowedInvariant;
-        uint256 utilRate = totalInvariant == 0 ? 0 : (borrowedInvariant * 1e18 / totalInvariant);
-        return(utilRate, utilRate);
+        utilizationRate = totalInvariant == 0 ? 0 : (borrowedInvariant * 1e18 / totalInvariant);
+        borrowRate = utilizationRate;
     }
 
     //ShortGamma

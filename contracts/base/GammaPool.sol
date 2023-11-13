@@ -291,6 +291,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         _loanData.accFeeIndex = s.accFeeIndex;
         _loanData.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
         _loanData.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
+        _loanData.LP_INVARIANT = s.LP_INVARIANT;
         _loanData.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         _loanData.lastCFMMInvariant = s.lastCFMMInvariant;
         _loanData.lastCFMMTotalSupply = s.lastCFMMTotalSupply;

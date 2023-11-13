@@ -8,6 +8,7 @@ import "../interfaces/observer/ICollateralManager.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
 import "../interfaces/strategies/lending/IBorrowStrategy.sol";
+import "../rates/AbstractRateModel.sol";
 import "../libraries/GSMath.sol";
 
 /// @title Implementation of Viewer Contract for GammaPool
@@ -105,12 +106,12 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMTotalSupply;
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(_loanData.poolId).getLatestCFMMBalances();
 
-        uint256 lastCFMMFeeIndex = block.number - _loanData.LAST_BLOCK_NUMBER > 0 ? calcCFMMFeeIndex(_loanData.BORROWED_INVARIANT,
-            lastCFMMInvariant, lastCFMMTotalSupply, _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply) * _loanData.lastCFMMFeeIndex / 1e18 : 1e18;
+        (uint256 borrowRate,) = AbstractRateModel(_loanData.shortStrategy).calcBorrowRate(_loanData.LP_INVARIANT,
+            _loanData.BORROWED_INVARIANT, _loanData.paramsStore, _loanData.poolId);
 
-        (uint256 lastFeeIndex,,) = IShortStrategy(_loanData.shortStrategy).getLastFees(_loanData.paramsStore,
-            _loanData.BORROWED_INVARIANT, _loanData.LP_TOKEN_BALANCE, _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply,
-            _loanData.LAST_BLOCK_NUMBER, _loanData.poolId, lastCFMMFeeIndex);
+        (uint256 lastFeeIndex,) = IShortStrategy(_loanData.shortStrategy).getLastFees(borrowRate, _loanData.BORROWED_INVARIANT,
+            lastCFMMInvariant, lastCFMMTotalSupply, _loanData.lastCFMMInvariant,
+            _loanData.lastCFMMTotalSupply, _loanData.LAST_BLOCK_NUMBER, _loanData.lastCFMMFeeIndex);
 
         accFeeIndex = _loanData.accFeeIndex * lastFeeIndex / 1e18;
     }
@@ -160,12 +161,12 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMTotalSupply;
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(pool).getLatestCFMMBalances();
 
-        data.lastCFMMFeeIndex = block.number - params.LAST_BLOCK_NUMBER > 0 ? calcCFMMFeeIndex(params.BORROWED_INVARIANT,
-            lastCFMMInvariant, lastCFMMTotalSupply, params.lastCFMMInvariant, params.lastCFMMTotalSupply) * params.lastCFMMFeeIndex / 1e18 : 1e18;
+        (uint256 borrowRate,) = AbstractRateModel(params.shortStrategy).calcBorrowRate(params.LP_INVARIANT,
+            params.BORROWED_INVARIANT, params.paramsStore, params.pool);
 
-        (data.lastFeeIndex,data.borrowRate,data.utilizationRate) = IShortStrategy(params.shortStrategy)
-            .getLastFees(params.paramsStore, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, params.lastCFMMInvariant,
-            params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.pool, data.lastCFMMFeeIndex);
+        (data.lastFeeIndex,) = IShortStrategy(params.shortStrategy)
+            .getLastFees(borrowRate, params.BORROWED_INVARIANT, lastCFMMInvariant, lastCFMMTotalSupply,
+            params.lastCFMMInvariant, params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.lastCFMMFeeIndex);
 
         (,, data.BORROWED_INVARIANT) = IShortStrategy(params.shortStrategy).getLatestBalances(data.lastFeeIndex,
             params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply);
@@ -205,12 +206,13 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMTotalSupply;
         (data.CFMM_RESERVES, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(pool).getLatestCFMMBalances();
 
-        uint256 lastCFMMFeeIndex = block.number - data.LAST_BLOCK_NUMBER > 0 ? calcCFMMFeeIndex(borrowedInvariant,
-            lastCFMMInvariant, lastCFMMTotalSupply, data.lastCFMMInvariant, data.lastCFMMTotalSupply) * data.lastCFMMFeeIndex / 1e18 : 1e18;
+        (data.borrowRate, data.utilizationRate) = AbstractRateModel(data.shortStrategy).calcBorrowRate(data.LP_INVARIANT,
+            data.BORROWED_INVARIANT, data.paramsStore, pool);
 
-        (data.lastFeeIndex, data.borrowRate, data.utilizationRate) = IShortStrategy(data.shortStrategy)
-            .getLastFees(data.paramsStore, borrowedInvariant, data.LP_TOKEN_BALANCE, data.lastCFMMInvariant,
-            data.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER, pool, lastCFMMFeeIndex);
+        uint256 lastCFMMFeeIndex;
+        (data.lastFeeIndex,lastCFMMFeeIndex) = IShortStrategy(data.shortStrategy)
+        .getLastFees(data.borrowRate, data.BORROWED_INVARIANT, lastCFMMInvariant, lastCFMMTotalSupply,
+            data.lastCFMMInvariant, data.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER, data.lastCFMMFeeIndex);
 
         data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
 

@@ -73,6 +73,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
 
         /// @dev borrowed liquidity invariant of the pool
         uint256 BORROWED_INVARIANT;
+        /// @dev Quantity of CFMM's liquidity invariant held in GammaPool as LP tokens
+        uint256 LP_INVARIANT;
         /// @dev balance of CFMM LP tokens in the pool
         uint256 LP_TOKEN_BALANCE;
         /// @dev last CFMM liquidity invariant
@@ -242,6 +244,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         address pool;
         /// @dev Quantity of CFMM's liquidity invariant that has been borrowed including accrued interest, maps to LP_TOKEN_BORROWED_PLUS_INTEREST
         uint256 BORROWED_INVARIANT;
+        /// @dev Quantity of CFMM's liquidity invariant held in GammaPool as LP tokens, maps to LP_TOKEN_BALANCE
+        uint256 LP_INVARIANT;
         /// @dev Quantity of CFMM's LP tokens deposited in GammaPool by liquidity providers
         uint256 LP_TOKEN_BALANCE;
         /// @dev Total liquidity invariant amount in CFMM (from GammaPool and others), read in last update to GammaPool's storage variables

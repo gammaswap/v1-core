@@ -119,7 +119,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         borrowRate = _borrowRate;
     }
 
-    function calcBorrowRate(uint256, uint256, address, address) internal virtual override view returns(uint256, uint256) {
+    function calcBorrowRate(uint256, uint256, address, address) public virtual override view returns(uint256, uint256) {
         return (borrowRate,0);
     }
 
@@ -345,7 +345,7 @@ contract TestLongStrategy is RepayStrategy, BorrowStrategy {
         return discount > _origFee ? 0 : (_origFee - discount);
     }
 
-    function calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate1, uint256 minUtilRate2, uint256 feeDivisor) external virtual override view returns(uint256 origFee) {
+    function calcDynamicOriginationFee(uint256 baseOrigFee, uint256 utilRate, uint256 lowUtilRate, uint256 minUtilRate1, uint256 minUtilRate2, uint256 feeDivisor) external virtual override view returns(uint256 _origFee) {
         return 0;
     }
 

@@ -66,13 +66,15 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     }
 
     /// @inheritdoc IShortStrategy
-    function getLastFees(address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum,
-        address pool, uint256 lastCFMMFeeIndex) public virtual override view returns(uint256 lastFeeIndex, uint256 borrowRate, uint256 utilizationRate) {
-        // Calculate borrow rate
-        (borrowRate, utilizationRate) = calcBorrowRate(convertLPToInvariant(lpBalance, prevCFMMInvariant, prevCFMMTotalSupply), borrowedInvariant, paramsStore, pool);
+    function getLastFees(uint256 borrowRate, uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply,
+        uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex) public virtual override
+        view returns(uint256 lastFeeIndex, uint256 updatedLastCFMMFeeIndex) {
+        lastBlockNum = block.number - lastBlockNum;
+
+        updatedLastCFMMFeeIndex = lastBlockNum > 0 ? calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply) * lastCFMMFeeIndex / 1e18 : 1e18;
 
         // Calculate interest that would be charged to entire pool's liquidity debt if pool were updated in this transaction
-        lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, block.number - lastBlockNum);
+        lastFeeIndex = calcFeeIndex(updatedLastCFMMFeeIndex, borrowRate, lastBlockNum);
     }
 
     //********* Short Gamma Functions *********//
