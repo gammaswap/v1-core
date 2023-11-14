@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
 
 import "../base/GammaPool.sol";
 
 contract TestGammaPool is GammaPool {
 
     using LibStorage for LibStorage.Storage;
+
+    address mPauser;
 
     struct params {
         uint16 protocolId;
@@ -16,6 +18,17 @@ contract TestGammaPool is GammaPool {
         address _shortStrategy, address _singleLiquidationStrategy, address _batchLiquidationStrategy, address _viewer)
         GammaPool(_protocolId, _factory, _borrowStrategy, _repayStrategy, _rebalanceStrategy, _shortStrategy,
         _singleLiquidationStrategy, _batchLiquidationStrategy, _viewer) {
+    }
+
+    // @dev See {Pausable-_pauser}
+    function _pauser() internal override virtual view returns(address) {
+        if(mPauser == address(0)) return s.factory;
+
+        return mPauser;
+    }
+
+    function setPauser(address addr) external virtual {
+        mPauser = addr;
     }
 
     function setAccFeeIndex(uint80 _accFeeIndex) external virtual {

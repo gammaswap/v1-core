@@ -678,6 +678,8 @@ describe("GammaPoolFactory", function () {
       expect(pool).to.not.equal(ethers.constants.AddressZero);
       expect(key).to.equal(await factory.getKey(pool));
 
+      const poolContract = GammaPool.attach(pool);
+
       // Precalculated address
       const expectedPoolAddress = await addressCalculator.calcAddress(
         factory.address,
@@ -687,25 +689,25 @@ describe("GammaPoolFactory", function () {
       expect(pool).to.equal(expectedPoolAddress);
       expect(await factory.allPoolsLength()).to.equal(1);
 
-      await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 101, 60, 0, 11, 1)
-      ).to.be.revertedWith("FEE_DIVISOR");
+      await expect(factory.setPoolParams(pool, 1, 2, 3, 101, 60, 0, 11, 1))
+        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
+        .withArgs(5);
 
-      await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 95, 60, 0, 11, 1)
-      ).to.be.revertedWith("FEE_DIVISOR");
+      await expect(factory.setPoolParams(pool, 1, 2, 3, 95, 60, 0, 11, 1))
+        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
+        .withArgs(5);
 
-      await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 94, 60, 0, 11, 1)
-      ).to.be.revertedWith("FEE_DIVISOR");
+      await expect(factory.setPoolParams(pool, 1, 2, 3, 94, 60, 0, 11, 1))
+        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
+        .withArgs(5);
 
-      await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 78, 60, 1, 11, 1)
-      ).to.be.revertedWith("LIQUIDATION_FEE");
+      await expect(factory.setPoolParams(pool, 1, 2, 3, 78, 60, 1, 11, 1))
+        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
+        .withArgs(6);
 
-      await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 77, 60, 100, 51, 5)
-      ).to.be.revertedWith("LIQUIDATION_FEE");
+      await expect(factory.setPoolParams(pool, 1, 2, 3, 77, 60, 100, 51, 5))
+        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
+        .withArgs(6);
     });
 
     it("Set Origination Fee", async function () {

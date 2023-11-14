@@ -677,6 +677,71 @@ describe("GammaPool", function () {
     });
   });
 
+  describe("Pause GammaPool", function () {
+    it("Forbidden pause", async function() {
+      await expect(
+        gammaPool.connect(addr1).pause(0)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).pause(1)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).pause(2)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).pause(3)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+    });
+
+    it("Forbidden unpause", async function() {
+      await expect(
+        gammaPool.connect(addr1).unpause(0)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).unpause(1)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).unpause(2)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).unpause(3)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+    });
+
+    it("Pause & Unpause functions", async function () {
+      await (await gammaPool.setPauser(addr1.address)).wait();
+
+      // Pausing
+      expect(await gammaPool.isPaused(1)).to.equal(false);
+      await (await gammaPool.connect(addr1).pause(1)).wait();
+      expect(await gammaPool.isPaused(1)).to.equal(true);
+
+      // Unpausing
+      await (await gammaPool.connect(addr1).unpause(1)).wait();
+      expect(await gammaPool.isPaused(1)).to.equal(false);
+
+      // Pausing all
+      await (await gammaPool.connect(addr1).pause(0)).wait();
+      expect(await gammaPool.isPaused(0)).to.equal(true);
+      expect(await gammaPool.isPaused(1)).to.equal(true);
+      expect(await gammaPool.isPaused(2)).to.equal(true);
+      expect(await gammaPool.isPaused(3)).to.equal(true);
+
+      // Unpausing all
+      await (await gammaPool.connect(addr1).unpause(0)).wait();
+      expect(await gammaPool.isPaused(0)).to.equal(false);
+      expect(await gammaPool.isPaused(1)).to.equal(false);
+      expect(await gammaPool.isPaused(2)).to.equal(false);
+      expect(await gammaPool.isPaused(3)).to.equal(false);
+    });
+  });
+
   // You can nest describe calls to create subsections.
   describe("Short Gamma", function () {
     it("Get Latest CFMM Reserves", async function () {

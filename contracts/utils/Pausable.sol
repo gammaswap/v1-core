@@ -56,7 +56,7 @@ abstract contract Pausable is IPausable {
 
     /// @dev See {IPausable-pause}
     function pause(uint8 _functionId) external override virtual returns (uint256) {
-        require(msg.sender == _pauser(), "FORBIDDEN");
+        if(msg.sender != _pauser()) revert ForbiddenPauser();
 
         uint256 mask = uint256(1) << _functionId;
         uint256 funcIds = _functionIds() | mask;
@@ -70,7 +70,7 @@ abstract contract Pausable is IPausable {
 
     /// @dev See {IPausable-unpause}
     function unpause(uint8 _functionId) external override virtual returns (uint256) {
-        require(msg.sender == _pauser(), "FORBIDDEN");
+        if(msg.sender != _pauser()) revert ForbiddenPauser();
 
         uint256 mask = ~(uint256(1) << _functionId);
         uint256 funcIds = _functionIds() & mask;
