@@ -390,8 +390,8 @@ describe("GammaPool", function () {
       expect(res6.ltvThreshold).to.equal(5);
       expect(res6.liquidationFee).to.equal(25);
 
-      const res7 = await gammaPool.getFeeIndexUpdateParams();
-      expect(res7.pool).to.equal(gammaPool.address);
+      const res7 = await gammaPool.getPoolData();
+      expect(res7.poolId).to.equal(gammaPool.address);
       expect(res7.shortStrategy).to.equal(await gammaPool.shortStrategy());
       expect(res7.paramsStore).to.equal(await gammaPool.factory());
       expect(res7.BORROWED_INVARIANT).to.equal(res4.BORROWED_INVARIANT);
@@ -590,7 +590,7 @@ describe("GammaPool", function () {
 
       const res0 = await poolViewer.testGetLastFeeIndex(gammaPool.address);
 
-      const res1 = await gammaPool.getFeeIndexUpdateParams();
+      const res1 = await gammaPool.getPoolData();
       expect(res0.accFeeIndex).to.eq(4);
       expect(res0.lastCFMMFeeIndex).to.eq(ONE);
       expect(res0.lastFeeIndex).to.eq(2);
@@ -674,6 +674,71 @@ describe("GammaPool", function () {
       expect(event1.shortStrategy).to.eq(await gammaPool.shortStrategy());
       expect(event1.ltvThreshold).to.eq(5);
       expect(event1.liquidationFee).to.eq(25);
+    });
+  });
+
+  describe("Pause GammaPool", function () {
+    it("Forbidden pause", async function() {
+      await expect(
+        gammaPool.connect(addr1).pause(0)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).pause(1)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).pause(2)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).pause(3)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+    });
+
+    it("Forbidden unpause", async function() {
+      await expect(
+        gammaPool.connect(addr1).unpause(0)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).unpause(1)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).unpause(2)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+
+      await expect(
+        gammaPool.connect(addr1).unpause(3)
+      ).to.be.revertedWithCustomError(gammaPool, "ForbiddenPauser");
+    });
+
+    it("Pause & Unpause functions", async function () {
+      await (await gammaPool.setPauser(addr1.address)).wait();
+
+      // Pausing
+      expect(await gammaPool.isPaused(1)).to.equal(false);
+      await (await gammaPool.connect(addr1).pause(1)).wait();
+      expect(await gammaPool.isPaused(1)).to.equal(true);
+
+      // Unpausing
+      await (await gammaPool.connect(addr1).unpause(1)).wait();
+      expect(await gammaPool.isPaused(1)).to.equal(false);
+
+      // Pausing all
+      await (await gammaPool.connect(addr1).pause(0)).wait();
+      expect(await gammaPool.isPaused(0)).to.equal(true);
+      expect(await gammaPool.isPaused(1)).to.equal(true);
+      expect(await gammaPool.isPaused(2)).to.equal(true);
+      expect(await gammaPool.isPaused(3)).to.equal(true);
+
+      // Unpausing all
+      await (await gammaPool.connect(addr1).unpause(0)).wait();
+      expect(await gammaPool.isPaused(0)).to.equal(false);
+      expect(await gammaPool.isPaused(1)).to.equal(false);
+      expect(await gammaPool.isPaused(2)).to.equal(false);
+      expect(await gammaPool.isPaused(3)).to.equal(false);
     });
   });
 

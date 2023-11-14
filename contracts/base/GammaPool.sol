@@ -22,6 +22,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     using LibStorage for LibStorage.Storage;
 
     error Forbidden();
+    error InvalidPoolParam(uint8 param);
 
     /// @dev See {IGammaPool-protocolId}
     uint16 immutable public override protocolId;
@@ -75,8 +76,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold) external virtual override {
         if(msg.sender != factory) revert Forbidden(); // only factory is allowed to update dynamic fee parameters
 
-        require(feeDivisor > 0, "FEE_DIVISOR");
-        require(liquidationFee <= uint256(ltvThreshold) * 10, "LIQUIDATION_FEE");
+        if(feeDivisor == 0) revert InvalidPoolParam(5);
+        if(liquidationFee > uint256(ltvThreshold) * 10) revert InvalidPoolParam(6);
 
         s.ltvThreshold = ltvThreshold;
         s.liquidationFee = liquidationFee;
@@ -161,29 +162,6 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     /// @dev See {IGammaPool-getRates}
     function getRates() external virtual override view returns(uint256 accFeeIndex, uint256 lastCFMMFeeIndex, uint256 lastBlockNumber) {
         return(s.accFeeIndex, s.lastCFMMFeeIndex, s.LAST_BLOCK_NUMBER);
-    }
-
-    /// @dev See {IGammaPool-getFeeIndexUpdateParams}
-    function getFeeIndexUpdateParams() external virtual override view returns(FeeIndexUpdateParams memory _data) {
-        _data.pool = address(this);
-        _data.shortStrategy = shortStrategy;
-        _data.paramsStore = s.factory;
-        _data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
-        _data.LP_INVARIANT = s.LP_INVARIANT;
-        _data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
-        _data.lastCFMMInvariant = s.lastCFMMInvariant;
-        _data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
-        _data.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
-        _data.accFeeIndex = s.accFeeIndex;
-        _data.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
-        _data.emaUtilRate = s.emaUtilRate;
-        _data.emaMultiplier = s.emaMultiplier;
-        _data.minUtilRate1 = s.minUtilRate1;
-        _data.minUtilRate2 = s.minUtilRate2;
-        _data.feeDivisor = s.feeDivisor;
-        _data.origFee = s.origFee;
-        _data.ltvThreshold = s.ltvThreshold;
-        _data.liquidationFee = s.liquidationFee;
     }
 
     /// @dev See {IGammaPool-getPoolData}

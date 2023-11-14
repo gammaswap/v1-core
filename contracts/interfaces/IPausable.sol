@@ -6,6 +6,7 @@ pragma solidity >=0.8.0;
 /// @dev All instantiated Pausable contracts must implement this interface so that they can pause individual functions
 interface IPausable {
 
+    error ForbiddenPauser();
     error Paused(uint8 _functionId);
     error NotPaused(uint8 _functionId);
 
