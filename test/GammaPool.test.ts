@@ -359,8 +359,8 @@ describe("GammaPool", function () {
 
       expect(res5.lastCFMMFeeIndex).to.equal(ONE);
       expect(res5.lastFeeIndex).to.equal(2);
-      expect(res5.borrowRate).to.equal(3);
-      expect(res5.supplyRate).to.equal(0);
+      expect(res5.borrowRate).to.equal(ONE.mul(4).div(100));
+      expect(res5.supplyRate).to.equal(ONE.mul(4).mul(3).div(1000));
 
       expect(res5.LP_TOKEN_BALANCE).to.equal(0);
       expect(res5.LP_TOKEN_BORROWED_PLUS_INTEREST).to.equal(5);
@@ -380,7 +380,7 @@ describe("GammaPool", function () {
       expect(res6.lastCFMMFeeIndex).to.eq(res5.lastCFMMFeeIndex);
       expect(res6.lastFeeIndex).to.eq(res5.lastFeeIndex);
       expect(res6.borrowRate).to.eq(res5.borrowRate);
-      expect(res6.supplyRate).to.equal(res5.borrowRate);
+      expect(res6.supplyRate).to.equal(res5.supplyRate);
       expect(res6.lastBlockNumber).to.eq(res5.LAST_BLOCK_NUMBER);
       expect(res6.emaUtilRate).to.equal(0);
       expect(res6.minUtilRate1).to.equal(85);
@@ -594,12 +594,12 @@ describe("GammaPool", function () {
       expect(res0.accFeeIndex).to.eq(4);
       expect(res0.lastCFMMFeeIndex).to.eq(ONE);
       expect(res0.lastFeeIndex).to.eq(2);
-      expect(res0.borrowRate).to.eq(3);
+      expect(res0.borrowRate).to.eq(ONE.mul(4).div(100));
       expect(res0.utilizationRate).to.eq(ONE);
       expect(res0.lastBlockNumber).to.eq(res1.LAST_BLOCK_NUMBER);
       expect(res0.currBlockNumber).to.gt(res1.LAST_BLOCK_NUMBER);
       expect(res0.lastPrice).to.eq(0);
-      expect(res0.supplyRate).to.eq(0);
+      expect(res0.supplyRate).to.eq(ONE.mul(3).mul(4).div(1000));
       expect(res0.shortStrategy).to.eq(await gammaPool.shortStrategy());
       expect(res0.paramsStore).to.eq(await gammaPool.factory());
 

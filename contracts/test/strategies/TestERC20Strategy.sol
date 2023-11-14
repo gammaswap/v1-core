@@ -43,15 +43,19 @@ contract TestERC20Strategy is AppStorage, IShortStrategy {
         cfmmInvariant = 100;
     }
 
-    function totalAssets(address, uint256, uint256, uint256, uint256, uint256, uint256, uint256, address, uint256) external override view returns(uint256) {
+    function totalAssets(uint256, uint256, uint256, uint256, uint256) external override view returns(uint256) {
         (bool success, bytes memory data) = address(_cfmm).staticcall(abi.encodeWithSelector(BALANCE_OF, msg.sender));
         require(success && data.length >= 32);
         return abi.decode(data, (uint256));
     }
 
-    function getLastFees(address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, address pool, uint256 lastCFMMFeeIndex)
-        external override view returns(uint256 lastFeeIndex, uint256 borrowRate, uint256 utilizationRate) {
-        return (2,3,4);
+    function totalSupply(address, address, uint256, uint256, uint256, uint256) external override view returns(uint256) {
+        return s.totalSupply;
+    }
+
+    function getLastFees(uint256 borrowRate, uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex)
+        external override view returns(uint256 lastFeeIndex, uint256 updLastCFMMFeeIndex) {
+        return (2,3);
     }
 
     function getLatestBalances(uint256 lastFeeIndex, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply)
@@ -108,5 +112,10 @@ contract TestERC20Strategy is AppStorage, IShortStrategy {
 
     function calcUtilRateEma(uint256 utilizationRate, uint256 emaUtilRateLast, uint256 emaMultiplier) external virtual override view returns(uint256 emaUtilRate) {
         return 0;
+    }
+
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual view returns(uint256 borrowRate, uint256 utilizationRate) {
+        borrowRate = 4*1e16;
+        utilizationRate = 3*1e17;
     }
 }

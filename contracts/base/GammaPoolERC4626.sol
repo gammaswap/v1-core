@@ -2,6 +2,7 @@
 pragma solidity >=0.8.13;
 
 import "../interfaces/strategies/base/IShortStrategy.sol";
+import "../rates/AbstractRateModel.sol";
 import "../utils/DelegateCaller.sol";
 import "../utils/Pausable.sol";
 import "./Refunds.sol";
@@ -87,11 +88,15 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
     }
 
     /// @dev Calculates and returns total CFMM LP tokens belonging to liquidity providers using state global variables. It does not update the GammaPool
-    /// @return totalAssets - current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
-    function totalAssets() public view virtual returns(uint256) {
-        return IShortStrategy(vaultImplementation()).totalAssets(s.factory, s.BORROWED_INVARIANT, s.LP_TOKEN_BALANCE,
-            _getLatestCFMMInvariant(), _getLatestCFMMTotalSupply(), s.lastCFMMInvariant, s.lastCFMMTotalSupply,
-            s.LAST_BLOCK_NUMBER, address(this), s.lastCFMMFeeIndex);
+    /// @return assets - current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
+    function totalAssets() public view virtual returns(uint256 assets) {
+        (assets,) = _totalAssetsAndSupply();
+    }
+
+    /// @dev Get total supply of GS LP tokens, takes into account dilution through protocol revenue
+    /// @return supply - total supply of GS LP tokens after taking protocol revenue dilution into account
+    function totalSupply() public virtual override view returns(uint256 supply){
+        (, supply) = _totalAssetsAndSupply();
     }
 
     /// @dev Convert CFMM LP tokens to GS LP tokens
@@ -101,8 +106,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
         if(assets == 0) {
             return 0;
         }
-        uint256 supply = totalSupply(); // Total amount of GS LP tokens issued
-        uint256 _totalAssets = totalAssets(); // Calculates total CFMM LP tokens, including accrued interest, using state variables
+        (uint256 _totalAssets, uint256 supply) = _totalAssetsAndSupply();
 
         if(supply == 0 || _totalAssets == 0) {
             if(assets <= MIN_SHARES) revert MinShares();
@@ -121,7 +125,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
         if(shares == 0) {
             return 0;
         }
-        uint256 supply = totalSupply(); // Total amount of GS LP tokens issued
+        (uint256 assets, uint256 supply) = _totalAssetsAndSupply();
         if(supply == 0) {
             if(shares <= MIN_SHARES) revert MinShares();
 
@@ -130,7 +134,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
             }
         }
         // totalAssets is total CFMM LP tokens, including accrued interest, calculated using state variables
-        return (shares * totalAssets()) / supply;
+        return (shares * assets) / supply;
     }
 
     /// @dev Allows an on-chain or off-chain user to simulate the effects of their deposit at the current block, given current on-chain conditions.
@@ -164,7 +168,8 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
     /// @dev Returns the maximum amount of CFMM LP tokens that can be deposited into the Vault for the receiver, through a deposit call. Ignores address parameter
     /// @return maxAssets - maximum amount of CFMM LP tokens that can be deposited
     function maxDeposit(address) public view virtual returns (uint256) {
-        return totalAssets() > 0 || totalSupply() == 0 ? type(uint256).max : 0; // no limits on deposits unless pool is a bad state
+        (uint256 assets, uint256 supply) = _totalAssetsAndSupply();
+        return assets > 0 || supply == 0 ? type(uint256).max : 0; // no limits on deposits unless pool is a bad state
     }
 
     /// @dev Returns the maximum amount of the GS LP tokens that can be minted for the receiver, through a mint call. Ignores address parameter
@@ -196,5 +201,25 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
     /// @return maxShares - maximum amount of GS LP tokens that can be redeemed by owner address
     function maxRedeem(address owner) public view virtual returns (uint256) {
         return convertToShares(maxWithdraw(owner)); // get maximum amount of CFMM LP tokens that can be withdrawn and convert to equivalent GS LP token amount
+    }
+
+    function _totalAssetsAndSupply() internal view virtual returns (uint256 assets, uint256 supply) {
+        address factory = s.factory;
+        address shortStrategy = vaultImplementation();
+        uint256 borrowedInvariant = s.BORROWED_INVARIANT;
+        uint256 latestCfmmInvariant = _getLatestCFMMInvariant();
+        uint256 latestCfmmTotalSupply = _getLatestCFMMTotalSupply();
+
+        (uint256 borrowRate, uint256 utilizationRate) = AbstractRateModel(shortStrategy).calcBorrowRate(s.LP_INVARIANT,
+            borrowedInvariant, factory, address(this));
+
+        (uint256 lastFeeIndex, uint256 cfmmFeeIndex) = IShortStrategy(shortStrategy).getLastFees(borrowRate, borrowedInvariant,
+            latestCfmmInvariant, latestCfmmTotalSupply, s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER, s.lastCFMMFeeIndex);
+
+        // Total amount of GS LP tokens issued
+        assets = IShortStrategy(shortStrategy).totalAssets(borrowedInvariant, s.LP_TOKEN_BALANCE, latestCfmmInvariant, latestCfmmTotalSupply, lastFeeIndex);
+
+        // Calculates total CFMM LP tokens, including accrued interest, using state variables
+        supply = IShortStrategy(shortStrategy).totalSupply(factory, address(this), cfmmFeeIndex, lastFeeIndex, utilizationRate, s.totalSupply);
     }
 }

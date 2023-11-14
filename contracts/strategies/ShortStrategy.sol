@@ -35,24 +35,29 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     /// @return payee - address reserve tokens will be sent to. Address holding CFMM's reserves might be different from CFMM's address
     function calcDepositAmounts(uint256[] calldata amountsDesired, uint256[] calldata amountsMin) internal virtual view returns (uint256[] memory reserves, address payee);
 
-    /// @dev See {IShortStrategy-calcUtilRateEma}.
+    /// @inheritdoc IShortStrategy
     function calcUtilRateEma(uint256 utilizationRate, uint256 emaUtilRateLast, uint256 emaMultiplier) external virtual override view returns(uint256 emaUtilRate) {
         return _calcUtilRateEma(utilizationRate, emaUtilRateLast, emaMultiplier);
     }
 
-    /// @dev See {IShortStrategy-totalAssets}.
-    function totalAssets(address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant,
-        uint256 prevCFMMTotalSupply, uint256 lastBlockNum, address pool, uint256 lastCFMMFeeIndex) public virtual override view returns(uint256 lastLPBalance) {
-        // Get fee growth in CFMM since last update
-        lastCFMMFeeIndex = block.number - lastBlockNum > 0 ? calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply) * lastCFMMFeeIndex / 1e18 : 1e18;
-
-        (uint256 lastFeeIndex, uint256 borrowRate,) = getLastFees(paramsStore, borrowedInvariant, lpBalance, prevCFMMInvariant, prevCFMMTotalSupply, lastBlockNum, pool, lastCFMMFeeIndex);
-
+    /// @inheritdoc IShortStrategy
+    function totalAssets(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 lastFeeIndex) public virtual override view returns(uint256 lastLPBalance) {
         // Return CFMM LP tokens depositedin GammaPool plus borrowed liquidity invariant with accrued interest in terms of CFMM LP tokens
         (lastLPBalance,,) = getLatestBalances(lastFeeIndex, borrowedInvariant, lpBalance, lastCFMMInvariant, lastCFMMTotalSupply);
     }
 
-    /// @dev See {IShortStrategy-getLatestBalances}.
+    /// @inheritdoc IShortStrategy
+    function totalSupply(address paramsStore, address pool, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 utilizationRate, uint256 supply) public virtual override view returns (uint256) {
+        uint256 devShares = 0;
+        (address feeTo, uint256 protocolFee,, ) = IGammaPoolFactory(paramsStore).getPoolFee(pool);
+        if(feeTo != address(0)) {
+            uint256 printPct = _calcProtocolDilution(lastFeeIndex, lastCFMMFeeIndex, utilizationRate, protocolFee);
+            devShares = supply * printPct / 1e18;
+        }
+        return supply + devShares;
+    }
+
+    /// @inheritdoc IShortStrategy
     function getLatestBalances(uint256 lastFeeIndex, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) public virtual override view
         returns(uint256 lastLPBalance, uint256 lastBorrowedLPBalance, uint256 lastBorrowedInvariant) {
         lastBorrowedInvariant = accrueBorrowedInvariant(borrowedInvariant, lastFeeIndex);
@@ -60,19 +65,21 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         lastLPBalance = lpBalance + lastBorrowedLPBalance;
     }
 
-    /// @dev See {IShortStrategy-getLastFees}.
-    function getLastFees(address paramsStore, uint256 borrowedInvariant, uint256 lpBalance, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum,
-        address pool, uint256 lastCFMMFeeIndex) public virtual override view returns(uint256 lastFeeIndex, uint256 borrowRate, uint256 utilizationRate) {
-        // Calculate borrow rate
-        (borrowRate, utilizationRate) = calcBorrowRate(convertLPToInvariant(lpBalance, prevCFMMInvariant, prevCFMMTotalSupply), borrowedInvariant, paramsStore, pool);
+    /// @inheritdoc IShortStrategy
+    function getLastFees(uint256 borrowRate, uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply,
+        uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex) public virtual override
+        view returns(uint256 lastFeeIndex, uint256 updatedLastCFMMFeeIndex) {
+        lastBlockNum = block.number - lastBlockNum;
+
+        updatedLastCFMMFeeIndex = lastBlockNum > 0 ? calcCFMMFeeIndex(borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply, prevCFMMInvariant, prevCFMMTotalSupply) * lastCFMMFeeIndex / 1e18 : 1e18;
 
         // Calculate interest that would be charged to entire pool's liquidity debt if pool were updated in this transaction
-        lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, block.number - lastBlockNum);
+        lastFeeIndex = calcFeeIndex(updatedLastCFMMFeeIndex, borrowRate, lastBlockNum);
     }
 
     //********* Short Gamma Functions *********//
 
-    /// @dev See {IShortStrategy-_depositNoPull}.
+    /// @inheritdoc IShortStrategy
     function _depositNoPull(address to) external virtual override lock returns(uint256 shares) {
         shares = depositAssetsNoPull(to, false);
     }
@@ -104,7 +111,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         depositAssets(msg.sender, to, assets, shares, isDepositReserves);
     }
 
-    /// @dev See {IShortStrategy-_withdrawNoPull}.
+    /// @inheritdoc IShortStrategy
     function _withdrawNoPull(address to) external virtual override lock returns(uint256 assets) {
         (,assets) = withdrawAssetsNoPull(to, false); // withdraw CFMM LP tokens
     }
@@ -146,7 +153,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         }
     }
 
-    /// @dev See {IShortStrategy-_depositReserves}.
+    /// @inheritdoc IShortStrategy
     function _depositReserves(address to, uint256[] calldata amountsDesired, uint256[] calldata amountsMin, bytes calldata data) external virtual override lock returns(uint256[] memory reserves, uint256 shares) {
         {
             uint256 tokenLen = s.tokens.length;
@@ -169,7 +176,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         shares = depositAssetsNoPull(to, true);
     }
 
-    /// @dev See {IShortStrategy-_withdrawReserves}.
+    /// @inheritdoc IShortStrategy
     function _withdrawReserves(address to) external virtual override lock returns(uint256[] memory reserves, uint256 assets) {
         (reserves, assets) = withdrawAssetsNoPull(to, true); // Withdraw reserve tokens
     }

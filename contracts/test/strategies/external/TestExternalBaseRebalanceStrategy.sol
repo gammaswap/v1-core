@@ -107,7 +107,7 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
         rateIndex = _loan.rateIndex;
     }
 
-    function calcBorrowRate(uint256,uint256,address, address) internal virtual override view returns(uint256,uint256) {
+    function calcBorrowRate(uint256,uint256,address, address) public virtual override view returns(uint256,uint256) {
         return(0,0);
     }
 

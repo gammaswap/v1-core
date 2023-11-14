@@ -96,7 +96,10 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
 
         s.LP_TOKEN_BORROWED = lpTokenBorrowed;
 
-        if(lpTokenBorrowed == 0) s.BORROWED_INVARIANT = 0;
+        if(lpTokenBorrowed == 0) {
+            s.BORROWED_INVARIANT = 0;
+            s.LP_TOKEN_BORROWED_PLUS_INTEREST = 0;
+        }
     }
 
     /// @dev Account for paid liquidity debt in loan

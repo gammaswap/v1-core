@@ -48,7 +48,7 @@ describe("ShortStrategySync", function () {
     cfmmTotalInvariant: BigNumber
   ) {
     expect(await strategy.getTotalAssets()).to.equal(0);
-    expect(await strategy.totalSupply()).to.equal(0);
+    expect(await strategy.totalSupply0()).to.equal(0);
     const params = await strategy.getTotalAssetsParams2();
     expect(params.borrowedInvariant).to.equal(0);
     expect(params.lpBalance).to.equal(0);

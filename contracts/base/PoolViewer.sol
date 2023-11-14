@@ -8,6 +8,7 @@ import "../interfaces/observer/ICollateralManager.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
 import "../interfaces/strategies/lending/IBorrowStrategy.sol";
+import "../rates/AbstractRateModel.sol";
 import "../libraries/GSMath.sol";
 
 /// @title Implementation of Viewer Contract for GammaPool
@@ -15,13 +16,13 @@ import "../libraries/GSMath.sol";
 /// @dev Used make complex view function calls from GammaPool's storage data (e.g. updated loan and pool debt)
 contract PoolViewer is IPoolViewer {
 
-    /// @dev See {IPoolViewer-getLoans}
+    /// @inheritdoc IPoolViewer
     function getLoans(address pool, uint256 start, uint256 end, bool active) external virtual override view returns(IGammaPool.LoanData[] memory _loans) {
         _loans = IGammaPool(pool).getLoans(start, end, active);
         return _getUpdatedLoans(pool, _loans);
     }
 
-    /// @dev See {IPoolViewer-getLoansById}
+    /// @inheritdoc IPoolViewer
     function getLoansById(address pool, uint256[] calldata tokenIds, bool active) external virtual override view returns(IGammaPool.LoanData[] memory _loans) {
         _loans = IGammaPool(pool).getLoansById(tokenIds, active);
         return _getUpdatedLoans(pool, _loans);
@@ -66,31 +67,7 @@ contract PoolViewer is IPoolViewer {
         return collateral * (10000 - ltvThreshold * 10) / 1e4 < liquidity;
     }
 
-    /// @dev Calculate fees accrued from fees in CFMM
-    /// @param borrowedInvariant - liquidity invariant borrowed from CFMM
-    /// @param lastCFMMInvariant - current liquidity invariant in CFMM
-    /// @param lastCFMMTotalSupply - current CFMM LP token supply
-    /// @param prevCFMMInvariant - liquidity invariant in CFMM in previous GammaPool update
-    /// @param prevCFMMTotalSupply - CFMM LP token supply in previous GammaPool update
-    /// @return cfmmFeeIndex - index tracking accrued fees from CFMM since last GammaPool update
-    ///
-    /// CFMM Fee Index = 1 + CFMM Yield = (cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1)
-    ///
-    /// Deleveraged CFMM Fee Index = 1 + Deleveraged CFMM Yield
-    ///
-    /// Deleveraged CFMM Fee Index = 1 + [(cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1) - 1] * (cfmmInvariant0 / borrowedInvariant)
-    ///
-    /// Deleveraged CFMM Fee Index = [cfmmInvariant1 * cfmmTotalSupply0 + (borrowedInvariant - cfmmInvariant0) * cfmmTotalSupply1] / (borrowedInvariant * cfmmTotalSupply1)
-    function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply) internal virtual view returns(uint256) {
-        if(lastCFMMInvariant > 0 && lastCFMMTotalSupply > 0 && prevCFMMInvariant > 0 && prevCFMMTotalSupply > 0) {
-            uint256 prevInvariant = borrowedInvariant > prevCFMMInvariant ? borrowedInvariant : prevCFMMInvariant; // Deleverage CFMM Yield
-            uint256 denominator = prevInvariant * lastCFMMTotalSupply;
-            return (lastCFMMInvariant * prevCFMMTotalSupply + lastCFMMTotalSupply * (prevInvariant - prevCFMMInvariant)) * 1e18 / denominator;
-        }
-        return 1e18; // first update
-    }
-
-    /// @dev See {IPoolViewer-loan}
+    /// @inheritdoc IPoolViewer
     function loan(address pool, uint256 tokenId) external virtual override view returns(IGammaPool.LoanData memory _loanData) {
         _loanData = IGammaPool(pool).getLoanData(tokenId);
         _loanData.accFeeIndex = _getLoanLastFeeIndex(_loanData);
@@ -102,7 +79,7 @@ contract PoolViewer is IPoolViewer {
         return _loanData;
     }
 
-    /// @dev See {IPoolViewer-canLiquidate}
+    /// @inheritdoc IPoolViewer
     function canLiquidate(address pool, uint256 tokenId) external virtual override view returns(bool) {
         IGammaPool.LoanData memory _loanData = IGammaPool(pool).getLoanData(tokenId);
         uint256 liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, _getLoanLastFeeIndex(_loanData));
@@ -119,12 +96,12 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMTotalSupply;
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(_loanData.poolId).getLatestCFMMBalances();
 
-        uint256 lastCFMMFeeIndex = block.number - _loanData.LAST_BLOCK_NUMBER > 0 ? calcCFMMFeeIndex(_loanData.BORROWED_INVARIANT,
-            lastCFMMInvariant, lastCFMMTotalSupply, _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply) * _loanData.lastCFMMFeeIndex / 1e18 : 1e18;
+        (uint256 borrowRate,) = AbstractRateModel(_loanData.shortStrategy).calcBorrowRate(_loanData.LP_INVARIANT,
+            _loanData.BORROWED_INVARIANT, _loanData.paramsStore, _loanData.poolId);
 
-        (uint256 lastFeeIndex,,) = IShortStrategy(_loanData.shortStrategy).getLastFees(_loanData.paramsStore,
-            _loanData.BORROWED_INVARIANT, _loanData.LP_TOKEN_BALANCE, _loanData.lastCFMMInvariant, _loanData.lastCFMMTotalSupply,
-            _loanData.LAST_BLOCK_NUMBER, _loanData.poolId, lastCFMMFeeIndex);
+        (uint256 lastFeeIndex,) = IShortStrategy(_loanData.shortStrategy).getLastFees(borrowRate, _loanData.BORROWED_INVARIANT,
+            lastCFMMInvariant, lastCFMMTotalSupply, _loanData.lastCFMMInvariant,
+            _loanData.lastCFMMTotalSupply, _loanData.LAST_BLOCK_NUMBER, _loanData.lastCFMMFeeIndex);
 
         accFeeIndex = _loanData.accFeeIndex * lastFeeIndex / 1e18;
     }
@@ -142,7 +119,7 @@ contract PoolViewer is IPoolViewer {
         }
     }
 
-    /// @dev See {IPoolViewer-calcDynamicOriginationFee}
+    /// @inheritdoc IPoolViewer
     function calcDynamicOriginationFee(address pool, uint256 liquidity) external virtual override view returns(uint256 origFee) {
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
 
@@ -174,12 +151,14 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMTotalSupply;
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(pool).getLatestCFMMBalances();
 
-        data.lastCFMMFeeIndex = block.number - params.LAST_BLOCK_NUMBER > 0 ? calcCFMMFeeIndex(params.BORROWED_INVARIANT,
-            lastCFMMInvariant, lastCFMMTotalSupply, params.lastCFMMInvariant, params.lastCFMMTotalSupply) * params.lastCFMMFeeIndex / 1e18 : 1e18;
+        (data.borrowRate,data.utilizationRate) = AbstractRateModel(params.shortStrategy).calcBorrowRate(params.LP_INVARIANT,
+            params.BORROWED_INVARIANT, params.paramsStore, params.pool);
 
-        (data.lastFeeIndex,data.borrowRate,data.utilizationRate) = IShortStrategy(params.shortStrategy)
-            .getLastFees(params.paramsStore, params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, params.lastCFMMInvariant,
-            params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.pool, data.lastCFMMFeeIndex);
+        (data.lastFeeIndex,data.lastCFMMFeeIndex) = IShortStrategy(params.shortStrategy)
+            .getLastFees(data.borrowRate, params.BORROWED_INVARIANT, lastCFMMInvariant, lastCFMMTotalSupply,
+            params.lastCFMMInvariant, params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.lastCFMMFeeIndex);
+
+        data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
 
         (,, data.BORROWED_INVARIANT) = IShortStrategy(params.shortStrategy).getLatestBalances(data.lastFeeIndex,
             params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply);
@@ -203,15 +182,13 @@ contract PoolViewer is IPoolViewer {
         data.currBlockNumber = block.number;
     }
 
-    /// @dev See {IPoolViewer-getLatestRates}
+    /// @inheritdoc IPoolViewer
     function getLatestRates(address pool) external virtual override view returns(IGammaPool.RateData memory data) {
         data = _getLastFeeIndex(pool);
-        data.currBlockNumber = block.number;
         data.lastPrice = IGammaPool(pool).getLastCFMMPrice();
-        data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
     }
 
-    /// @dev See {IPoolViewer-getLatestPoolData}
+    /// @inheritdoc IPoolViewer
     function getLatestPoolData(address pool) external virtual override view returns(IGammaPool.PoolData memory data) {
         data = getPoolData(pool);
         uint256 borrowedInvariant = data.BORROWED_INVARIANT;
@@ -219,12 +196,13 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMTotalSupply;
         (data.CFMM_RESERVES, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(pool).getLatestCFMMBalances();
 
-        uint256 lastCFMMFeeIndex = block.number - data.LAST_BLOCK_NUMBER > 0 ? calcCFMMFeeIndex(borrowedInvariant,
-            lastCFMMInvariant, lastCFMMTotalSupply, data.lastCFMMInvariant, data.lastCFMMTotalSupply) * data.lastCFMMFeeIndex / 1e18 : 1e18;
+        (data.borrowRate, data.utilizationRate) = AbstractRateModel(data.shortStrategy).calcBorrowRate(data.LP_INVARIANT,
+            data.BORROWED_INVARIANT, data.paramsStore, pool);
 
-        (data.lastFeeIndex, data.borrowRate, data.utilizationRate) = IShortStrategy(data.shortStrategy)
-            .getLastFees(data.paramsStore, borrowedInvariant, data.LP_TOKEN_BALANCE, data.lastCFMMInvariant,
-            data.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER, pool, lastCFMMFeeIndex);
+        uint256 lastCFMMFeeIndex;
+        (data.lastFeeIndex,lastCFMMFeeIndex) = IShortStrategy(data.shortStrategy)
+        .getLastFees(data.borrowRate, data.BORROWED_INVARIANT, lastCFMMInvariant, lastCFMMTotalSupply,
+            data.lastCFMMInvariant, data.lastCFMMTotalSupply, data.LAST_BLOCK_NUMBER, data.lastCFMMFeeIndex);
 
         data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
 
@@ -246,13 +224,13 @@ contract PoolViewer is IPoolViewer {
         data.lastCFMMTotalSupply = lastCFMMTotalSupply;
     }
 
-    /// @dev See {IPoolViewer-getPoolData}
+    /// @inheritdoc IPoolViewer
     function getPoolData(address pool) public virtual override view returns(IGammaPool.PoolData memory data) {
         data = IGammaPool(pool).getPoolData();
         (data.symbols, data.names,) = getTokensMetaData(data.tokens);
     }
 
-    /// dev See {IPoolViewer-getTokensMetaData}
+    /// @inheritdoc IPoolViewer
     function getTokensMetaData(address[] memory _tokens) public virtual override view returns(string[] memory _symbols,
         string[] memory _names, uint8[] memory _decimals) {
         _symbols = new string[](_tokens.length);
