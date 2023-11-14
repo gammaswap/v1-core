@@ -671,19 +671,28 @@ describe("ShortStrategyERC4626", function () {
 
         const assets3 = assets2.div(2);
         const params1 = await strategy.getTotalAssetsParams();
-        const lastFees = await strategy.getLastFees(
-          paramsStore.address,
-          params1.borrowedInvariant,
-          params1.lpBalance,
-          params1.prevCFMMInvariant,
-          params1.prevCFMMTotalSupply,
-          params1.lastBlockNum.sub(1),
-          strategy.address,
-          params1.lastCFMMFeeIndex
-        );
 
         const cfmmTotalSupply1 = await cfmm.totalSupply();
         const cfmmInvariant1 = await cfmm.invariant();
+
+        const borrowRate = await strategy.calcBorrowRate(
+          params1.borrowedInvariant,
+          params1.lpInvariant,
+          paramsStore.address,
+          strategy.address
+        );
+
+        const lastFees = await strategy.getLastFees(
+          borrowRate.borrowRate,
+          params1.borrowedInvariant,
+          cfmmInvariant1,
+          cfmmTotalSupply1,
+          params1.prevCFMMInvariant,
+          params1.prevCFMMTotalSupply,
+          params1.lastBlockNum.sub(1),
+          params1.lastCFMMFeeIndex
+        );
+
         const currTotalAssets = await strategy.totalAssets(
           params1.borrowedInvariant,
           params1.lpBalance,
@@ -941,19 +950,28 @@ describe("ShortStrategyERC4626", function () {
 
         const shares2 = shares.div(2);
         const params1 = await strategy.getTotalAssetsParams();
-        let lastFees = await strategy.getLastFees(
-          paramsStore.address,
-          params1.borrowedInvariant,
-          params1.lpBalance,
-          params1.prevCFMMInvariant,
-          params1.prevCFMMTotalSupply,
-          params1.lastBlockNum.sub(1),
-          strategy.address,
-          params1.lastCFMMFeeIndex
-        );
 
         const cfmmTotalSupply1 = await cfmm.totalSupply();
         const cfmmInvariant1 = await cfmm.invariant();
+
+        const borrowRate = await strategy.calcBorrowRate(
+          params1.borrowedInvariant,
+          params1.lpInvariant,
+          paramsStore.address,
+          strategy.address
+        );
+
+        let lastFees = await strategy.getLastFees(
+          borrowRate.borrowRate,
+          params1.borrowedInvariant,
+          cfmmInvariant1,
+          cfmmTotalSupply1,
+          params1.prevCFMMInvariant,
+          params1.prevCFMMTotalSupply,
+          params1.lastBlockNum.sub(1),
+          params1.lastCFMMFeeIndex
+        );
+
         const currTotalAssets = await strategy.totalAssets(
           params1.borrowedInvariant,
           params1.lpBalance,
@@ -989,19 +1007,28 @@ describe("ShortStrategyERC4626", function () {
 
         const shares3 = shares2.div(2);
         const params2 = await strategy.getTotalAssetsParams();
-        lastFees = await strategy.getLastFees(
-          paramsStore.address,
-          params2.borrowedInvariant,
-          params2.lpBalance,
-          params2.prevCFMMInvariant,
-          params2.prevCFMMTotalSupply,
-          params2.lastBlockNum.sub(1),
-          strategy.address,
-          params2.lastCFMMFeeIndex
-        );
 
         const cfmmTotalSupply2 = await cfmm.totalSupply();
         const cfmmInvariant2 = await cfmm.invariant();
+
+        const borrowRate2 = await strategy.calcBorrowRate(
+          params2.borrowedInvariant,
+          params2.lpInvariant,
+          paramsStore.address,
+          strategy.address
+        );
+
+        lastFees = await strategy.getLastFees(
+          borrowRate2.borrowRate,
+          params2.borrowedInvariant,
+          cfmmInvariant2,
+          cfmmTotalSupply2,
+          params2.prevCFMMInvariant,
+          params2.prevCFMMTotalSupply,
+          params2.lastBlockNum.sub(1),
+          params2.lastCFMMFeeIndex
+        );
+
         const currTotalAssets2 = await strategy.totalAssets(
           params2.borrowedInvariant,
           params2.lpBalance,
@@ -1223,19 +1250,27 @@ describe("ShortStrategyERC4626", function () {
 
       const params = await strategy.getTotalAssetsParams();
 
-      let lastFees = await strategy.getLastFees(
-        paramsStore.address,
+      const cfmmInvariant = await cfmm.invariant();
+      const cfmmTotalSupply = await cfmm.totalSupply();
+
+      const borrowRate = await strategy.calcBorrowRate(
         params.borrowedInvariant,
-        params.lpBalance,
+        params.lpInvariant,
+        paramsStore.address,
+        strategy.address
+      );
+
+      let lastFees = await strategy.getLastFees(
+        borrowRate.borrowRate,
+        params.borrowedInvariant,
+        cfmmInvariant,
+        cfmmTotalSupply,
         params.prevCFMMInvariant,
         params.prevCFMMTotalSupply,
         params.lastBlockNum.sub(1),
-        strategy.address,
         params.lastCFMMFeeIndex
       );
 
-      const cfmmInvariant = await cfmm.invariant();
-      const cfmmTotalSupply = await cfmm.totalSupply();
       const currTotalAssets = await strategy.totalAssets(
         params.borrowedInvariant,
         params.lpBalance,
@@ -1254,19 +1289,28 @@ describe("ShortStrategyERC4626", function () {
       await ethers.provider.send("hardhat_mine", ["0x100"]);
 
       const params1 = await strategy.getTotalAssetsParams();
-      lastFees = await strategy.getLastFees(
-        paramsStore.address,
-        params1.borrowedInvariant,
-        params1.lpBalance,
-        params1.prevCFMMInvariant,
-        params1.prevCFMMTotalSupply,
-        params1.lastBlockNum.sub(1),
-        strategy.address,
-        params1.lastCFMMFeeIndex
-      );
 
       const cfmmInvariant1 = await cfmm.invariant();
       const cfmmTotalSupply1 = await cfmm.totalSupply();
+
+      const borrowRate1 = await strategy.calcBorrowRate(
+        params1.borrowedInvariant,
+        params1.lpInvariant,
+        paramsStore.address,
+        strategy.address
+      );
+
+      lastFees = await strategy.getLastFees(
+        borrowRate1.borrowRate,
+        params1.borrowedInvariant,
+        cfmmInvariant1,
+        cfmmTotalSupply1,
+        params1.prevCFMMInvariant,
+        params1.prevCFMMTotalSupply,
+        params1.lastBlockNum.sub(1),
+        params1.lastCFMMFeeIndex
+      );
+
       const currTotalAssets1 = await strategy.totalAssets(
         params1.borrowedInvariant,
         params1.lpBalance,
@@ -1310,19 +1354,27 @@ describe("ShortStrategyERC4626", function () {
 
       const params = await strategy.getTotalAssetsParams();
 
-      const lastFees = await strategy.getLastFees(
-        paramsStore.address,
+      const cfmmInvariant1 = await cfmm.invariant();
+      const cfmmTotalSupply1 = await cfmm.totalSupply();
+
+      const borrowRate = await strategy.calcBorrowRate(
         params.borrowedInvariant,
-        params.lpBalance,
+        params.lpInvariant,
+        paramsStore.address,
+        strategy.address
+      );
+
+      const lastFees = await strategy.getLastFees(
+        borrowRate.borrowRate,
+        params.borrowedInvariant,
+        cfmmInvariant1,
+        cfmmTotalSupply1,
         params.prevCFMMInvariant,
         params.prevCFMMTotalSupply,
         params.lastBlockNum.sub(1),
-        strategy.address,
         params.lastCFMMFeeIndex
       );
 
-      const cfmmInvariant1 = await cfmm.invariant();
-      const cfmmTotalSupply1 = await cfmm.totalSupply();
       const currTotalAssets = await strategy.totalAssets(
         params.borrowedInvariant,
         params.lpBalance,
