@@ -3,11 +3,11 @@ pragma solidity >=0.8.13;
 
 import "../interfaces/strategies/base/IShortStrategy.sol";
 import "../interfaces/IPoolViewer.sol";
+import "../rates/AbstractRateModel.sol";
 import "../utils/DelegateCaller.sol";
 import "../utils/Pausable.sol";
 import "./Refunds.sol";
 import "./GammaPoolERC20.sol";
-import "../rates/AbstractRateModel.sol";
 
 /// @title ERC4626 (GS LP) implementation of GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
