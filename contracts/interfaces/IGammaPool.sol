@@ -109,8 +109,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
         uint256 supplyRate;
         /// @dev names of ERC20 tokens of CFMM
         uint256 BORROWED_INVARIANT;
-        /// @dev Quantity of CFMM's liquidity invariant held in GammaPool as LP tokens, maps to LP_TOKEN_BALANCE
-        uint256 LP_INVARIANT;//Invariant from LP Tokens, TOTAL_INVARIANT = BORROWED_INVARIANT + LP_INVARIANT
+        /// @dev Quantity of CFMM's liquidity invariant held in GammaPool as LP tokens
+        uint256 LP_INVARIANT;
         /// @dev EMA of utilization Rate
         uint256 emaUtilRate;
         /// @dev Minimum Utilization Rate 1

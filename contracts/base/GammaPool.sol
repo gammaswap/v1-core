@@ -168,6 +168,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         _data.shortStrategy = shortStrategy;
         _data.paramsStore = s.factory;
         _data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
+        _data.LP_INVARIANT = s.LP_INVARIANT;
         _data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
         _data.lastCFMMInvariant = s.lastCFMMInvariant;
         _data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;

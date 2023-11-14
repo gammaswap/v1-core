@@ -56,12 +56,17 @@ contract TestShortStrategy2 is IShortStrategy{
 
     function getLastFees(uint256 borrowRate, uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex)
         external override view returns(uint256 lastFeeIndex, uint256 updLastCFMMFeeIndex) {
-        return (2,3);
+        return (2,1e18);
     }
 
     function getLatestBalances(uint256 lastFeeIndex, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply)
         external override view returns(uint256 lastLPBalance, uint256 lastBorrowedLPBalance, uint256 lastBorrowedInvariant) {
         return (4,5,6);
+    }
+
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual view returns(uint256 borrowRate, uint256 utilizationRate) {
+        borrowRate = 4*1e16;
+        utilizationRate = 3*1e17;
     }
 
     /***** ERC4626 Functions *****/

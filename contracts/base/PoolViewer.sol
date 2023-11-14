@@ -161,12 +161,14 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMTotalSupply;
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(pool).getLatestCFMMBalances();
 
-        (uint256 borrowRate,) = AbstractRateModel(params.shortStrategy).calcBorrowRate(params.LP_INVARIANT,
+        (data.borrowRate,data.utilizationRate) = AbstractRateModel(params.shortStrategy).calcBorrowRate(params.LP_INVARIANT,
             params.BORROWED_INVARIANT, params.paramsStore, params.pool);
 
-        (data.lastFeeIndex,) = IShortStrategy(params.shortStrategy)
-            .getLastFees(borrowRate, params.BORROWED_INVARIANT, lastCFMMInvariant, lastCFMMTotalSupply,
+        (data.lastFeeIndex,data.lastCFMMFeeIndex) = IShortStrategy(params.shortStrategy)
+            .getLastFees(data.borrowRate, params.BORROWED_INVARIANT, lastCFMMInvariant, lastCFMMTotalSupply,
             params.lastCFMMInvariant, params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.lastCFMMFeeIndex);
+
+        data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
 
         (,, data.BORROWED_INVARIANT) = IShortStrategy(params.shortStrategy).getLatestBalances(data.lastFeeIndex,
             params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply);
@@ -193,9 +195,7 @@ contract PoolViewer is IPoolViewer {
     /// @inheritdoc IPoolViewer
     function getLatestRates(address pool) external virtual override view returns(IGammaPool.RateData memory data) {
         data = _getLastFeeIndex(pool);
-        data.currBlockNumber = block.number;
         data.lastPrice = IGammaPool(pool).getLastCFMMPrice();
-        data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
     }
 
     /// @inheritdoc IPoolViewer
