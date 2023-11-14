@@ -164,29 +164,6 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         return(s.accFeeIndex, s.lastCFMMFeeIndex, s.LAST_BLOCK_NUMBER);
     }
 
-    /// @dev See {IGammaPool-getFeeIndexUpdateParams}
-    function getFeeIndexUpdateParams() external virtual override view returns(FeeIndexUpdateParams memory _data) {
-        _data.pool = address(this);
-        _data.shortStrategy = shortStrategy;
-        _data.paramsStore = s.factory;
-        _data.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
-        _data.LP_INVARIANT = s.LP_INVARIANT;
-        _data.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
-        _data.lastCFMMInvariant = s.lastCFMMInvariant;
-        _data.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
-        _data.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
-        _data.accFeeIndex = s.accFeeIndex;
-        _data.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
-        _data.emaUtilRate = s.emaUtilRate;
-        _data.emaMultiplier = s.emaMultiplier;
-        _data.minUtilRate1 = s.minUtilRate1;
-        _data.minUtilRate2 = s.minUtilRate2;
-        _data.feeDivisor = s.feeDivisor;
-        _data.origFee = s.origFee;
-        _data.ltvThreshold = s.ltvThreshold;
-        _data.liquidationFee = s.liquidationFee;
-    }
-
     /// @dev See {IGammaPool-getPoolData}
     function getPoolData() external virtual override view returns(PoolData memory data) {
         data.poolId = address(this);

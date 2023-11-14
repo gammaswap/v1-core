@@ -145,14 +145,14 @@ contract PoolViewer is IPoolViewer {
     /// @param pool - struct containing necessary loan information to calculate accFeeIndex
     /// @param data - struct containing updated fee index information from pool
     function _getLastFeeIndex(address pool) internal virtual view returns(IGammaPool.RateData memory data) {
-        IGammaPool.FeeIndexUpdateParams memory params = IGammaPool(pool).getFeeIndexUpdateParams();
+        IGammaPool.PoolData memory params = IGammaPool(pool).getPoolData();
 
         uint256 lastCFMMInvariant;
         uint256 lastCFMMTotalSupply;
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(pool).getLatestCFMMBalances();
 
         (data.borrowRate,data.utilizationRate) = AbstractRateModel(params.shortStrategy).calcBorrowRate(params.LP_INVARIANT,
-            params.BORROWED_INVARIANT, params.paramsStore, params.pool);
+            params.BORROWED_INVARIANT, params.paramsStore, pool);
 
         (data.lastFeeIndex,data.lastCFMMFeeIndex) = IShortStrategy(params.shortStrategy)
             .getLastFees(data.borrowRate, params.BORROWED_INVARIANT, lastCFMMInvariant, lastCFMMTotalSupply,

@@ -390,8 +390,8 @@ describe("GammaPool", function () {
       expect(res6.ltvThreshold).to.equal(5);
       expect(res6.liquidationFee).to.equal(25);
 
-      const res7 = await gammaPool.getFeeIndexUpdateParams();
-      expect(res7.pool).to.equal(gammaPool.address);
+      const res7 = await gammaPool.getPoolData();
+      expect(res7.poolId).to.equal(gammaPool.address);
       expect(res7.shortStrategy).to.equal(await gammaPool.shortStrategy());
       expect(res7.paramsStore).to.equal(await gammaPool.factory());
       expect(res7.BORROWED_INVARIANT).to.equal(res4.BORROWED_INVARIANT);
@@ -590,7 +590,7 @@ describe("GammaPool", function () {
 
       const res0 = await poolViewer.testGetLastFeeIndex(gammaPool.address);
 
-      const res1 = await gammaPool.getFeeIndexUpdateParams();
+      const res1 = await gammaPool.getPoolData();
       expect(res0.accFeeIndex).to.eq(4);
       expect(res0.lastCFMMFeeIndex).to.eq(ONE);
       expect(res0.lastFeeIndex).to.eq(2);

@@ -30,9 +30,9 @@ To deploy contracts to local live network use v1-deployment repository
 To install foundry locally go to [getfoundry.sh](https://getfoundry.sh/)
 
 ## Solidity Versions
-Code is tested with solidity version 0.8.19.
+Code is built with solidity version 0.8.21. But the evm in hardhat is set to Paris for Arbitrum deployment.
 
-Concrete contracts support only solidity version 0.8.19.
+Concrete contracts support only solidity version 0.8.21.
 
 Abstract contracts support solidity version 0.8.4 and up.
 
@@ -40,7 +40,8 @@ Interfaces support solidity version 0.8.0 and up.
 
 GammaPool.sol, GammaPoolERC4626, and GammaSwapLibrary.sol support solidity version 0.8.13 and up due to [abi.encodecall bug](https://soliditylang.org/blog/2022/03/16/encodecall-bug/).
 
-We used solidity version 0.8.19 because at the time arbitrum only works with up to solidity version 0.8.19
+We used solidity version 0.8.21 so that the code is ready to deploy to ethereum mainnet but set the evm in hardhat to Paris because at the time
+arbitrum does not support push0 opcode (shanghai evm).
 
 ## Publishing NPM Packages
 
