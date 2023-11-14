@@ -68,16 +68,6 @@ contract PoolViewer is IPoolViewer {
     }
 
     /// @inheritdoc IPoolViewer
-    function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply) public virtual view returns(uint256) {
-        if(lastCFMMInvariant > 0 && lastCFMMTotalSupply > 0 && prevCFMMInvariant > 0 && prevCFMMTotalSupply > 0) {
-            uint256 prevInvariant = borrowedInvariant > prevCFMMInvariant ? borrowedInvariant : prevCFMMInvariant; // Deleverage CFMM Yield
-            uint256 denominator = prevInvariant * lastCFMMTotalSupply;
-            return (lastCFMMInvariant * prevCFMMTotalSupply + lastCFMMTotalSupply * (prevInvariant - prevCFMMInvariant)) * 1e18 / denominator;
-        }
-        return 1e18; // first update
-    }
-
-    /// @inheritdoc IPoolViewer
     function loan(address pool, uint256 tokenId) external virtual override view returns(IGammaPool.LoanData memory _loanData) {
         _loanData = IGammaPool(pool).getLoanData(tokenId);
         _loanData.accFeeIndex = _getLoanLastFeeIndex(_loanData);

@@ -2,7 +2,6 @@
 pragma solidity >=0.8.13;
 
 import "../interfaces/strategies/base/IShortStrategy.sol";
-import "../interfaces/IPoolViewer.sol";
 import "../rates/AbstractRateModel.sol";
 import "../utils/DelegateCaller.sol";
 import "../utils/Pausable.sol";
@@ -18,12 +17,6 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
 
     /// @dev Minimum number of shares issued on first deposit to avoid rounding issues
     uint256 public constant MIN_SHARES = 1e3;
-
-    address immutable internal poolViewer;
-
-    constructor(address _poolViewer) {
-        poolViewer = _poolViewer;
-    }
 
     /// @return address - implementation contract that implements vault logic (e.g. ShortStrategy)
     function vaultImplementation() internal virtual view returns(address);
@@ -95,17 +88,15 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
     }
 
     /// @dev Calculates and returns total CFMM LP tokens belonging to liquidity providers using state global variables. It does not update the GammaPool
-    /// @return totalAssets current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
-    function totalAssets() public view virtual returns(uint256) {
-        (uint256 assets,) = _totalAssetsAndSupply();
-
-        return assets;
+    /// @return assets - current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
+    function totalAssets() public view virtual returns(uint256 assets) {
+        (assets,) = _totalAssetsAndSupply();
     }
 
-    function totalSupply() public virtual override view returns(uint256){
-        (, uint256 supply) = _totalAssetsAndSupply();
-
-        return supply;
+    /// @dev Get total supply of GS LP tokens, takes into account dilution through protocol revenue
+    /// @return supply - total supply of GS LP tokens after taking protocol revenue dilution into account
+    function totalSupply() public virtual override view returns(uint256 supply){
+        (, supply) = _totalAssetsAndSupply();
     }
 
     /// @dev Convert CFMM LP tokens to GS LP tokens

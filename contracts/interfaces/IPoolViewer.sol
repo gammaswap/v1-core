@@ -64,20 +64,4 @@ interface IPoolViewer {
     /// @return _decimals - array of decimals of ERC20 tokens of CFMM
     function getTokensMetaData(address[] memory _tokens) external view returns(string[] memory _symbols, string[] memory _names, uint8[] memory _decimals);
 
-    /// @dev Calculate fees accrued from fees in CFMM
-    /// @param borrowedInvariant - liquidity invariant borrowed from CFMM
-    /// @param lastCFMMInvariant - current liquidity invariant in CFMM
-    /// @param lastCFMMTotalSupply - current CFMM LP token supply
-    /// @param prevCFMMInvariant - liquidity invariant in CFMM in previous GammaPool update
-    /// @param prevCFMMTotalSupply - CFMM LP token supply in previous GammaPool update
-    /// @return cfmmFeeIndex - index tracking accrued fees from CFMM since last GammaPool update
-    ///
-    /// CFMM Fee Index = 1 + CFMM Yield = (cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1)
-    ///
-    /// Deleveraged CFMM Fee Index = 1 + Deleveraged CFMM Yield
-    ///
-    /// Deleveraged CFMM Fee Index = 1 + [(cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1) - 1] * (cfmmInvariant0 / borrowedInvariant)
-    ///
-    /// Deleveraged CFMM Fee Index = [cfmmInvariant1 * cfmmTotalSupply0 + (borrowedInvariant - cfmmInvariant0) * cfmmTotalSupply1] / (borrowedInvariant * cfmmTotalSupply1)
-    function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply) external view returns(uint256);
 }
