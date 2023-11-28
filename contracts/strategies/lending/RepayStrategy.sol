@@ -51,7 +51,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
     function proRataCollateral(uint128[] memory tokensHeld, uint256 liquidity, uint256 totalLiquidityDebt) internal virtual view returns(uint128[] memory) {
         uint256 tokenCount = tokensHeld.length;
         for(uint256 i = 0; i < tokenCount;) {
-            tokensHeld[i] = uint128(GSMath.min(tokensHeld[i] * liquidity / totalLiquidityDebt, uint256(tokensHeld[i])));
+            tokensHeld[i] = uint128(GSMath.min(uint256(tokensHeld[i]) * liquidity / totalLiquidityDebt, uint256(tokensHeld[i])));
             unchecked {
                 ++i;
             }
