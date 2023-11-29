@@ -133,19 +133,19 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         // Update liquidity debt to include accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
 
-        uint128[] memory collateral;
+        uint128[] memory collateral = _loan.tokensHeld;
         {
             // Cap liquidity repayment at total liquidity debt
             uint256 liquidityToCalculate;
             (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minBorrow() * 10) : (payLiquidity, payLiquidity);
 
             if(collateralId > 0) {
-                collateral = proRataCollateral(_loan.tokensHeld, liquidityToCalculate, loanLiquidity);
+                collateral = proRataCollateral(collateral, liquidityToCalculate, loanLiquidity);
                 collateral = remainingCollateral(collateral, _rebalanceCollateralToClose(_loan, collateral, collateralId, liquidityToCalculate));
                 updateIndex();
             }
             amounts = calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate);
-            for(uint256 i = 0; i < amounts.length;) {
+            for(uint256 i = 0; i < collateral.length;) {
                 amounts[i] = GSMath.min(collateral[i], amounts[i]);
                 unchecked {
                     ++i;

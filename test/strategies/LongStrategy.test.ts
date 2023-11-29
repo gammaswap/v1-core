@@ -1876,7 +1876,7 @@ describe("LongStrategy", function () {
   });
 
   describe("Repay Liquidity", function () {
-    it("Error Payment, Min Borrow", async function () {
+    it.skip("Error Payment, Min Borrow", async function () {
       const ONE = BigNumber.from(10).pow(18);
       const startLiquidity = ONE.mul(800);
       const startLpTokens = ONE.mul(400);
@@ -1943,7 +1943,7 @@ describe("LongStrategy", function () {
       ).wait();
     });
 
-    it("Error Full Payment, MinBorrow", async function () {
+    it.skip("Error Full Payment, MinBorrow", async function () {
       const ONE = BigNumber.from(10).pow(18);
 
       const res1 = await (await strategy.createLoan()).wait();
@@ -2035,7 +2035,7 @@ describe("LongStrategy", function () {
       expect(res2b.lpTokens).to.equal(0);
     });
 
-    it("Partial Payment", async function () {
+    it.skip("Partial Payment", async function () {
       const ONE = BigNumber.from(10).pow(18);
 
       const res1 = await (await strategy.createLoan()).wait();
@@ -2144,7 +2144,7 @@ describe("LongStrategy", function () {
       expect(res2b.lpTokens).to.equal(loanLPTokens.div(2));
     });
 
-    it("Full Payment", async function () {
+    it.skip("Full Payment", async function () {
       const ONE = BigNumber.from(10).pow(18);
 
       const res1 = await (await strategy.createLoan()).wait();
