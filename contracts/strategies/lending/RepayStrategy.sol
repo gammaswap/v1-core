@@ -102,6 +102,8 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         repayTokens(_loan, amounts); // convert LP Tokens to liquidity to check how much got back
         // with this strategy we don't request for payment, we assume collateral vault sent payment already
 
+        updateIndex();
+
         // Update loan collateral after repayment
         (tokensHeld,) = updateCollateral(_loan);
 
@@ -142,12 +144,20 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                 collateral = remainingCollateral(collateral, _rebalanceCollateralToClose(_loan, collateral, collateralId, liquidityToCalculate));
                 updateIndex();
             }
-            amounts = calcTokensToRepay(getReserves(s.cfmm), liquidityToCalculate);
+            amounts = calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate);
+            for(uint256 i = 0; i < amounts.length;) {
+                amounts[i] = GSMath.min(collateral[i], amounts[i]);
+                unchecked {
+                    ++i;
+                }
+            }
         }
 
         // Repay liquidity debt with reserve tokens, must check against available loan collateral
         repayTokens(_loan, amounts); // convert LP Tokens to liquidity to check how much got back
         // with this strategy we don't request for payment, we assume collateral vault sent payment already
+
+        updateIndex();
 
         // Update loan collateral after repayment
         (uint128[] memory tokensHeld, int256[] memory deltas) = updateCollateral(_loan);
