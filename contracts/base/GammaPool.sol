@@ -262,7 +262,7 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     /// @dev Get loan and convert to LoanData struct
     /// @param _tokenId - tokenId of loan to convert
     /// @return _loanData - loan data struct (same as Loan + tokenId)
-    function getLoanData(uint256 _tokenId) public virtual view returns(LoanData memory _loanData) {
+    function getLoanData(uint256 _tokenId) public virtual override view returns(LoanData memory _loanData) {
         _loanData = _getLoanData(_tokenId);
         _loanData.tokens = s.tokens;
         _loanData.decimals = s.decimals;

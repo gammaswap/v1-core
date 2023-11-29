@@ -11,7 +11,7 @@ import "../base/BaseLiquidationStrategy.sol";
 abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseLiquidationStrategy {
 
     function _calcLiquidationTokensToRepay(uint128[] memory tokensHeld, uint256 liquidityToPay) internal virtual returns(uint256[] memory amounts) {
-        amounts = calcTokensToRepay(getReserves(s.cfmm), liquidityToPay);
+        amounts = calcTokensToRepay(s.CFMM_RESERVES, liquidityToPay);
         for(uint256 i = 0; i < amounts.length;) {
             amounts[i] = GSMath.min(tokensHeld[i], amounts[i]);
             unchecked {
@@ -41,6 +41,7 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
 
         if(_liqLoan.payableInternalLiquidityPlusFee > 0) {
             uint256 lpDeposit = repayTokens(_loan, _calcLiquidationTokensToRepay(tokensHeld, _liqLoan.payableInternalLiquidityPlusFee));
+            updateIndex();
             refund = lpDeposit * _liqLoan.internalFee / _liqLoan.payableInternalLiquidityPlusFee;
             if(refund <= minBorrow()) {
                 refund = 0;

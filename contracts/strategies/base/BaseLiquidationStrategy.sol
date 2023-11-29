@@ -169,6 +169,9 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
 
         if(_liqLoan.isObserved) {
             liquidateWithObserver(_liqLoan, msg.sender);
+            updateIndex();
+            lastCFMMInvariant = s.lastCFMMInvariant;
+            lastCFMMTotalSupply = s.lastCFMMTotalSupply;
             (liquidityDeposit, lpDeposit) = calcDeposit(_liqLoan.payableInternalLiquidity, lastCFMMInvariant, lastCFMMTotalSupply, currLpBalance, false);
         }
 
