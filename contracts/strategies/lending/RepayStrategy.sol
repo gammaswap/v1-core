@@ -82,20 +82,19 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         // Update liquidity debt to include accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
 
-        uint128[] memory tokensHeld;
+        uint128[] memory tokensHeld = _loan.tokensHeld;
         {
             // Cap liquidity repayment at total liquidity debt
             uint256 liquidityToCalculate;
             (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minBorrow() * 10) : (payLiquidity, payLiquidity);
 
-            tokensHeld = _loan.tokensHeld;
             int256[] memory deltas = _calcDeltasToCloseSetRatio(tokensHeld, s.CFMM_RESERVES, liquidityToCalculate,
                 isRatioValid(ratio) ? ratio : GammaSwapLibrary.convertUint128ToRatio(tokensHeld));
             if(isDeltasValid(deltas)) {
                 rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
                 updateIndex();
             }
-            amounts = calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate);
+            amounts = calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate, new uint128[](0));
         }
 
         // Repay liquidity debt with reserve tokens, must check against available loan collateral
@@ -144,13 +143,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                 collateral = remainingCollateral(collateral, _rebalanceCollateralToClose(_loan, collateral, collateralId, liquidityToCalculate));
                 updateIndex();
             }
-            amounts = calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate);
-            for(uint256 i = 0; i < collateral.length;) {
-                amounts[i] = GSMath.min(collateral[i], amounts[i]);
-                unchecked {
-                    ++i;
-                }
-            }
+            amounts = calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate, collateral);
         }
 
         // Repay liquidity debt with reserve tokens, must check against available loan collateral

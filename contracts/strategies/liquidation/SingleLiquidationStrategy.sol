@@ -10,16 +10,6 @@ import "../base/BaseLiquidationStrategy.sol";
 /// @dev Only defines common functions that would be used by all concrete contracts that liquidate loans
 abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseLiquidationStrategy {
 
-    function _calcLiquidationTokensToRepay(uint128[] memory tokensHeld, uint256 liquidityToPay) internal virtual returns(uint256[] memory amounts) {
-        amounts = calcTokensToRepay(s.CFMM_RESERVES, liquidityToPay);
-        for(uint256 i = 0; i < amounts.length;) {
-            amounts[i] = GSMath.min(tokensHeld[i], amounts[i]);
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
     /// @dev See {LiquidationStrategy-_liquidate}.
     function _liquidate(uint256 tokenId) external override lock virtual returns(uint256 loanLiquidity, uint256 refund) {
         // Check can liquidate loan and get loan with updated loan liquidity
@@ -40,14 +30,14 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
         loanLiquidity = _liqLoan.loanLiquidity;
 
         if(_liqLoan.payableInternalLiquidityPlusFee > 0) {
-            uint256 lpDeposit = repayTokens(_loan, _calcLiquidationTokensToRepay(tokensHeld, _liqLoan.payableInternalLiquidityPlusFee));
-            updateIndex();
+            uint256 lpDeposit = repayTokens(_loan, calcTokensToRepay(s.CFMM_RESERVES, _liqLoan.payableInternalLiquidityPlusFee, tokensHeld));
             refund = lpDeposit * _liqLoan.internalFee / _liqLoan.payableInternalLiquidityPlusFee;
             if(refund <= minBorrow()) {
                 refund = 0;
             } else {
                 GammaSwapLibrary.safeTransfer(s.cfmm, msg.sender, refund);
             }
+            updateIndex();
         }
 
         (tokensHeld,) = updateCollateral(_loan); // Update remaining collateral

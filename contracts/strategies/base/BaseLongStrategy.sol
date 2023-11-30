@@ -26,9 +26,11 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
     function beforeRepay(LibStorage.Loan storage _loan, uint256[] memory amounts) internal virtual;
 
     /// @dev Calculate token amounts the liquidity invariant amount converts to in the CFMM
+    /// @param reserves - token quantites in CFMM used to calculate tokens to repay
     /// @param liquidity - liquidity invariant units from CFMM
+    /// @param maxAmounts - max token amounts to repay
     /// @return amounts - reserve token amounts in CFMM that liquidity invariant converted to
-    function calcTokensToRepay(uint128[] memory reserves, uint256 liquidity) internal virtual view returns(uint256[] memory amounts);
+    function calcTokensToRepay(uint128[] memory reserves, uint256 liquidity, uint128[] memory maxAmounts) internal virtual view returns(uint256[] memory amounts);
 
     /// @dev Perform necessary transaction before repaying swapping tokens
     /// @param _loan - liquidity loan whose collateral will be swapped
