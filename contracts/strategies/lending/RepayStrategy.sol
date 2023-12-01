@@ -19,8 +19,9 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
     /// @dev Calculate remaining collateral after rebalancing. Used for calculating remaining partial collateral
     /// @param collateral - collateral amounts before collateral changes
     /// @param deltas - collateral changes
+    /// @param padding - padding to add from previous padding subtraction
     /// @return remaining - remaining collateral after collateral changes
-    function remainingCollateral(uint128[] memory collateral, int256[] memory deltas) internal virtual view returns(uint128[] memory) {
+    function remainingCollateral(uint128[] memory collateral, int256[] memory deltas, uint128 padding) internal virtual view returns(uint128[] memory) {
         uint256 tokenCount = deltas.length;
         for(uint256 i = 0; i < tokenCount;) {
             int256 delta = deltas[i];
@@ -36,6 +37,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                     }
                 }
             }
+            collateral[i] += padding;
             unchecked {
                 ++i;
             }
@@ -47,11 +49,12 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
     /// @param tokensHeld - loan total collateral available to pay loan
     /// @param liquidity - liquidity that we'll pay using loan collateral
     /// @param totalLiquidityDebt - total liquidity debt of loan
+    /// @param padding - padding to avoid rounding issues
     /// @return collateral - collateral portion of total collateral that will be used to pay `liquidity`
-    function proRataCollateral(uint128[] memory tokensHeld, uint256 liquidity, uint256 totalLiquidityDebt) internal virtual view returns(uint128[] memory) {
+    function proRataCollateral(uint128[] memory tokensHeld, uint256 liquidity, uint256 totalLiquidityDebt, uint128 padding) internal virtual view returns(uint128[] memory) {
         uint256 tokenCount = tokensHeld.length;
         for(uint256 i = 0; i < tokenCount;) {
-            tokensHeld[i] = uint128(GSMath.min(uint256(tokensHeld[i]) * liquidity / totalLiquidityDebt, uint256(tokensHeld[i])));
+            tokensHeld[i] = uint128(GSMath.min(uint256(tokensHeld[i]) * liquidity / totalLiquidityDebt, tokensHeld[i] - padding));
             unchecked {
                 ++i;
             }
@@ -139,8 +142,8 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
             (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minBorrow() * 10) : (payLiquidity, payLiquidity);
 
             if(collateralId > 0) {
-                collateral = proRataCollateral(collateral, liquidityToCalculate, loanLiquidity);
-                collateral = remainingCollateral(collateral, _rebalanceCollateralToClose(_loan, collateral, collateralId, liquidityToCalculate));
+                collateral = proRataCollateral(collateral, liquidityToCalculate, loanLiquidity, 1);
+                collateral = remainingCollateral(collateral, _rebalanceCollateralToClose(_loan, collateral, collateralId, liquidityToCalculate), 1);
                 updateIndex();
             }
             amounts = calcTokensToRepay(s.CFMM_RESERVES, liquidityToCalculate, collateral);
@@ -160,7 +163,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         (liquidityPaid, remainingLiquidity) = payLoan(_loan, liquidityPaid, loanLiquidity);// don't want to do this twice
 
         if(collateralId > 0 && to != address(0)) {
-            tokensHeld = withdrawCollateral(_loan, remainingCollateral(collateral, deltas), to);
+            tokensHeld = withdrawCollateral(_loan, remainingCollateral(collateral, deltas, 0), to);
         }
 
         checkCollateral(_loan, tokenId, tokensHeld, remainingLiquidity);
@@ -192,7 +195,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         tokensHeld = _loan.tokensHeld;
         if(to != address(0)) {
             // Get pro rata collateral of liquidity paid to withdraw
-            tokensHeld = proRataCollateral(tokensHeld, liquidityPaid, loanLiquidity);
+            tokensHeld = proRataCollateral(tokensHeld, liquidityPaid, loanLiquidity, 0);
             if(collateralId > 0) { // If collateralId was chosen, rebalance to one of the amounts and withdraw
                 unchecked {
                     collateralId -= 1;
@@ -201,7 +204,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                 int256[] memory deltas = new int256[](tokensHeld.length);
                 deltas[collateralId] = -int256(uint256(tokensHeld[collateralId]));
                 (, deltas) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
-                tokensHeld = remainingCollateral(tokensHeld, deltas);
+                tokensHeld = remainingCollateral(tokensHeld, deltas, 0);
             }
             // Withdraw, check margin
             tokensHeld = withdrawCollateral(_loan, tokensHeld, to);
