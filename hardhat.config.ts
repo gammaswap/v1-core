@@ -32,14 +32,14 @@ const config: HardhatUserConfig = {
     arbitrumGoerli: {
       url: `https://arb-goerli.g.alchemy.com/v2/${process.env.ALCHEMY_ARBITRUM_GOERLI_API_KEY}`,
       accounts: {
-        mnemonic: process.env.ARBITRUM_GOERLI_MNEMONIC,
+        mnemonic: process.env.ARBITRUM_GOERLI_MNEMONIC || "",
       },
       chainId: 421613,
     },
     arbitrum: {
       url: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_ARBITRUM_API_KEY}`,
       accounts: {
-        mnemonic: process.env.ARBITRUM_MNEMONIC,
+        mnemonic: process.env.ARBITRUM_MNEMONIC || "",
       },
       chainId: 42161,
     },
