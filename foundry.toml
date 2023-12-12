@@ -6,3 +6,6 @@ solc_version = '0.8.21'
 test = 'test'
 match_path = '*.t.sol'
 cache_path  = 'cache_forge'
+
+[fuzz]
+runs = 10000
