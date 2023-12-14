@@ -30,7 +30,11 @@ abstract contract ExternalRebalanceStrategy is IExternalRebalanceStrategy, BaseE
         _loan.tokensHeld = tokensHeld;
 
         if(liquiditySwapped > loanLiquidity) {
-            loanLiquidity = loanLiquidity + calcExternalSwapFee(liquiditySwapped, loanLiquidity);
+            uint256 fee = calcExternalSwapFee(liquiditySwapped, loanLiquidity);
+            uint256 borrowedInvariant = s.BORROWED_INVARIANT + fee;
+            s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(borrowedInvariant, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
+            s.BORROWED_INVARIANT = uint128(borrowedInvariant);
+            loanLiquidity = loanLiquidity + fee;
             _loan.liquidity = uint128(loanLiquidity);
         }
 

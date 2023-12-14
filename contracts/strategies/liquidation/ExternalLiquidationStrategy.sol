@@ -34,6 +34,9 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, B
         uint256 loanLiquidity = _liqLoan.loanLiquidity;
         if(liquiditySwapped > loanLiquidity) {
             uint256 swapFee = calcExternalSwapFee(liquiditySwapped, loanLiquidity) / 2;
+            uint256 borrowedInvariant = s.BORROWED_INVARIANT + swapFee;
+            s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(borrowedInvariant, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
+            s.BORROWED_INVARIANT = uint128(borrowedInvariant);
             loanLiquidity += swapFee;
             _loan.liquidity = uint128(loanLiquidity);
             _liqLoan.payableInternalLiquidity += swapFee;

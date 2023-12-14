@@ -77,6 +77,13 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
         lpInvariant = s.LP_INVARIANT;
     }
 
+    function getBorrowedBalances() external virtual view returns(uint256 borrowedInvariant,
+        uint256 lpTokensBorrowedPlusInterest, uint256 lpTokensBorrowed) {
+        borrowedInvariant = s.BORROWED_INVARIANT;
+        lpTokensBorrowedPlusInterest = s.LP_TOKEN_BORROWED_PLUS_INTEREST;
+        lpTokensBorrowed = s.LP_TOKEN_BORROWED;
+    }
+
     // create loan
     function createLoan(uint128 liquidity) external virtual returns(uint256 tokenId) {
         tokenId = s.createLoan(s.tokens.length, 0);
