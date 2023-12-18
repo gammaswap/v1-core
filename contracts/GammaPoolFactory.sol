@@ -72,6 +72,10 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         isProtocolRestricted[_protocolId] = _isRestricted;
     }
 
+    function getPoolImplementation(address implementation) internal virtual returns(address) {
+        return implementation;
+    }
+
     /// @dev See {IGammaPoolFactory-createPool}
     function createPool(uint16 _protocolId, address _cfmm, address[] calldata _tokens, bytes calldata _data) external virtual override returns (address pool) {
         isProtocolNotSet(_protocolId); // check there is an implementation contract mapped to _protocolId parameter
@@ -81,7 +85,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         address implementation = getProtocol[_protocolId];
 
         // check GammaPool can be created with this implementation
-        address[] memory _tokensOrdered = IGammaPool(implementation).validateCFMM(_tokens, _cfmm, _data);
+        address[] memory _tokensOrdered = IGammaPool(getPoolImplementation(implementation)).validateCFMM(_tokens, _cfmm, _data);
 
         // calculate unique identifier of GammaPool that will also be used as salt for instantiating the proxy contract address
         bytes32 key = AddressCalculator.getGammaPoolKey(_cfmm, _protocolId);

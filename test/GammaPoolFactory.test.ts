@@ -1,10 +1,13 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
+const UpgradeableBeaconJSON = require("@openzeppelin/contracts/build/contracts/UpgradeableBeacon.json");
+
 const PROTOCOL_ID = 1;
 const PROTOCOL_EXTERNAL_ID = 2;
 
 describe("GammaPoolFactory", function () {
+  let BeaconFactory: any;
   let TestERC20: any;
   let TestAddressCalculator: any;
   let TestRateModel: any;
@@ -45,7 +48,9 @@ describe("GammaPoolFactory", function () {
     GammaPoolExternal = await ethers.getContractFactory(
       "TestGammaPoolExternal"
     );
-    GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
+    GammaPoolFactory = await ethers.getContractFactory(
+      "GammaPoolBeaconFactory"
+    );
     TestAddressCalculator = await ethers.getContractFactory(
       "TestAddressCalculator"
     );
@@ -63,6 +68,11 @@ describe("GammaPoolFactory", function () {
       addr10,
     ] = await ethers.getSigners();
 
+    BeaconFactory = new ethers.ContractFactory(
+      UpgradeableBeaconJSON.abi,
+      UpgradeableBeaconJSON.bytecode,
+      owner
+    );
     // To deploy our contract, we just have to call Token.deploy() and await
     // for it to be deployed(), which happens onces its transaction has been
     // mined.
@@ -74,7 +84,7 @@ describe("GammaPoolFactory", function () {
     poolViewer = await PoolViewer.deploy();
     rateModel = await TestRateModel.deploy(owner.address);
 
-    protocol = await GammaPool.deploy(
+    const protocolImpl = await GammaPool.deploy(
       PROTOCOL_ID,
       factory.address,
       addr1.address,
@@ -86,9 +96,12 @@ describe("GammaPoolFactory", function () {
       poolViewer.address
     );
 
+    await protocolImpl.deployed();
+    protocol = await BeaconFactory.deploy(protocolImpl.address);
+
     addressCalculator = await TestAddressCalculator.deploy();
 
-    protocolZero = await GammaPool.deploy(
+    const protocolZeroImpl = await GammaPool.deploy(
       0,
       factory.address,
       addr1.address,
@@ -100,7 +113,10 @@ describe("GammaPoolFactory", function () {
       poolViewer.address
     );
 
-    protocolExternal = await GammaPoolExternal.deploy(
+    await protocolZeroImpl.deployed();
+    protocolZero = await BeaconFactory.deploy(protocolZeroImpl.address);
+
+    const protocolExternalImpl = await GammaPoolExternal.deploy(
       PROTOCOL_EXTERNAL_ID,
       factory.address,
       addr1.address,
@@ -113,12 +129,15 @@ describe("GammaPoolFactory", function () {
       addr5.address,
       addr5.address
     );
+    await protocolExternalImpl.deployed();
+    protocolExternal = await BeaconFactory.deploy(protocolExternalImpl.address);
 
     // We can interact with the contract by calling `hardhatToken.method()`
     await tokenA.deployed();
     await tokenB.deployed();
     await factory.deployed();
     await protocol.deployed();
+    await protocolZero.deployed();
     await protocolExternal.deployed();
   });
 

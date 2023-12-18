@@ -117,7 +117,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
      * @param salt - the bytes32 key that is unique to the GammaPool and therefore also used as a unique identifier of the GammaPool
      * @return instance - address of GammaPool that was created
      */
-    function cloneDeterministic(address implementation, bytes32 salt) internal returns (address instance) {
+    function cloneDeterministic(address implementation, bytes32 salt) internal virtual returns (address instance) {
         /// @solidity memory-safe-assembly
         assembly {
             // Cleans the upper 96 bits of the `implementation` word, then packs the first 3 bytes
