@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "@openzeppelin/contracts/proxy/beacon/IBeacon.sol";
+interface GammaPoolBeaconFactory {
+    function getPoolImplementation(address proxy) external view returns(address);
+}
 
 contract MinimalBeaconProxy {
     fallback() external payable virtual {
-        address implementation = IBeacon(0xBEbeBeBEbeBebeBeBEBEbebEBeBeBebeBeBebebe).implementation();
+        address implementation = GammaPoolBeaconFactory(0xBEbeBeBEbeBebeBeBEBEbebEBeBeBebeBeBebebe).getPoolImplementation(address(this));
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly
             // block because it will not return to Solidity code. We overwrite the

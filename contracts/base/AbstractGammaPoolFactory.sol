@@ -15,6 +15,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     error ZeroProtocol();
     error ProtocolNotSet();
     error ProtocolExists();
+    error ProtocolMismatch();
     error ProtocolRestricted();
     error PoolExists();
     error DeployFailed();

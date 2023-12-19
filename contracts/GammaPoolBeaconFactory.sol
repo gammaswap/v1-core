@@ -1,32 +1,34 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.21;
 
-import "@openzeppelin/contracts/proxy/beacon/IBeacon.sol";
-
 import "./GammaPoolFactory.sol";
 
 contract GammaPoolBeaconFactory is GammaPoolFactory {
-    constructor(address _feeTo) GammaPoolFactory(_feeTo){
+    error ProtocolNotSetForProxy();
+
+    /// @dev minimalProxy -> protocolId
+    mapping(address => uint16) public proxyBeacons;
+
+    constructor(address _feeTo) GammaPoolFactory(_feeTo) {}
+
+    function createPool(uint16 _protocolId, address _cfmm, address[] calldata _tokens, bytes calldata _data) external override returns (address pool) {
+        pool = _createPool(_protocolId, _cfmm, _tokens, _data);
+        proxyBeacons[pool] = _protocolId;
     }
 
-    function addProtocol(address beacon) external virtual override onlyOwner {
-        address implementation = IBeacon(beacon).implementation();
-        if(IGammaPool(implementation).protocolId() == 0) revert ZeroProtocol();// implementation protocolId is zero
-        if(getProtocol[IGammaPool(implementation).protocolId()] != address(0)) revert ProtocolExists(); // protocolId already set
+    function getPoolImplementation(address proxy) external view returns(address) {
+        uint16 protocolId = proxyBeacons[proxy];
+        if (protocolId == 0) revert ProtocolNotSetForProxy();
 
-        getProtocol[IGammaPool(implementation).protocolId()] = beacon; // store implementation
+        return getProtocol[protocolId];
     }
 
-    function getPoolImplementation(address beacon) internal virtual override returns(address) {
-        return IBeacon(beacon).implementation();
-    }
-
-    function cloneDeterministic(address implementation, bytes32 salt) internal override returns (address result) {
+    function cloneDeterministic(address, bytes32 salt) internal override returns (address result) {
 
         bytes memory bytecode = abi.encodePacked(
             hex"608060405234801561001057600080fd5b5060f68061001f6000396000f3fe60",
             hex"806040819052635c60da1b60e01b815260009073",
-            implementation,
+            address(this),
             hex"90635c60da1b90608490602090600481865afa158015604b573d6000803e3d60",
             hex"00fd5b505050506040513d601f19601f82011682018060405250810190606d91",
             hex"906092565b90503660008037600080366000845af43d6000803e808015608d57",
