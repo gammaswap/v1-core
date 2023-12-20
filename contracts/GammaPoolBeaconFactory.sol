@@ -11,10 +11,10 @@ contract GammaPoolBeaconFactory is GammaPoolFactory {
 
     constructor(address _feeTo) GammaPoolFactory(_feeTo) {}
 
-    function createPool(uint16 _protocolId, address _cfmm, address[] calldata _tokens, bytes calldata _data) external override returns (address pool) {
-        pool = _createPool(_protocolId, _cfmm, _tokens, _data);
-        proxyBeacons[pool] = _protocolId;
-    }
+    // function createPool(uint16 _protocolId, address _cfmm, address[] calldata _tokens, bytes calldata _data) external override returns (address pool) {
+    //     pool = _createPool(_protocolId, _cfmm, _tokens, _data);
+    //     proxyBeacons[pool] = _protocolId;
+    // }
 
     function getPoolImplementation(address proxy) external view returns(address) {
         uint16 protocolId = proxyBeacons[proxy];
@@ -44,7 +44,7 @@ contract GammaPoolBeaconFactory is GammaPoolFactory {
     }
 
     // custom minimal proxy, only used for proof of concept
-    function cloneDeterministic2(address implementation, bytes32 salt) internal virtual returns (address result) {
+    function cloneDeterministic2(address implementation, bytes32 salt) internal override returns (address result) {
 
         bytes memory bytecode = abi.encodePacked(
             hex"6080604052348015600f57600080fd5b50606d80601d6000396000f3fe608060",

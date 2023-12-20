@@ -2,12 +2,12 @@
 pragma solidity >=0.8.0;
 
 interface GammaPoolBeaconFactory {
-    function getPoolImplementation(address proxy) external view returns(address);
+    function getProtocol(uint16 _protocolId) external view returns (address);
 }
 
 contract MinimalBeaconProxy {
     fallback() external payable virtual {
-        address implementation = GammaPoolBeaconFactory(0xBEbeBeBEbeBebeBeBEBEbebEBeBeBebeBeBebebe).getPoolImplementation(address(this));
+        address implementation = GammaPoolBeaconFactory(0xBEbeBeBEbeBebeBeBEBEbebEBeBeBebeBeBebebe).getProtocol(0x01);
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly
             // block because it will not return to Solidity code. We overwrite the

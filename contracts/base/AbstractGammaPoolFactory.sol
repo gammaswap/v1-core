@@ -107,6 +107,26 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
         feeToSetter = _feeToSetter;
     }
 
+    function cloneDeterministic(address, bytes32 salt) internal virtual returns (address result) {
+
+        bytes memory bytecode = abi.encodePacked(
+            hex"608060405234801561001057600080fd5b5060f68061001f6000396000f3fe60",
+            hex"806040819052635c60da1b60e01b815260009073",
+            address(this),
+            hex"90635c60da1b90608490602090600481865afa158015604b573d6000803e3d60",
+            hex"00fd5b505050506040513d601f19601f82011682018060405250810190606d91",
+            hex"906092565b90503660008037600080366000845af43d6000803e808015608d57",
+            hex"3d6000f35b3d6000fd5b60006020828403121560a357600080fd5b8151600160",
+            hex"0160a01b038116811460b957600080fd5b939250505056fea264697066735822",
+            hex"1220e00b97edf2feacc64cc08f7e5b1dc6fce1cb12cd365908bdd712927eb036",
+            hex"ddb264736f6c63430008150033"
+        );
+
+        assembly {
+            result := create2(0, add(bytecode, 32), mload(bytecode), salt)
+        }
+    }
+
     /**
      * @dev Deploys and returns the address of a clone that mimics the behaviour of `implementation`.
      *
@@ -118,7 +138,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
      * @param salt - the bytes32 key that is unique to the GammaPool and therefore also used as a unique identifier of the GammaPool
      * @return instance - address of GammaPool that was created
      */
-    function cloneDeterministic(address implementation, bytes32 salt) internal virtual returns (address instance) {
+    function cloneDeterministic2(address implementation, bytes32 salt) internal virtual returns (address instance) {
         /// @solidity memory-safe-assembly
         assembly {
             // Cleans the upper 96 bits of the `implementation` word, then packs the first 3 bytes

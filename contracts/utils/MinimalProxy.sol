@@ -11,7 +11,7 @@ contract MinimalProxy {
             // Call the implementation.
             // out and outsize are 0 because we don't know the size yet.
             //let result := delegatecall(gas(), target, 0, calldatasize(), 0, 0) //0x4c53e94b7eD73FfC7AC8f70F08f639364fc0A6B3
-            let result := delegatecall(gas(), 0xbebebebebebebebebebebebebebebebebebebebe, 0, calldatasize(), 0, 0)
+            let result := delegatecall(gas(), 0x76BE3b62873462d2142405439777e971754E8E77, 0, calldatasize(), 0, 0)
             // Copy the returned data.
             returndatacopy(0, 0, returndatasize())
             switch result
