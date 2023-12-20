@@ -3,6 +3,7 @@ pragma solidity >=0.8.4;
 
 import "../../../strategies/base/BaseExternalStrategy.sol";
 import "../../TestCFMM.sol";
+import "../../../strategies/base/BaseBorrowStrategy.sol";
 
 abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
 
@@ -20,7 +21,7 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
 
     function initialize(address factory, address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) external virtual {
         protocolId = _protocolId;
-        s.initialize(factory, _cfmm, _protocolId, _tokens, _decimals);
+        s.initialize(factory, _cfmm, _protocolId, _tokens, _decimals, 1e3);
     }
 
     function maxTotalApy() internal virtual override view returns(uint256) {
@@ -35,7 +36,7 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
         return 8000;
     }
 
-    function minBorrow() internal view virtual override returns(uint256) {
+    function minPay() internal view virtual override returns(uint256) {
         return 1e3;
     }
 
