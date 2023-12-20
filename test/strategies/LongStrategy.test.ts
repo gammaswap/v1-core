@@ -2199,7 +2199,7 @@ describe("LongStrategy", function () {
       expect(res1b.liquidity).to.equal(loanLiquidity);
       expect(res1b.lpTokens).to.equal(loanLPTokens);
 
-      await (await strategy.setMinBorrow(0)).wait();
+      await (await strategy.setMinPay(0)).wait();
 
       const res = await (
         await strategy._repayLiquidity(
@@ -2279,7 +2279,7 @@ describe("LongStrategy", function () {
       await strategy.setCfmmReserves([lastCFMMInvariant, lastCFMMInvariant]);
 
       await (await cfmm.mint(startLpTokens, strategy.address)).wait();
-      await (await strategy.setMinBorrow(0)).wait();
+      await (await strategy.setMinPay(0)).wait();
 
       // const beneficiary = "0x000000000000000000000000000000000000dEaD";
       const res = await (
@@ -2715,7 +2715,7 @@ describe("LongStrategy", function () {
       expect(res1b.liquidity).to.equal(loanLiquidity);
       expect(res1b.lpTokens).to.equal(loanLPTokens);
 
-      await (await strategy.setMinBorrow(0)).wait();
+      await (await strategy.setMinPay(0)).wait();
 
       await (await cfmm.mint(loanLiquidity.div(2), strategy.address)).wait();
 
@@ -2823,7 +2823,7 @@ describe("LongStrategy", function () {
       expect(res1b.liquidity).to.equal(loanLiquidity);
       expect(res1b.lpTokens).to.equal(loanLPTokens);
 
-      await (await strategy.setMinBorrow(0)).wait();
+      await (await strategy.setMinPay(0)).wait();
 
       await (await cfmm.mint(loanLiquidity.div(2), strategy.address)).wait();
 

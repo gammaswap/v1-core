@@ -656,7 +656,7 @@ describe("GammaPoolFactory", function () {
       expect(await factory.allPoolsLength()).to.equal(1);
 
       await expect(
-        factory.connect(addr1).setPoolParams(pool, 1, 2, 3, 4, 5, 6, 7, 8)
+        factory.connect(addr1).setPoolParams(pool, 1, 2, 3, 4, 5, 6, 7, 8, 9)
       ).to.be.revertedWithCustomError(factory, "Forbidden");
     });
 
@@ -689,25 +689,41 @@ describe("GammaPoolFactory", function () {
       expect(pool).to.equal(expectedPoolAddress);
       expect(await factory.allPoolsLength()).to.equal(1);
 
-      await expect(factory.setPoolParams(pool, 1, 2, 3, 101, 60, 0, 11, 1))
+      await expect(
+        factory.setPoolParams(pool, 1, 2, 3, 101, 60, 0, 11, 1, 1000)
+      )
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(5);
 
-      await expect(factory.setPoolParams(pool, 1, 2, 3, 95, 60, 0, 11, 1))
+      await expect(factory.setPoolParams(pool, 1, 2, 3, 95, 60, 0, 11, 1, 1000))
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(5);
 
-      await expect(factory.setPoolParams(pool, 1, 2, 3, 94, 60, 0, 11, 1))
+      await expect(factory.setPoolParams(pool, 1, 2, 3, 94, 60, 0, 11, 1, 1000))
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(5);
 
-      await expect(factory.setPoolParams(pool, 1, 2, 3, 78, 60, 1, 11, 1))
+      await expect(factory.setPoolParams(pool, 1, 2, 3, 78, 60, 1, 11, 1, 1000))
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(6);
 
-      await expect(factory.setPoolParams(pool, 1, 2, 3, 77, 60, 100, 51, 5))
+      await expect(
+        factory.setPoolParams(pool, 1, 2, 3, 77, 60, 100, 51, 5, 1000)
+      )
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(6);
+
+      await expect(
+        factory.setPoolParams(pool, 1, 2, 3, 77, 60, 100, 51, 5, 1000)
+      )
+        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
+        .withArgs(6);
+
+      await expect(
+        factory.setPoolParams(pool, 1, 2, 3, 77, 60, 100, 50, 5, 999)
+      )
+        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
+        .withArgs(8);
     });
 
     it("Set Origination Fee", async function () {
@@ -746,7 +762,7 @@ describe("GammaPoolFactory", function () {
       expect(resp.feeDivisor).to.equal(16384);
 
       const tx = await (
-        await factory.setPoolParams(pool, 1, 2, 20, 84, 60, 1, 50, 10)
+        await factory.setPoolParams(pool, 1, 2, 20, 84, 60, 1, 50, 10, 1000)
       ).wait();
 
       const event = tx.events[tx.events.length - 1];
@@ -759,6 +775,7 @@ describe("GammaPoolFactory", function () {
       expect(event.args.feeDivisor).to.equal(1);
       expect(event.args.liquidationFee).to.equal(50);
       expect(event.args.ltvThreshold).to.equal(10);
+      expect(event.args.minBorrow).to.equal(1000);
 
       const resp1 = await gammaPool.getPoolData();
       expect(resp1.origFee).to.equal(1);
@@ -769,9 +786,10 @@ describe("GammaPoolFactory", function () {
       expect(resp1.feeDivisor).to.equal(1);
       expect(resp1.liquidationFee).to.equal(50);
       expect(resp1.ltvThreshold).to.equal(10);
+      expect(resp1.minBorrow).to.equal(1000);
 
       const tx1 = await (
-        await factory.setPoolParams(pool, 1, 2, 20, 84, 64, 65535, 50, 5)
+        await factory.setPoolParams(pool, 1, 2, 20, 84, 64, 65535, 50, 5, 2000)
       ).wait();
 
       const event1 = tx1.events[tx.events.length - 1];
@@ -784,6 +802,7 @@ describe("GammaPoolFactory", function () {
       expect(event1.args.feeDivisor).to.equal(65535);
       expect(event1.args.liquidationFee).to.equal(50);
       expect(event1.args.ltvThreshold).to.equal(5);
+      expect(event1.args.minBorrow).to.equal(2000);
 
       const resp2 = await gammaPool.getPoolData();
       expect(resp2.origFee).to.equal(1);
@@ -794,6 +813,7 @@ describe("GammaPoolFactory", function () {
       expect(resp2.feeDivisor).to.equal(65535);
       expect(resp2.liquidationFee).to.equal(50);
       expect(resp2.ltvThreshold).to.equal(5);
+      expect(resp2.minBorrow).to.equal(2000);
     });
   });
 

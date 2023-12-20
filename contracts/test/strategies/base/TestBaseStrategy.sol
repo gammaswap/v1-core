@@ -24,7 +24,7 @@ contract TestBaseStrategy is BaseStrategy {
     }
 
     function initialize(address cfmm, address[] calldata tokens, uint8[] calldata decimals) external virtual {
-        s.initialize(_factory, cfmm, _protocolId, tokens, decimals);
+        s.initialize(_factory, cfmm, _protocolId, tokens, decimals, 1e3);
     }
 
     function maxTotalApy() internal virtual override view returns(uint256) {

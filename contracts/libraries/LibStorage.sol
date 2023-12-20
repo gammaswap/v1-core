@@ -116,6 +116,9 @@ library LibStorage {
         /// @dev Mapping of all loans issued by the GammaPool, the key is the tokenId (unique identifier) of the loan
         mapping(uint256 => Loan) loans;
 
+        /// @dev Minimum liquidity that can be borrowed or remain for a loan
+        uint72 minBorrow;
+
         // tokens and balances
         /// @dev ERC20 tokens of CFMM
         address[] tokens;
@@ -144,7 +147,8 @@ library LibStorage {
     /// @param _protocolId - protocol id of the implementation contract for this GammaPool
     /// @param _tokens - tokens of CFMM this GammaPool is for
     /// @param _decimals -decimals of the tokens of the CFMM the GammaPool is for, indices must match tokens array
-    function initialize(Storage storage self, address _factory, address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) internal {
+    /// @param _minBorrow - minimum amount of liquidity that can be borrowed or left unpaid in a loan
+    function initialize(Storage storage self, address _factory, address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals, uint72 _minBorrow) internal {
         if(self.factory != address(0)) revert Initialized();// cannot initialize twice
 
         self.factory = _factory;
@@ -152,6 +156,7 @@ library LibStorage {
         self.cfmm = _cfmm;
         self.tokens = _tokens;
         self.decimals = _decimals;
+        self.minBorrow =_minBorrow;
 
         self.lastCFMMFeeIndex = 1e18;
         self.accFeeIndex = 1e18; // initialized as 1 with 18 decimal places

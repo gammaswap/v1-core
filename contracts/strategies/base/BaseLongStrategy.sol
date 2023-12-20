@@ -18,7 +18,12 @@ abstract contract BaseLongStrategy is ILongStrategy, BaseStrategy {
     error InvalidAmountsLength();
 
     /// @dev Minimum number of liquidity borrowed to avoid rounding issues. Assumes invariant >= CFMM LP Token. Default should be 1e3
-    function minBorrow() internal view virtual returns(uint256);
+    function minBorrow() internal view virtual returns(uint256) {
+        return s.minBorrow;
+    }
+
+    /// @dev Minimum amount of liquidity to pay to avoid rounding issues. Assumes invariant >= CFMM LP Token. Default should be 1e3
+    function minPay() internal view virtual returns(uint256);
 
     /// @dev Perform necessary transaction before repaying liquidity debt
     /// @param _loan - liquidity loan that will be repaid
