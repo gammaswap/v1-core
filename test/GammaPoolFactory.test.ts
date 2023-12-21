@@ -1,13 +1,11 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
-const UpgradeableBeaconJSON = require("@openzeppelin/contracts/build/contracts/UpgradeableBeacon.json");
-
-const PROTOCOL_ID = 1;
-const PROTOCOL_EXTERNAL_ID = 2;
+const PROTOCOL_ID = 20000;
+const PROTOCOL_EXTERNAL_ID = 20001;
+// const PROTOCOL_ID_UPGRADEABLE = 1;
 
 describe("GammaPoolFactory", function () {
-  let BeaconFactory: any;
   let TestERC20: any;
   let TestAddressCalculator: any;
   let TestRateModel: any;
@@ -48,9 +46,7 @@ describe("GammaPoolFactory", function () {
     GammaPoolExternal = await ethers.getContractFactory(
       "TestGammaPoolExternal"
     );
-    GammaPoolFactory = await ethers.getContractFactory(
-      "GammaPoolBeaconFactory"
-    );
+    GammaPoolFactory = await ethers.getContractFactory("GammaPoolFactory");
     TestAddressCalculator = await ethers.getContractFactory(
       "TestAddressCalculator"
     );
@@ -68,11 +64,6 @@ describe("GammaPoolFactory", function () {
       addr10,
     ] = await ethers.getSigners();
 
-    BeaconFactory = new ethers.ContractFactory(
-      UpgradeableBeaconJSON.abi,
-      UpgradeableBeaconJSON.bytecode,
-      owner
-    );
     // To deploy our contract, we just have to call Token.deploy() and await
     // for it to be deployed(), which happens onces its transaction has been
     // mined.
@@ -84,7 +75,7 @@ describe("GammaPoolFactory", function () {
     poolViewer = await PoolViewer.deploy();
     rateModel = await TestRateModel.deploy(owner.address);
 
-    const protocolImpl = await GammaPool.deploy(
+    protocol = await GammaPool.deploy(
       PROTOCOL_ID,
       factory.address,
       addr1.address,
@@ -96,12 +87,11 @@ describe("GammaPoolFactory", function () {
       poolViewer.address
     );
 
-    await protocolImpl.deployed();
-    protocol = await BeaconFactory.deploy(protocolImpl.address);
+    await protocol.deployed();
 
     addressCalculator = await TestAddressCalculator.deploy();
 
-    const protocolZeroImpl = await GammaPool.deploy(
+    protocolZero = await GammaPool.deploy(
       0,
       factory.address,
       addr1.address,
@@ -113,10 +103,9 @@ describe("GammaPoolFactory", function () {
       poolViewer.address
     );
 
-    await protocolZeroImpl.deployed();
-    protocolZero = await BeaconFactory.deploy(protocolZeroImpl.address);
+    await protocolZero.deployed();
 
-    const protocolExternalImpl = await GammaPoolExternal.deploy(
+    protocolExternal = await GammaPoolExternal.deploy(
       PROTOCOL_EXTERNAL_ID,
       factory.address,
       addr1.address,
@@ -129,16 +118,12 @@ describe("GammaPoolFactory", function () {
       addr5.address,
       addr5.address
     );
-    await protocolExternalImpl.deployed();
-    protocolExternal = await BeaconFactory.deploy(protocolExternalImpl.address);
+    await protocolExternal.deployed();
 
     // We can interact with the contract by calling `hardhatToken.method()`
     await tokenA.deployed();
     await tokenB.deployed();
     await factory.deployed();
-    await protocol.deployed();
-    await protocolZero.deployed();
-    await protocolExternal.deployed();
   });
 
   function createPoolParamsObj(cfmmAddress: any, tokenA: any, tokenB: any) {
@@ -148,7 +133,7 @@ describe("GammaPoolFactory", function () {
     };
 
     const createPoolParams = {
-      protocolId: 1,
+      protocolId: PROTOCOL_ID,
       cfmm: cfmmAddress,
       tokens: [tokenA.address, tokenB.address],
     };
@@ -183,17 +168,17 @@ describe("GammaPoolFactory", function () {
       expect(await factory.getProtocol(0)).to.equal(
         ethers.constants.AddressZero
       );
-      expect(await factory.getProtocol(1)).to.equal(
+      expect(await factory.getProtocol(PROTOCOL_ID)).to.equal(
         ethers.constants.AddressZero
       );
       await (await factory.addProtocol(protocol.address)).wait();
       expect(await factory.getProtocol(0)).to.equal(
         ethers.constants.AddressZero
       );
-      expect(await factory.getProtocol(1)).to.equal(protocol.address);
+      expect(await factory.getProtocol(PROTOCOL_ID)).to.equal(protocol.address);
 
-      await (await factory.removeProtocol(1)).wait();
-      expect(await factory.getProtocol(1)).to.equal(
+      await (await factory.removeProtocol(PROTOCOL_ID)).wait();
+      expect(await factory.getProtocol(PROTOCOL_ID)).to.equal(
         ethers.constants.AddressZero
       );
 
@@ -209,19 +194,19 @@ describe("GammaPoolFactory", function () {
       await expect(
         factory.connect(addr1).addProtocol(addr2.address)
       ).to.be.revertedWith("Forbidden");
-      await expect(factory.connect(addr1).removeProtocol(1)).to.be.revertedWith(
-        "Forbidden"
-      );
+      await expect(
+        factory.connect(addr1).removeProtocol(PROTOCOL_ID)
+      ).to.be.revertedWith("Forbidden");
     });
 
     it("Restrict Protocol", async function () {
       await factory.addProtocol(protocol.address);
 
-      expect(await factory.isProtocolRestricted(1)).to.equal(false);
+      expect(await factory.isProtocolRestricted(PROTOCOL_ID)).to.equal(false);
 
-      await factory.setIsProtocolRestricted(1, true);
+      await factory.setIsProtocolRestricted(PROTOCOL_ID, true);
 
-      expect(await factory.isProtocolRestricted(1)).to.equal(true);
+      expect(await factory.isProtocolRestricted(PROTOCOL_ID)).to.equal(true);
       await expect(
         factory.connect(addr1).setIsProtocolRestricted(1, false)
       ).to.be.revertedWith("Forbidden");
