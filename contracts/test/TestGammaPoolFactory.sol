@@ -24,7 +24,7 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
     function createPool2(bytes calldata _data) external virtual returns(address pool) {
         bytes32 key = AddressCalculator.getGammaPoolKey(cfmm, protocolId);
 
-        pool = cloneDeterministic(protocol, key);
+        pool = cloneDeterministic2(protocol, key);
         decimals[0] = 18;
         decimals[1] = 18;
         IGammaPool(pool).initialize(cfmm, tokens, decimals, _data);

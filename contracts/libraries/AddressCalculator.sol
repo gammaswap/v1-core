@@ -22,7 +22,7 @@ library AddressCalculator {
     /// @param key - salt used in address generation to assure its uniqueness
     /// @return _address - address of GammaPool that maps to protocolId and key
     function calcAddress(address factory, uint16 protocolId, bytes32 key) internal view returns (address) {
-        return predictDeterministicAddress(IGammaPoolFactory(factory).getProtocol(protocolId), key, factory);
+        return predictDeterministicAddress(protocolId, key, factory);
     }
 
     /// @dev calculate deterministic address to instantiate GammaPool minimal proxy contract
@@ -41,6 +41,34 @@ library AddressCalculator {
     /// @return _address - address of contract that maps to salt and init code hash that is created by factory contract
     function calcAddress(address factory, bytes32 salt, bytes32 initCodeHash) internal pure returns (address) {
         return address(uint160(uint256(keccak256(abi.encodePacked(hex"ff",factory,salt,initCodeHash)))));
+    }
+
+    function predictDeterministicAddress(
+        uint16 protocolId,
+        bytes32 salt,
+        address factory
+    ) public pure returns (address) {
+        // Compute the hash of the initialization code.
+        bytes memory bytecode = abi.encodePacked(
+            hex"6080604052348015600f57600080fd5b5060",
+            protocolId < 256 ? hex"6c" : hex"6d",
+            hex"8061001e6000396000f3fe608060408190526334b1f0a960e21b8152",
+            protocolId < 256 ? hex"60" : hex"61",
+            protocolId < 256 ? abi.encodePacked(uint8(protocolId)) : abi.encodePacked(protocolId),
+            hex"60845260208160248173",
+            factory,
+            hex"5afa60",
+            protocolId < 256 ? hex"3a" : hex"3b",
+            hex"573d6000fd5b5060805160003681823780813683855af491503d81823e81801560",
+            protocolId < 256 ? hex"5b" : hex"5c",
+            hex"573d82f35b3d82fdfea164736f6c6343000815000a"
+        );
+
+        bytes32 bytecodeHash = keccak256(bytecode);
+
+        // Compute the final CREATE2 address
+        bytes32 data = keccak256(abi.encodePacked(bytes1(0xff), factory, salt, bytecodeHash));
+        return address(uint160(uint256(data)));
     }
 
     /// @dev Computes the address of a minimal proxy contract
@@ -64,52 +92,5 @@ library AddressCalculator {
             mstore(add(ptr, 0x78), keccak256(add(ptr, 0x0c), 0x37))
             predicted := keccak256(add(ptr, 0x43), 0x55)
         }
-    }
-
-    // only used for proof of concept minimal proxy
-    function predictDeterministicAddress3(
-        address implementation,
-        bytes32 salt,
-        address factory
-    ) public pure returns (address) {
-        // Compute the hash of the initialization code.
-        bytes memory bytecode = abi.encodePacked(
-            hex"6080604052348015600f57600080fd5b50606d80601d6000396000f3fe608060",
-            hex"40526000368182378081368373",
-            implementation,
-            hex"5af43d82833e8080156033573d83f35b3d83fdfea2646970667358221220464f",
-            hex"28377c2fca72af73b668c7b0478422b822de2bef99b3e38362698c1544326473",
-            hex"6f6c63430008150033"
-        );
-        bytes32 bytecodeHash = keccak256(bytecode);
-
-        // Compute the final CREATE2 address
-        bytes32 data = keccak256(abi.encodePacked(bytes1(0xff), factory, salt, bytecodeHash));
-        return address(uint160(uint256(data)));
-    }
-
-    function predictDeterministicAddress(
-        address implementation,
-        bytes32 salt,
-        address factory
-    ) public pure returns (address) {
-        // Compute the hash of the initialization code.
-        bytes memory bytecode = abi.encodePacked(
-            hex"608060405234801561001057600080fd5b5060f68061001f6000396000f3fe60",
-            hex"806040819052635c60da1b60e01b815260009073",
-            implementation,
-            hex"90635c60da1b90608490602090600481865afa158015604b573d6000803e3d60",
-            hex"00fd5b505050506040513d601f19601f82011682018060405250810190606d91",
-            hex"906092565b90503660008037600080366000845af43d6000803e808015608d57",
-            hex"3d6000f35b3d6000fd5b60006020828403121560a357600080fd5b8151600160",
-            hex"0160a01b038116811460b957600080fd5b939250505056fea264697066735822",
-            hex"1220e00b97edf2feacc64cc08f7e5b1dc6fce1cb12cd365908bdd712927eb036",
-            hex"ddb264736f6c63430008150033"
-        );
-        bytes32 bytecodeHash = keccak256(bytecode);
-
-        // Compute the final CREATE2 address
-        bytes32 data = keccak256(abi.encodePacked(bytes1(0xff), factory, salt, bytecodeHash));
-        return address(uint160(uint256(data)));
     }
 }

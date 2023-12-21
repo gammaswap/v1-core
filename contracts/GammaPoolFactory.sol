@@ -81,11 +81,6 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         isProtocolRestricted[_protocolId] = _isRestricted;
     }
 
-    // Do we need this here?
-    // function getPoolImplementation(address implementation) internal virtual returns(address) {
-    //     return implementation;
-    // }
-
     /// @dev See {IGammaPoolFactory-createPool}
     function createPool(uint16 _protocolId, address _cfmm, address[] calldata _tokens, bytes calldata _data) external virtual override returns (address pool) {
         isProtocolNotSet(_protocolId); // check there is an implementation contract mapped to _protocolId parameter
@@ -106,7 +101,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         if (_protocolId > 10000) {
             pool = cloneDeterministic2(implementation, key);
         } else {
-            
+            pool = cloneDeterministic(_protocolId, key);
         }
 
         uint8[] memory _decimals = getDecimals(_tokensOrdered);

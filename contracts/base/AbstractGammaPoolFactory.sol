@@ -107,24 +107,26 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
         feeToSetter = _feeToSetter;
     }
 
-    function cloneDeterministic(address, bytes32 salt) internal virtual returns (address result) {
-
+    function cloneDeterministic(uint16 protocolId, bytes32 salt) internal virtual returns (address instance) {
         bytes memory bytecode = abi.encodePacked(
-            hex"608060405234801561001057600080fd5b5060f68061001f6000396000f3fe60",
-            hex"806040819052635c60da1b60e01b815260009073",
+            hex"6080604052348015600f57600080fd5b5060",
+            protocolId < 256 ? hex"6c" : hex"6d",
+            hex"8061001e6000396000f3fe608060408190526334b1f0a960e21b8152",
+            protocolId < 256 ? hex"60" : hex"61",
+            protocolId < 256 ? abi.encodePacked(uint8(protocolId)) : abi.encodePacked(protocolId),
+            hex"60845260208160248173",
             address(this),
-            hex"90635c60da1b90608490602090600481865afa158015604b573d6000803e3d60",
-            hex"00fd5b505050506040513d601f19601f82011682018060405250810190606d91",
-            hex"906092565b90503660008037600080366000845af43d6000803e808015608d57",
-            hex"3d6000f35b3d6000fd5b60006020828403121560a357600080fd5b8151600160",
-            hex"0160a01b038116811460b957600080fd5b939250505056fea264697066735822",
-            hex"1220e00b97edf2feacc64cc08f7e5b1dc6fce1cb12cd365908bdd712927eb036",
-            hex"ddb264736f6c63430008150033"
+            hex"5afa60",
+            protocolId < 256 ? hex"3a" : hex"3b",
+            hex"573d6000fd5b5060805160003681823780813683855af491503d81823e81801560",
+            protocolId < 256 ? hex"5b" : hex"5c",
+            hex"573d82f35b3d82fdfea164736f6c6343000815000a"
         );
 
         assembly {
-            result := create2(0, add(bytecode, 32), mload(bytecode), salt)
+            instance := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
+        if(instance == address(0)) revert DeployFailed();
     }
 
     /**
