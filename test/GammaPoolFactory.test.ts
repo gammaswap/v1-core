@@ -1898,6 +1898,7 @@ describe("GammaPoolFactory", function () {
         await beaconProtocol.borrowStrategy()
       );
 
+      const cfmmAddr = await poolContract.cfmm();
       const beaconProtocol2 = await GammaPool.deploy(
         PROTOCOL_ID_UPGRADEABLE,
         factory.address,
@@ -1920,6 +1921,7 @@ describe("GammaPoolFactory", function () {
       expect(await poolContract.borrowStrategy()).to.equal(
         await beaconProtocol2.borrowStrategy()
       );
+      expect(await poolContract.cfmm()).to.equal(cfmmAddr);
     });
 
     it("Set Origination Fee", async function () {
