@@ -1792,13 +1792,15 @@ describe("GammaPoolFactory", function () {
         beaconProtocol.address
       );
 
+      expect(await beaconProtocol.borrowStrategy()).to.equal(addr1.address);
+
       await expect(
         factory.updateProtocol(PROTOCOL_ID_UPGRADEABLE, protocol.address)
       ).to.be.revertedWithCustomError(factory, "ProtocolMismatch");
       const beaconProtocol2 = await GammaPool.deploy(
         PROTOCOL_ID_UPGRADEABLE,
         factory.address,
-        addr1.address,
+        addr2.address,
         addr9.address,
         addr10.address,
         addr2.address,
@@ -1806,6 +1808,7 @@ describe("GammaPoolFactory", function () {
         addr5.address,
         poolViewer.address
       );
+      expect(await beaconProtocol2.borrowStrategy()).to.equal(addr2.address);
       await (
         await factory.updateProtocol(
           PROTOCOL_ID_UPGRADEABLE,
@@ -1886,6 +1889,37 @@ describe("GammaPoolFactory", function () {
       );
       expect(pool2).to.equal(expectedPoolAddress2);
       expect(await factory.allPoolsLength()).to.equal(2);
+
+      expect(await beaconProtocol.borrowStrategy()).to.equal(addr1.address);
+
+      const poolContract = await GammaPool.attach(pool2);
+
+      expect(await poolContract.borrowStrategy()).to.equal(
+        await beaconProtocol.borrowStrategy()
+      );
+
+      const beaconProtocol2 = await GammaPool.deploy(
+        PROTOCOL_ID_UPGRADEABLE,
+        factory.address,
+        addr2.address,
+        addr9.address,
+        addr10.address,
+        addr2.address,
+        addr5.address,
+        addr5.address,
+        poolViewer.address
+      );
+      expect(await beaconProtocol2.borrowStrategy()).to.equal(addr2.address);
+      await (
+        await factory.updateProtocol(
+          PROTOCOL_ID_UPGRADEABLE,
+          beaconProtocol2.address
+        )
+      ).wait();
+
+      expect(await poolContract.borrowStrategy()).to.equal(
+        await beaconProtocol2.borrowStrategy()
+      );
     });
 
     it("Set Origination Fee", async function () {
