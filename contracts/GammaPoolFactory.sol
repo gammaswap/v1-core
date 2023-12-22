@@ -62,6 +62,15 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         getProtocol[IGammaPool(implementation).protocolId()] = implementation; // store implementation
     }
 
+    function updateProtocol(uint16 _protocolId, address _newImplementation) external virtual override onlyOwner {
+        isProtocolNotSet(_protocolId);
+        if(IGammaPool(_newImplementation).protocolId() == 0) revert ZeroProtocol();
+        if(IGammaPool(_newImplementation).protocolId() != _protocolId) revert ProtocolMismatch();
+        if(getProtocol[_protocolId] == _newImplementation) revert ProtocolExists(); // protocolId already set with same implementation
+
+        getProtocol[_protocolId] = _newImplementation;
+    }
+
     /// @dev See {IGammaPoolFactory-removeProtocol}
     function removeProtocol(uint16 _protocolId) external virtual override onlyOwner {
         getProtocol[_protocolId] = address(0);
@@ -89,7 +98,11 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         hasPool(key); // check this instance hasn't already been created
 
         // instantiate GammaPool proxy contract address for protocol's implementation contract using unique key as salt for the pool's address
-        pool = cloneDeterministic(implementation, key);
+        if (_protocolId < 10000) {
+            pool = cloneDeterministic(_protocolId, key);
+        } else {
+            pool = cloneDeterministic2(implementation, key);
+        }
 
         uint8[] memory _decimals = getDecimals(_tokensOrdered);
         uint72 _minBorrow = uint72(10**((_decimals[0] + _decimals[1]) / 2));

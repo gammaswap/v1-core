@@ -51,6 +51,12 @@ interface IGammaPoolFactory {
     function addProtocol(address _implementation) external;
 
     /// @notice Only owner of GammaPoolFactory can call this function
+    /// @dev Update protocol implementation for a protocol.
+    /// @param _protocolId - id identifier of GammaPool implementation
+    /// @param _newImplementation - implementation address of GammaPool proxy contract. Because all GammaPools are created as proxy contracts
+    function updateProtocol(uint16 _protocolId, address _newImplementation) external;
+
+    /// @notice Only owner of GammaPoolFactory can call this function
     /// @dev Removing protocol implementation from GammaPoolFactory contract. Which means GammaPoolFactory will no longer be able to create GammaPools with this implementation (protocol)
     /// @param _protocolId - id identifier of GammaPool implementation
     function removeProtocol(uint16 _protocolId) external;
