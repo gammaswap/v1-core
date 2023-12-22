@@ -5,6 +5,7 @@ import "../interfaces/IGammaPoolFactory.sol";
 import "../interfaces/IGammaPool.sol";
 import "../interfaces/IPausable.sol";
 import "../utils/TwoStepOwnable.sol";
+import "../libraries/AddressCalculator.sol";
 
 /// @title Abstract factory contract to create more GammaPool contracts.
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
@@ -15,6 +16,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     error ZeroProtocol();
     error ProtocolNotSet();
     error ProtocolExists();
+    error ProtocolMismatch();
     error ProtocolRestricted();
     error PoolExists();
     error DeployFailed();
@@ -73,10 +75,10 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     }
 
     /// @dev See {IGammaPoolFactory-setPoolParams}
-    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate1, uint8 _minUtilRate2, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold) external virtual override {
+    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate1, uint8 _minUtilRate2, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold, uint72 _minBorrow) external virtual override {
         isForbidden(feeToSetter); // only feeToSetter can update origination fee parameters
-        IGammaPool(_pool).setPoolParams(_origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _feeDivisor, _liquidationFee, _ltvThreshold);
-        emit PoolParamsUpdate(_pool, _origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _feeDivisor, _liquidationFee, _ltvThreshold);
+        IGammaPool(_pool).setPoolParams(_origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _feeDivisor, _liquidationFee, _ltvThreshold, _minBorrow);
+        emit PoolParamsUpdate(_pool, _origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _feeDivisor, _liquidationFee, _ltvThreshold, _minBorrow);
     }
 
     /// @dev See {IGammaPoolFactory-setFee}
@@ -106,6 +108,15 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
         feeToSetter = _feeToSetter;
     }
 
+    function cloneDeterministic(uint16 protocolId, bytes32 salt) internal virtual returns (address instance) {
+        bytes memory bytecode = AddressCalculator.calcMinimalBeaconProxyBytecode(protocolId, salt, address(this));
+
+        assembly {
+            instance := create2(0, add(bytecode, 32), mload(bytecode), salt)
+        }
+        if(instance == address(0)) revert DeployFailed();
+    }
+
     /**
      * @dev Deploys and returns the address of a clone that mimics the behaviour of `implementation`.
      *
@@ -117,7 +128,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
      * @param salt - the bytes32 key that is unique to the GammaPool and therefore also used as a unique identifier of the GammaPool
      * @return instance - address of GammaPool that was created
      */
-    function cloneDeterministic(address implementation, bytes32 salt) internal virtual returns (address instance) {
+    function cloneDeterministic2(address implementation, bytes32 salt) internal virtual returns (address instance) {
         /// @solidity memory-safe-assembly
         assembly {
             // Cleans the upper 96 bits of the `implementation` word, then packs the first 3 bytes
