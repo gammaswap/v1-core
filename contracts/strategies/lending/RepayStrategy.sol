@@ -89,7 +89,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         {
             // Cap liquidity repayment at total liquidity debt
             uint256 liquidityToCalculate;
-            (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minBorrow() * 10) : (payLiquidity, payLiquidity);
+            (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minPay()) : (payLiquidity, payLiquidity);
 
             int256[] memory deltas = _calcDeltasToCloseSetRatio(tokensHeld, s.CFMM_RESERVES, liquidityToCalculate,
                 isRatioValid(ratio) ? ratio : GammaSwapLibrary.convertUint128ToRatio(tokensHeld));
@@ -139,7 +139,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         {
             // Cap liquidity repayment at total liquidity debt
             uint256 liquidityToCalculate;
-            (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minBorrow() * 10) : (payLiquidity, payLiquidity);
+            (liquidityPaid, liquidityToCalculate) = payLiquidity >= loanLiquidity ? (loanLiquidity, loanLiquidity + minPay()) : (payLiquidity, payLiquidity);
 
             if(collateralId > 0) {
                 collateral = proRataCollateral(collateral, liquidityToCalculate, loanLiquidity, 1);

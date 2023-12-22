@@ -105,7 +105,8 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         }
 
         uint8[] memory _decimals = getDecimals(_tokensOrdered);
-        IGammaPool(pool).initialize(_cfmm, _tokensOrdered, _decimals, _data); // initialize GammaPool's state variables
+        uint72 _minBorrow = uint72(10**((_decimals[0] + _decimals[1]) / 2));
+        IGammaPool(pool).initialize(_cfmm, _tokensOrdered, _decimals, _minBorrow, _data); // initialize GammaPool's state variables
 
         getPool[key] = pool; // map unique key to new instance of GammaPool
         getKey[pool] = key; // map unique key to new instance of GammaPool

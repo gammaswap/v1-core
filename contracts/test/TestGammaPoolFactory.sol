@@ -27,7 +27,7 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
         pool = cloneDeterministic(protocolId, key);
         decimals[0] = 18;
         decimals[1] = 18;
-        IGammaPool(pool).initialize(cfmm, tokens, decimals, _data);
+        IGammaPool(pool).initialize(cfmm, tokens, decimals, uint72(1e3), _data);
 
         getPool[key] = pool;
         getKey[pool] = key;

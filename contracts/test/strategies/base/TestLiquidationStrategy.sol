@@ -30,10 +30,10 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
     }
 
     function initialize(address _factory, address cfmm, address[] calldata tokens, uint8[] calldata decimals) external virtual {
-        s.initialize(_factory, cfmm, 1, tokens, decimals);
+        s.initialize(_factory, cfmm, 1, tokens, decimals, 1e3);
     }
 
-    function minBorrow() internal virtual override view returns(uint256) {
+    function minPay() internal virtual override view returns(uint256) {
         return 1e3;
     }
 

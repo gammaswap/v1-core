@@ -32,7 +32,8 @@ interface IGammaPoolFactory {
     /// @param feeDivisor - fee divisor for calculating origination fee, based on 2^(maxUtilRate - minUtilRate1)
     /// @param liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
     /// @param ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
-    event PoolParamsUpdate(address indexed pool, uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold);
+    /// @param minBorrow - minimum liquidity amount that can be borrowed or left unpaid in a loan
+    event PoolParamsUpdate(address indexed pool, uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold, uint72 minBorrow);
 
     /// @dev Check if protocol is restricted. Which means only owner of GammaPoolFactory is allowed to instantiate GammaPools using this protocol
     /// @param _protocolId - id identifier of GammaPool protocol (can be thought of as version) that is being checked
@@ -112,7 +113,8 @@ interface IGammaPoolFactory {
     /// @param _feeDivisor - fee divisor for calculating origination fee, based on 2^(maxUtilRate - minUtilRate1)
     /// @param _liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
     /// @param _ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
-    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate1, uint8 _minUtilRate2, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold) external;
+    /// @param _minBorrow - minimum liquidity amount that can be borrowed or left unpaid in a loan
+    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate1, uint8 _minUtilRate2, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold, uint72 _minBorrow) external;
 
     /// @dev Pause a GammaPool's function identified by a `_functionId`
     /// @param _pool - address of GammaPool whose functions we will pause

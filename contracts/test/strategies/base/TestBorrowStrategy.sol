@@ -15,7 +15,7 @@ contract TestBorrowStrategy is BorrowStrategy {
     uint80 public borrowRate = 1e18;
     uint16 public origFee = 0;
     uint16 public protocolId;
-    uint256 private _minBorrow = 1e3;
+    uint256 private _minPay = 1e3;
     uint256 private mCurrPrice = 1e18;
 
     constructor() {
@@ -23,22 +23,22 @@ contract TestBorrowStrategy is BorrowStrategy {
 
     function initialize(address _factory, address _cfmm, uint16 _protocolId, address[] calldata _tokens, uint8[] calldata _decimals) external virtual {
         protocolId = _protocolId;
-        s.initialize(_factory, _cfmm, _protocolId, _tokens, _decimals);
+        s.initialize(_factory, _cfmm, _protocolId, _tokens, _decimals, 1e3);
     }
 
     function setOrigFeeParams(uint8 baseOrigFee) external virtual {
         s.origFee = baseOrigFee;
     }
 
-    function setMinBorrow(uint256 _newMinBorrow) external virtual {
-        _minBorrow = _newMinBorrow;
+    function setMinPay(uint256 _newMinPay) external virtual {
+        _minPay = _newMinPay;
     }
 
     function syncCFMM(address cfmm) internal override virtual {
     }
 
-    function minBorrow() internal virtual override view returns(uint256) {
-        return _minBorrow;
+    function minPay() internal virtual override view returns(uint256) {
+        return _minPay;
     }
 
     function maxTotalApy() internal virtual override view returns(uint256) {

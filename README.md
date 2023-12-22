@@ -55,3 +55,15 @@ To publish an npm package follow the following steps
 1. If change does not break interface, then it's a patch version update
 2. If change breaks interface, then it's a minor version update
 3. If change is for a new product release to public, it's a major version update
+
+### How to Generate Minimal Beacon Proxy Bytecode
+
+The source code for the Minimal Beacon Proxy is in /contracts/utils/MinimalBeaconProxy.sol
+
+1. Disable bytecode metadata hash in hardhat config file
+    solidity: { settings: { metadata: { bytecodeHash: "none" } } }
+2. Run npx hardhat compile
+3. Retrieve bytecode from MinimalBeaconProxy.json file in artifacts
+
+*The reason for the changes in the bytecode depending on protocolId > 256 is because if protocolId > 256 then it takes
+2 bytes in the bytecode instead of 1 byte, which means the bytecode must allocate this space.
