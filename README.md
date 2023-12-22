@@ -62,7 +62,7 @@ The source code for the Minimal Beacon Proxy is in /contracts/utils/MinimalBeaco
 
 1. Disable bytecode metadata hash in hardhat config file
     solidity: { settings: { metadata: { bytecodeHash: "none" } } }
-2. Run npx hardhat compile
+2. Run 'npx hardhat compile'
 3. Retrieve bytecode from MinimalBeaconProxy.json file in artifacts
 
 *The reason for the changes in the bytecode depending on protocolId > 256 is because if protocolId > 256 then it takes
