@@ -259,7 +259,7 @@ describe("GammaPoolFactory", function () {
       expect(key).to.equal(await factory.getKey(pool));
 
       // Precalculated address
-      const expectedPoolAddress = await addressCalculator.calcAddress2(
+      const expectedPoolAddress = await addressCalculator.calcAddress(
         factory.address,
         PROTOCOL_ID,
         key
@@ -289,7 +289,7 @@ describe("GammaPoolFactory", function () {
       expect(key2).to.equal(await factory.getKey(pool2));
 
       // Precalculated address
-      const expectedPoolAddress2 = await addressCalculator.calcAddress2(
+      const expectedPoolAddress2 = await addressCalculator.calcAddress(
         factory.address,
         PROTOCOL_ID,
         key2
@@ -725,7 +725,7 @@ describe("GammaPoolFactory", function () {
       expect(key).to.equal(await factory.getKey(pool));
 
       // Precalculated address
-      const expectedPoolAddress = await addressCalculator.calcAddress2(
+      const expectedPoolAddress = await addressCalculator.calcAddress(
         factory.address,
         PROTOCOL_ID,
         key
@@ -767,7 +767,7 @@ describe("GammaPoolFactory", function () {
       const poolContract = GammaPool.attach(pool);
 
       // Precalculated address
-      const expectedPoolAddress = await addressCalculator.calcAddress2(
+      const expectedPoolAddress = await addressCalculator.calcAddress(
         factory.address,
         PROTOCOL_ID,
         key
@@ -823,7 +823,7 @@ describe("GammaPoolFactory", function () {
       expect(key).to.equal(await factory.getKey(pool));
 
       // Precalculated address
-      const expectedPoolAddress = await addressCalculator.calcAddress2(
+      const expectedPoolAddress = await addressCalculator.calcAddress(
         factory.address,
         PROTOCOL_ID,
         key

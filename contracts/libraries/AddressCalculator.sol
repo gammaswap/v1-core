@@ -16,22 +16,17 @@ library AddressCalculator {
         return keccak256(abi.encode(cfmm, protocolId)); // key is hash of CFMM address and protocolId
     }
 
-    /// @dev calculate deterministic address to instantiate GammaPool minimal beacon proxy contract
+    /// @dev calculate deterministic address to instantiate GammaPool minimal beacon proxy or minimal proxy contract
     /// @param factory - address of factory that will instantiate GammaPool proxy contract
     /// @param protocolId - protocol id of instance address the GammaPool will use (version of this GammaPool)
     /// @param key - salt used in address generation to assure its uniqueness
     /// @return _address - address of GammaPool that maps to protocolId and key
     function calcAddress(address factory, uint16 protocolId, bytes32 key) internal view returns (address) {
-        return predictDeterministicAddress(protocolId, key, factory);
-    }
-
-    /// @dev calculate deterministic address to instantiate GammaPool minimal proxy contract
-    /// @param factory - address of factory that will instantiate GammaPool proxy contract
-    /// @param protocolId - protocol id of instance address the GammaPool will use (version of this GammaPool)
-    /// @param key - salt used in address generation to assure its uniqueness
-    /// @return _address - address of GammaPool that maps to protocolId and key
-    function calcAddress2(address factory, uint16 protocolId, bytes32 key) internal view returns (address) {
-        return predictDeterministicAddress2(IGammaPoolFactory(factory).getProtocol(protocolId), key, factory);
+        if (protocolId < 10000) {
+            return predictDeterministicAddress(protocolId, key, factory);
+        } else {
+            return predictDeterministicAddress2(IGammaPoolFactory(factory).getProtocol(protocolId), key, factory);
+        }
     }
 
     /// @dev calculate a deterministic address based on init code hash
@@ -43,13 +38,17 @@ library AddressCalculator {
         return address(uint160(uint256(keccak256(abi.encodePacked(hex"ff",factory,salt,initCodeHash)))));
     }
 
-    function predictDeterministicAddress(
+    /// @dev Compute bytecode of a minimal beacon proxy contract, excluding bytecode metadata hash
+    /// @param protocolId - id of protocol
+    /// @param salt - salt used in address generation to assure its uniqueness
+    /// @param factory - address of factory that instantiated or will instantiate this contract
+    /// @return bytecode - the calculated bytecode for minimal beacon proxy contract
+    function calcMinimalBeaconProxyBytecode(
         uint16 protocolId,
         bytes32 salt,
         address factory
-    ) public pure returns (address) {
-        // Compute the hash of the initialization code.
-        bytes memory bytecode = abi.encodePacked(
+    ) internal pure returns(bytes memory) {
+        return abi.encodePacked(
             hex"6080604052348015600f57600080fd5b5060",
             protocolId < 256 ? hex"6c" : hex"6d",
             hex"8061001e6000396000f3fe608060408190526334b1f0a960e21b8152",
@@ -63,7 +62,21 @@ library AddressCalculator {
             protocolId < 256 ? hex"5b" : hex"5c",
             hex"573d82f35b3d82fdfea164736f6c6343000815000a"
         );
+    }
 
+    /// @dev Computes the address of a minimal beacon proxy contract
+    /// @param protocolId - id of protocol
+    /// @param salt - salt used in address generation to assure its uniqueness
+    /// @param factory - address of factory that instantiated or will instantiate this contract
+    /// @return predicted - the calculated address
+    function predictDeterministicAddress(
+        uint16 protocolId,
+        bytes32 salt,
+        address factory
+    ) internal pure returns (address) {
+        bytes memory bytecode = calcMinimalBeaconProxyBytecode(protocolId, salt, factory);
+
+        // Compute the hash of the initialization code.
         bytes32 bytecodeHash = keccak256(bytecode);
 
         // Compute the final CREATE2 address

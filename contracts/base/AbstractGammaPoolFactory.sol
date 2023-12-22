@@ -5,6 +5,7 @@ import "../interfaces/IGammaPoolFactory.sol";
 import "../interfaces/IGammaPool.sol";
 import "../interfaces/IPausable.sol";
 import "../utils/TwoStepOwnable.sol";
+import "../libraries/AddressCalculator.sol";
 
 /// @title Abstract factory contract to create more GammaPool contracts.
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
@@ -108,20 +109,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     }
 
     function cloneDeterministic(uint16 protocolId, bytes32 salt) internal virtual returns (address instance) {
-        bytes memory bytecode = abi.encodePacked(
-            hex"6080604052348015600f57600080fd5b5060",
-            protocolId < 256 ? hex"6c" : hex"6d",
-            hex"8061001e6000396000f3fe608060408190526334b1f0a960e21b8152",
-            protocolId < 256 ? hex"60" : hex"61",
-            protocolId < 256 ? abi.encodePacked(uint8(protocolId)) : abi.encodePacked(protocolId),
-            hex"60845260208160248173",
-            address(this),
-            hex"5afa60",
-            protocolId < 256 ? hex"3a" : hex"3b",
-            hex"573d6000fd5b5060805160003681823780813683855af491503d81823e81801560",
-            protocolId < 256 ? hex"5b" : hex"5c",
-            hex"573d82f35b3d82fdfea164736f6c6343000815000a"
-        );
+        bytes memory bytecode = AddressCalculator.calcMinimalBeaconProxyBytecode(protocolId, salt, address(this));
 
         assembly {
             instance := create2(0, add(bytecode, 32), mload(bytecode), salt)
