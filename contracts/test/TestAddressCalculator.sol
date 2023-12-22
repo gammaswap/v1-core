@@ -13,6 +13,10 @@ contract TestAddressCalculator {
         pool = AddressCalculator.calcAddress(factory, protocolId, key);
     }
 
+    function calcAddress2(address factory, uint16 protocolId, bytes32 key) external view returns(address pool){
+        pool = AddressCalculator.calcAddress2(factory, protocolId, key);
+    }
+
     function getPoolAddress(address factory, address tokenA, address tokenB, uint24 protocol) external pure returns(address pool){
     }
 }

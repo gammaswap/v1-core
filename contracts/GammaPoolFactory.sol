@@ -98,10 +98,10 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         hasPool(key); // check this instance hasn't already been created
 
         // instantiate GammaPool proxy contract address for protocol's implementation contract using unique key as salt for the pool's address
-        if (_protocolId > 10000) {
-            pool = cloneDeterministic2(implementation, key);
-        } else {
+        if (_protocolId < 10000) {
             pool = cloneDeterministic(_protocolId, key);
+        } else {
+            pool = cloneDeterministic2(implementation, key);
         }
 
         uint8[] memory _decimals = getDecimals(_tokensOrdered);
