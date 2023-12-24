@@ -109,7 +109,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     }
 
     function cloneDeterministic(uint16 protocolId, bytes32 salt) internal virtual returns (address instance) {
-        bytes memory bytecode = AddressCalculator.calcMinimalBeaconProxyBytecode(protocolId, salt, address(this));
+        bytes memory bytecode = AddressCalculator.calcMinimalBeaconProxyBytecode(protocolId, address(this));
 
         assembly {
             instance := create2(0, add(bytecode, 32), mload(bytecode), salt)

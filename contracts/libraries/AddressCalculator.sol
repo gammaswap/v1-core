@@ -40,12 +40,10 @@ library AddressCalculator {
 
     /// @dev Compute bytecode of a minimal beacon proxy contract, excluding bytecode metadata hash
     /// @param protocolId - id of protocol
-    /// @param salt - salt used in address generation to assure its uniqueness
     /// @param factory - address of factory that instantiated or will instantiate this contract
     /// @return bytecode - the calculated bytecode for minimal beacon proxy contract
     function calcMinimalBeaconProxyBytecode(
         uint16 protocolId,
-        bytes32 salt,
         address factory
     ) internal pure returns(bytes memory) {
         return abi.encodePacked(
@@ -74,7 +72,7 @@ library AddressCalculator {
         bytes32 salt,
         address factory
     ) internal pure returns (address) {
-        bytes memory bytecode = calcMinimalBeaconProxyBytecode(protocolId, salt, factory);
+        bytes memory bytecode = calcMinimalBeaconProxyBytecode(protocolId, factory);
 
         // Compute the hash of the initialization code.
         bytes32 bytecodeHash = keccak256(bytecode);
