@@ -416,7 +416,8 @@ interface IGammaPool is IGammaPoolEvents, IGammaPoolERC20Events, IRateModel {
     /// @param ratio - ratio to rebalance collateral after borrowing
     /// @return liquidityBorrowed - liquidity amount that has been borrowed
     /// @return amounts - reserves quantities withdrawn from CFMM that correspond to the LP tokens shorted, now used as collateral
-    function borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external returns(uint256 liquidityBorrowed, uint256[] memory amounts);
+    /// @return tokensHeld - updated collateral token amounts backing loan
+    function borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external returns(uint256 liquidityBorrowed, uint256[] memory amounts, uint128[] memory tokensHeld);
 
     /// @dev Repay liquidity debt of loan identified by tokenId, debt is repaid using available collateral in loan
     /// @param tokenId - unique id identifying loan

@@ -37,5 +37,6 @@ interface IBorrowStrategy is ILongStrategy {
     /// @param ratio - weights of collateral after borrowing liquidity
     /// @return liquidityBorrowed - liquidity amount that has been borrowed
     /// @return amounts - reserves quantities withdrawn from CFMM that correspond to the LP tokens shorted, now used as collateral
-    function _borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external returns(uint256 liquidityBorrowed, uint256[] memory amounts);
+    /// @return tokensHeld - updated collateral token amounts backing loan
+    function _borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external returns(uint256 liquidityBorrowed, uint256[] memory amounts, uint128[] memory tokensHeld);
 }

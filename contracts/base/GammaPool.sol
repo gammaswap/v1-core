@@ -359,8 +359,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     }
 
     /// @dev See {IGammaPool-borrowLiquidity}
-    function borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external virtual override whenNotPaused(12) returns(uint256 liquidityBorrowed, uint256[] memory amounts) {
-        return abi.decode(callStrategy(borrowStrategy, abi.encodeCall(IBorrowStrategy._borrowLiquidity, (tokenId, lpTokens, ratio))), (uint256, uint256[]));
+    function borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external virtual override whenNotPaused(12) returns(uint256 liquidityBorrowed, uint256[] memory amounts, uint128[] memory tokensHeld) {
+        return abi.decode(callStrategy(borrowStrategy, abi.encodeCall(IBorrowStrategy._borrowLiquidity, (tokenId, lpTokens, ratio))), (uint256, uint256[], uint128[]));
     }
 
     /// @dev See {IGammaPool-repayLiquidity}
