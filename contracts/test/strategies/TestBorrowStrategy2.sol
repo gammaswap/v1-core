@@ -27,14 +27,14 @@ contract TestBorrowStrategy2 is IBorrowStrategy {
         emit LoanUpdated(tokenId, tokensHeld, 21, 22, 23, 24, TX_TYPE.DECREASE_COLLATERAL);
     }
 
-    function _borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external override returns(uint256 liquidityBorrowed, uint256[] memory amounts) {
+    function _borrowLiquidity(uint256 tokenId, uint256 lpTokens, uint256[] calldata ratio) external override returns(uint256 liquidityBorrowed, uint256[] memory amounts, uint128[] memory tokensHeld) {
         amounts = new uint256[](2);
         amounts[0] = lpTokens * 2;
         amounts[1] = lpTokens;
-        uint128[] memory heldTokens = new uint128[](2);
-        heldTokens[0] = uint128(lpTokens * 2);
-        heldTokens[1] = uint128(lpTokens);
+        tokensHeld = new uint128[](2);
+        tokensHeld[0] = uint128(lpTokens * 2);
+        tokensHeld[1] = uint128(lpTokens);
         liquidityBorrowed = tokenId;
-        emit LoanUpdated(tokenId, heldTokens, 31, 32, 33, 34, TX_TYPE.BORROW_LIQUIDITY);
+        emit LoanUpdated(tokenId, tokensHeld, 31, 32, 33, 34, TX_TYPE.BORROW_LIQUIDITY);
     }
 }
