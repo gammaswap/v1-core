@@ -103,18 +103,10 @@ interface IGammaPoolFactory {
     /// @param _isSet - bool flag, true use fee information, false use GammaSwap default fees
     function setPoolFee(address _pool, address _to, uint16 _protocolFee, uint16 _origFeeShare, bool _isSet) external;
 
-    /// @dev Set parameters to calculate origination fee for GammaPool and set liquidation fee and ltvThreshold
-    /// @param _pool - address of GammaPool whose origination fee parameters function will update
-    /// @param _origFee - loan opening origination fee in basis points
-    /// @param _extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
-    /// @param _emaMultiplier - multiplier used in EMA calculation of utilization rate
-    /// @param _minUtilRate1 - minimum utilization rate to calculate dynamic origination fee in exponential model
-    /// @param _minUtilRate2 - minimum utilization rate to calculate dynamic origination fee in linear model
-    /// @param _feeDivisor - fee divisor for calculating origination fee, based on 2^(maxUtilRate - minUtilRate1)
-    /// @param _liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
-    /// @param _ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
-    /// @param _minBorrow - minimum liquidity amount that can be borrowed or left unpaid in a loan
-    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate1, uint8 _minUtilRate2, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold, uint72 _minBorrow) external;
+    /// @dev Call admin function in GammaPool contract
+    /// @param _pool - address of GammaPool whose admin function will be called
+    /// @param _data - custom struct containing information to execute in pool contract
+    function execute(address _pool, bytes calldata _data) external;
 
     /// @dev Pause a GammaPool's function identified by a `_functionId`
     /// @param _pool - address of GammaPool whose functions we will pause

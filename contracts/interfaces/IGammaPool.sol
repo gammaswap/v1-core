@@ -266,6 +266,18 @@ interface IGammaPool is IProtocol, IGammaPoolEvents, IGammaPoolERC20Events, IRat
     /// @dev Batch Liquidations Strategy implementation contract for this GammaPool
     function batchLiquidationStrategy() external view returns(address);
 
+    /// @dev Set parameters to calculate origination fee, liquidation fee, and ltv threshold
+    /// @param origFee - loan opening origination fee in basis points
+    /// @param extSwapFee - external swap fee in basis points, max 255 basis points = 2.55%
+    /// @param emaMultiplier - multiplier used in EMA calculation of utilization rate
+    /// @param minUtilRate1 - minimum utilization rate to calculate dynamic origination fee in exponential model
+    /// @param minUtilRate2 - minimum utilization rate to calculate dynamic origination fee in linear model
+    /// @param feeDivisor - fee divisor for calculating origination fee, based on 2^(maxUtilRate - minUtilRate1)
+    /// @param liquidationFee - liquidation fee to charge during liquidations in basis points (1 - 255 => 0.01% to 2.55%)
+    /// @param ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
+    /// @param minBorrow - minimum liquidity amount that can be borrowed or left unpaid in a loan
+    function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold, uint72 minBorrow) external;
+
     /// @dev Balances in the GammaPool of collateral tokens, CFMM LP tokens, and invariant amounts at last update
     /// @return tokenBalances - balances of collateral tokens in GammaPool
     /// @return lpTokenBalance - CFMM LP token balance of GammaPool

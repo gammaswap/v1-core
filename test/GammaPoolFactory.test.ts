@@ -733,8 +733,14 @@ describe("GammaPoolFactory", function () {
       expect(pool).to.equal(expectedPoolAddress);
       expect(await factory.allPoolsLength()).to.equal(1);
 
+      const poolContract = await GammaPool.attach(pool);
+      const functionData = poolContract.interface.encodeFunctionData(
+        "setPoolParams",
+        [1, 2, 3, 4, 5, 6, 7, 8, 9]
+      );
+
       await expect(
-        factory.connect(addr1).setPoolParams(pool, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+        factory.connect(addr1).execute(pool, functionData)
       ).to.be.revertedWithCustomError(factory, "Forbidden");
     });
 
@@ -775,39 +781,60 @@ describe("GammaPoolFactory", function () {
       expect(pool).to.equal(expectedPoolAddress);
       expect(await factory.allPoolsLength()).to.equal(1);
 
-      await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 101, 60, 0, 11, 1, 1000)
-      )
+      let functionData = poolContract.interface.encodeFunctionData(
+        "setPoolParams",
+        [1, 2, 3, 101, 60, 0, 11, 1, 1000]
+      );
+
+      await expect(factory.execute(pool, functionData))
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(5);
 
-      await expect(factory.setPoolParams(pool, 1, 2, 3, 95, 60, 0, 11, 1, 1000))
+      functionData = poolContract.interface.encodeFunctionData(
+        "setPoolParams",
+        [1, 2, 3, 95, 60, 0, 11, 1, 1000]
+      );
+      await expect(factory.execute(pool, functionData))
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(5);
 
-      await expect(factory.setPoolParams(pool, 1, 2, 3, 94, 60, 0, 11, 1, 1000))
+      functionData = poolContract.interface.encodeFunctionData(
+        "setPoolParams",
+        [1, 2, 3, 94, 60, 0, 11, 1, 1000]
+      );
+      await expect(factory.execute(pool, functionData))
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(5);
 
-      await expect(factory.setPoolParams(pool, 1, 2, 3, 78, 60, 1, 11, 1, 1000))
+      functionData = poolContract.interface.encodeFunctionData(
+        "setPoolParams",
+        [1, 2, 3, 78, 60, 1, 11, 1, 1000]
+      );
+      await expect(factory.execute(pool, functionData))
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(6);
 
-      await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 77, 60, 100, 51, 5, 1000)
-      )
+      functionData = poolContract.interface.encodeFunctionData(
+        "setPoolParams",
+        [1, 2, 3, 77, 60, 100, 51, 5, 1000]
+      );
+      await expect(factory.execute(pool, functionData))
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(6);
 
-      await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 77, 60, 100, 51, 5, 1000)
-      )
+      functionData = poolContract.interface.encodeFunctionData(
+        "setPoolParams",
+        [1, 2, 3, 77, 60, 100, 51, 5, 1000]
+      );
+      await expect(factory.execute(pool, functionData))
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(6);
 
-      await expect(
-        factory.setPoolParams(pool, 1, 2, 3, 77, 60, 100, 50, 5, 999)
-      )
+      functionData = poolContract.interface.encodeFunctionData(
+        "setPoolParams",
+        [1, 2, 3, 77, 60, 100, 50, 5, 999]
+      );
+      await expect(factory.execute(pool, functionData))
         .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
         .withArgs(8);
     });
@@ -855,21 +882,12 @@ describe("GammaPoolFactory", function () {
       expect(resp.minUtilRate1).to.equal(85);
       expect(resp.feeDivisor).to.equal(16384);
 
-      const tx = await (
-        await factory.setPoolParams(pool, 1, 2, 20, 84, 60, 1, 50, 10, 1000)
-      ).wait();
+      let functionData = gammaPool.interface.encodeFunctionData(
+        "setPoolParams",
+        [1, 2, 20, 84, 60, 1, 50, 10, 1000]
+      );
 
-      const event = tx.events[tx.events.length - 1];
-      expect(event.args.pool).to.equal(pool);
-      expect(event.args.origFee).to.equal(1);
-      expect(event.args.extSwapFee).to.equal(2);
-      expect(event.args.emaMultiplier).to.equal(20);
-      expect(event.args.minUtilRate1).to.equal(84);
-      expect(event.args.minUtilRate2).to.equal(60);
-      expect(event.args.feeDivisor).to.equal(1);
-      expect(event.args.liquidationFee).to.equal(50);
-      expect(event.args.ltvThreshold).to.equal(10);
-      expect(event.args.minBorrow).to.equal(1000);
+      await (await factory.execute(pool, functionData)).wait();
 
       const resp1 = await gammaPool.getPoolData();
       expect(resp1.origFee).to.equal(1);
@@ -882,21 +900,12 @@ describe("GammaPoolFactory", function () {
       expect(resp1.ltvThreshold).to.equal(10);
       expect(resp1.minBorrow).to.equal(1000);
 
-      const tx1 = await (
-        await factory.setPoolParams(pool, 1, 2, 20, 84, 64, 65535, 50, 5, 2000)
-      ).wait();
+      functionData = gammaPool.interface.encodeFunctionData(
+        "setPoolParams",
+        [1, 2, 20, 84, 64, 65535, 50, 5, 2000]
+      );
 
-      const event1 = tx1.events[tx.events.length - 1];
-      expect(event1.args.pool).to.equal(pool);
-      expect(event1.args.origFee).to.equal(1);
-      expect(event1.args.extSwapFee).to.equal(2);
-      expect(event1.args.emaMultiplier).to.equal(20);
-      expect(event1.args.minUtilRate1).to.equal(84);
-      expect(event1.args.minUtilRate2).to.equal(64);
-      expect(event1.args.feeDivisor).to.equal(65535);
-      expect(event1.args.liquidationFee).to.equal(50);
-      expect(event1.args.ltvThreshold).to.equal(5);
-      expect(event1.args.minBorrow).to.equal(2000);
+      await (await factory.execute(pool, functionData)).wait();
 
       const resp2 = await gammaPool.getPoolData();
       expect(resp2.origFee).to.equal(1);
@@ -1986,21 +1995,23 @@ describe("GammaPoolFactory", function () {
       const minBorrow = ethers.BigNumber.from(10).pow(18);
       expect(resp.minBorrow).to.equal(minBorrow);
 
-      const tx = await (
-        await factory.setPoolParams(pool, 1, 2, 20, 84, 60, 1, 50, 10, 1000)
-      ).wait();
+      const functionData = gammaPool.interface.encodeFunctionData(
+        "setPoolParams",
+        [1, 2, 20, 84, 60, 1, 50, 10, 1000]
+      );
 
-      const event = tx.events[tx.events.length - 1];
-      expect(event.args.pool).to.equal(pool);
-      expect(event.args.origFee).to.equal(1);
-      expect(event.args.extSwapFee).to.equal(2);
-      expect(event.args.emaMultiplier).to.equal(20);
-      expect(event.args.minUtilRate1).to.equal(84);
-      expect(event.args.minUtilRate2).to.equal(60);
-      expect(event.args.feeDivisor).to.equal(1);
-      expect(event.args.liquidationFee).to.equal(50);
-      expect(event.args.ltvThreshold).to.equal(10);
-      expect(event.args.minBorrow).to.equal(1000);
+      await (await factory.execute(pool, functionData)).wait();
+
+      const resp1 = await gammaPool.getPoolData();
+      expect(resp1.origFee).to.equal(1);
+      expect(resp1.extSwapFee).to.equal(2);
+      expect(resp1.emaMultiplier).to.equal(20);
+      expect(resp1.minUtilRate1).to.equal(84);
+      expect(resp1.minUtilRate2).to.equal(60);
+      expect(resp1.feeDivisor).to.equal(1);
+      expect(resp1.liquidationFee).to.equal(50);
+      expect(resp1.ltvThreshold).to.equal(10);
+      expect(resp1.minBorrow).to.equal(1000);
     });
   });
 });
