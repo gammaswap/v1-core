@@ -1,8 +1,19 @@
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity >=0.8.0;
 
+/// @title Interface for Protocol
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
+/// @dev Interface used to add protocols and initialize them in GammaPoolFactory
 interface IProtocol {
     /// @dev Protocol id of the implementation contract for this GammaPool
     function protocolId() external view returns(uint16);
+
+    /// @dev Check GammaPool for CFMM and tokens can be created with this implementation
+    /// @param _tokens - assumed tokens of CFMM, validate function should check CFMM is indeed for these tokens
+    /// @param _cfmm - address of CFMM GammaPool will be for
+    /// @param _data - custom struct containing additional information used to verify the `_cfmm`
+    /// @return _tokensOrdered - tokens ordered to match the same order as in CFMM
+    function validateCFMM(address[] calldata _tokens, address _cfmm, bytes calldata _data) external view returns(address[] memory _tokensOrdered);
 
     /// @dev Function to initialize state variables GammaPool, called usually from GammaPoolFactory contract right after GammaPool instantiation
     /// @param _cfmm - address of CFMM GammaPool is for
@@ -23,11 +34,4 @@ interface IProtocol {
     /// @param ltvThreshold - ltv threshold (1 - 255 => 0.1% to 25.5%)
     /// @param minBorrow - minimum liquidity amount that can be borrowed or left unpaid in a loan
     function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold, uint72 minBorrow) external;
-
-    /// @dev Check GammaPool for CFMM and tokens can be created with this implementation
-    /// @param _tokens - assumed tokens of CFMM, validate function should check CFMM is indeed for these tokens
-    /// @param _cfmm - address of CFMM GammaPool will be for
-    /// @param _data - custom struct containing additional information used to verify the `_cfmm`
-    /// @return _tokensOrdered - tokens ordered to match the same order as in CFMM
-    function validateCFMM(address[] calldata _tokens, address _cfmm, bytes calldata _data) external view returns(address[] memory _tokensOrdered);
 }

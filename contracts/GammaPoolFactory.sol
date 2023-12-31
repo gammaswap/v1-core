@@ -61,6 +61,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         getProtocol[IProtocol(implementation).protocolId()] = implementation; // store implementation
     }
 
+    /// @dev See {IGammaPoolFactory-updateProtocol}
     function updateProtocol(uint16 _protocolId, address _newImplementation) external virtual override onlyOwner {
         isProtocolNotSet(_protocolId);
         if(IProtocol(_newImplementation).protocolId() == 0) revert ZeroProtocol();
