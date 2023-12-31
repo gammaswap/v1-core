@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.21;
 
-import "./interfaces/IGammaPool.sol";
 import "./base/AbstractGammaPoolFactory.sol";
 import "./rates/storage/AbstractRateParamsStore.sol";
 import "./libraries/AddressCalculator.sol";
@@ -56,16 +55,16 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
 
     /// @dev See {IGammaPoolFactory-addProtocol}
     function addProtocol(address implementation) external virtual override onlyOwner {
-        if(IGammaPool(implementation).protocolId() == 0) revert ZeroProtocol();// implementation protocolId is zero
-        if(getProtocol[IGammaPool(implementation).protocolId()] != address(0)) revert ProtocolExists(); // protocolId already set
+        if(IProtocol(implementation).protocolId() == 0) revert ZeroProtocol();// implementation protocolId is zero
+        if(getProtocol[IProtocol(implementation).protocolId()] != address(0)) revert ProtocolExists(); // protocolId already set
 
-        getProtocol[IGammaPool(implementation).protocolId()] = implementation; // store implementation
+        getProtocol[IProtocol(implementation).protocolId()] = implementation; // store implementation
     }
 
     function updateProtocol(uint16 _protocolId, address _newImplementation) external virtual override onlyOwner {
         isProtocolNotSet(_protocolId);
-        if(IGammaPool(_newImplementation).protocolId() == 0) revert ZeroProtocol();
-        if(IGammaPool(_newImplementation).protocolId() != _protocolId) revert ProtocolMismatch();
+        if(IProtocol(_newImplementation).protocolId() == 0) revert ZeroProtocol();
+        if(IProtocol(_newImplementation).protocolId() != _protocolId) revert ProtocolMismatch();
         if(getProtocol[_protocolId] == _newImplementation) revert ProtocolExists(); // protocolId already set with same implementation
 
         getProtocol[_protocolId] = _newImplementation;
@@ -90,7 +89,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
         address implementation = getProtocol[_protocolId];
 
         // check GammaPool can be created with this implementation
-        address[] memory _tokensOrdered = IGammaPool(implementation).validateCFMM(_tokens, _cfmm, _data);
+        address[] memory _tokensOrdered = IProtocol(implementation).validateCFMM(_tokens, _cfmm, _data);
 
         // calculate unique identifier of GammaPool that will also be used as salt for instantiating the proxy contract address
         bytes32 key = AddressCalculator.getGammaPoolKey(_cfmm, _protocolId);
@@ -106,7 +105,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
 
         uint8[] memory _decimals = getDecimals(_tokensOrdered);
         uint72 _minBorrow = uint72(10**((_decimals[0] + _decimals[1]) / 2));
-        IGammaPool(pool).initialize(_cfmm, _tokensOrdered, _decimals, _minBorrow, _data); // initialize GammaPool's state variables
+        IProtocol(pool).initialize(_cfmm, _tokensOrdered, _decimals, _minBorrow, _data); // initialize GammaPool's state variables
 
         getPool[key] = pool; // map unique key to new instance of GammaPool
         getKey[pool] = key; // map unique key to new instance of GammaPool

@@ -2,7 +2,7 @@
 pragma solidity >=0.8.4;
 
 import "../interfaces/IGammaPoolFactory.sol";
-import "../interfaces/IGammaPool.sol";
+import "../interfaces/IProtocol.sol";
 import "../interfaces/IPausable.sol";
 import "../utils/TwoStepOwnable.sol";
 import "../libraries/AddressCalculator.sol";
@@ -77,7 +77,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     /// @dev See {IGammaPoolFactory-setPoolParams}
     function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate1, uint8 _minUtilRate2, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold, uint72 _minBorrow) external virtual override {
         isForbidden(feeToSetter); // only feeToSetter can update origination fee parameters
-        IGammaPool(_pool).setPoolParams(_origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _feeDivisor, _liquidationFee, _ltvThreshold, _minBorrow);
+        IProtocol(_pool).setPoolParams(_origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _feeDivisor, _liquidationFee, _ltvThreshold, _minBorrow);
         emit PoolParamsUpdate(_pool, _origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _feeDivisor, _liquidationFee, _ltvThreshold, _minBorrow);
     }
 
