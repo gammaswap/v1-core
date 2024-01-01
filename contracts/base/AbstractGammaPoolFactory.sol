@@ -2,7 +2,7 @@
 pragma solidity >=0.8.4;
 
 import "../interfaces/IGammaPoolFactory.sol";
-import "../interfaces/IGammaPool.sol";
+import "../interfaces/IProtocol.sol";
 import "../interfaces/IPausable.sol";
 import "../utils/TwoStepOwnable.sol";
 import "../libraries/AddressCalculator.sol";
@@ -21,6 +21,7 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     error PoolExists();
     error DeployFailed();
     error ZeroAddress();
+    error ExecuteFailed();
 
     /// @dev See {IGammaPoolFactory-getPool}
     mapping(bytes32 => address) public override getPool; // all GS Pools addresses can be predetermined through key
@@ -74,11 +75,16 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
         return IPausable(_pool).unpause(_functionId);
     }
 
-    /// @dev See {IGammaPoolFactory-setPoolParams}
-    function setPoolParams(address _pool, uint16 _origFee, uint8 _extSwapFee, uint8 _emaMultiplier, uint8 _minUtilRate1, uint8 _minUtilRate2, uint16 _feeDivisor, uint8 _liquidationFee, uint8 _ltvThreshold, uint72 _minBorrow) external virtual override {
-        isForbidden(feeToSetter); // only feeToSetter can update origination fee parameters
-        IGammaPool(_pool).setPoolParams(_origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _feeDivisor, _liquidationFee, _ltvThreshold, _minBorrow);
-        emit PoolParamsUpdate(_pool, _origFee, _extSwapFee, _emaMultiplier, _minUtilRate1, _minUtilRate2, _feeDivisor, _liquidationFee, _ltvThreshold, _minBorrow);
+    /// @dev See {IGammaPoolFactory-execute}
+    function execute(address _pool, bytes calldata _data) external virtual override {
+        isForbidden(feeToSetter);
+        (bool success, bytes memory result) = _pool.call(_data);
+        if (!success) {
+            if (result.length == 0) revert ExecuteFailed();
+            assembly {
+                revert(add(32, result), mload(result))
+            }
+        }
     }
 
     /// @dev See {IGammaPoolFactory-setFee}
