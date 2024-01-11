@@ -23,7 +23,7 @@ library AddressCalculator {
     /// @return _address - address of GammaPool that maps to protocolId and key
     function calcAddress(address factory, uint16 protocolId, bytes32 key) internal view returns (address) {
         if (protocolId < 10000) {
-            return predictDeterministicAddress(protocolId, key, factory);
+            return predictDeterministicAddress(IGammaPoolFactory(factory).getProtocolBeacon(protocolId), protocolId, key, factory);
         } else {
             return predictDeterministicAddress2(IGammaPoolFactory(factory).getProtocol(protocolId), key, factory);
         }
@@ -39,10 +39,12 @@ library AddressCalculator {
     }
 
     /// @dev Compute bytecode of a minimal beacon proxy contract, excluding bytecode metadata hash
+    /// @param beacon - address of beacon of minimal beacon proxy
     /// @param protocolId - id of protocol
     /// @param factory - address of factory that instantiated or will instantiate this contract
     /// @return bytecode - the calculated bytecode for minimal beacon proxy contract
     function calcMinimalBeaconProxyBytecode(
+        address beacon,
         uint16 protocolId,
         address factory
     ) internal pure returns(bytes memory) {
@@ -68,11 +70,12 @@ library AddressCalculator {
     /// @param factory - address of factory that instantiated or will instantiate this contract
     /// @return predicted - the calculated address
     function predictDeterministicAddress(
+        address beacon,
         uint16 protocolId,
         bytes32 salt,
         address factory
     ) internal pure returns (address) {
-        bytes memory bytecode = calcMinimalBeaconProxyBytecode(protocolId, factory);
+        bytes memory bytecode = calcMinimalBeaconProxyBytecode(beacon, protocolId, factory);
 
         // Compute the hash of the initialization code.
         bytes32 bytecodeHash = keccak256(bytecode);
