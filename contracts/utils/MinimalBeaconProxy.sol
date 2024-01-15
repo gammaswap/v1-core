@@ -7,7 +7,7 @@ contract MinimalBeaconProxy {
 
     constructor() {
         assembly {
-            sstore(BEACON_SLOT, 0xCEceCeCEceCeceCeCECEcecECeCeCeceCeCecece) // store beacon address
+            sstore(BEACON_SLOT, 0xCeCecececECecEcEcececECECeCECeCEcECececE) // store beacon address
         }
     }
 

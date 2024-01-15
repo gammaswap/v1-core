@@ -49,9 +49,14 @@ library AddressCalculator {
         address factory
     ) internal pure returns(bytes memory) {
         return abi.encodePacked(
-            hex"6080604052348015600f57600080fd5b5060",
+            hex"608060405234801561001057600080fd5b5073",
+            beacon,
+            "7f",
+            hex"a3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50",
+            hex"5560",
             protocolId < 256 ? hex"6c" : hex"6d",
-            hex"8061001e6000396000f3fe608060408190526334b1f0a960e21b8152",
+            hex"806100566000396000f3fe",
+            hex"608060408190526334b1f0a960e21b8152",
             protocolId < 256 ? hex"60" : hex"61",
             protocolId < 256 ? abi.encodePacked(uint8(protocolId)) : abi.encodePacked(protocolId),
             hex"60845260208160248173",
