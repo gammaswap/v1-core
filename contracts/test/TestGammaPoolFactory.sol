@@ -24,7 +24,7 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
     function createPool2(bytes calldata _data) external virtual returns(address pool) {
         bytes32 key = AddressCalculator.getGammaPoolKey(cfmm, protocolId);
 
-        pool = cloneDeterministic(protocolId, key);
+        pool = cloneDeterministic(address(0), protocolId, key);
         decimals[0] = 18;
         decimals[1] = 18;
         IGammaPool(pool).initialize(cfmm, tokens, decimals, uint72(1e3), _data);
@@ -56,6 +56,10 @@ contract TestGammaPoolFactory is AbstractGammaPoolFactory {
 
     function getProtocol(uint16) external override view returns (address) {
         return protocol;
+    }
+
+    function getProtocolBeacon(uint16) external override view returns (address) {
+        return address(0);
     }
 
     function allPoolsLength() external override pure returns (uint256) {

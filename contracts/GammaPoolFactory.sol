@@ -6,6 +6,7 @@ import "./rates/storage/AbstractRateParamsStore.sol";
 import "./libraries/AddressCalculator.sol";
 import "./libraries/GammaSwapLibrary.sol";
 import "./observer/AbstractLoanObserverStore.sol";
+import "./utils/MinimalBeacon.sol";
 
 /// @title Factory contract to create more GammaPool contracts.
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
@@ -21,6 +22,9 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
 
     /// @dev See {IGammaPoolFactory-getProtocol}
     mapping(uint16 => address) public override getProtocol;
+
+    /// @dev See {IGammaPoolFactory-getProtocolBeacon}
+    mapping(uint16 => address) public override getProtocolBeacon;
 
     /// @dev See {IGammaPoolFactory-isProtocolRestricted}
     mapping(uint16 => bool) public override isProtocolRestricted;
@@ -55,10 +59,14 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
 
     /// @dev See {IGammaPoolFactory-addProtocol}
     function addProtocol(address implementation) external virtual override onlyOwner {
-        if(IProtocol(implementation).protocolId() == 0) revert ZeroProtocol();// implementation protocolId is zero
-        if(getProtocol[IProtocol(implementation).protocolId()] != address(0)) revert ProtocolExists(); // protocolId already set
+        uint16 _protocolId = IProtocol(implementation).protocolId();
+        if(_protocolId == 0) revert ZeroProtocol();// implementation protocolId is zero
+        if(getProtocol[_protocolId] != address(0)) revert ProtocolExists(); // protocolId already set
 
-        getProtocol[IProtocol(implementation).protocolId()] = implementation; // store implementation
+        getProtocol[_protocolId] = implementation; // store implementation
+        if (_protocolId < 10000) {
+            getProtocolBeacon[_protocolId] = address(new MinimalBeacon(address(this), _protocolId));
+        }
     }
 
     /// @dev See {IGammaPoolFactory-updateProtocol}
@@ -99,7 +107,7 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
 
         // instantiate GammaPool proxy contract address for protocol's implementation contract using unique key as salt for the pool's address
         if (_protocolId < 10000) {
-            pool = cloneDeterministic(_protocolId, key);
+            pool = cloneDeterministic(getProtocolBeacon[_protocolId], _protocolId, key);
         } else {
             pool = cloneDeterministic2(implementation, key);
         }

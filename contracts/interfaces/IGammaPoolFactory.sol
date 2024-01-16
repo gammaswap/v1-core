@@ -66,6 +66,11 @@ interface IGammaPoolFactory {
     /// @return _address - implementation address of GammaPool proxy contract. Because all GammaPools are created as proxy contracts
     function getProtocol(uint16 _protocolId) external view returns (address);
 
+    /// @dev Get beacon address that maps to protocolId. This beacon contract contains the implementation address of the GammaPool proxy
+    /// @param _protocolId - id identifier of GammaPool implementation (can be thought of as version)
+    /// @return _address - address of beacon of GammaPool proxy contract. Because all GammaPools are created as proxy contracts if there is one
+    function getProtocolBeacon(uint16 _protocolId) external view returns (address);
+
     /// @dev Instantiate a new GammaPool for a CFMM based on an existing implementation (protocolId)
     /// @param _protocolId - id identifier of GammaPool protocol (can be thought of as version)
     /// @param _cfmm - address of CFMM the GammaPool is created for
