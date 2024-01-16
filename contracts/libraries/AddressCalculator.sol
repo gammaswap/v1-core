@@ -51,7 +51,7 @@ library AddressCalculator {
         return abi.encodePacked(
             hex"608060405234801561001057600080fd5b5073",
             beacon,
-            "7f",
+            hex"7f",
             hex"a3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50",
             hex"5560",
             protocolId < 256 ? hex"6c" : hex"6d",
