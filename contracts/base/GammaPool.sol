@@ -22,7 +22,9 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     using LibStorage for LibStorage.Storage;
 
     error Forbidden();
-    error InvalidPoolParam(uint8 param);
+    error ZeroFeeDivisor();
+    error LiquidationFeeGtLTVThreshold();
+    error InvalidMinBorrow();
 
     /// @dev See {IGammaPool-protocolId}
     uint16 immutable public override protocolId;
@@ -76,9 +78,9 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
     function setPoolParams(uint16 origFee, uint8 extSwapFee, uint8 emaMultiplier, uint8 minUtilRate1, uint8 minUtilRate2, uint16 feeDivisor, uint8 liquidationFee, uint8 ltvThreshold, uint72 minBorrow) external virtual override {
         if(msg.sender != factory) revert Forbidden(); // only factory is allowed to update dynamic fee parameters
 
-        if(feeDivisor == 0) revert InvalidPoolParam(5);
-        if(liquidationFee > uint256(ltvThreshold) * 10) revert InvalidPoolParam(6);
-        if(minBorrow < 1e3) revert InvalidPoolParam(8);
+        if(feeDivisor == 0) revert ZeroFeeDivisor();
+        if(liquidationFee > uint256(ltvThreshold) * 10) revert LiquidationFeeGtLTVThreshold();
+        if(minBorrow < 1e3) revert InvalidMinBorrow();
 
         s.ltvThreshold = ltvThreshold;
         s.liquidationFee = liquidationFee;

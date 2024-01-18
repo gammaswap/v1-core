@@ -786,57 +786,66 @@ describe("GammaPoolFactory", function () {
         [1, 2, 3, 101, 60, 0, 11, 1, 1000]
       );
 
-      await expect(factory.execute(pool, functionData))
-        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
-        .withArgs(5);
+      await expect(
+        factory.execute(pool, functionData)
+      ).to.be.revertedWithCustomError(poolContract, "ZeroFeeDivisor");
 
       functionData = poolContract.interface.encodeFunctionData(
         "setPoolParams",
         [1, 2, 3, 95, 60, 0, 11, 1, 1000]
       );
-      await expect(factory.execute(pool, functionData))
-        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
-        .withArgs(5);
+      await expect(
+        factory.execute(pool, functionData)
+      ).to.be.revertedWithCustomError(poolContract, "ZeroFeeDivisor");
 
       functionData = poolContract.interface.encodeFunctionData(
         "setPoolParams",
         [1, 2, 3, 94, 60, 0, 11, 1, 1000]
       );
-      await expect(factory.execute(pool, functionData))
-        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
-        .withArgs(5);
+      await expect(
+        factory.execute(pool, functionData)
+      ).to.be.revertedWithCustomError(poolContract, "ZeroFeeDivisor");
 
       functionData = poolContract.interface.encodeFunctionData(
         "setPoolParams",
         [1, 2, 3, 78, 60, 1, 11, 1, 1000]
       );
-      await expect(factory.execute(pool, functionData))
-        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
-        .withArgs(6);
+      await expect(
+        factory.execute(pool, functionData)
+      ).to.be.revertedWithCustomError(
+        poolContract,
+        "LiquidationFeeGtLTVThreshold"
+      );
 
       functionData = poolContract.interface.encodeFunctionData(
         "setPoolParams",
         [1, 2, 3, 77, 60, 100, 51, 5, 1000]
       );
-      await expect(factory.execute(pool, functionData))
-        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
-        .withArgs(6);
+      await expect(
+        factory.execute(pool, functionData)
+      ).to.be.revertedWithCustomError(
+        poolContract,
+        "LiquidationFeeGtLTVThreshold"
+      );
 
       functionData = poolContract.interface.encodeFunctionData(
         "setPoolParams",
         [1, 2, 3, 77, 60, 100, 51, 5, 1000]
       );
-      await expect(factory.execute(pool, functionData))
-        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
-        .withArgs(6);
+      await expect(
+        factory.execute(pool, functionData)
+      ).to.be.revertedWithCustomError(
+        poolContract,
+        "LiquidationFeeGtLTVThreshold"
+      );
 
       functionData = poolContract.interface.encodeFunctionData(
         "setPoolParams",
         [1, 2, 3, 77, 60, 100, 50, 5, 999]
       );
-      await expect(factory.execute(pool, functionData))
-        .to.be.revertedWithCustomError(poolContract, "InvalidPoolParam")
-        .withArgs(8);
+      await expect(
+        factory.execute(pool, functionData)
+      ).to.be.revertedWithCustomError(poolContract, "InvalidMinBorrow");
     });
 
     it("Set Origination Fee", async function () {
