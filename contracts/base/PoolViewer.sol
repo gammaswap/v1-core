@@ -82,6 +82,9 @@ contract PoolViewer is IPoolViewer {
     /// @inheritdoc IPoolViewer
     function canLiquidate(address pool, uint256 tokenId) external virtual override view returns(bool) {
         IGammaPool.LoanData memory _loanData = IGammaPool(pool).getLoanData(tokenId);
+        if(_loanData.liquidity == 0) {
+            return false;
+        }
         uint256 liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, _getLoanLastFeeIndex(_loanData));
         address refAddr = _loanData.refType == 3 ? _loanData.refAddr : address(0);
         uint256 collateral = _collateral(pool, tokenId, _loanData.tokensHeld, refAddr);
@@ -95,6 +98,9 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMInvariant;
         uint256 lastCFMMTotalSupply;
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(_loanData.poolId).getLatestCFMMBalances();
+        if(lastCFMMTotalSupply == 0) {
+            return 1e18;
+        }
 
         (uint256 borrowRate,) = AbstractRateModel(_loanData.shortStrategy).calcBorrowRate(_loanData.LP_INVARIANT,
             _loanData.BORROWED_INVARIANT, _loanData.paramsStore, _loanData.poolId);
@@ -123,6 +129,10 @@ contract PoolViewer is IPoolViewer {
     function calcDynamicOriginationFee(address pool, uint256 liquidity) external virtual override view returns(uint256 origFee) {
         IGammaPool.RateData memory data = _getLastFeeIndex(pool);
 
+        if(liquidity >= data.LP_INVARIANT) {
+            return 10000;
+        }
+
         uint256 utilRate = _calcUtilizationRate(data.LP_INVARIANT - liquidity, data.BORROWED_INVARIANT + liquidity) / 1e16;// convert utilizationRate to integer
         uint256 emaUtilRate = data.emaUtilRate / 1e4; // convert ema to integer
 
@@ -150,24 +160,26 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMInvariant;
         uint256 lastCFMMTotalSupply;
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(pool).getLatestCFMMBalances();
+        if(lastCFMMTotalSupply > 0) {
+            (data.borrowRate,data.utilizationRate) = AbstractRateModel(params.shortStrategy).calcBorrowRate(params.LP_INVARIANT,
+                params.BORROWED_INVARIANT, params.paramsStore, pool);
 
-        (data.borrowRate,data.utilizationRate) = AbstractRateModel(params.shortStrategy).calcBorrowRate(params.LP_INVARIANT,
-            params.BORROWED_INVARIANT, params.paramsStore, pool);
+            (data.lastFeeIndex,data.lastCFMMFeeIndex) = IShortStrategy(params.shortStrategy)
+                .getLastFees(data.borrowRate, params.BORROWED_INVARIANT, lastCFMMInvariant, lastCFMMTotalSupply,
+                params.lastCFMMInvariant, params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.lastCFMMFeeIndex);
 
-        (data.lastFeeIndex,data.lastCFMMFeeIndex) = IShortStrategy(params.shortStrategy)
-            .getLastFees(data.borrowRate, params.BORROWED_INVARIANT, lastCFMMInvariant, lastCFMMTotalSupply,
-            params.lastCFMMInvariant, params.lastCFMMTotalSupply, params.LAST_BLOCK_NUMBER, params.lastCFMMFeeIndex);
+            data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
 
-        data.supplyRate = data.borrowRate * data.utilizationRate / 1e18;
+            (,, data.BORROWED_INVARIANT) = IShortStrategy(params.shortStrategy).getLatestBalances(data.lastFeeIndex,
+                params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply);
 
-        (,, data.BORROWED_INVARIANT) = IShortStrategy(params.shortStrategy).getLatestBalances(data.lastFeeIndex,
-            params.BORROWED_INVARIANT, params.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply);
+            data.LP_INVARIANT = uint128(params.LP_TOKEN_BALANCE * lastCFMMInvariant / lastCFMMTotalSupply);
 
-        data.LP_INVARIANT = uint128(params.LP_TOKEN_BALANCE * lastCFMMInvariant / lastCFMMTotalSupply);
+            data.utilizationRate = _calcUtilizationRate(data.LP_INVARIANT, data.BORROWED_INVARIANT);
+            data.emaUtilRate = uint40(IShortStrategy(params.shortStrategy).calcUtilRateEma(data.utilizationRate, params.emaUtilRate,
+                GSMath.max(block.number - params.LAST_BLOCK_NUMBER, params.emaMultiplier)));
+        }
 
-        data.utilizationRate = _calcUtilizationRate(data.LP_INVARIANT, data.BORROWED_INVARIANT);
-        data.emaUtilRate = uint40(IShortStrategy(params.shortStrategy).calcUtilRateEma(data.utilizationRate, params.emaUtilRate,
-            GSMath.max(block.number - params.LAST_BLOCK_NUMBER, params.emaMultiplier)));
         data.origFee = params.origFee;
         data.feeDivisor = params.feeDivisor;
         data.minUtilRate1 = params.minUtilRate1;
@@ -195,6 +207,9 @@ contract PoolViewer is IPoolViewer {
         uint256 lastCFMMInvariant;
         uint256 lastCFMMTotalSupply;
         (data.CFMM_RESERVES, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(pool).getLatestCFMMBalances();
+        if(lastCFMMTotalSupply == 0) {
+            return data;
+        }
 
         (data.borrowRate, data.utilizationRate) = AbstractRateModel(data.shortStrategy).calcBorrowRate(data.LP_INVARIANT,
             data.BORROWED_INVARIANT, data.paramsStore, pool);
