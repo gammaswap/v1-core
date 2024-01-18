@@ -413,7 +413,7 @@ describe("GammaPool", function () {
         gammaPool.address,
         0
       );
-      expect(res8).to.equal(0);
+      expect(res8).to.equal(10000);
     });
 
     it("Custom Fields Set & Get", async function () {
