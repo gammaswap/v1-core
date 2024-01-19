@@ -70,6 +70,9 @@ contract PoolViewer is IPoolViewer {
     /// @inheritdoc IPoolViewer
     function loan(address pool, uint256 tokenId) external virtual override view returns(IGammaPool.LoanData memory _loanData) {
         _loanData = IGammaPool(pool).getLoanData(tokenId);
+        if(_loanData.id == 0) {
+            return _loanData;
+        }
         _loanData.accFeeIndex = _getLoanLastFeeIndex(_loanData);
         _loanData.liquidity = _updateLiquidity(_loanData.liquidity, _loanData.rateIndex, _loanData.accFeeIndex);
         address refAddr = _loanData.refType == 3 ? _loanData.refAddr : address(0);
@@ -97,6 +100,9 @@ contract PoolViewer is IPoolViewer {
     function _getLoanLastFeeIndex(IGammaPool.LoanData memory _loanData) internal virtual view returns(uint256 accFeeIndex) {
         uint256 lastCFMMInvariant;
         uint256 lastCFMMTotalSupply;
+        if(_loanData.poolId == address(0)) {
+            return 1e18;
+        }
         (, lastCFMMInvariant, lastCFMMTotalSupply) = IGammaPool(_loanData.poolId).getLatestCFMMBalances();
         if(lastCFMMTotalSupply == 0) {
             return 1e18;
@@ -178,6 +184,8 @@ contract PoolViewer is IPoolViewer {
             data.utilizationRate = _calcUtilizationRate(data.LP_INVARIANT, data.BORROWED_INVARIANT);
             data.emaUtilRate = uint40(IShortStrategy(params.shortStrategy).calcUtilRateEma(data.utilizationRate, params.emaUtilRate,
                 GSMath.max(block.number - params.LAST_BLOCK_NUMBER, params.emaMultiplier)));
+        } else {
+            data.lastFeeIndex = 1e18;
         }
 
         data.origFee = params.origFee;
