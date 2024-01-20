@@ -57,9 +57,9 @@ interface IGammaPoolFactory {
     function updateProtocol(uint16 _protocolId, address _newImplementation) external;
 
     /// @notice Only owner of GammaPoolFactory can call this function
-    /// @dev Removing protocol implementation from GammaPoolFactory contract. Which means GammaPoolFactory will no longer be able to create GammaPools with this implementation (protocol)
+    /// @dev Locks protocol implementation for upgradable protocols (<10000) so GammaPoolFactory can no longer update the implementation contract for this upgradable protocol
     /// @param _protocolId - id identifier of GammaPool implementation
-    function removeProtocol(uint16 _protocolId) external;
+    function lockProtocol(uint16 _protocolId) external;
 
     /// @dev Get implementation address that maps to protocolId. This is the actual implementation code that a GammaPool implements for a protocolId
     /// @param _protocolId - id identifier of GammaPool implementation (can be thought of as version)

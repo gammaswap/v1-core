@@ -65,32 +65,27 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
 
         getProtocol[_protocolId] = implementation; // store implementation
         if (_protocolId < 10000) {
-            getProtocolBeacon[_protocolId] = address(new LockableMinimalBeacon(address(this), _protocolId));
+            getProtocolBeacon[_protocolId] = address(new LockableMinimalBeacon(address(this), _protocolId)); // only set once
         }
     }
 
     /// @dev See {IGammaPoolFactory-updateProtocol}
     function updateProtocol(uint16 _protocolId, address _newImplementation) external virtual override onlyOwner {
         isProtocolNotSet(_protocolId);
+        if(_protocolId >= 10000) revert NotUpgradable();
         if(IProtocol(_newImplementation).protocolId() == 0) revert ZeroProtocol();
         if(IProtocol(_newImplementation).protocolId() != _protocolId) revert ProtocolMismatch();
         if(getProtocol[_protocolId] == _newImplementation) revert ProtocolExists(); // protocolId already set with same implementation
-        //if(_protocolId < 1000) revert NotUpgradable();//TODO: Should add this line
-        //if(LockableMinimalBeacon(getProtocolBeacon[_protocolId]).protocol()!= address(0)) revert Locked();//TODO: Should add this line
+        if(LockableMinimalBeacon(getProtocolBeacon[_protocolId]).protocol()!= address(0)) revert ProtocolLocked();
         getProtocol[_protocolId] = _newImplementation;
     }
 
-    /// @dev See {IGammaPoolFactory-removeProtocol} // TODO: Should probably remove this. Would screw up subgraph
-    function removeProtocol(uint16 _protocolId) external virtual override onlyOwner {
-        //if (_protocolId > 10000) { // TODO: Should get rid of removals
-            getProtocol[_protocolId] = address(0);
-        //}
-    }
+    /// @dev See {IGammaPoolFactory-lockProtocol}
+    function lockProtocol(uint16 _protocolId) external virtual override onlyOwner {
+        isProtocolNotSet(_protocolId);
+        if(_protocolId >= 10000) revert NotLockable();
 
-    function lockProtocol(uint16 _protocolId) external virtual onlyOwner { // TODO: Should add to the interface
-        if (_protocolId < 10000) {
-            LockableMinimalBeacon(getProtocolBeacon[_protocolId]).lock();
-        }
+        LockableMinimalBeacon(getProtocolBeacon[_protocolId]).lock();
     }
 
     /// @dev See {IGammaPoolFactory-setIsProtocolRestricted}

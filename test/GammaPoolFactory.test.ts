@@ -184,7 +184,7 @@ describe("GammaPoolFactory", function () {
   });
 
   describe("Create Pool", function () {
-    it.only("Add & Remove Protocol", async function () {
+    it("Add Protocol", async function () {
       expect(await factory.getProtocol(0)).to.equal(
         ethers.constants.AddressZero
       );
@@ -197,25 +197,24 @@ describe("GammaPoolFactory", function () {
       );
       expect(await factory.getProtocol(PROTOCOL_ID)).to.equal(protocol.address);
 
-      await (await factory.removeProtocol(PROTOCOL_ID)).wait();
-      expect(await factory.getProtocol(PROTOCOL_ID)).to.equal(
-        ethers.constants.AddressZero
-      );
-
-      await (await factory.addProtocol(protocol.address)).wait();
       await expect(
         factory.addProtocol(protocol.address)
       ).to.be.revertedWithCustomError(factory, "ProtocolExists");
-
       await expect(
         factory.addProtocol(protocolZero.address)
       ).to.be.revertedWithCustomError(factory, "ZeroProtocol");
+      await expect(
+        factory.updateProtocol(PROTOCOL_ID, addr2.address)
+      ).to.be.revertedWithCustomError(factory, "NotUpgradable");
 
       await expect(
         factory.connect(addr1).addProtocol(addr2.address)
       ).to.be.revertedWith("Forbidden");
       await expect(
-        factory.connect(addr1).removeProtocol(PROTOCOL_ID)
+        factory.connect(addr1).updateProtocol(PROTOCOL_ID, addr2.address)
+      ).to.be.revertedWith("Forbidden");
+      await expect(
+        factory.connect(addr1).lockProtocol(PROTOCOL_ID)
       ).to.be.revertedWith("Forbidden");
     });
 
@@ -299,7 +298,6 @@ describe("GammaPoolFactory", function () {
     });
 
     it("Create Pool Errors", async function () {
-      await factory.removeProtocol(PROTOCOL_ID);
       const createPoolParams = {
         cfmm: addr3.address,
         protocolId: PROTOCOL_ID,
@@ -1821,7 +1819,7 @@ describe("GammaPoolFactory", function () {
   });
 
   describe("Minimal Beacon Proxy Pattern", function () {
-    it.only("Add, Update, Remove protocol", async function () {
+    it("Add, Update, Lock protocol", async function () {
       expect(await factory.getProtocol(PROTOCOL_ID_UPGRADEABLE)).to.equal(
         ethers.constants.AddressZero
       );
@@ -1857,10 +1855,17 @@ describe("GammaPoolFactory", function () {
         beaconProtocol2.address
       );
 
-      await (await factory.removeProtocol(PROTOCOL_ID_UPGRADEABLE)).wait();
+      await expect(
+        factory.updateProtocol(PROTOCOL_ID_UPGRADEABLE, beaconProtocol2.address)
+      ).to.be.revertedWithCustomError(factory, "ProtocolExists");
+
+      await (await factory.lockProtocol(PROTOCOL_ID_UPGRADEABLE)).wait();
       expect(await factory.getProtocol(PROTOCOL_ID_UPGRADEABLE)).to.equal(
-        ethers.constants.AddressZero
+        beaconProtocol2.address
       );
+      await expect(
+        factory.updateProtocol(PROTOCOL_ID_UPGRADEABLE, beaconProtocol.address)
+      ).to.be.revertedWithCustomError(factory, "ProtocolLocked");
     });
 
     it("Create Pool", async function () {

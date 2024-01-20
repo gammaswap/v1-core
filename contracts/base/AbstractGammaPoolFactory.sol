@@ -22,6 +22,9 @@ abstract contract AbstractGammaPoolFactory is IGammaPoolFactory, TwoStepOwnable 
     error DeployFailed();
     error ZeroAddress();
     error ExecuteFailed();
+    error NotUpgradable();
+    error ProtocolLocked();
+    error NotLockable();
 
     /// @dev See {IGammaPoolFactory-getPool}
     mapping(bytes32 => address) public override getPool; // all GS Pools addresses can be predetermined through key
