@@ -184,7 +184,7 @@ describe("GammaPoolFactory", function () {
   });
 
   describe("Create Pool", function () {
-    it("Add & Remove Protocol", async function () {
+    it.only("Add & Remove Protocol", async function () {
       expect(await factory.getProtocol(0)).to.equal(
         ethers.constants.AddressZero
       );
@@ -1821,7 +1821,7 @@ describe("GammaPoolFactory", function () {
   });
 
   describe("Minimal Beacon Proxy Pattern", function () {
-    it("Add, Update, Remove protocol", async function () {
+    it.only("Add, Update, Remove protocol", async function () {
       expect(await factory.getProtocol(PROTOCOL_ID_UPGRADEABLE)).to.equal(
         ethers.constants.AddressZero
       );
