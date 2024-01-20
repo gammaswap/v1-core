@@ -38,8 +38,7 @@ contract TestGammaPoolFactory2 is AbstractGammaPoolFactory {
     function updateProtocol(uint16 _protocolId, address _newImpl) external override {
     }
 
-    function removeProtocol(uint16) external override {
-        protocol = address(0);
+    function lockProtocol(uint16) external override {
     }
 
     function getProtocol(uint16) external override view returns (address) {

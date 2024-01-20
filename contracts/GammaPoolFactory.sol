@@ -6,7 +6,7 @@ import "./rates/storage/AbstractRateParamsStore.sol";
 import "./libraries/AddressCalculator.sol";
 import "./libraries/GammaSwapLibrary.sol";
 import "./observer/AbstractLoanObserverStore.sol";
-import "./utils/MinimalBeacon.sol";
+import "./utils/LockableMinimalBeacon.sol";
 
 /// @title Factory contract to create more GammaPool contracts.
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
@@ -65,23 +65,27 @@ contract GammaPoolFactory is AbstractGammaPoolFactory, AbstractRateParamsStore, 
 
         getProtocol[_protocolId] = implementation; // store implementation
         if (_protocolId < 10000) {
-            getProtocolBeacon[_protocolId] = address(new MinimalBeacon(address(this), _protocolId));
+            getProtocolBeacon[_protocolId] = address(new LockableMinimalBeacon(address(this), _protocolId)); // only set once
         }
     }
 
     /// @dev See {IGammaPoolFactory-updateProtocol}
     function updateProtocol(uint16 _protocolId, address _newImplementation) external virtual override onlyOwner {
         isProtocolNotSet(_protocolId);
+        if(_protocolId >= 10000) revert NotUpgradable();
         if(IProtocol(_newImplementation).protocolId() == 0) revert ZeroProtocol();
         if(IProtocol(_newImplementation).protocolId() != _protocolId) revert ProtocolMismatch();
         if(getProtocol[_protocolId] == _newImplementation) revert ProtocolExists(); // protocolId already set with same implementation
-
+        if(LockableMinimalBeacon(getProtocolBeacon[_protocolId]).protocol()!= address(0)) revert ProtocolLocked();
         getProtocol[_protocolId] = _newImplementation;
     }
 
-    /// @dev See {IGammaPoolFactory-removeProtocol}
-    function removeProtocol(uint16 _protocolId) external virtual override onlyOwner {
-        getProtocol[_protocolId] = address(0);
+    /// @dev See {IGammaPoolFactory-lockProtocol}
+    function lockProtocol(uint16 _protocolId) external virtual override onlyOwner {
+        isProtocolNotSet(_protocolId);
+        if(_protocolId >= 10000) revert NotLockable();
+
+        LockableMinimalBeacon(getProtocolBeacon[_protocolId]).lock();
     }
 
     /// @dev See {IGammaPoolFactory-setIsProtocolRestricted}

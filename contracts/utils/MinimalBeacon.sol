@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+/// @title Minimal Beacon Contract
+/// @author Daniel D. Alcarraz (https://github.com/0xDanr)
+/// @dev Gets protocol implementation from GammaPoolFactory
+/// @dev Follows OpenZeppelin's Beacon implementation
 contract MinimalBeacon {
     address immutable public factory;
     uint16 immutable public protocolId;
@@ -10,7 +14,11 @@ contract MinimalBeacon {
         protocolId = _protocolId;
     }
 
-    function implementation() external view returns (address impl) {
+    function implementation() external virtual view returns (address) {
+        return _implementation();
+    }
+
+    function _implementation() internal view returns(address impl) {
         address _factory = factory;
         uint16 _protocolId = protocolId;
         assembly {
