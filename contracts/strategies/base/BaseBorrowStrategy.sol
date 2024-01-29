@@ -98,8 +98,10 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         // Irrelevant that lastCFMMInvariant and lastCFMMInvariant are overstated since their conversion rate did not change
         uint256 liquidityBorrowedExFee = convertLPToInvariant(lpTokens, lastCFMMInvariant, lastCFMMTotalSupply);
 
+        liquidity = _loan.liquidity;
+
         // Can't borrow less than minimum liquidity to avoid rounding issues
-        if (liquidityBorrowedExFee < minBorrow()) revert MinBorrow();
+        if (liquidity == 0 && liquidityBorrowedExFee < minBorrow()) revert MinBorrow();
 
         uint256 borrowedInvariant = s.BORROWED_INVARIANT;
 
@@ -133,7 +135,7 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         // Update loan's total liquidity debt and principal amounts
         uint256 initLiquidity = _loan.initLiquidity;
         _loan.px = updateLoanPrice(liquidityBorrowedExFee, getCurrentCFMMPrice(), initLiquidity, _loan.px);
-        liquidity = _loan.liquidity + liquidityBorrowed;
+        liquidity = liquidity + liquidityBorrowed;
         _loan.liquidity = uint128(liquidity);
         _loan.initLiquidity = uint128(initLiquidity + liquidityBorrowedExFee);
         _loan.lpTokens = _loan.lpTokens + lpTokens;
