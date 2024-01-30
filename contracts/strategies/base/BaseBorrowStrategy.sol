@@ -99,9 +99,10 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         uint256 liquidityBorrowedExFee = convertLPToInvariant(lpTokens, lastCFMMInvariant, lastCFMMTotalSupply);
 
         liquidity = _loan.liquidity;
+        uint256 initLiquidity = minBorrow(); // avoid second sload
 
         // Can't borrow less than minimum liquidity to avoid rounding issues
-        if (liquidity == 0 && liquidityBorrowedExFee < minBorrow()) revert MinBorrow();
+        if (liquidity == 0 && liquidityBorrowedExFee < initLiquidity) revert MinBorrow();
 
         uint256 borrowedInvariant = s.BORROWED_INVARIANT;
 
@@ -132,10 +133,12 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         // Add CFMM LP tokens borrowed (principal) plus origination fee to pool's total CFMM LP tokens borrowed including accrued interest
         s.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST + lpTokens + lpTokenOrigFee;
 
-        // Update loan's total liquidity debt and principal amounts
-        uint256 initLiquidity = _loan.initLiquidity;
-        _loan.px = updateLoanPrice(liquidityBorrowedExFee, getCurrentCFMMPrice(), initLiquidity, _loan.px);
         liquidity = liquidity + liquidityBorrowed;
+        if(liquidity < initLiquidity) revert MinBorrow();
+
+        // Update loan's total liquidity debt and principal amounts
+        initLiquidity = _loan.initLiquidity;
+        _loan.px = updateLoanPrice(liquidityBorrowedExFee, getCurrentCFMMPrice(), initLiquidity, _loan.px);
         _loan.liquidity = uint128(liquidity);
         _loan.initLiquidity = uint128(initLiquidity + liquidityBorrowedExFee);
         _loan.lpTokens = _loan.lpTokens + lpTokens;
