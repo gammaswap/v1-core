@@ -81,20 +81,9 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @return cfmmFeeIndex - index tracking accrued fees from CFMM since last GammaPool update
     ///
     /// CFMM Fee Index = 1 + CFMM Yield = (cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1)
-    ///
-    /// Deleveraged CFMM Fee Index = 1 + Deleveraged CFMM Yield
-    ///
-    /// Deleveraged CFMM Fee Index = 1 + [(cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1) - 1] * (cfmmInvariant0 / borrowedInvariant)
-    ///
-    /// Deleveraged CFMM Fee Index = [cfmmInvariant1 * cfmmTotalSupply0 + (borrowedInvariant - cfmmInvariant0) * cfmmTotalSupply1] / (borrowedInvariant * cfmmTotalSupply1)
     function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply) internal virtual view returns(uint256) {
         if(lastCFMMInvariant > 0 && lastCFMMTotalSupply > 0 && prevCFMMInvariant > 0 && prevCFMMTotalSupply > 0) {
-            uint256 prevInvariant = borrowedInvariant > prevCFMMInvariant ? borrowedInvariant : prevCFMMInvariant; // Deleverage CFMM Yield
-            uint256 denominator = prevInvariant * lastCFMMTotalSupply;
-            unchecked {
-                prevInvariant = prevInvariant - prevCFMMInvariant;
-            }
-            return (lastCFMMInvariant * prevCFMMTotalSupply + lastCFMMTotalSupply * prevInvariant) * 1e18 / denominator;
+            return lastCFMMInvariant * prevCFMMTotalSupply * 1e18 / (prevCFMMInvariant * lastCFMMTotalSupply);
         }
         return 1e18; // first update
     }
@@ -106,11 +95,11 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @return feeIndex - (1 + total fee yield) since last update
     function calcFeeIndex(uint256 lastCFMMFeeIndex, uint256 borrowRate, uint256 blockDiff) internal virtual view returns(uint256) {
         uint256 _blocksPerYear = blocksPerYear(); // Expected network blocks per year
-        uint256 adjBorrowRate = blockDiff * borrowRate / _blocksPerYear; // De-annualized borrow rate
+        uint256 adjBorrowRate = 1e18 + blockDiff * borrowRate / _blocksPerYear; // De-annualized borrow rate
         uint256 _maxTotalApy = 1e18 + (blockDiff * maxTotalApy()) / _blocksPerYear; // De-annualized APY cap
 
-        // Minimum of max de-annualized APY or CFMM fee yield + de-annualized borrow yield
-        return GSMath.min(_maxTotalApy, lastCFMMFeeIndex + adjBorrowRate);
+        // Minimum of max de-annualized APY or max of CFMM fee yield or de-annualized borrow yield
+        return GSMath.min(_maxTotalApy, GSMath.max(lastCFMMFeeIndex, adjBorrowRate));
     }
 
     /// @dev Calculate total interest rate charged by GammaPool since last update

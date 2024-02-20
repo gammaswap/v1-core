@@ -54,7 +54,7 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
             return (0, 0);
         }
         uint256 utilizationRateSquare = utilizationRate**2; // since utilizationRate is a fraction, this lowers its value in a non linear way
-        uint256 denominator = 1e36 - utilizationRateSquare + 1; // add 1 so that it never becomes 0
+        uint256 denominator = 1 + 1e36 - utilizationRateSquare; // add 1 so that it never becomes 0
         (uint64 _baseRate, uint80 _factor, uint80 _maxApy) = getRateModelParams(paramsStore, pool);
         borrowRate = GSMath.min(_baseRate + _factor * utilizationRateSquare / denominator, _maxApy); // division by an ever non linear decreasing denominator creates an exponential looking curve as util. rate increases
     }
