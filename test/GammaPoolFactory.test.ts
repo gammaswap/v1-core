@@ -886,8 +886,9 @@ describe("GammaPoolFactory", function () {
       expect(resp.origFee).to.equal(2);
       expect(resp.extSwapFee).to.equal(10);
       expect(resp.emaMultiplier).to.equal(10);
-      expect(resp.minUtilRate1).to.equal(85);
-      expect(resp.feeDivisor).to.equal(16384);
+      expect(resp.minUtilRate1).to.equal(90);
+      expect(resp.minUtilRate2).to.equal(85);
+      expect(resp.feeDivisor).to.equal(2048);
 
       let functionData = gammaPool.interface.encodeFunctionData(
         "setPoolParams",
@@ -2004,8 +2005,9 @@ describe("GammaPoolFactory", function () {
       expect(resp.origFee).to.equal(2);
       expect(resp.extSwapFee).to.equal(10);
       expect(resp.emaMultiplier).to.equal(10);
-      expect(resp.minUtilRate1).to.equal(85);
-      expect(resp.feeDivisor).to.equal(16384);
+      expect(resp.minUtilRate1).to.equal(90);
+      expect(resp.minUtilRate2).to.equal(85);
+      expect(resp.feeDivisor).to.equal(2048);
       const minBorrow = ethers.BigNumber.from(10).pow(18);
       expect(resp.minBorrow).to.equal(minBorrow);
 

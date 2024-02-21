@@ -914,6 +914,7 @@ describe("LongStrategy", function () {
           2,
           emaUtilRate,
           85,
+          65,
           16384,
           liquidityBorrowed.mul(96).div(10),
           borrowedInvariant,
@@ -939,6 +940,7 @@ describe("LongStrategy", function () {
           10,
           emaUtilRate,
           85,
+          65,
           16384,
           liquidityBorrowed,
           borrowedInvariant,
@@ -955,6 +957,7 @@ describe("LongStrategy", function () {
           10,
           emaUtilRate,
           85,
+          65,
           16384,
           liquidityBorrowed.mul(2),
           borrowedInvariant,
@@ -971,6 +974,7 @@ describe("LongStrategy", function () {
           10,
           emaUtilRate,
           85,
+          65,
           16384,
           liquidityBorrowed.mul(5),
           borrowedInvariant,
@@ -987,6 +991,7 @@ describe("LongStrategy", function () {
           10,
           emaUtilRate,
           85,
+          65,
           16384,
           liquidityBorrowed.mul(9),
           borrowedInvariant,
@@ -1003,6 +1008,7 @@ describe("LongStrategy", function () {
           2,
           emaUtilRate,
           85,
+          65,
           16384,
           liquidityBorrowed.mul(8),
           borrowedInvariant,
@@ -1019,6 +1025,7 @@ describe("LongStrategy", function () {
           2,
           emaUtilRate,
           85,
+          65,
           16384,
           liquidityBorrowed.mul(95).div(10),
           borrowedInvariant,
@@ -1035,6 +1042,7 @@ describe("LongStrategy", function () {
           2,
           emaUtilRate,
           85,
+          65,
           16384,
           liquidityBorrowed.mul(96).div(10),
           borrowedInvariant,
@@ -1060,6 +1068,7 @@ describe("LongStrategy", function () {
           2,
           emaUtilRate,
           85,
+          65,
           16384,
           liquidityBorrowed,
           borrowedInvariant,
@@ -1248,6 +1257,19 @@ describe("LongStrategy", function () {
 
     it("Open Loan with Origination Fee", async function () {
       strategy = strategy3;
+      await (
+        await strategy.testCalcOriginationFee(
+          2,
+          0,
+          85,
+          65,
+          16384,
+          0,
+          0,
+          0,
+          1000
+        )
+      ).wait();
       await (await strategy.setOrigFeeParams(10)).wait();
       const res1 = await (await strategy.createLoan()).wait();
       const tokenId = res1.events[0].args.tokenId;
