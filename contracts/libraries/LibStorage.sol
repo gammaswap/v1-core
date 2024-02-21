@@ -171,9 +171,9 @@ library LibStorage {
         self.extSwapFee = 10;
 
         self.emaMultiplier = 10; // ema smoothing factor is 10/1000 = 1%
-        self.minUtilRate1 = 85; // min util rate 1 is 85%
-        self.minUtilRate2 = 65; // min util rate 2 is 65%
-        self.feeDivisor = 16384; // max util rate is 99% => 2^(99 - minUtilRate1)
+        self.minUtilRate1 = 90; // min util rate 1 is 90%
+        self.minUtilRate2 = 85; // min util rate 2 is 85%
+        self.feeDivisor = 2048; // max util rate is 99% => 2^(99 - minUtilRate1)
 
         self.TOKEN_BALANCE = new uint128[](_tokens.length);
         self.CFMM_RESERVES = new uint128[](_tokens.length);

@@ -887,7 +887,7 @@ describe("BaseStrategy", function () {
       // trades happen
       const cfmmInvariant = await strategy.invariant();
       await (
-        await strategy.setInvariant(cfmmInvariant.add(cfmmInvariant.div(1000)))
+        await strategy.setInvariant(cfmmInvariant.add(cfmmInvariant.div(10000)))
       ).wait();
 
       // time passes by
