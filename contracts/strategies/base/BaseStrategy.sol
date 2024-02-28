@@ -93,9 +93,10 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         if(lastCFMMInvariant > 0 && lastCFMMTotalSupply > 0 && prevCFMMInvariant > 0 && prevCFMMTotalSupply > 0) {
             uint256 cfmmFeeIndex = lastCFMMInvariant * prevCFMMTotalSupply * 1e18 / (prevCFMMInvariant * lastCFMMTotalSupply);
             if(cfmmFeeIndex > 1e18 && borrowedInvariant > 5 * prevCFMMInvariant) {
-                cfmmFeeIndex = cfmmFeeIndex - 1e18;
-                cfmmFeeIndex = cfmmFeeIndex * prevCFMMInvariant * 5 / (prevCFMMInvariant + borrowedInvariant); // cap leverage at 5x
-                cfmmFeeIndex = cfmmFeeIndex + 1e18;
+                unchecked {
+                    cfmmFeeIndex = cfmmFeeIndex - 1e18;
+                }
+                cfmmFeeIndex = 1e18 + cfmmFeeIndex * prevCFMMInvariant * 5 / (prevCFMMInvariant + borrowedInvariant); // cap leverage at 5x
             }
             return cfmmFeeIndex;
         }
