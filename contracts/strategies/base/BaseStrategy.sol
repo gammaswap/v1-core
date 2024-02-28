@@ -72,7 +72,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         s.CFMM_RESERVES = getReserves(cfmm);
     }
 
-    /// @dev Calculate fees accrued from fees in CFMM
+    /// @dev Calculate fees accrued from fees in CFMM, and if leveraged, cap the leveraged yield at 5x
     /// @param borrowedInvariant - liquidity invariant borrowed from CFMM
     /// @param lastCFMMInvariant - current liquidity invariant in CFMM
     /// @param lastCFMMTotalSupply - current CFMM LP token supply
@@ -81,11 +81,36 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @return cfmmFeeIndex - index tracking accrued fees from CFMM since last GammaPool update
     ///
     /// CFMM Fee Index = 1 + CFMM Yield = (cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1)
+    ///
+    /// Leverage Multiplier = (cfmmInvariant0 + borrowedInvariant) / cfmmInvariant0
+    ///
+    /// Deleveraged CFMM Yield = CFMM Yield / Leverage Multiplier
+    ///
+    /// Releveraged CFMM Yield = Deleveraged CFMM Yield * 5
+    ///
+    /// Releveraged CFMM Fee Index = 1 + Releveraged CFMM Yield
     function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply) internal virtual view returns(uint256) {
         if(lastCFMMInvariant > 0 && lastCFMMTotalSupply > 0 && prevCFMMInvariant > 0 && prevCFMMTotalSupply > 0) {
-            return lastCFMMInvariant * prevCFMMTotalSupply * 1e18 / (prevCFMMInvariant * lastCFMMTotalSupply);
+            uint256 cfmmFeeIndex = lastCFMMInvariant * prevCFMMTotalSupply * 1e18 / (prevCFMMInvariant * lastCFMMTotalSupply);
+            if(cfmmFeeIndex > 1e18 && borrowedInvariant > 5 * prevCFMMInvariant) {
+                unchecked {
+                    cfmmFeeIndex = cfmmFeeIndex - 1e18;
+                }
+                cfmmFeeIndex = 1e18 + cfmmFeeIndex * prevCFMMInvariant * 5 / (prevCFMMInvariant + borrowedInvariant); // cap leverage at 5x
+            }
+            return cfmmFeeIndex;
         }
         return 1e18; // first update
+    }
+
+    /// @dev Add spread to lastCFMMFeeIndex based on borrowRate. If such logic is defined
+    /// @notice borrowRate depends on utilization rate and BaseStrategy inherits AbstractRateModel
+    /// @notice Therefore, utilization rate information is included in borrow rate to calculate spread
+    /// @param lastCFMMFeeIndex - percentage of fees accrued in CFMM since last update to GammaPool
+    /// @param borrowRate - annual borrow rate calculated from utilization rate of GammaPool
+    /// @return cfmmFeeIndex - cfmmFeeIndex + spread
+    function addSpread(uint256 lastCFMMFeeIndex, uint256 borrowRate) internal virtual view returns(uint256) {
+        return lastCFMMFeeIndex;
     }
 
     /// @dev Calculate total interest rate charged by GammaPool since last update
@@ -98,8 +123,8 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         uint256 adjBorrowRate = 1e18 + blockDiff * borrowRate / _blocksPerYear; // De-annualized borrow rate
         uint256 _maxTotalApy = 1e18 + (blockDiff * maxTotalApy()) / _blocksPerYear; // De-annualized APY cap
 
-        // Minimum of max de-annualized APY or max of CFMM fee yield or de-annualized borrow yield
-        return GSMath.min(_maxTotalApy, GSMath.max(lastCFMMFeeIndex, adjBorrowRate));
+        // Minimum of max de-annualized Max APY or max of CFMM fee yield + spread or de-annualized borrow yield
+        return GSMath.min(_maxTotalApy, GSMath.max(addSpread(lastCFMMFeeIndex, borrowRate), adjBorrowRate));
     }
 
     /// @dev Calculate total interest rate charged by GammaPool since last update
