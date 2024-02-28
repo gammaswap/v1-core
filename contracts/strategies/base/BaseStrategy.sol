@@ -102,6 +102,16 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         return 1e18; // first update
     }
 
+    /// @dev Add spread to lastCFMMFeeIndex based on borrowRate. If such logic is defined
+    /// @notice borrowRate depends on utilization rate and BaseStrategy inherits AbstractRateModel
+    /// @notice Therefore, utilization rate information is included in borrow rate to calculate spread
+    /// @param lastCFMMFeeIndex - percentage of fees accrued in CFMM since last update to GammaPool
+    /// @param borrowRate - annual borrow rate calculated from utilization rate of GammaPool
+    /// @return cfmmFeeIndex - cfmmFeeIndex + spread
+    function addSpread(uint256 lastCFMMFeeIndex, uint256 borrowRate) internal virtual view returns(uint256) {
+        return lastCFMMFeeIndex;
+    }
+
     /// @dev Calculate total interest rate charged by GammaPool since last update
     /// @param lastCFMMFeeIndex - percentage of fees accrued in CFMM since last update to GammaPool
     /// @param borrowRate - annual borrow rate calculated from utilization rate of GammaPool
@@ -112,8 +122,8 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         uint256 adjBorrowRate = 1e18 + blockDiff * borrowRate / _blocksPerYear; // De-annualized borrow rate
         uint256 _maxTotalApy = 1e18 + (blockDiff * maxTotalApy()) / _blocksPerYear; // De-annualized APY cap
 
-        // Minimum of max de-annualized APY or max of CFMM fee yield or de-annualized borrow yield
-        return GSMath.min(_maxTotalApy, GSMath.max(lastCFMMFeeIndex, adjBorrowRate));
+        // Minimum of max de-annualized Max APY or max of CFMM fee yield + spread or de-annualized borrow yield
+        return GSMath.min(_maxTotalApy, GSMath.max(addSpread(lastCFMMFeeIndex, borrowRate), adjBorrowRate));
     }
 
     /// @dev Calculate total interest rate charged by GammaPool since last update
