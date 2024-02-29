@@ -27,4 +27,13 @@ interface ILinearKinkedRateModel is IRateModel {
     /// @dev Slope2 is expected to be greater than slope1
     /// @return slope2 - rate of increase of interest rate when utilization rate is above target rate
     function slope2() external view returns(uint64);
+
+    /// @dev Get interest rate model parameters
+    /// @param paramsStore - address storing rate params
+    /// @param pool - address of contract to get parameters for
+    /// @return baseRate - baseRate parameter of model
+    /// @return optimalUtilRate - target utilization rate of model
+    /// @return slope1 - factor parameter of model
+    /// @return slope2 - maxApy parameter of model
+    function getRateModelParams(address paramsStore, address pool) external view returns(uint64, uint64, uint64, uint64);
 }
