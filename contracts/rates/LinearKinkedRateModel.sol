@@ -58,13 +58,16 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
         if(utilizationRate == 0) { // if utilization rate is zero, the borrow rate is zero
             return (0, 0);
         }
-        if(utilizationRate <= optimalUtilRate) { // if pool funds are underutilized use slope1
-            uint256 variableRate = (utilizationRate * slope1) / optimalUtilRate;
-            borrowRate = baseRate + variableRate;
-        } else { // if pool funds are overutilized use slope2
-            uint256 utilizationRateDiff = utilizationRate - optimalUtilRate;
-            uint256 variableRate = (utilizationRateDiff * slope2) / (1e18 - optimalUtilRate);
-            borrowRate = baseRate + slope1 + variableRate;
+        (uint64 _baseRate, uint64 _optimalUtilRate, uint64 _slope1, uint64 _slope2) = getRateModelParams(paramsStore, pool);
+        unchecked {
+            if(utilizationRate <= _optimalUtilRate) { // if pool funds are underutilized use slope1
+                uint256 variableRate = (utilizationRate * _slope1) / _optimalUtilRate;
+                borrowRate = _baseRate + variableRate;
+            } else { // if pool funds are overutilized use slope2
+                uint256 utilizationRateDiff = utilizationRate - _optimalUtilRate;
+                uint256 variableRate = (utilizationRateDiff * _slope2) / (1e18 - _optimalUtilRate);
+                borrowRate = _baseRate + _slope1 + variableRate;
+            }
         }
     }
 
@@ -75,7 +78,7 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
     /// @return optimalUtilRate - target utilization rate of model
     /// @return slope1 - factor parameter of model
     /// @return slope2 - maxApy parameter of model
-    function getRateModelParams(address paramsStore, address pool) external view returns(uint64, uint64, uint64, uint64) {
+    function getRateModelParams(address paramsStore, address pool) public view returns(uint64, uint64, uint64, uint64) {
         IRateParamsStore.RateParams memory rateParams = IRateParamsStore(paramsStore).getRateParams(pool);
         if(!rateParams.active) {
             return (baseRate, optimalUtilRate, slope1, slope2);

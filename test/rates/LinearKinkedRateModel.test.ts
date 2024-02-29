@@ -5,11 +5,14 @@ import { BigNumber } from "ethers";
 
 describe("LinearKinkedRateModel", function () {
   let RateModel: any;
+  let TestRateParamsStore: any;
   let rateModel: any;
+  let rateParamsStore: any;
   let baseRate: any;
   let optimalUtilRate: any;
   let slope1: any;
   let slope2: any;
+  let owner: any;
   let ONE: any;
 
   // `beforeEach` will run before each test, re-deploying the contract every
@@ -17,6 +20,11 @@ describe("LinearKinkedRateModel", function () {
   beforeEach(async function () {
     // Get the ContractFactory and Signers here.
     RateModel = await ethers.getContractFactory("TestLinearKinkedRateModel");
+    TestRateParamsStore = await ethers.getContractFactory(
+      "TestRateParamsStore"
+    );
+
+    [owner] = await ethers.getSigners();
 
     ONE = BigNumber.from(10).pow(18);
     baseRate = ONE.div(100);
@@ -30,6 +38,8 @@ describe("LinearKinkedRateModel", function () {
       slope1,
       slope2
     );
+    rateParamsStore = await TestRateParamsStore.deploy(owner.address);
+    await (await rateModel.setRateParamsStore(rateParamsStore.address)).wait();
   });
 
   function calcBorrowRate(
