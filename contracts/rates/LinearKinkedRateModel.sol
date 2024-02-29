@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.4;
 
+import "../interfaces/rates/storage/IRateParamsStore.sol";
 import "../interfaces/rates/ILinearKinkedRateModel.sol";
 import "./AbstractRateModel.sol";
 
@@ -10,8 +11,22 @@ import "./AbstractRateModel.sol";
 /// @dev This contract is abstract and therefore supposed to be inherited by BaseStrategy. Modeled after AAVE's rate model
 abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateModel {
 
-    /// @dev Error thrown when optimal util rate initialized to greater than 1e18
+    /// @dev Error thrown when optimal util rate set to 0 or greater or equal to 1e18
     error OptimalUtilRate();
+    /// @dev Error thrown when slope2 < slope1
+    error Slope2LtSlope1();
+
+    /// @dev struct containing model rate parameters, used in validation
+    struct ModelRateParams {
+        /// @dev baseRate - minimum rate charged to all loans
+        uint64 baseRate;
+        /// @dev optimalUtilRate - target utilization rate of model
+        uint64 optimalUtilRate;
+        /// @dev slope1 - factor parameter of model
+        uint64 slope1;
+        /// @dev slope2 - maxApy parameter of model
+        uint64 slope2;
+    }
 
     /// @dev See {ILinearKinkedRateModel-baseRate}.
     uint64 immutable public override baseRate;
@@ -28,6 +43,7 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
     /// @dev Initializes the contract by setting `_baseRate`, `_optimalUtilRate`, `_slope1`, and `_slope2`. the target rate (`_optimalUtilRate`) cannot be greater than 1e18
     constructor(uint64 _baseRate, uint64 _optimalUtilRate, uint64 _slope1, uint64 _slope2) {
         if(!(_optimalUtilRate > 0 && _optimalUtilRate < 1e18)) revert OptimalUtilRate();
+        if(_slope2 < _slope1) revert Slope2LtSlope1();
 
         baseRate = _baseRate;
         optimalUtilRate = _optimalUtilRate;
@@ -52,8 +68,38 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
         }
     }
 
+    /// @dev Get interest rate model parameters
+    /// @param paramsStore - address storing rate params
+    /// @param pool - address of contract to get parameters for
+    /// @return baseRate - baseRate parameter of model
+    /// @return optimalUtilRate - target utilization rate of model
+    /// @return slope1 - factor parameter of model
+    /// @return slope2 - maxApy parameter of model
+    function getRateModelParams(address paramsStore, address pool) external view returns(uint64, uint64, uint64, uint64) {
+        IRateParamsStore.RateParams memory rateParams = IRateParamsStore(paramsStore).getRateParams(pool);
+        if(!rateParams.active) {
+            return (baseRate, optimalUtilRate, slope1, slope2);
+        }
+        ModelRateParams memory params = abi.decode(rateParams.data, (ModelRateParams));
+        return (params.baseRate, params.optimalUtilRate, params.slope1, params.slope2);
+    }
+
     /// @dev See {IRateModel-validateParameters}.
-    function validateParameters(bytes calldata _data) external override view returns(bool) {
+    function validateParameters(bytes calldata _data) external override virtual view returns(bool) {
+        ModelRateParams memory params = abi.decode(_data, (ModelRateParams));
+        _validateParameters(params.baseRate, params.optimalUtilRate, params.slope1, params.slope2);
+        return true;
+    }
+
+    /// @dev Validate interest rate model parameters
+    /// @param _baseRate - baseRate parameter of model
+    /// @param _optimalUtilRate - target utilization rate of model
+    /// @param _slope1 - factor parameter of model
+    /// @param _slope2 - maxApy parameter of model
+    /// @return bool - return true if model passed validation or error if it failed
+    function _validateParameters(uint64 _baseRate, uint64 _optimalUtilRate, uint64 _slope1, uint64 _slope2) internal virtual view returns(bool) {
+        if(!(_optimalUtilRate > 0 && _optimalUtilRate < 1e18)) revert OptimalUtilRate();
+        if(_slope2 < _slope1) revert Slope2LtSlope1();
         return true;
     }
 }
