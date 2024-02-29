@@ -54,18 +54,18 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
     /// @notice formula is as follows: max{ baseRate + (utilRate * slope1) / optimalRate, baseRate + slope1 + slope2 * (utilRate - optimalRate) / (1 - optimalUtilRate) }
     /// @dev See {AbstractRateModel-calcBorrowRate}.
     function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual override view returns(uint256 borrowRate, uint256 utilizationRate) {
-        utilizationRate = calcUtilizationRate(lpInvariant, borrowedInvariant);
+        utilizationRate = calcUtilizationRate(lpInvariant, borrowedInvariant); // at most 1e18 < max(uint64)
         if(utilizationRate == 0) { // if utilization rate is zero, the borrow rate is zero
             return (0, 0);
         }
         (uint64 _baseRate, uint64 _optimalUtilRate, uint64 _slope1, uint64 _slope2) = getRateModelParams(paramsStore, pool);
         unchecked {
             if(utilizationRate <= _optimalUtilRate) { // if pool funds are underutilized use slope1
-                uint256 variableRate = (utilizationRate * _slope1) / _optimalUtilRate;
+                uint256 variableRate = (utilizationRate * _slope1) / _optimalUtilRate; // at most uint128
                 borrowRate = _baseRate + variableRate;
             } else { // if pool funds are overutilized use slope2
-                uint256 utilizationRateDiff = utilizationRate - _optimalUtilRate;
-                uint256 variableRate = (utilizationRateDiff * _slope2) / (1e18 - _optimalUtilRate);
+                uint256 utilizationRateDiff = utilizationRate - _optimalUtilRate; // at most 1e18 - 1 < max(uint64)
+                uint256 variableRate = (utilizationRateDiff * _slope2) / (1e18 - _optimalUtilRate); // at most uint128
                 borrowRate = _baseRate + _slope1 + variableRate;
             }
         }
