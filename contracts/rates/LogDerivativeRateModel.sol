@@ -92,4 +92,9 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
         if(_factor > 1e19 || _factor == 0) revert Factor(); // revert if factor is greater than 10 or is zero
         return true;
     }
+
+    /// @dev See {AbstractRateModel-_calcMaxLeverage}
+    function _calcMaxLeverage(address paramsStore, address pool) internal override virtual view returns(uint256) {
+        return 5000;
+    }
 }

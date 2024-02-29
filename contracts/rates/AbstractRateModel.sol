@@ -31,6 +31,12 @@ abstract contract AbstractRateModel is IRateModel {
     /// @return utilizationRate - utilization rate used to calculate the borrow rate
     function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual view returns(uint256, uint256);
 
+    /// @notice Calculates cfmm yield max leverage multiplier
+    /// @param paramsStore - address of rate params store, to get overriding parameter values
+    /// @param pool - address of pool asking for rate calculation
+    /// @return maxLeverage - maxLeverage number x 1000, e.g. 5000 = 5x
+    function _calcMaxLeverage(address paramsStore, address pool) internal virtual view returns(uint256);
+
     /// @dev See {IRateModel-rateParamsStore}
     function rateParamsStore() public override virtual view returns(address) {
         return _rateParamsStore();

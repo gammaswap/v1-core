@@ -188,6 +188,10 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
         return (0,0);
     }
 
+    function _calcMaxLeverage(address paramsStore, address pool) internal virtual override view returns(uint256) {
+        return 5000;
+    }
+
     //BaseStrategy functions
     function calcCFMMFeeIndex(uint256, uint256, uint256, uint256, uint256) internal override virtual view returns(uint256) {
         return 0;

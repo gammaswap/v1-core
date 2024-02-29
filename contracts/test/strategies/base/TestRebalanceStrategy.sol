@@ -118,6 +118,10 @@ contract TestRebalanceStrategy is BorrowStrategy, RebalanceStrategy {
         return (borrowRate,0);
     }
 
+    function _calcMaxLeverage(address paramsStore, address pool) internal virtual override view returns(uint256) {
+        return 5000;
+    }
+
     //LongGamma
     function beforeRepay(LibStorage.Loan storage _loan, uint256[] memory amounts) internal virtual override {
         _loan.tokensHeld[0] -= uint128(amounts[0]);

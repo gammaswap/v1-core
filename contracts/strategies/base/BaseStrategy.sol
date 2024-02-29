@@ -92,7 +92,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply) internal virtual view returns(uint256) {
         if(lastCFMMInvariant > 0 && lastCFMMTotalSupply > 0 && prevCFMMInvariant > 0 && prevCFMMTotalSupply > 0) {
             uint256 cfmmFeeIndex = lastCFMMInvariant * prevCFMMTotalSupply * 1e18 / (prevCFMMInvariant * lastCFMMTotalSupply);
-            uint256 maxLeverage = getMaxCFMMFeeLeverage();
+            uint256 maxLeverage = 5;
             if(cfmmFeeIndex > 1e18 && borrowedInvariant > maxLeverage * prevCFMMInvariant) { // exceeds max cfmm yield leverage
                 unchecked {
                     cfmmFeeIndex = cfmmFeeIndex - 1e18;
@@ -112,11 +112,6 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @return cfmmFeeIndex - cfmmFeeIndex + spread
     function addSpread(uint256 lastCFMMFeeIndex, uint256 borrowRate) internal virtual view returns(uint256) {
         return lastCFMMFeeIndex;
-    }
-
-    /// @return maxCFMMLeverage - max leverage of CFMM yield
-    function getMaxCFMMFeeLeverage() internal virtual view returns(uint256) {
-        return 5;
     }
 
     /// @dev Calculate total interest rate charged by GammaPool since last update

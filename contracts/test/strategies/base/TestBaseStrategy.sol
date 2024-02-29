@@ -180,6 +180,10 @@ contract TestBaseStrategy is BaseStrategy {
         return (borrowRate, 1e18/2);
     }
 
+    function _calcMaxLeverage(address paramsStore, address pool) internal virtual override view returns(uint256) {
+        return 5000;
+    }
+
     function getReserves() public virtual view returns(uint128[] memory) {
         return s.CFMM_RESERVES;
     }

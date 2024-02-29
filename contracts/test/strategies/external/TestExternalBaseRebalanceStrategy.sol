@@ -36,6 +36,10 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
         return 8000;
     }
 
+    function _calcMaxLeverage(address paramsStore, address pool) internal virtual override view returns(uint256) {
+        return 5000;
+    }
+
     function minPay() internal view virtual override returns(uint256) {
         return 1e3;
     }

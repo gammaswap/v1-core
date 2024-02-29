@@ -190,4 +190,8 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         address _cfmm = abi.decode(data, (address));
         return uint128(TestCFMM(_cfmm).invariant());
     }
+
+    function _calcMaxLeverage(address paramsStore, address pool) internal virtual override view returns(uint256) {
+        return 5000;
+    }
 }

@@ -105,4 +105,10 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
         if(_slope2 < _slope1) revert Slope2LtSlope1();
         return true;
     }
+
+    /// @dev See {AbstractRateModel-_calcMaxLeverage}
+    function _calcMaxLeverage(address paramsStore, address pool) internal override virtual view returns(uint256) {
+        (,uint64 _optimalUtilRate,,) = getRateModelParams(paramsStore, pool);
+        return 1e21 / (1e18 - _optimalUtilRate);
+    }
 }
