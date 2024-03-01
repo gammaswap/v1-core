@@ -78,16 +78,16 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param lastCFMMTotalSupply - current CFMM LP token supply
     /// @param prevCFMMInvariant - liquidity invariant in CFMM in previous GammaPool update
     /// @param prevCFMMTotalSupply - CFMM LP token supply in previous GammaPool update
-    /// @param maxCFMMFeeLeverage - max leverage of CFMM yield
+    /// @param maxCFMMFeeLeverage - max leverage of CFMM yield with 3 decimals. E.g. 5000 = 5
     /// @return cfmmFeeIndex - index tracking accrued fees from CFMM since last GammaPool update
     ///
     /// CFMM Fee Index = 1 + CFMM Yield = (cfmmInvariant1 / cfmmInvariant0) * (cfmmTotalSupply0 / cfmmTotalSupply1)
     ///
     /// Leverage Multiplier = (cfmmInvariant0 + borrowedInvariant) / cfmmInvariant0
     ///
-    /// Deleveraged CFMM Yield = CFMM Yield / Leverage Multiplier
+    /// Deleveraged CFMM Yield = CFMM Yield / Leverage Multiplier = CFMM Yield * prevCFMMInvariant / (prevCFMMInvariant + borrowedInvariant)
     ///
-    /// Releveraged CFMM Yield = Deleveraged CFMM Yield * Max CFMM Yield Leverage
+    /// Releveraged CFMM Yield = Deleveraged CFMM Yield * Max CFMM Yield Leverage = Deleveraged CFMM Yield * maxCFMMFeeLeverage / 1000
     ///
     /// Releveraged CFMM Fee Index = 1 + Releveraged CFMM Yield
     function calcCFMMFeeIndex(uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 maxCFMMFeeLeverage) internal virtual view returns(uint256) {
