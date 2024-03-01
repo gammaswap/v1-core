@@ -45,7 +45,7 @@ arbitrum does not support push0 opcode (shanghai evm).
 
 ## Publishing NPM Packages
 
-To publish an npm package follow the following steps
+To publish an npm package follow the following steps 
 
 1. Bump the package.json version to the next level (either major, minor, or patch version)
 2. commit to the main branch adding 'publish package' in the comment section of the commit (e.g. when merging a pull request)
