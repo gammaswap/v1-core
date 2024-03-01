@@ -111,8 +111,11 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param spread - spread to add to cfmmFeeIndex
     /// @return cfmmFeeIndex - cfmmFeeIndex + spread
     function addSpread(uint256 lastCFMMFeeIndex, uint256 spread) internal virtual view returns(uint256) {
-        if(lastCFMMFeeIndex > 1e18) {
-            return (lastCFMMFeeIndex - 1e18) * spread / 1e18 + 1e18;
+        if(lastCFMMFeeIndex > 1e18 && spread > 1e18) {
+            unchecked {
+                lastCFMMFeeIndex = lastCFMMFeeIndex - 1e18;
+            }
+            return lastCFMMFeeIndex * spread / 1e18 + 1e18;
         }
         return lastCFMMFeeIndex;
     }
