@@ -123,12 +123,8 @@ contract TestBorrowStrategy is BorrowStrategy {
         borrowRate = _borrowRate;
     }
 
-    function calcBorrowRate(uint256, uint256, address, address) public virtual override view returns(uint256, uint256) {
-        return (borrowRate,0);
-    }
-
-    function _calcMaxLeverage(address paramsStore, address pool) internal virtual override view returns(uint256) {
-        return 5000;
+    function calcBorrowRate(uint256, uint256, address, address) public virtual override view returns(uint256, uint256, uint256, uint256) {
+        return (borrowRate,0,5000,1e18);
     }
 
     //LongGamma

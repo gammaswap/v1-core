@@ -53,12 +53,13 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
 
     /// @notice formula is as follows: max{ baseRate + (utilRate * slope1) / optimalRate, baseRate + slope1 + slope2 * (utilRate - optimalRate) / (1 - optimalUtilRate) }
     /// @dev See {AbstractRateModel-calcBorrowRate}.
-    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual override view returns(uint256 borrowRate, uint256 utilizationRate) {
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual override view returns(uint256 borrowRate, uint256 utilizationRate, uint256 maxLeverage, uint256 spread) {
         utilizationRate = calcUtilizationRate(lpInvariant, borrowedInvariant); // at most 1e18 < max(uint64)
-        if(utilizationRate == 0) { // if utilization rate is zero, the borrow rate is zero
-            return (0, 0);
-        }
         (uint64 _baseRate, uint64 _optimalUtilRate, uint64 _slope1, uint64 _slope2) = getRateModelParams(paramsStore, pool);
+        maxLeverage = _calcMaxLeverage(_optimalUtilRate);
+        if(utilizationRate == 0) { // if utilization rate is zero, the borrow rate is zero
+            return (0, 0, maxLeverage, 1e18);
+        }
         unchecked {
             if(utilizationRate <= _optimalUtilRate) { // if pool funds are underutilized use slope1
                 uint256 variableRate = (utilizationRate * _slope1) / _optimalUtilRate; // at most uint128
@@ -68,7 +69,18 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
                 uint256 variableRate = (utilizationRateDiff * _slope2) / (1e18 - _optimalUtilRate); // at most uint128
                 borrowRate = _baseRate + _slope1 + variableRate;
             }
+            spread = _calcSpread(borrowRate);
         }
+    }
+
+    /// @dev return max leverage based on optimal utilization rate times 1000 (e.g. 1000 / (1 - optimalRate)
+    function _calcMaxLeverage(uint256 _optimalUtilRate) internal virtual view returns(uint256) {
+        return 1e21 / (1e18 - _optimalUtilRate);
+    }
+
+    /// @dev return spread to add to the CFMMFeeIndex as the borrow rate * 10
+    function _calcSpread(uint256 borrowRate) internal virtual view returns(uint256) {
+        return 1e18 + borrowRate * 10;
     }
 
     /// @dev Get interest rate model parameters
@@ -104,11 +116,5 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
         if(!(_optimalUtilRate > 0 && _optimalUtilRate < 1e18)) revert OptimalUtilRate();
         if(_slope2 < _slope1) revert Slope2LtSlope1();
         return true;
-    }
-
-    /// @dev See {AbstractRateModel-_calcMaxLeverage}
-    function _calcMaxLeverage(address paramsStore, address pool) internal override virtual view returns(uint256) {
-        (,uint64 _optimalUtilRate,,) = getRateModelParams(paramsStore, pool);
-        return 1e21 / (1e18 - _optimalUtilRate);
     }
 }

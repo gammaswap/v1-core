@@ -132,13 +132,13 @@ contract TestBaseStrategy is BaseStrategy {
     }
 
     function testUpdateCFMMIndex() public virtual {
-        (uint256 lastCFMMFeeIndex,,) = updateCFMMIndex(s.BORROWED_INVARIANT);
+        (uint256 lastCFMMFeeIndex,,) = updateCFMMIndex(s.BORROWED_INVARIANT, 5000);
         _lastCFMMFeeIndex = uint64(lastCFMMFeeIndex);
     }
 
     function testUpdateFeeIndex() public virtual {
-        (uint256 _borrowRate,) = calcBorrowRate(s.LP_INVARIANT, s.BORROWED_INVARIANT, s.factory, address(this));
-        _lastFeeIndex = uint80(calcFeeIndex(_lastCFMMFeeIndex, _borrowRate, block.number - s.LAST_BLOCK_NUMBER));
+        (uint256 _borrowRate,,,uint256 spread) = calcBorrowRate(s.LP_INVARIANT, s.BORROWED_INVARIANT, s.factory, address(this));
+        _lastFeeIndex = uint80(calcFeeIndex(_lastCFMMFeeIndex, _borrowRate, block.number - s.LAST_BLOCK_NUMBER, spread));
     }
 
     function testUpdateStore() public virtual {
@@ -176,12 +176,8 @@ contract TestBaseStrategy is BaseStrategy {
         return s.balanceOf[account];
     }
 
-    function calcBorrowRate(uint256, uint256, address, address) public virtual override view returns(uint256, uint256) {
-        return (borrowRate, 1e18/2);
-    }
-
-    function _calcMaxLeverage(address paramsStore, address pool) internal virtual override view returns(uint256) {
-        return 5000;
+    function calcBorrowRate(uint256, uint256, address, address) public virtual override view returns(uint256, uint256, uint256, uint256) {
+        return (borrowRate, 1e18/2, 5000, 1e18);
     }
 
     function getReserves() public virtual view returns(uint128[] memory) {

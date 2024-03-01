@@ -780,7 +780,9 @@ describe("ShortStrategy", function () {
           params0.prevCFMMInvariant,
           params0.prevCFMMTotalSupply,
           params0.lastBlockNum,
-          params0.lastCFMMFeeIndex
+          params0.lastCFMMFeeIndex,
+          borrowRate.maxCFMMFeeLeverage,
+          borrowRate.spread
         );
 
         const totalAssets0 = await strategy.totalAssets(
@@ -813,7 +815,9 @@ describe("ShortStrategy", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.add(1),
-          params1.lastCFMMFeeIndex
+          params1.lastCFMMFeeIndex,
+          borrowRate1.maxCFMMFeeLeverage,
+          borrowRate1.spread
         );
         const totalAssets1 = await strategy.totalAssets(
           params1.borrowedInvariant,
@@ -927,7 +931,9 @@ describe("ShortStrategy", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(2),
-          params1.lastCFMMFeeIndex
+          params1.lastCFMMFeeIndex,
+          borrowRate.maxCFMMFeeLeverage,
+          borrowRate.spread
         );
 
         const currTotalAssets = await strategy.totalAssets(
@@ -1343,7 +1349,9 @@ describe("ShortStrategy", function () {
           params1.prevCFMMInvariant,
           params1.prevCFMMTotalSupply,
           params1.lastBlockNum.sub(1),
-          params1.lastCFMMFeeIndex
+          params1.lastCFMMFeeIndex,
+          borrowRate.maxCFMMFeeLeverage,
+          borrowRate.spread
         );
 
         const currTotalAssets = await strategy.totalAssets(

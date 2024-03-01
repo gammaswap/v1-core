@@ -48,15 +48,27 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
 
     /// @notice formula is as follows: max{ baseRate + factor * (utilRate^2)/(1 - utilRate^2), maxApy }
     /// @dev See {AbstractRateModel-calcBorrowRate}.
-    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual override view returns(uint256 borrowRate, uint256 utilizationRate) {
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual override view returns(uint256 borrowRate, uint256 utilizationRate, uint256 maxLeverage, uint256 spread) {
         utilizationRate = calcUtilizationRate(lpInvariant, borrowedInvariant);
+        maxLeverage = _calcMaxLeverage();
         if(utilizationRate == 0) { // if utilization rate is zero, the borrow rate is zero
-            return (0, 0);
+            return (0, 0, maxLeverage, 1e18);
         }
         uint256 utilizationRateSquare = utilizationRate**2; // since utilizationRate is a fraction, this lowers its value in a non linear way
         uint256 denominator = 1 + 1e36 - utilizationRateSquare; // add 1 so that it never becomes 0
         (uint64 _baseRate, uint80 _factor, uint80 _maxApy) = getRateModelParams(paramsStore, pool);
         borrowRate = GSMath.min(_baseRate + _factor * utilizationRateSquare / denominator, _maxApy); // division by an ever non linear decreasing denominator creates an exponential looking curve as util. rate increases
+        spread = _calcSpread();
+    }
+
+    /// @dev max leverage hardcoded at 5x
+    function _calcMaxLeverage() internal virtual view returns(uint256) {
+        return 5000;
+    }
+
+    /// @dev spread is always 0%
+    function _calcSpread() internal virtual view returns(uint256) {
+        return 1e18;
     }
 
     /// @dev Get parameters for itnerest rate model
@@ -91,10 +103,5 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
         if(_baseRate > 1e18 || _baseRate == 0) revert BaseRate(); // revert if base rate is greater than 100% or is zero
         if(_factor > 1e19 || _factor == 0) revert Factor(); // revert if factor is greater than 10 or is zero
         return true;
-    }
-
-    /// @dev See {AbstractRateModel-_calcMaxLeverage}
-    function _calcMaxLeverage(address paramsStore, address pool) internal override virtual view returns(uint256) {
-        return 5000;
     }
 }

@@ -145,10 +145,13 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         return convertToAssets(shares);
     }
 
-    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual override view returns(uint256 borrowRate, uint256 utilizationRate) {
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual
+        override view returns(uint256 borrowRate, uint256 utilizationRate, uint256 maxCFMMFeeLeverage, uint256 spread) {
         uint256 totalInvariant = lpInvariant + borrowedInvariant;
         utilizationRate = totalInvariant == 0 ? 0 : (borrowedInvariant * 1e18 / totalInvariant);
         borrowRate = utilizationRate;
+        maxCFMMFeeLeverage = 5000;
+        spread = 1e18;
     }
 
     //ShortGamma
@@ -189,9 +192,5 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
     function _getLatestCFMMInvariant(bytes memory data) external override view virtual returns(uint256 cfmmInvariant) {
         address _cfmm = abi.decode(data, (address));
         return uint128(TestCFMM(_cfmm).invariant());
-    }
-
-    function _calcMaxLeverage(address paramsStore, address pool) internal virtual override view returns(uint256) {
-        return 5000;
     }
 }

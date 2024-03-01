@@ -36,10 +36,6 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
         return 8000;
     }
 
-    function _calcMaxLeverage(address paramsStore, address pool) internal virtual override view returns(uint256) {
-        return 5000;
-    }
-
     function minPay() internal view virtual override returns(uint256) {
         return 1e3;
     }
@@ -119,8 +115,8 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
         rateIndex = _loan.rateIndex;
     }
 
-    function calcBorrowRate(uint256,uint256,address, address) public virtual override view returns(uint256,uint256) {
-        return(0,0);
+    function calcBorrowRate(uint256,uint256,address, address) public virtual override view returns(uint256,uint256,uint256,uint256) {
+        return(0,0,5000,1e18);
     }
 
     function calcInvariant(address, uint128[] memory amounts) internal virtual override view returns(uint256) {

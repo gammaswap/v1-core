@@ -54,8 +54,9 @@ contract TestShortStrategy2 is IShortStrategy{
         return 1000*(10**18);
     }
 
-    function getLastFees(uint256 borrowRate, uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex)
-        external override view returns(uint256 lastFeeIndex, uint256 updLastCFMMFeeIndex) {
+    function getLastFees(uint256 borrowRate, uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply,
+        uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex,
+        uint256 maxCFMMFeeLeverage, uint256 spread) external override view returns(uint256 lastFeeIndex, uint256 updLastCFMMFeeIndex) {
         return (2,1e18);
     }
 
@@ -64,9 +65,11 @@ contract TestShortStrategy2 is IShortStrategy{
         return (4,5,6);
     }
 
-    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual view returns(uint256 borrowRate, uint256 utilizationRate) {
+    function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual view returns(uint256 borrowRate, uint256 utilizationRate, uint256 maxCFMMFeeLeverage, uint256 spread) {
         borrowRate = 4*1e16;
         utilizationRate = 3*1e17;
+        maxCFMMFeeLeverage = 5000;
+        spread = 1e18;
     }
 
     /***** ERC4626 Functions *****/
