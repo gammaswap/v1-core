@@ -47,9 +47,9 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     }
 
     /// @inheritdoc IShortStrategy
-    function totalSupply(address paramsStore, address pool, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 utilizationRate, uint256 supply) public virtual override view returns (uint256) {
+    function totalSupply(address factory, address pool, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 utilizationRate, uint256 supply) public virtual override view returns (uint256) {
         uint256 devShares = 0;
-        (address feeTo, uint256 protocolFee,, ) = IGammaPoolFactory(paramsStore).getPoolFee(pool);
+        (address feeTo, uint256 protocolFee,, ) = IGammaPoolFactory(factory).getPoolFee(pool);
         if(feeTo != address(0)) {
             uint256 printPct = _calcProtocolDilution(lastFeeIndex, lastCFMMFeeIndex, utilizationRate, protocolFee);
             devShares = supply * printPct / 1e18;
@@ -75,6 +75,23 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
 
         // Calculate interest that would be charged to entire pool's liquidity debt if pool were updated in this transaction
         lastFeeIndex = calcFeeIndex(updatedLastCFMMFeeIndex, borrowRate, lastBlockNum, spread);
+    }
+
+    /// @inheritdoc IShortStrategy
+    function totalAssetsAndSupply(VaultBalancesParams memory _params) public virtual override view returns(uint256 assets, uint256 supply) {
+        // use lastFeeIndex and cfmmFeeIndex to hold maxCFMMFeeLeverage and spread respectively
+        (uint256 borrowRate, uint256 utilizationRate, uint256 lastFeeIndex, uint256 cfmmFeeIndex) = calcBorrowRate(_params.LP_INVARIANT,
+            _params.BORROWED_INVARIANT, _params.paramsStore, _params.pool);
+
+        (lastFeeIndex, cfmmFeeIndex) = getLastFees(borrowRate, _params.BORROWED_INVARIANT, _params.latestCfmmInvariant,
+            _params.latestCfmmTotalSupply, _params.lastCFMMInvariant, _params.lastCFMMTotalSupply, _params.LAST_BLOCK_NUMBER,
+            _params.lastCFMMFeeIndex, lastFeeIndex, cfmmFeeIndex);
+
+        // Total amount of GS LP tokens issued after protocol fees are paid
+        assets = totalAssets(_params.BORROWED_INVARIANT, _params.LP_TOKEN_BALANCE, _params.latestCfmmInvariant, _params.latestCfmmTotalSupply, lastFeeIndex);
+
+        // Calculates total CFMM LP tokens, including accrued interest, using state variables
+        supply = totalSupply(_params.factory, _params.pool, cfmmFeeIndex, lastFeeIndex, utilizationRate, _params.totalSupply);
     }
 
     //********* Short Gamma Functions *********//
