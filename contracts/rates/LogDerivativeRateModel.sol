@@ -61,7 +61,7 @@ abstract contract LogDerivativeRateModel is AbstractRateModel, ILogDerivativeRat
         spread = _calcSpread();
     }
 
-    /// @dev max leverage hardcoded at 5x
+    /// @dev max leverage hardcoded at 5 with 3 decimal precision
     function _calcMaxLeverage() internal virtual view returns(uint256) {
         return 5000;
     }
