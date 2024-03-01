@@ -3,6 +3,7 @@ pragma solidity >=0.8.4;
 
 import "../interfaces/rates/storage/IRateParamsStore.sol";
 import "../interfaces/rates/ILinearKinkedRateModel.sol";
+import "../libraries/GSMath.sol";
 import "./AbstractRateModel.sol";
 
 /// @title Linear Kinked Rate Model used to calculate the yearly rate charged to liquidity borrowers according to the current utilization rate of the pool
@@ -75,7 +76,7 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
 
     /// @dev return max leverage based on optimal utilization rate times 1000 (e.g. 1000 / (1 - optimalRate)
     function _calcMaxLeverage(uint256 _optimalUtilRate) internal virtual view returns(uint256) {
-        return 1e21 / (1e18 - _optimalUtilRate);
+        return GSMath.min(1e21 / (1e18 - _optimalUtilRate), 100000); // capped at 100
     }
 
     /// @dev return spread to add to the CFMMFeeIndex as the borrow rate * 10
