@@ -210,11 +210,12 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
         uint256 latestCfmmInvariant = _getLatestCFMMInvariant();
         uint256 latestCfmmTotalSupply = _getLatestCFMMTotalSupply();
 
-        (uint256 borrowRate, uint256 utilizationRate) = AbstractRateModel(shortStrategy).calcBorrowRate(s.LP_INVARIANT,
+        (uint256 borrowRate, uint256 utilizationRate, uint256 maxCFMMFeeLeverage, uint256 spread) = AbstractRateModel(shortStrategy).calcBorrowRate(s.LP_INVARIANT,
             borrowedInvariant, factory, address(this));
 
         (uint256 lastFeeIndex, uint256 cfmmFeeIndex) = IShortStrategy(shortStrategy).getLastFees(borrowRate, borrowedInvariant,
-            latestCfmmInvariant, latestCfmmTotalSupply, s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER, s.lastCFMMFeeIndex);
+            latestCfmmInvariant, latestCfmmTotalSupply, s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER,
+            s.lastCFMMFeeIndex, maxCFMMFeeLeverage, spread);
 
         // Total amount of GS LP tokens issued
         assets = IShortStrategy(shortStrategy).totalAssets(borrowedInvariant, s.LP_TOKEN_BALANCE, latestCfmmInvariant, latestCfmmTotalSupply, lastFeeIndex);

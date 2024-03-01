@@ -291,15 +291,18 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
         if(start > end || _tokenIds.length == 0) {
             return _loans;
         }
-        uint256 lastIdx = _tokenIds.length - 1;
-        if(start <= lastIdx) {
-            uint256 _start = start;
-            uint256 _end = lastIdx < end ? lastIdx : end;
-            uint256 _size = _end - _start + 1;
-            _loans = new LoanData[](_size);
+        uint256 lastIdx;
+        unchecked {
+            lastIdx = _tokenIds.length - 1;
+        }
+        end = lastIdx < end ? lastIdx : end; // end = min(lastIdx,end) <= min(type(uint256).max-1,end)
+        if(start <= end) {
+            unchecked {
+                _loans = new LoanData[](1 + end - start);
+            }
             LoanData memory _loan;
             uint256 k = 0;
-            for(uint256 i = _start; i <= _end;) {
+            for(uint256 i = start; i <= end;) {
                 _loan = _getLoanData(_tokenIds[i]);
                 if(!active || _loan.initLiquidity > 0) {
                     _loans[k] = _loan;

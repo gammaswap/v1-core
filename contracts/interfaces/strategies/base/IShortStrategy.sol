@@ -70,11 +70,13 @@ interface IShortStrategy is IShortStrategyEvents {
     /// @param prevCFMMTotalSupply - total supply in CFMM in last update to GammaPool
     /// @param lastBlockNum - last block GammaPool was updated
     /// @param lastCFMMFeeIndex - last fees accrued by CFMM since last update
+    /// @param maxCFMMFeeLeverage - max leverage of CFMM yield
+    /// @param spread - spread to add to cfmmFeeIndex
     /// @return lastFeeIndex - last fees charged by GammaPool since last update
     /// @return updLastCFMMFeeIndex - updated fees accrued by CFMM till current block
     function getLastFees(uint256 borrowRate, uint256 borrowedInvariant, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply,
-        uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex)
-        external view returns(uint256 lastFeeIndex, uint256 updLastCFMMFeeIndex);
+        uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex,
+        uint256 maxCFMMFeeLeverage, uint256 spread) external view returns(uint256 lastFeeIndex, uint256 updLastCFMMFeeIndex);
 
     /// @dev Calculate balances updated by fees charged since last update
     /// @param lastFeeIndex - last fees charged by GammaPool since last update

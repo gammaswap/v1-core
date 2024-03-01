@@ -184,20 +184,20 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
     }
 
     //AbstractRateModel abstract functions
-    function calcBorrowRate(uint256, uint256, address, address) public virtual override view returns(uint256, uint256) {
-        return (0,0);
+    function calcBorrowRate(uint256, uint256, address, address) public virtual override view returns(uint256, uint256, uint256, uint256) {
+        return (0,0,5000,1e18);
     }
 
     //BaseStrategy functions
-    function calcCFMMFeeIndex(uint256, uint256, uint256, uint256, uint256) internal override virtual view returns(uint256) {
+    function calcCFMMFeeIndex(uint256, uint256, uint256, uint256, uint256, uint256) internal override virtual view returns(uint256) {
         return 0;
     }
 
-    function calcFeeIndex(uint256, uint256, uint256) internal override virtual view returns(uint256) {
+    function calcFeeIndex(uint256, uint256, uint256, uint256) internal override virtual view returns(uint256) {
         return 0;
     }
 
-    function updateCFMMIndex(uint256) internal override virtual returns(uint256, uint256, uint256){
+    function updateCFMMIndex(uint256, uint256) internal override virtual returns(uint256, uint256, uint256){
         return (0,0,0);
     }
 

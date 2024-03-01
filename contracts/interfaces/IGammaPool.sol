@@ -130,6 +130,10 @@ interface IGammaPool is IProtocol, IGammaPoolEvents, IGammaPoolERC20Events, IRat
         address shortStrategy;
         /// @dev Interest Rate Parameters Store contract
         address paramsStore;
+        /// @dev Max CFMM Yield Leverage
+        uint256 maxCFMMFeeLeverage;
+        /// @dev Spread to add to CFMM Fee Index
+        uint256 spread;
     }
 
     /// @dev Struct returned in getPoolData function. Contains all relevant global state variables
@@ -234,6 +238,10 @@ interface IGammaPool is IProtocol, IGammaPoolEvents, IGammaPoolERC20Events, IRat
         uint16 feeDivisor;
         /// @dev Minimum liquidity amount that can be borrowed
         uint72 minBorrow;
+        /// @dev Max CFMM Yield Leverage
+        uint256 maxCFMMFeeLeverage;
+        /// @dev Spread to add to CFMM Fee Index
+        uint256 spread;
     }
 
     /// @dev cfmm - address of CFMM this GammaPool is for
