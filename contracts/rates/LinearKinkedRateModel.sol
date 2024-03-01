@@ -91,7 +91,7 @@ abstract contract LinearKinkedRateModel is AbstractRateModel, ILinearKinkedRateM
     /// @return optimalUtilRate - target utilization rate of model
     /// @return slope1 - factor parameter of model
     /// @return slope2 - maxApy parameter of model
-    function getRateModelParams(address paramsStore, address pool) public view returns(uint64, uint64, uint64, uint64) {
+    function getRateModelParams(address paramsStore, address pool) public override virtual view returns(uint64, uint64, uint64, uint64) {
         IRateParamsStore.RateParams memory rateParams = IRateParamsStore(paramsStore).getRateParams(pool);
         if(!rateParams.active) {
             return (baseRate, optimalUtilRate, slope1, slope2);

@@ -7,6 +7,38 @@ import "../events/IShortStrategyEvents.sol";
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used in strategies that deposit and withdraw liquidity from CFMM for liquidity providers
 interface IShortStrategy is IShortStrategyEvents {
+
+    /// @dev Parameters used to calculate the GS LP tokens and CFMM LP tokens in the GammaPool after protocol fees and accrued interest
+    struct VaultBalancesParams {
+        /// @dev address of factory contract of GammaPool
+        address factory;
+        /// @dev address of GammaPool
+        address pool;
+        /// @dev address of contract holding rate parameters for pool
+        address paramsStore;
+        /// @dev storage number of borrowed liquidity invariant in GammaPool
+        uint256 BORROWED_INVARIANT;
+        /// @dev current liquidity invariant in CFMM
+        uint256 latestCfmmInvariant;
+        /// @dev current total supply of CFMM LP tokens in existence
+        uint256 latestCfmmTotalSupply;
+        /// @dev last block number GammaPool was updated
+        uint256 LAST_BLOCK_NUMBER;
+        /// @dev CFMM liquidity invariant at time of last update of GammaPool
+        uint256 lastCFMMInvariant;
+        /// @dev CFMM LP Token supply at time of last update of GammaPool
+        uint256 lastCFMMTotalSupply;
+        /// @dev CFMM Fee Index at time of last update of GammaPool
+        uint256 lastCFMMFeeIndex;
+        /// @dev current total supply of GS LP tokens
+        uint256 totalSupply;
+        /// @dev current LP Tokens in GammaPool counted at time of last update
+        uint256 LP_TOKEN_BALANCE;
+        /// @dev liquidity invariant of LP tokens in GammaPool at time of last update
+        uint256 LP_INVARIANT;
+    }
+
+
     /// @dev Deposit CFMM LP tokens and get GS LP tokens, without doing a transferFrom transaction. Must have sent CFMM LP tokens first
     /// @param to - address of receiver of GS LP token
     /// @return shares - quantity of GS LP tokens received for CFMM LP tokens
@@ -51,15 +83,15 @@ interface IShortStrategy is IShortStrategyEvents {
     /// @return totalAssets - total CFMM LP tokens in existence in the pool (real and virtual) including accrued interest
     function totalAssets(uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, uint256 lastFeeIndex) external view returns(uint256);
 
-    /// @dev Calculate current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
-    /// @param paramsStore - address containing rate model parameters
+    /// @dev Calculate current total GS LP tokens in the GammaPool after dilution from protocol fees
+    /// @param factory - address of factory contract that created GammaPool
     /// @param pool - address of pool to get interest rate calculations for
     /// @param lastCFMMFeeIndex - accrued CFMM Fees in storage
     /// @param lastFeeIndex - last fees charged by GammaPool since last update
     /// @param utilizationRate - current utilization rate of GammaPool
     /// @param supply - actual GS LP total supply available in the pool
     /// @return totalSupply - total GS LP tokens in the pool including accrued interest
-    function totalSupply(address paramsStore, address pool, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 utilizationRate, uint256 supply) external view returns (uint256);
+    function totalSupply(address factory, address pool, uint256 lastCFMMFeeIndex, uint256 lastFeeIndex, uint256 utilizationRate, uint256 supply) external view returns (uint256);
 
     /// @dev Calculate fees charged by GammaPool since last update to liquidity loans and current borrow rate
     /// @param borrowRate - current borrow rate of GammaPool
@@ -78,6 +110,14 @@ interface IShortStrategy is IShortStrategyEvents {
         uint256 prevCFMMInvariant, uint256 prevCFMMTotalSupply, uint256 lastBlockNum, uint256 lastCFMMFeeIndex,
         uint256 maxCFMMFeeLeverage, uint256 spread) external view returns(uint256 lastFeeIndex, uint256 updLastCFMMFeeIndex);
 
+    /// @dev Calculate current total GS LP tokens after protocol fees and total CFMM LP tokens (real and virtual) in
+    /// @dev existence in the GammaPool after accrued interest. The total assets and supply numbers returned by this
+    /// @dev function are used in the ERC4626 implementation of the GammaPool
+    /// @param vaultBalanceParams - parameters from GammaPool to calculate current total GS LP Tokens and CFMM LP Tokens after fees and interest
+    /// @return assets - total CFMM LP tokens in existence in the pool (real and virtual) including accrued interest
+    /// @return supply - total GS LP tokens in the pool including accrued interest
+    function totalAssetsAndSupply(VaultBalancesParams memory vaultBalanceParams) external view returns(uint256 assets, uint256 supply);
+
     /// @dev Calculate balances updated by fees charged since last update
     /// @param lastFeeIndex - last fees charged by GammaPool since last update
     /// @param borrowedInvariant - invariant amount borrowed in GammaPool including accrued interest calculated in last update to GammaPool
@@ -87,7 +127,8 @@ interface IShortStrategy is IShortStrategyEvents {
     /// @return lastLPBalance - last fees accrued by CFMM since last update
     /// @return lastBorrowedLPBalance - last fees charged by GammaPool since last update
     /// @return lastBorrowedInvariant - current borrow rate of GammaPool
-    function getLatestBalances(uint256 lastFeeIndex, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) external view returns(uint256 lastLPBalance, uint256 lastBorrowedLPBalance, uint256 lastBorrowedInvariant);
+    function getLatestBalances(uint256 lastFeeIndex, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant,
+        uint256 lastCFMMTotalSupply) external view returns(uint256 lastLPBalance, uint256 lastBorrowedLPBalance, uint256 lastBorrowedInvariant);
 
     /// @dev Update pool invariant, LP tokens borrowed plus interest, interest rate index, and last block update
     /// @param utilizationRate - interest accrued to loans in GammaPool

@@ -203,24 +203,27 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
         return convertToShares(maxWithdraw(owner)); // get maximum amount of CFMM LP tokens that can be withdrawn and convert to equivalent GS LP token amount
     }
 
+    /// @dev Calculate and return total CFMM LP tokens belonging to GammaPool liquidity providers using state global variables.
+    /// @dev And calculate and return total supply of GS LP tokens taking into account dilution through protocol revenue.
+    /// @dev This function does not update the GammaPool
+    /// @return assets - current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
+    /// @return supply - total supply of GS LP tokens after taking protocol revenue dilution into account
     function _totalAssetsAndSupply() internal view virtual returns (uint256 assets, uint256 supply) {
-        address factory = s.factory;
-        address shortStrategy = vaultImplementation();
-        uint256 borrowedInvariant = s.BORROWED_INVARIANT;
-        uint256 latestCfmmInvariant = _getLatestCFMMInvariant();
-        uint256 latestCfmmTotalSupply = _getLatestCFMMTotalSupply();
+        IShortStrategy.VaultBalancesParams memory _params;
+        _params.factory = s.factory;
+        _params.pool = address(this);
+        _params.paramsStore = _params.factory;
+        _params.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
+        _params.latestCfmmInvariant = _getLatestCFMMInvariant();
+        _params.latestCfmmTotalSupply = _getLatestCFMMTotalSupply();
+        _params.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
+        _params.lastCFMMInvariant = s.lastCFMMInvariant;
+        _params.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
+        _params.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
+        _params.totalSupply = s.totalSupply;
+        _params.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
+        _params.LP_INVARIANT = s.LP_INVARIANT;
 
-        (uint256 borrowRate, uint256 utilizationRate, uint256 maxCFMMFeeLeverage, uint256 spread) = AbstractRateModel(shortStrategy).calcBorrowRate(s.LP_INVARIANT,
-            borrowedInvariant, factory, address(this));
-
-        (uint256 lastFeeIndex, uint256 cfmmFeeIndex) = IShortStrategy(shortStrategy).getLastFees(borrowRate, borrowedInvariant,
-            latestCfmmInvariant, latestCfmmTotalSupply, s.lastCFMMInvariant, s.lastCFMMTotalSupply, s.LAST_BLOCK_NUMBER,
-            s.lastCFMMFeeIndex, maxCFMMFeeLeverage, spread);
-
-        // Total amount of GS LP tokens issued
-        assets = IShortStrategy(shortStrategy).totalAssets(borrowedInvariant, s.LP_TOKEN_BALANCE, latestCfmmInvariant, latestCfmmTotalSupply, lastFeeIndex);
-
-        // Calculates total CFMM LP tokens, including accrued interest, using state variables
-        supply = IShortStrategy(shortStrategy).totalSupply(factory, address(this), cfmmFeeIndex, lastFeeIndex, utilizationRate, s.totalSupply);
+        (assets, supply) = IShortStrategy(vaultImplementation()).totalAssetsAndSupply(_params);
     }
 }
