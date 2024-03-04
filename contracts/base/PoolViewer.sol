@@ -236,7 +236,7 @@ contract PoolViewer is IPoolViewer {
 
         data.lastCFMMFeeIndex = uint64(lastCFMMFeeIndex);
         (,data.LP_TOKEN_BORROWED_PLUS_INTEREST, borrowedInvariant) = IShortStrategy(data.shortStrategy)
-        .getLatestBalances(data.lastFeeIndex, borrowedInvariant, data.LP_TOKEN_BALANCE,
+        .getLatestBalances(data.lastFeeIndex, data.BORROWED_INVARIANT, data.LP_TOKEN_BALANCE,
             lastCFMMInvariant, lastCFMMTotalSupply);
 
         data.BORROWED_INVARIANT = uint128(borrowedInvariant);
