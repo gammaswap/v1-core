@@ -180,7 +180,18 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param lastCFMMTotalSupply - total supply of LP tokens issued by CFMM
     /// @return liquidityInvariant - liquidity invariant lpTokens represents
     function convertLPToInvariant(uint256 lpTokens, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) internal virtual pure returns(uint256) {
-        return lastCFMMTotalSupply == 0 ? 0 : (lpTokens * lastCFMMInvariant) / lastCFMMTotalSupply;
+        return convertLPToInvariantRoundUp(lpTokens, lastCFMMInvariant, lastCFMMTotalSupply, false);
+    }
+
+    /// @notice Convert CFMM LP tokens into liquidity invariant units, with option to round up
+    /// @dev In case of CFMM where convertLPToInvariant calculation is different from convertInvariantToLP
+    /// @param lpTokens - liquidity invariant borrowed in the GammaPool
+    /// @param lastCFMMInvariant - liquidity invariant in CFMM
+    /// @param lastCFMMTotalSupply - total supply of LP tokens issued by CFMM
+    /// @param roundUp - if true, round invariant up
+    /// @return liquidityInvariant - liquidity invariant lpTokens represents
+    function convertLPToInvariantRoundUp(uint256 lpTokens, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply, bool roundUp) internal virtual pure returns(uint256) {
+        return lastCFMMTotalSupply == 0 ? 0 : ((lpTokens * lastCFMMInvariant) * 10 / lastCFMMTotalSupply + (roundUp ? 9 : 0)) / 10;
     }
 
     /// @dev Update pool invariant, LP tokens borrowed plus interest, interest rate index, and last block update

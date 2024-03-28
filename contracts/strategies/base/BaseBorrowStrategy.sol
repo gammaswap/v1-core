@@ -96,7 +96,7 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
 
         // Calculate borrowed liquidity invariant excluding loan origination fee
         // Irrelevant that lastCFMMInvariant and lastCFMMInvariant are overstated since their conversion rate did not change
-        uint256 liquidityBorrowedExFee = convertLPToInvariant(lpTokens, lastCFMMInvariant, lastCFMMTotalSupply);
+        uint256 liquidityBorrowedExFee = convertLPToInvariantRoundUp(lpTokens, lastCFMMInvariant, lastCFMMTotalSupply, true);
 
         liquidity = _loan.liquidity;
         uint256 initLiquidity = minBorrow(); // avoid second sload
@@ -110,7 +110,7 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         uint256 lpTokenOrigFee = lpTokens * _calcOriginationFee(liquidityBorrowedExFee, borrowedInvariant, s.LP_INVARIANT, s.emaUtilRate, _loan.refFee) / 10000;
 
         // Pay origination fee share as protocol revenue
-        liquidityBorrowed = convertLPToInvariant(lpTokenOrigFee, lastCFMMInvariant, lastCFMMTotalSupply);
+        liquidityBorrowed = convertLPToInvariantRoundUp(lpTokenOrigFee, lastCFMMInvariant, lastCFMMTotalSupply, true);
         mintOrigFeeToDevs(liquidityBorrowed, borrowedInvariant + s.LP_INVARIANT);
 
         // Calculate borrowed liquidity invariant including origination fee
