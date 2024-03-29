@@ -253,7 +253,7 @@ describe("GammaPool", function () {
       expect(res3.minUtilRate1).to.equal(90);
       expect(res3.minUtilRate2).to.equal(85);
       expect(res3.feeDivisor).to.equal(2048);
-      expect(res3.origFee).to.equal(2);
+      expect(res3.origFee).to.equal(0);
       expect(res3.extSwapFee).to.equal(10);
 
       const latestBlock = await ethers.provider.getBlock("latest");
@@ -311,7 +311,7 @@ describe("GammaPool", function () {
       expect(res4.minUtilRate1).to.equal(90);
       expect(res4.minUtilRate2).to.equal(85);
       expect(res4.feeDivisor).to.equal(2048);
-      expect(res4.origFee).to.equal(2);
+      expect(res4.origFee).to.equal(0);
       expect(res4.extSwapFee).to.equal(10);
       expect(res4.ltvThreshold).to.equal(5);
       expect(res4.liquidationFee).to.equal(25);
@@ -370,7 +370,7 @@ describe("GammaPool", function () {
       expect(res5.minUtilRate1).to.equal(90);
       expect(res5.minUtilRate2).to.equal(85);
       expect(res5.feeDivisor).to.equal(2048);
-      expect(res5.origFee).to.equal(2);
+      expect(res5.origFee).to.equal(0);
       expect(res5.extSwapFee).to.equal(10);
 
       const res6 = await poolViewer.getLatestRates(gammaPool.address);
@@ -386,7 +386,7 @@ describe("GammaPool", function () {
       expect(res6.minUtilRate1).to.equal(90);
       expect(res6.minUtilRate2).to.equal(85);
       expect(res6.feeDivisor).to.equal(2048);
-      expect(res6.origFee).to.equal(2);
+      expect(res6.origFee).to.equal(0);
       expect(res6.ltvThreshold).to.equal(5);
       expect(res6.liquidationFee).to.equal(25);
 
@@ -405,7 +405,7 @@ describe("GammaPool", function () {
       expect(res7.minUtilRate1).to.equal(90);
       expect(res7.minUtilRate2).to.equal(85);
       expect(res7.feeDivisor).to.equal(2048);
-      expect(res7.origFee).to.equal(2);
+      expect(res7.origFee).to.equal(0);
       expect(res7.ltvThreshold).to.equal(5);
       expect(res7.liquidationFee).to.equal(25);
 

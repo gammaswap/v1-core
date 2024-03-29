@@ -883,7 +883,7 @@ describe("GammaPoolFactory", function () {
 
       const gammaPool = GammaPool.attach(pool);
       const resp = await gammaPool.getPoolData();
-      expect(resp.origFee).to.equal(2);
+      expect(resp.origFee).to.equal(0);
       expect(resp.extSwapFee).to.equal(10);
       expect(resp.emaMultiplier).to.equal(10);
       expect(resp.minUtilRate1).to.equal(90);
@@ -2002,7 +2002,7 @@ describe("GammaPoolFactory", function () {
 
       const gammaPool = GammaPool.attach(pool);
       const resp = await gammaPool.getPoolData();
-      expect(resp.origFee).to.equal(2);
+      expect(resp.origFee).to.equal(0);
       expect(resp.extSwapFee).to.equal(10);
       expect(resp.emaMultiplier).to.equal(10);
       expect(resp.minUtilRate1).to.equal(90);
