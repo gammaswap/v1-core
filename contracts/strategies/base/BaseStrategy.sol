@@ -239,12 +239,12 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         }
     }
 
-    /// @dev Calculate intra block CFMM FeeIndex capped at half a basis point
+    /// @dev Calculate intra block CFMM FeeIndex capped at ~18.44x
     /// @param curCFMMFeeIndex - current lastCFMMFeeIndex (accrued from last intra block update)
     /// @param lastCFMMFeeIndex - lastCFMMFeeIndex that will accrue to curCFMMFeeIndex
     /// @return updLastCFMMFeeIndex - updated lastCFMMFeeIndex
     function calcIntraBlockCFMMFeeIndex(uint256 curCFMMFeeIndex, uint256 lastCFMMFeeIndex) internal pure returns(uint256) {
-        return GSMath.min(GSMath.max(curCFMMFeeIndex * lastCFMMFeeIndex / 1e18, 1e18), 1e18 + 5e13); // half a basis point
+        return GSMath.min(curCFMMFeeIndex * GSMath.max(lastCFMMFeeIndex, 1e18) / 1e18, type(uint64).max);
     }
 
     /// @dev Update GammaPool's state variables and pay protocol fee
@@ -263,7 +263,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         (lastCFMMFeeIndex, lastCFMMInvariant, lastCFMMTotalSupply) = updateCFMMIndex(borrowedInvariant, maxCFMMFeeLeverage);
         uint256 blockDiff = block.number - s.LAST_BLOCK_NUMBER; // Time passed in blocks
         if(blockDiff > 0) {
-            lastCFMMFeeIndex = s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18;
+            lastCFMMFeeIndex = uint256(s.lastCFMMFeeIndex) * lastCFMMFeeIndex / 1e18;
             s.lastCFMMFeeIndex = 1e18;
             lastFeeIndex = calcFeeIndex(lastCFMMFeeIndex, borrowRate, blockDiff, spread);
             (accFeeIndex, borrowedInvariant) = updateStore(lastFeeIndex, borrowedInvariant, lastCFMMInvariant, lastCFMMTotalSupply);
