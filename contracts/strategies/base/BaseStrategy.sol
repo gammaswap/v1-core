@@ -239,6 +239,14 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         }
     }
 
+    /// @dev Calculate intra block CFMM FeeIndex capped at half a basis point
+    /// @param curCFMMFeeIndex - current lastCFMMFeeIndex (accrued from last intra block update)
+    /// @param lastCFMMFeeIndex - lastCFMMFeeIndex that will accrue to curCFMMFeeIndex
+    /// @return updLastCFMMFeeIndex - updated lastCFMMFeeIndex
+    function calcIntraBlockCFMMFeeIndex(uint256 curCFMMFeeIndex, uint256 lastCFMMFeeIndex) internal pure returns(uint256) {
+        return GSMath.min(GSMath.max(curCFMMFeeIndex * lastCFMMFeeIndex / 1e18, 1e18), 1e18 + 5e13); // half a basis point
+    }
+
     /// @dev Update GammaPool's state variables and pay protocol fee
     /// @return accFeeIndex - liquidity invariant lpTokenBalance represents
     /// @return lastFeeIndex - interest accrued to loans in GammaPool
@@ -263,7 +271,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
                 mintToDevs(lastFeeIndex, lastCFMMFeeIndex, utilizationRate);
             }
         } else {
-            s.lastCFMMFeeIndex = uint64(s.lastCFMMFeeIndex * lastCFMMFeeIndex / 1e18);
+            s.lastCFMMFeeIndex = uint64(calcIntraBlockCFMMFeeIndex(s.lastCFMMFeeIndex, lastCFMMFeeIndex));
             lastFeeIndex = 1e18;
             accFeeIndex = s.accFeeIndex;
             s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(borrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
