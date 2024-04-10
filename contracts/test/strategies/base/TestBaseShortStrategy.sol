@@ -164,6 +164,10 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
         (reserves[0], reserves[1],) = TestCFMM(cfmm).getReserves();
     }
 
+    function getLPReserves(address cfmm) internal virtual override view returns(uint128[] memory) {
+        return s.CFMM_RESERVES;
+    }
+
     function calcInvariant(address cfmm, uint128[] memory) internal virtual override view returns(uint256) {
         return TestCFMM(cfmm).invariant();
     }

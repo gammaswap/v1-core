@@ -127,4 +127,8 @@ abstract contract TestExternalBaseRebalanceStrategy is BaseExternalStrategy {
         reserves = new uint128[](2);
         (reserves[0], reserves[1],) = TestCFMM(cfmm).getReserves();
     }
+
+    function getLPReserves(address cfmm) internal virtual override view returns(uint128[] memory) {
+        return s.CFMM_RESERVES;
+    }
 }
