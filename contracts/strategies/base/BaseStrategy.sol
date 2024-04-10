@@ -36,8 +36,9 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
 
     /// @dev Get LP reserves token quantities from CFMM
     /// @param cfmm - address of GammaPool's CFMM
+    /// @param isLatest - if true get latest reserves information
     /// @return reserves - amounts that will be deposited in CFMM
-    function getLPReserves(address cfmm) internal virtual view returns(uint128[] memory);
+    function getLPReserves(address cfmm, bool isLatest) internal virtual view returns(uint128[] memory);
 
     /// @dev Calculates liquidity invariant from amounts quantities
     /// @param cfmm - address sending `amount`
@@ -149,7 +150,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     function updateCFMMIndex(uint256 borrowedInvariant, uint256 maxCFMMFeeLeverage) internal virtual returns(uint256 lastCFMMFeeIndex, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) {
         address cfmm = s.cfmm; // Saves gas
         updateReserves(cfmm); // Update CFMM_RESERVES with reserves in CFMM
-        lastCFMMInvariant = calcInvariant(cfmm, getLPReserves(cfmm)); // Calculate current total invariant in CFMM
+        lastCFMMInvariant = calcInvariant(cfmm, getLPReserves(cfmm,false)); // Calculate current total invariant in CFMM
         lastCFMMTotalSupply = GammaSwapLibrary.totalSupply(cfmm); // Get current total CFMM LP token supply
 
         // Get CFMM fee yield growth since last update by checking current invariant vs previous invariant discounting with change in total supply
