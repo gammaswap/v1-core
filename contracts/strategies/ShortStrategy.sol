@@ -267,7 +267,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         if(askForReserves) { // If withdrawing reserve tokens
             reserves = withdrawFromCFMM(cfmm, to, assets); // Changes lastCFMMTotalSupply and lastCFMMInvariant (less assets, less invariant)
             lpTokenBalance = GammaSwapLibrary.balanceOf(cfmm, address(this));
-            uint256 lastCFMMInvariant = calcInvariant(cfmm, getReserves(cfmm));
+            uint256 lastCFMMInvariant = calcInvariant(cfmm, getLPReserves(cfmm));
             uint256 lastCFMMTotalSupply = GammaSwapLibrary.totalSupply(cfmm);
             lpInvariant = uint128(convertLPToInvariant(lpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply));
             s.lastCFMMInvariant = uint128(lastCFMMInvariant); // Less invariant

@@ -154,6 +154,10 @@ contract TestBaseStrategy is BaseStrategy {
         (reserves[0], reserves[1],) = TestCFMM(cfmm).getReserves();
     }
 
+    function getLPReserves(address cfmm) internal virtual override view returns(uint128[] memory) {
+        return s.CFMM_RESERVES;
+    }
+
     function getCFMMData() public virtual view returns(uint256 lastCFMMFeeIndex, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) {
         lastCFMMFeeIndex = _lastCFMMFeeIndex;
         lastCFMMInvariant = s.lastCFMMInvariant;
