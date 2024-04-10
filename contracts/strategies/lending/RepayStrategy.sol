@@ -97,7 +97,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                 rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
                 updateIndex();
             }
-            amounts = calcTokensToRepay(getLPReserves(s.cfmm), liquidityToCalculate, new uint128[](0));
+            amounts = calcTokensToRepay(getLPReserves(s.cfmm,false), liquidityToCalculate, new uint128[](0));
         }
 
         // Repay liquidity debt with reserve tokens, must check against available loan collateral
@@ -146,7 +146,7 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
                 collateral = remainingCollateral(collateral, _rebalanceCollateralToClose(_loan, collateral, collateralId, liquidityToCalculate), 1);
                 updateIndex();
             }
-            amounts = calcTokensToRepay(getLPReserves(s.cfmm), liquidityToCalculate, collateral);
+            amounts = calcTokensToRepay(getLPReserves(s.cfmm,false), liquidityToCalculate, collateral);
         }
 
         // Repay liquidity debt with reserve tokens, must check against available loan collateral

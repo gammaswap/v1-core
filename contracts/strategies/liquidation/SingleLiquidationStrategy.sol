@@ -30,7 +30,7 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
         loanLiquidity = _liqLoan.loanLiquidity;
 
         if(_liqLoan.payableInternalLiquidityPlusFee > 0) {
-            uint256 lpDeposit = repayTokens(_loan, calcTokensToRepay(getLPReserves(s.cfmm), _liqLoan.payableInternalLiquidityPlusFee, tokensHeld));
+            uint256 lpDeposit = repayTokens(_loan, calcTokensToRepay(getLPReserves(s.cfmm,false), _liqLoan.payableInternalLiquidityPlusFee, tokensHeld));
             refund = lpDeposit * _liqLoan.internalFee / _liqLoan.payableInternalLiquidityPlusFee;
             if(refund <= minPay()) {
                 refund = 0;

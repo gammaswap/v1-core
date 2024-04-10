@@ -242,7 +242,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
         (reserves[0], reserves[1],) = TestCFMM(cfmm).getReserves();
     }
 
-    function getLPReserves(address cfmm) internal virtual override view returns(uint128[] memory) {
+    function getLPReserves(address cfmm,bool) internal virtual override view returns(uint128[] memory) {
         return s.CFMM_RESERVES;
     }
 

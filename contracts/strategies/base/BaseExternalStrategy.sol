@@ -39,7 +39,7 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
         address[] memory tokens = s.tokens;
         if(tokens.length != amounts.length) revert InvalidAmountsLength();
 
-        uint128[] memory lpReserves = getLPReserves(s.cfmm);
+        uint128[] memory lpReserves = getLPReserves(s.cfmm,false);
         for(uint256 i; i < amounts.length;) {
             // Collateral sent is measured as max of LP token equivalent if requested proportionally at current CFMM pool price
             swappedCollateralAsLPTokens += amounts[i] * (lastCFMMTotalSupply / amounts.length) / lpReserves[i];
