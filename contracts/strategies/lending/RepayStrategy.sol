@@ -94,10 +94,10 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
             int256[] memory deltas = _calcDeltasToCloseSetRatio(tokensHeld, s.CFMM_RESERVES, liquidityToCalculate,
                 isRatioValid(ratio) ? ratio : GammaSwapLibrary.convertUint128ToRatio(tokensHeld));
             if(isDeltasValid(deltas)) {
-                rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
+                (tokensHeld,) = rebalanceCollateral(_loan, deltas, s.CFMM_RESERVES);
                 updateIndex();
             }
-            amounts = calcTokensToRepay(getLPReserves(s.cfmm,false), liquidityToCalculate, new uint128[](0));
+            amounts = calcTokensToRepay(getLPReserves(s.cfmm,false), liquidityToCalculate, tokensHeld);
         }
 
         // Repay liquidity debt with reserve tokens, must check against available loan collateral
@@ -114,10 +114,6 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         (liquidityPaid, remainingLiquidity) = payLoan(_loan, liquidityPaid, loanLiquidity);// don't want to do this twice
 
         checkCollateral(_loan, tokenId, tokensHeld, remainingLiquidity);
-
-        // we check here if debt > 0, then we should be collateralized or collateral should be zero. If collateral not zero, then revert. Ask for full payment
-
-        // Do not check for loan undercollateralization because repaying debt always improves pool debt health
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(remainingLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.REPAY_LIQUIDITY_SET_RATIO);
 
@@ -168,10 +164,6 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
 
         checkCollateral(_loan, tokenId, tokensHeld, remainingLiquidity);
 
-        // we check here if debt > 0, then we should be collateralized or collateral should be zero. If collateral not zero, then revert. Ask for full payment
-
-        // Do not check for loan undercollateralization because repaying debt always improves pool debt health
-
         emit LoanUpdated(tokenId, tokensHeld, uint128(remainingLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.REPAY_LIQUIDITY);
 
         emit PoolUpdated(s.LP_TOKEN_BALANCE, s.LP_TOKEN_BORROWED, s.LAST_BLOCK_NUMBER, s.accFeeIndex,
@@ -211,7 +203,6 @@ abstract contract RepayStrategy is IRepayStrategy, BaseRepayStrategy {
         }
 
         checkCollateral(_loan, tokenId, tokensHeld, remainingLiquidity);
-        // If not withdrawing, do not check for loan undercollateralization because repaying debt always improves pool debt health
 
         emit LoanUpdated(tokenId, tokensHeld, uint128(remainingLiquidity), _loan.initLiquidity, _loan.lpTokens, _loan.rateIndex, TX_TYPE.REPAY_LIQUIDITY_WITH_LP);
 

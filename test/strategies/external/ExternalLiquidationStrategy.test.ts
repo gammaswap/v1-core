@@ -135,7 +135,9 @@ describe("ExternalLiquidationStrategy", function () {
       expect(loan.tokensHeld[1]).to.equal(amount1);
       const heldLiquidity = sqrt(amount0.mul(amount1));
       expect(loan.heldLiquidity).to.equal(heldLiquidity);
-      expect(loan.liquidity).to.equal(liquidity);
+      expect(loan.liquidity).to.equal(
+        liquidity.add(liquidity.mul(2).div(10000)) // 2bps fee
+      );
       expect(loan.lpTokens).to.equal(heldLiquidity.div(2));
       expect(loan.rateIndex).to.equal(ONE);
 
