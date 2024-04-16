@@ -167,7 +167,7 @@ library LibStorage {
 
         self.ltvThreshold = 5; // 50 basis points
         self.liquidationFee = 25; // 25 basis points
-        self.origFee = 0;
+        self.origFee = 2;
         self.extSwapFee = 10;
 
         self.emaMultiplier = 10; // ema smoothing factor is 10/1000 = 1%
