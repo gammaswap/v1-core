@@ -109,6 +109,8 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         // Calculate loan origination fee
         uint256 lpTokenOrigFee = lpTokens * _calcOriginationFee(liquidityBorrowedExFee, borrowedInvariant, s.LP_INVARIANT, s.emaUtilRate, _loan.refFee) / 10000;
 
+        checkExpectedUtilizationRate(lpTokens + lpTokenOrigFee, true);
+
         // Pay origination fee share as protocol revenue
         liquidityBorrowed = convertLPToInvariantRoundUp(lpTokenOrigFee, lastCFMMInvariant, lastCFMMTotalSupply, true);
         mintOrigFeeToDevs(liquidityBorrowed, borrowedInvariant + s.LP_INVARIANT);

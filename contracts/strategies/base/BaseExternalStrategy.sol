@@ -76,7 +76,10 @@ abstract contract BaseExternalStrategy is BaseLongStrategy {
 
         // Send collateral tokens and CFMM LP tokens to external address and calculate their value as LP tokens
         if(amounts.length > 0) liquiditySwapped = sendAndCalcCollateralLPTokens(to, amounts, lastCFMMTotalSupply);
-        if(lpTokens > 0) liquiditySwapped += sendCFMMLPTokens(_cfmm, to, lpTokens);
+        if(lpTokens > 0) {
+            checkExpectedUtilizationRate(lpTokens, true);
+            liquiditySwapped += sendCFMMLPTokens(_cfmm, to, lpTokens);
+        }
 
         // Calculate liquidity sent out
         liquiditySwapped = convertLPToInvariant(liquiditySwapped, s.lastCFMMInvariant, lastCFMMTotalSupply);

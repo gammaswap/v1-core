@@ -257,6 +257,8 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
             spendAllowance(owner, caller, shares);
         }
 
+        checkExpectedUtilizationRate(assets, false);
+
         beforeWithdraw(assets, shares); // Before withdraw hook
 
         _burn(owner, shares); // Burn owner's GS LP tokens

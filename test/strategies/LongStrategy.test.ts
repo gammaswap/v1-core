@@ -1218,8 +1218,8 @@ describe("LongStrategy", function () {
       //  lastCFMMTotalSupply.sub(lpTokens)
       // );
 
-      const lpTokens1 = ONE.mul(300);
-      const liquidity1 = ONE.mul(600);
+      const lpTokens1 = ONE.mul(250);
+      const liquidity1 = ONE.mul(500);
       await (await cfmm.burn(lpTokens1, strategy.address)).wait();
       await (await strategy.setCurrentCFMMPrice(ONE.mul(2))).wait();
       await (await strategy.testOpenLoan(tokenId, lpTokens1)).wait();
@@ -1460,8 +1460,8 @@ describe("LongStrategy", function () {
       //   lastCFMMTotalSupply.sub(lpTokens)
       // );
 
-      const lpTokens1 = ONE.mul(300);
-      const liquidity1 = ONE.mul(600);
+      const lpTokens1 = ONE.mul(250);
+      const liquidity1 = ONE.mul(500);
       await (await cfmm.burn(lpTokens1.div(2), strategy.address)).wait();
       await (await strategy.setCurrentCFMMPrice(ONE.mul(7))).wait();
       await (await strategy.testOpenLoan(tokenId, lpTokens1)).wait();

@@ -49,6 +49,20 @@ contract ExternalRebalanceStrategyTest is Test {
     strategy.updatePoolBalances();
   }
 
+  function calcExpectedUtilizationRate(uint256 assets) internal view returns(uint256){
+    (,,uint256 lastCFMMTotalSupply, uint128 lastCFMMInvariant,, uint128 lpInvariant) = strategy.getPoolBalances();
+    (uint256 borrowedInvariant,,) = strategy.getBorrowedBalances();
+
+    uint256 loanInvariant = assets * lastCFMMInvariant / lastCFMMTotalSupply;
+    uint256 _lpInvariant = lpInvariant - loanInvariant;
+    uint256 _borrowedInvariant = borrowedInvariant + loanInvariant;
+    uint256 totalInvariant = _lpInvariant + _borrowedInvariant; // total invariant belonging to liquidity depositors in GammaSwap
+    if(totalInvariant == 0) // avoid division by zero
+      return 0;
+
+    return _borrowedInvariant * 1e18 / totalInvariant; // utilization rate will always have 18 decimals
+  }
+
   function test_rebalance_externally(uint256 amt0, uint256 amt1, uint256 lpAmt) public {
     assertEq(strategy.swapFee(), 10);
     uint256 amount0 = 10 * 1e18;
@@ -74,20 +88,31 @@ contract ExternalRebalanceStrategyTest is Test {
       cfmm: address(cfmm), token0: address(tokenA), token1: address(tokenB), amount0: amounts[0], amount1: amounts[1],
       lpTokens: lpAmt});
 
-    strategy._rebalanceExternally(
-      tokenId,
-      amounts,
-      lpAmt,
-      address(callee),
-      abi.encode(swapData)
-    );
+    if(calcExpectedUtilizationRate(lpAmt) > 98e16) {
+      vm.expectRevert(bytes4(keccak256("MaxUtilizationRate()")));
+      strategy._rebalanceExternally(
+        tokenId,
+        amounts,
+        lpAmt,
+        address(callee),
+        abi.encode(swapData)
+      );
+    } else {
+      strategy._rebalanceExternally(
+        tokenId,
+        amounts,
+        lpAmt,
+        address(callee),
+        abi.encode(swapData)
+      );
 
-    (uint128[] memory postTokenBalances,,,,
-    uint256 postLpTokenBalance,) = strategy.getPoolBalances();
+      (uint128[] memory postTokenBalances,,,,
+      uint256 postLpTokenBalance,) = strategy.getPoolBalances();
 
-    assertEq(postTokenBalances[0], tokenBalances[0]);
-    assertEq(postTokenBalances[1], tokenBalances[1]);
-    assertEq(postLpTokenBalance, lpTokenBalance);
+      assertEq(postTokenBalances[0], tokenBalances[0]);
+      assertEq(postTokenBalances[1], tokenBalances[1]);
+      assertEq(postLpTokenBalance, lpTokenBalance);
+    }
   }
 
   struct PoolData {
@@ -143,7 +168,8 @@ contract ExternalRebalanceStrategyTest is Test {
 
     (data.borrowedInvariant, data.lpTokensBorrowedPlusInterest, data.lpTokensBorrowed) = strategy.getBorrowedBalances();
 
-    if(GSMath.sqrt(uint256(amt0) * amt1) * strategy.ltvThreshold() / 10000 >= liquidity) {
+    if(calcExpectedUtilizationRate(lpAmt) > 98e16) {
+      vm.expectRevert(bytes4(keccak256("MaxUtilizationRate()")));
       strategy._rebalanceExternally(
         tokenId,
         tokensHeld,
@@ -151,40 +177,49 @@ contract ExternalRebalanceStrategyTest is Test {
         address(callee),
         abi.encode(swapData)
       );
-      if(data.swappedLiquidity > data.prevLiquidity) {
-        (,,,,,uint256 newLiquidity,,) = strategy.getLoan(tokenId);
-        assertGt(newLiquidity, data.prevLiquidity);
-        (newLiquidity,,) = strategy.getBorrowedBalances();
-        assertGt(newLiquidity, data.borrowedInvariant);
-      } else {
-        (uint256 newLiquidity,,) = strategy.getBorrowedBalances();
-        assertEq(newLiquidity, data.borrowedInvariant);
-      }
-
-      (uint128[] memory postTokenBalances,,,,
-      uint256 postLpTokenBalance,) = strategy.getPoolBalances();
-
-      assertEq(postTokenBalances[0], data.tokenBalances[0] - (tokensHeld[0] - amt0));
-      assertEq(postTokenBalances[1], data.tokenBalances[1] - (tokensHeld[1] - amt1));
-      assertEq(postLpTokenBalance, data.lpTokenBalance);
     } else {
-      vm.expectRevert(bytes4(keccak256("Margin()")));
-      strategy._rebalanceExternally(
-        tokenId,
-        tokensHeld,
-        lpAmt,
-        address(callee),
-        abi.encode(swapData)
-      );
+      if(GSMath.sqrt(uint256(amt0) * amt1) * strategy.ltvThreshold() / 10000 >= liquidity) {
+        strategy._rebalanceExternally(
+          tokenId,
+          tokensHeld,
+          lpAmt,
+          address(callee),
+          abi.encode(swapData)
+        );
+        if(data.swappedLiquidity > data.prevLiquidity) {
+          (,,,,,uint256 newLiquidity,,) = strategy.getLoan(tokenId);
+          assertGt(newLiquidity, data.prevLiquidity);
+          (newLiquidity,,) = strategy.getBorrowedBalances();
+          assertGt(newLiquidity, data.borrowedInvariant);
+        } else {
+          (uint256 newLiquidity,,) = strategy.getBorrowedBalances();
+          assertEq(newLiquidity, data.borrowedInvariant);
+        }
 
-      (uint128[] memory postTokenBalances,,,,
-      uint256 postLpTokenBalance,) = strategy.getPoolBalances();
+        (uint128[] memory postTokenBalances,,,,
+        uint256 postLpTokenBalance,) = strategy.getPoolBalances();
 
-      assertEq(postTokenBalances[0], data.tokenBalances[0]);
-      assertEq(postTokenBalances[1], data.tokenBalances[1]);
-      assertEq(postLpTokenBalance, data.lpTokenBalance);
+        assertEq(postTokenBalances[0], data.tokenBalances[0] - (tokensHeld[0] - amt0));
+        assertEq(postTokenBalances[1], data.tokenBalances[1] - (tokensHeld[1] - amt1));
+        assertEq(postLpTokenBalance, data.lpTokenBalance);
+      } else {
+        vm.expectRevert(bytes4(keccak256("Margin()")));
+        strategy._rebalanceExternally(
+          tokenId,
+          tokensHeld,
+          lpAmt,
+          address(callee),
+          abi.encode(swapData)
+        );
+
+        (uint128[] memory postTokenBalances,,,,
+        uint256 postLpTokenBalance,) = strategy.getPoolBalances();
+
+        assertEq(postTokenBalances[0], data.tokenBalances[0]);
+        assertEq(postTokenBalances[1], data.tokenBalances[1]);
+        assertEq(postLpTokenBalance, data.lpTokenBalance);
+      }
     }
-
   }
 
   function _createLoan(uint256 amount0, uint256 amount1, uint128 liquidity) internal returns (uint256 tokenId) {
