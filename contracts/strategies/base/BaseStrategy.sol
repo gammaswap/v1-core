@@ -19,6 +19,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     error NotEnoughBalance();
     error NotEnoughCollateral();
     error MaxUtilizationRate();
+    error NotEnoughLPInvariant();
 
     /// @dev Emitted when transferring GS LP token from one address (`from`) to another (`to`)
     /// @param from - address sending `amount`
@@ -324,9 +325,13 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @dev Revert if lpTokens withdrawal causes utilization rate to go over 98%
     /// @param lpTokens - lpTokens expected to change utilization rate
     /// @param isLoan - true if lpTokens are being borrowed
-    function checkExpectedUtilizationRate(uint256 lpTokens, bool isLoan) internal virtual {
+    function checkExpectedUtilizationRate(uint256 lpTokens, bool isLoan) internal virtual view {
         uint256 lpTokenInvariant = convertLPToInvariant(lpTokens, s.lastCFMMInvariant, s.lastCFMMTotalSupply);
-        uint256 lpInvariant = s.LP_INVARIANT - lpTokenInvariant;
+        uint256 lpInvariant = s.LP_INVARIANT;
+        if(lpInvariant < lpTokenInvariant) revert NotEnoughLPInvariant();
+        unchecked {
+            lpInvariant = lpInvariant - lpTokenInvariant;
+        }
         uint256 borrowedInvariant = s.BORROWED_INVARIANT + (isLoan ? lpTokenInvariant : 0);
         if(calcUtilizationRate(lpInvariant, borrowedInvariant) > 98e16) {
             revert MaxUtilizationRate();

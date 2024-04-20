@@ -148,6 +148,8 @@ abstract contract BorrowStrategy is IBorrowStrategy, BaseBorrowStrategy, BaseReb
         // Update liquidity debt to include accrued interest since last update
         uint256 loanLiquidity = updateLoan(_loan);
 
+        checkExpectedUtilizationRate(lpTokens, true);
+
         // Withdraw reserve tokens from CFMM that lpTokens represent
         amounts = withdrawFromCFMM(s.cfmm, address(this), lpTokens);
 
