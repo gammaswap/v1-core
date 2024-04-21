@@ -129,7 +129,7 @@ contract TestRepayStrategy is RepayStrategy, BorrowStrategy {
         TestCFMM(cfmm).mint(liquidity / 2, address(this));
     }
 
-    function calcTokensToRepay(uint128[] memory reserves, uint256 liquidity, uint128[] memory maxAmounts) internal virtual override view returns(uint256[] memory amounts) {
+    function calcTokensToRepay(uint128[] memory reserves, uint256 liquidity, uint128[] memory maxAmounts, bool isLiquidation) internal virtual override view returns(uint256[] memory amounts) {
         amounts = new uint256[](2);
         amounts[0] = liquidity;
         amounts[1] = liquidity * 2;

@@ -222,7 +222,7 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
     function beforeRepay(LibStorage.Loan storage, uint256[] memory) internal virtual override {
     }
 
-    function calcTokensToRepay(uint128[] memory,uint256, uint128[] memory) internal virtual override view returns(uint256[] memory) {
+    function calcTokensToRepay(uint128[] memory,uint256, uint128[] memory, bool) internal virtual override view returns(uint256[] memory) {
         return new uint256[](2);
     }
 
