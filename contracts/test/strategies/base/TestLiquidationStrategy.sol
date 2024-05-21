@@ -53,6 +53,9 @@ contract TestLiquidationStrategy is SingleLiquidationStrategy, BatchLiquidationS
         return 2252571;
     }
 
+    function _checkLiquidator(address _sender) internal override virtual {
+    }
+
     function syncCFMM(address cfmm) internal override virtual {
     }
 
