@@ -54,7 +54,7 @@ abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseL
     }
 
     /// @dev See {LiquidationStrategy-_liquidateWithLP}.
-    function _liquidateWithLP(uint256 tokenId) external override lock virtual returns(uint256 loanLiquidity, uint128[] memory refund) {
+    function _liquidateWithLP(uint256 tokenId) external override lock checkLiquidator virtual returns(uint256 loanLiquidity, uint128[] memory refund) {
         // Check can liquidate loan and get loan with updated loan liquidity and collateral
         // No need to check if msg.sender has permission
         LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
