@@ -27,7 +27,7 @@ abstract contract BatchLiquidationStrategy is IBatchLiquidationStrategy, BaseLiq
     }
 
     /// @dev See {LiquidationStrategy-_batchLiquidations}.
-    function _batchLiquidations(uint256[] calldata tokenIds) external override lock virtual
+    function _batchLiquidations(uint256[] calldata tokenIds) external override lock checkLiquidator virtual
         returns(uint256 totalLoanLiquidity, uint128[] memory refund) {
         if(tokenIds.length == 0) revert InvalidTokenIdsLength(); // Revert if no loan tokenIds are passed
 

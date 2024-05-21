@@ -21,6 +21,9 @@ contract TestExternalLiquidationStrategy is TestExternalBaseRebalanceStrategy, E
     function mintToDevs(uint256 lastFeeIndex, uint256 lastCFMMIndex, uint256 utilizationRate) internal virtual override {
     }
 
+    function _checkLiquidator(address _sender) internal override virtual {
+    }
+
     // create loan
     function createLoan(uint128 liquidity) external virtual override returns(uint256 tokenId) {
         tokenId = s.createLoan(s.tokens.length, 0);

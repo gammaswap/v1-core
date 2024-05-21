@@ -11,7 +11,7 @@ import "../base/BaseLiquidationStrategy.sol";
 abstract contract SingleLiquidationStrategy is ISingleLiquidationStrategy, BaseLiquidationStrategy {
 
     /// @dev See {LiquidationStrategy-_liquidate}.
-    function _liquidate(uint256 tokenId) external override lock virtual returns(uint256 loanLiquidity, uint256 refund) {
+    function _liquidate(uint256 tokenId) external override lock checkLiquidator virtual returns(uint256 loanLiquidity, uint256 refund) {
         // Check can liquidate loan and get loan with updated loan liquidity
         // No need to check if msg.sender has permission
         LibStorage.Loan storage _loan = _getExistingLoan(tokenId);
