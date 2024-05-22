@@ -50,14 +50,14 @@ abstract contract BaseLiquidationStrategy is ILiquidationStrategy, BaseRepayStra
         bool isObserved;
     }
 
-    /// @dev Check caller of liquidation function
-    modifier checkLiquidator() {
-        _checkLiquidator(msg.sender);
+    /// @dev Pre check before liquidation function call
+    modifier beforeLiquidation() {
+        _beforeLiquidation();
         _;
     }
 
-    /// @dev Check caller of liquidator function
-    function _checkLiquidator(address _sender) internal virtual;
+    /// @dev Pre check before liquidation function call
+    function _beforeLiquidation() internal virtual;
 
     /// @return - liquidationFee - threshold used to measure the liquidation fee
     function _liquidationFee() internal virtual view returns(uint16) {
