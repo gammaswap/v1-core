@@ -13,7 +13,7 @@ abstract contract ExternalLiquidationStrategy is IExternalLiquidationStrategy, B
     error CollateralShortfall();
 
     /// @dev See {IExternalLiquidationStrategy-_liquidateExternally}.
-    function _liquidateExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock checkLiquidator virtual
+    function _liquidateExternally(uint256 tokenId, uint128[] calldata amounts, uint256 lpTokens, address to, bytes calldata data) external override lock beforeLiquidation virtual
         returns(uint256, uint128[] memory) {
         // Check can liquidate loan and get loan with updated loan liquidity and collateral
         // No need to check if msg.sender has permission
