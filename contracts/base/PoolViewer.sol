@@ -4,6 +4,7 @@ pragma solidity 0.8.21;
 import "../libraries/GammaSwapLibrary.sol";
 import "../interfaces/IPoolViewer.sol";
 import "../interfaces/IGammaPool.sol";
+import "../interfaces/ITokenMetaData.sol";
 import "../interfaces/observer/ICollateralManager.sol";
 import "../interfaces/strategies/base/ILongStrategy.sol";
 import "../interfaces/strategies/base/IShortStrategy.sol";
@@ -14,7 +15,7 @@ import "../libraries/GSMath.sol";
 /// @title Implementation of Viewer Contract for GammaPool
 /// @author Daniel D. Alcarraz (https://github.com/0xDanr)
 /// @dev Used make complex view function calls from GammaPool's storage data (e.g. updated loan and pool debt)
-contract PoolViewer is IPoolViewer {
+contract PoolViewer is IPoolViewer, ITokenMetaData {
 
     /// @inheritdoc IPoolViewer
     function getLoans(address pool, uint256 start, uint256 end, bool active) external virtual override view returns(IGammaPool.LoanData[] memory _loans) {
@@ -265,13 +266,54 @@ contract PoolViewer is IPoolViewer {
         _names = new string[](_tokens.length);
         _decimals = new uint8[](_tokens.length);
         for(uint256 i = 0; i < _tokens.length;) {
-            _symbols[i] = GammaSwapLibrary.symbol(_tokens[i]);
-            _names[i] = GammaSwapLibrary.name(_tokens[i]);
-            _decimals[i] = GammaSwapLibrary.decimals(_tokens[i]);
+            _symbols[i] = getTokenSymbol(_tokens[i]);
+            _names[i] = getTokenName(_tokens[i]);
+            _decimals[i] = getTokenDecimals(_tokens[i]);
             unchecked {
                 ++i;
             }
         }
+    }
+
+    /// @inheritdoc ITokenMetaData
+    function getTokenSymbol(address _token) public virtual override view returns(string memory _symbol) {
+        (bool success, bytes memory data) = _token.staticcall(abi.encodeWithSignature("symbol()")); // requesting via ERC20 name implementation
+
+        require(success && data.length >= 1);
+
+        // Try to decode as bytes32
+        if (data.length == 32) {
+            bytes32 bytes32Value;
+            assembly {
+                bytes32Value := mload(add(data, 32))
+            }
+            return bytes32ToString(bytes32Value);
+        }
+
+        return abi.decode(data, (string));
+    }
+
+    /// @inheritdoc ITokenMetaData
+    function getTokenName(address _token) public virtual override view returns(string memory _name) {
+        (bool success, bytes memory data) = _token.staticcall(abi.encodeWithSignature("name()")); // requesting via ERC20 name implementation
+
+        require(success && data.length >= 1);
+
+        // Try to decode as bytes32
+        if (data.length == 32) {
+            bytes32 bytes32Value;
+            assembly {
+                bytes32Value := mload(add(data, 32))
+            }
+            return bytes32ToString(bytes32Value);
+        }
+
+        return abi.decode(data, (string));
+    }
+
+    /// @inheritdoc ITokenMetaData
+    function getTokenDecimals(address _token) public virtual override view returns(uint8 _decimals) {
+        return GammaSwapLibrary.decimals(_token);
     }
 
     /// @dev Update liquidity to current debt level
@@ -281,5 +323,20 @@ contract PoolViewer is IPoolViewer {
     /// @return updatedLiquidity - liquidity debt updated to current time
     function _updateLiquidity(uint256 liquidity, uint256 rateIndex, uint256 accFeeIndex) internal virtual view returns(uint128) {
         return rateIndex == 0 ? 0 : uint128(liquidity * accFeeIndex / rateIndex);
+    }
+
+    /// @dev Convert bytes32 to string
+    /// @param _bytes32 - bytes32 parameter to convert to string
+    /// @return string - _bytes32 parameter converted to string
+    function bytes32ToString(bytes32 _bytes32) internal pure returns (string memory) {
+        uint8 i = 0;
+        while(i < 32 && _bytes32[i] != 0) {
+            i++;
+        }
+        bytes memory bytesArray = new bytes(i);
+        for (i = 0; i < 32 && _bytes32[i] != 0; i++) {
+            bytesArray[i] = _bytes32[i];
+        }
+        return string(bytesArray);
     }
 }
