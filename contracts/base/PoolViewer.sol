@@ -214,7 +214,7 @@ contract PoolViewer is IPoolViewer, ITokenMetaData {
     }
 
     /// @inheritdoc IPoolViewer
-    function getLatestPoolData(address pool) external virtual override view returns(IGammaPool.PoolData memory data) {
+    function getLatestPoolData(address pool) public virtual override view returns(IGammaPool.PoolData memory data) {
         data = getPoolData(pool);
         uint256 lastCFMMInvariant;
         uint256 lastCFMMTotalSupply;
@@ -254,9 +254,14 @@ contract PoolViewer is IPoolViewer, ITokenMetaData {
     }
 
     /// @inheritdoc IPoolViewer
+    function getLatestPoolDataWithMetaData(address pool) external virtual override view returns(IGammaPool.PoolData memory data) {
+        data = getLatestPoolData(pool);
+        (data.symbols, data.names,) = getTokensMetaData(data.tokens);
+    }
+
+    /// @inheritdoc IPoolViewer
     function getPoolData(address pool) public virtual override view returns(IGammaPool.PoolData memory data) {
         data = IGammaPool(pool).getPoolData();
-        (data.symbols, data.names,) = getTokensMetaData(data.tokens);
     }
 
     /// @inheritdoc IPoolViewer
