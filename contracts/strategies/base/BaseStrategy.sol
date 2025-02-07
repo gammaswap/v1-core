@@ -167,8 +167,8 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @param borrowedInvariant - liquidity invariant borrowed in the GammaPool
     /// @param lastFeeIndex - interest accrued to loans in GammaPool
     /// @return newBorrowedInvariant - borrowed invariant with accrued interest
-    function accrueBorrowedInvariant(uint256 borrowedInvariant, uint256 lastFeeIndex) internal virtual pure returns(uint256) {
-        return  borrowedInvariant * lastFeeIndex / 1e18;
+    function accrueBorrowedInvariant(uint256 borrowedInvariant, uint256 lastFeeIndex) internal virtual view returns(uint256) {
+        return borrowedInvariant * lastFeeIndex / 1e18;
     }
 
     /// @notice Convert CFMM LP tokens into liquidity invariant units.
