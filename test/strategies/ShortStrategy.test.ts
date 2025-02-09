@@ -4,6 +4,7 @@ import { BigNumber } from "ethers";
 import { Address } from "cluster";
 
 const PROTOCOL_ID = 1;
+const MIN_SHARES = 1000;
 
 describe("ShortStrategy", function () {
   let TestERC20: any;
@@ -65,19 +66,37 @@ describe("ShortStrategy", function () {
   async function convertToShares(
     assets: BigNumber,
     supply: BigNumber,
-    totalAssets: BigNumber
+    totalAssets: BigNumber,
+    roundUp: boolean
   ): Promise<BigNumber> {
-    return supply.eq(0) || totalAssets.eq(0)
-      ? assets
-      : assets.mul(supply).div(totalAssets);
+    if (assets.eq(0)) {
+      return BigNumber.from(0);
+    }
+    if (supply.eq(0) || totalAssets.eq(0)) {
+      return assets.sub(MIN_SHARES);
+    }
+    if (roundUp) {
+      return assets.mul(supply).add(totalAssets.sub(1)).div(totalAssets);
+    }
+    return assets.mul(supply).div(totalAssets);
   }
 
   async function convertToAssets(
     shares: BigNumber,
     supply: BigNumber,
-    totalAssets: BigNumber
+    totalAssets: BigNumber,
+    roundUp: boolean
   ): Promise<BigNumber> {
-    return supply.eq(0) ? shares : shares.mul(totalAssets).div(supply);
+    if (shares.eq(0)) {
+      return BigNumber.from(0);
+    }
+    if (supply.eq(0)) {
+      return shares.add(MIN_SHARES);
+    }
+    if (roundUp) {
+      return shares.mul(totalAssets).add(supply.sub(1)).div(supply);
+    }
+    return shares.mul(totalAssets).div(supply);
   }
 
   // increase totalAssets by assets, increase totalSupply by shares
@@ -108,14 +127,15 @@ describe("ShortStrategy", function () {
     const convertedToShares = await convertToShares(
       assets,
       totalSupply,
-      totalAssets
+      totalAssets,
+      true
     );
 
     const _convertedToShares = await convert2Shares(assets);
 
     expect(_convertedToShares).to.be.equal(convertedToShares);
     expect(await convert2Assets(convertedToShares)).to.be.equal(
-      await convertToAssets(convertedToShares, totalSupply, totalAssets)
+      await convertToAssets(convertedToShares, totalSupply, totalAssets, false)
     );
 
     return convertedToShares;
@@ -477,7 +497,7 @@ describe("ShortStrategy", function () {
           strategy._convertToShares,
           strategy._convertToAssets
         )
-      ).to.be.equal(assets1);
+      ).to.be.equal(assets1.sub(MIN_SHARES));
       expect(
         await testConvertToAssets(
           shares1,
@@ -623,7 +643,7 @@ describe("ShortStrategy", function () {
 
         await expect(
           strategy._depositNoPull(owner.address)
-        ).to.be.revertedWithCustomError(strategy, "ZeroAmount");
+        ).to.be.revertedWithCustomError(strategy, "ZeroShares");
       });
 
       it("First Deposit Assets/LP Tokens", async function () {
@@ -699,9 +719,7 @@ describe("ShortStrategy", function () {
         expect(depositEvent.args.caller).to.equal(owner.address);
         expect(depositEvent.args.to).to.equal(owner.address);
         expect(depositEvent.args.assets).to.equal(assets.sub(minShares));
-        expect(depositEvent.args.shares).to.equal(
-          expectedGSShares.sub(minShares)
-        );
+        expect(depositEvent.args.shares).to.equal(expectedGSShares);
 
         const poolUpdatedEvent = events[events.length - 1];
         expect(poolUpdatedEvent.event).to.equal("PoolUpdated");
@@ -724,13 +742,15 @@ describe("ShortStrategy", function () {
         expect(poolUpdatedEvent.args.cfmmReserves[1]).to.equal(cfmmReserves[1]);
         expect(poolUpdatedEvent.args.txType).to.equal(0);
 
-        expect(await strategy.totalSupply0()).to.equal(expectedGSShares);
+        expect(await strategy.totalSupply0()).to.equal(
+          expectedGSShares.add(minShares)
+        );
         expect(await strategy.balanceOf(owner.address)).to.equal(
-          expectedGSShares.sub(minShares)
+          expectedGSShares
         );
         const params1 = await strategy.getTotalAssetsParams();
         expect(params1.lpBalance).to.equal(assets);
-        expect(assets).to.equal(expectedGSShares);
+        expect(assets).to.equal(expectedGSShares.add(minShares));
       });
 
       it("Total Assets Ignore CFMM Fee if Same Block", async function () {
@@ -872,13 +892,13 @@ describe("ShortStrategy", function () {
         expect(depositEvent.args.caller).to.equal(owner.address);
         expect(depositEvent.args.to).to.equal(owner.address);
         expect(depositEvent.args.assets).to.equal(assets.sub(minShares));
-        expect(depositEvent.args.shares).to.equal(
-          expectedGSShares.sub(minShares)
-        );
+        expect(depositEvent.args.shares).to.equal(expectedGSShares);
 
-        expect(await strategy.totalSupply0()).to.equal(expectedGSShares);
+        expect(await strategy.totalSupply0()).to.equal(
+          expectedGSShares.add(minShares)
+        );
         expect(await strategy.balanceOf(owner.address)).to.equal(
-          expectedGSShares.sub(minShares)
+          expectedGSShares
         );
 
         await (await cfmm.trade(tradeYield)).wait();
@@ -973,7 +993,10 @@ describe("ShortStrategy", function () {
           strategy._withdrawNoPull(owner.address)
         ).to.be.revertedWithCustomError(strategy, "ZeroAssets");
 
-        await (await strategy.transfer(strategy.address, assets)).wait();
+        const minShares = BigNumber.from(1000);
+        await (
+          await strategy.transfer(strategy.address, assets.sub(minShares))
+        ).wait();
 
         await borrowLPTokens(ONE.mul(1));
 
@@ -987,8 +1010,16 @@ describe("ShortStrategy", function () {
         const assets = ONE.mul(200);
         await prepareAssetsToWithdraw(assets, owner);
 
-        const withdrawAssets = ONE.mul(50);
         const shares = ONE.mul(50);
+
+        const totalSupply = await strategy.totalSupply0();
+        const strategyCFMMBalance = await cfmm.balanceOf(strategy.address);
+        const withdrawAssets = await convertToAssets(
+          shares,
+          totalSupply,
+          strategyCFMMBalance,
+          false
+        );
 
         await (await strategy.transfer(strategy.address, shares)).wait();
 
@@ -1123,7 +1154,7 @@ describe("ShortStrategy", function () {
 
         await expect(
           posManager.depositReserves(owner.address, [500, 500], [0, 0])
-        ).to.be.revertedWithCustomError(posManager, "ZeroAmount");
+        ).to.be.revertedWithCustomError(posManager, "ZeroShares");
       });
 
       it("First Deposit Reserves", async function () {
@@ -1241,11 +1272,11 @@ describe("ShortStrategy", function () {
         expect(depositReserveEvent.args.reserves[1]).to.equal(1000);
         expect(depositReserveEvent.args.shares).to.equal(minShares);
 
-        expect(await strategy.totalSupply0()).to.equal(expectedGSShares);
+        expect(await strategy.totalSupply0()).to.equal(expectedGSShares.add(minShares));
         expect(await strategy.balanceOf(owner.address)).to.equal(minShares);
         const params1 = await strategy.getTotalAssetsParams();
         expect(params1.lpBalance).to.equal(assets);
-        expect(assets).to.equal(expectedGSShares);
+        expect(assets).to.equal(expectedGSShares.add(minShares));
       });
 
       it("More Deposit Reserves", async function () {
@@ -1288,13 +1319,13 @@ describe("ShortStrategy", function () {
         expect(depositEvent.args.caller).to.equal(posManager.address);
         expect(depositEvent.args.to).to.equal(owner.address);
         expect(depositEvent.args.assets).to.equal(assets.sub(minShares));
-        expect(depositEvent.args.shares).to.equal(
-          expectedGSShares.sub(minShares)
-        );
+        expect(depositEvent.args.shares).to.equal(expectedGSShares);
 
-        expect(await strategy.totalSupply0()).to.equal(expectedGSShares);
+        expect(await strategy.totalSupply0()).to.equal(
+          expectedGSShares.add(minShares)
+        );
         expect(await strategy.balanceOf(owner.address)).to.equal(
-          expectedGSShares.sub(minShares)
+          expectedGSShares
         );
 
         await (await cfmm.trade(tradeYield)).wait();
@@ -1393,7 +1424,10 @@ describe("ShortStrategy", function () {
           strategy._withdrawReserves(owner.address)
         ).to.be.revertedWithCustomError(strategy, "ZeroAssets");
 
-        await (await strategy.transfer(strategy.address, assets)).wait();
+        const minShares = BigNumber.from(1000);
+        await (
+          await strategy.transfer(strategy.address, assets.sub(minShares))
+        ).wait();
 
         await borrowLPTokens(ONE.mul(1));
 
@@ -1407,8 +1441,16 @@ describe("ShortStrategy", function () {
         const assets = ONE.mul(200);
         await prepareAssetsToWithdraw(assets, owner);
 
-        const withdrawAssets = ONE.mul(50);
         const shares = ONE.mul(50);
+
+        const totalSupply = await strategy.totalSupply0();
+        const strategyCFMMBalance = await cfmm.balanceOf(strategy.address);
+        const withdrawAssets = await convertToAssets(
+          shares,
+          totalSupply,
+          strategyCFMMBalance,
+          false
+        );
 
         // px is assumed to be 2
         await (await strategy.transfer(strategy.address, shares)).wait();

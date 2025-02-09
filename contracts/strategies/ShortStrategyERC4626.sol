@@ -15,7 +15,7 @@ abstract contract ShortStrategyERC4626 is ShortStrategy {
         updateIndex();
 
         // Convert CFMM LP tokens to GS LP tokens
-        shares = convertToShares(assets);
+        shares = convertToShares(assets, false);
 
         // Revert if redeeming 0 GS LP tokens
         if(shares == 0) revert ZeroShares();
@@ -30,7 +30,7 @@ abstract contract ShortStrategyERC4626 is ShortStrategy {
         updateIndex();
 
         // Convert GS LP tokens to CFMM LP tokens
-        assets = convertToAssets(shares);
+        assets = convertToAssets(shares, true);
 
         // Revert if withdrawing 0 CFMM LP tokens
         if(assets == 0) revert ZeroAssets();
@@ -48,7 +48,7 @@ abstract contract ShortStrategyERC4626 is ShortStrategy {
         if(assets > s.LP_TOKEN_BALANCE) revert ExcessiveWithdrawal();
 
         // Convert CFMM LP tokens to GS LP tokens
-        shares = convertToShares(assets);
+        shares = convertToShares(assets, true);
 
         // Revert if redeeming 0 GS LP tokens
         if(shares == 0) revert ZeroShares();
@@ -63,7 +63,7 @@ abstract contract ShortStrategyERC4626 is ShortStrategy {
         updateIndex();
 
         // Convert GS LP tokens to CFMM LP tokens
-        assets = convertToAssets(shares);
+        assets = convertToAssets(shares, false);
         if(assets == 0) revert ZeroAssets(); // revert if withdrawing 0 CFMM LP tokens
 
         // Revert if not enough CFMM LP tokens to withdraw
@@ -84,7 +84,6 @@ abstract contract ShortStrategyERC4626 is ShortStrategy {
 
         // To prevent rounding errors, lock min shares in first deposit
         if(s.totalSupply == 0) {
-            shares = shares - MIN_SHARES;
             assets = assets - MIN_SHARES;
             depositAssets(caller, address(0), MIN_SHARES, MIN_SHARES, false);
         }

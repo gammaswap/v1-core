@@ -102,7 +102,15 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
     /// @dev Convert CFMM LP tokens to GS LP tokens
     /// @param assets - CFMM LP tokens
     /// @return shares - GS LP tokens quantity that corresponds to assets quantity provided as a parameter (CFMM LP tokens)
-    function convertToShares(uint256 assets) public view virtual returns (uint256) {
+    function convertToShares(uint256 assets) external view virtual returns (uint256) {
+        return _convertToShares(assets, true);
+    }
+
+    /// @dev Convert CFMM LP tokens to GS LP tokens
+    /// @param assets - CFMM LP tokens
+    /// @param roundUp - if true round up result else round down
+    /// @return shares - GS LP tokens quantity that corresponds to assets quantity provided as a parameter (CFMM LP tokens)
+    function _convertToShares(uint256 assets, bool roundUp) internal view virtual returns (uint256) {
         if(assets == 0) {
             return 0;
         }
@@ -115,23 +123,35 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
                 return assets - MIN_SHARES;
             }
         }
+
+        if(roundUp) {
+            return (assets * supply + (_totalAssets - 1))/ _totalAssets;
+        }
         return (assets * supply) / _totalAssets;
     }
 
     /// @dev Convert GS LP tokens to GS LP tokens
     /// @param shares - GS LP tokens
     /// @return assets - CFMM LP tokens quantity that corresponds to shares quantity provided as a parameter (GS LP tokens)
-    function convertToAssets(uint256 shares) public view virtual returns (uint256) {
+    function convertToAssets(uint256 shares) external view virtual returns (uint256) {
+        return _convertToAssets(shares, false);
+    }
+
+    /// @dev Convert GS LP tokens to GS LP tokens
+    /// @param shares - GS LP tokens
+    /// @param roundUp - if true round up result else round down
+    /// @return assets - CFMM LP tokens quantity that corresponds to shares quantity provided as a parameter (GS LP tokens)
+    function _convertToAssets(uint256 shares, bool roundUp) internal view virtual returns (uint256) {
         if(shares == 0) {
             return 0;
         }
         (uint256 assets, uint256 supply) = _totalAssetsAndSupply();
         if(supply == 0) {
-            if(shares <= MIN_SHARES) revert MinShares();
+            return shares + MIN_SHARES;
+        }
 
-            unchecked {
-                return shares - MIN_SHARES;
-            }
+        if(roundUp) {
+            return (shares * assets + (supply - 1)) / supply;
         }
         // totalAssets is total CFMM LP tokens, including accrued interest, calculated using state variables
         return (shares * assets) / supply;
@@ -141,28 +161,28 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
     /// @param assets - CFMM LP tokens
     /// @return shares - expected GS LP tokens to get from assets (CFMM LP tokens) deposited
     function previewDeposit(uint256 assets) public view virtual returns (uint256) {
-        return convertToShares(assets);
+        return _convertToShares(assets, false);
     }
 
     /// @dev Allows an on-chain or off-chain user to simulate the effects of their mint at the current block, given current on-chain conditions.
     /// @param shares - GS LP tokens
     /// @return assets - CFMM LP tokens needed to deposit to get the desired shares (GS LP tokens)
     function previewMint(uint256 shares) public view virtual returns (uint256) {
-        return convertToAssets(shares);
+        return _convertToAssets(shares, true);
     }
 
     /// @dev Allows an on-chain or off-chain user to simulate the effects of their withdrawal at the current block, given current on-chain conditions.
     /// @param assets - CFMM LP tokens
     /// @return shares - expected GS LP tokens needed to burn to withdraw desired assets (CFMM LP tokens)
     function previewWithdraw(uint256 assets) public view virtual returns (uint256) {
-        return convertToShares(assets);
+        return _convertToShares(assets, true);
     }
 
     /// @dev Allows an on-chain or off-chain user to simulate the effects of their redemption at the current block, given current on-chain conditions.
     /// @param shares - GS LP tokens
     /// @return assets - expected CFMM LP tokens withdrawn if shares (GS LP tokens) burned
     function previewRedeem(uint256 shares) public view virtual returns (uint256) {
-        return convertToAssets(shares);
+        return _convertToAssets(shares, false);
     }
 
     /// @dev Returns the maximum amount of CFMM LP tokens that can be deposited into the Vault for the receiver, through a deposit call. Ignores address parameter
@@ -193,14 +213,14 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
     /// @param owner - address that owns GS LP tokens
     /// @return maxAssets - maximum amount of CFMM LP tokens that can be withdrawn by owner address
     function maxWithdraw(address owner) public view virtual returns (uint256) {
-        return maxAssets(convertToAssets(s.balanceOf[owner])); // convert owner GS LP tokens to equivalent CFMM LP tokens and check if available to withdraw
+        return maxAssets(_convertToAssets(s.balanceOf[owner], false)); // convert owner GS LP tokens to equivalent CFMM LP tokens and check if available to withdraw
     }
 
     /// @dev Returns the maximum amount of GS LP tokens that can be redeemed from the owner balance in the Vault, through a redeem call.
     /// @param owner - address that owns GS LP tokens
     /// @return maxShares - maximum amount of GS LP tokens that can be redeemed by owner address
     function maxRedeem(address owner) public view virtual returns (uint256) {
-        return convertToShares(maxWithdraw(owner)); // get maximum amount of CFMM LP tokens that can be withdrawn and convert to equivalent GS LP token amount
+        return s.balanceOf[owner]; // get maximum amount of CFMM LP tokens that can be withdrawn and convert to equivalent GS LP token amount
     }
 
     /// @dev Calculate and return total CFMM LP tokens belonging to GammaPool liquidity providers using state global variables.
@@ -209,21 +229,23 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
     /// @return assets - current total CFMM LP tokens (real and virtual) in existence in the GammaPool, including accrued interest
     /// @return supply - total supply of GS LP tokens after taking protocol revenue dilution into account
     function _totalAssetsAndSupply() internal view virtual returns (uint256 assets, uint256 supply) {
-        IShortStrategy.VaultBalancesParams memory _params;
-        _params.factory = s.factory;
-        _params.pool = address(this);
-        _params.paramsStore = _params.factory;
-        _params.BORROWED_INVARIANT = s.BORROWED_INVARIANT;
-        _params.latestCfmmInvariant = _getLatestCFMMInvariant();
-        _params.latestCfmmTotalSupply = _getLatestCFMMTotalSupply();
-        _params.LAST_BLOCK_NUMBER = s.LAST_BLOCK_NUMBER;
-        _params.lastCFMMInvariant = s.lastCFMMInvariant;
-        _params.lastCFMMTotalSupply = s.lastCFMMTotalSupply;
-        _params.lastCFMMFeeIndex = s.lastCFMMFeeIndex;
-        _params.totalSupply = s.totalSupply;
-        _params.LP_TOKEN_BALANCE = s.LP_TOKEN_BALANCE;
-        _params.LP_INVARIANT = s.LP_INVARIANT;
-
-        (assets, supply) = IShortStrategy(vaultImplementation()).totalAssetsAndSupply(_params);
+        address _factory = s.factory;
+        (assets, supply) = IShortStrategy(vaultImplementation()).totalAssetsAndSupply(
+            IShortStrategy.VaultBalancesParams({
+                factory: _factory,
+                pool: address(this),
+                paramsStore: _factory,
+                BORROWED_INVARIANT: s.BORROWED_INVARIANT,
+                latestCfmmInvariant: _getLatestCFMMInvariant(),
+                latestCfmmTotalSupply: _getLatestCFMMTotalSupply(),
+                LAST_BLOCK_NUMBER: s.LAST_BLOCK_NUMBER,
+                lastCFMMInvariant: s.lastCFMMInvariant,
+                lastCFMMTotalSupply: s.lastCFMMTotalSupply,
+                lastCFMMFeeIndex: s.lastCFMMFeeIndex,
+                totalSupply: s.totalSupply,
+                LP_TOKEN_BALANCE: s.LP_TOKEN_BALANCE,
+                LP_INVARIANT: s.LP_INVARIANT
+            })
+        );
     }
 }

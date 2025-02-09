@@ -114,13 +114,12 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         updateIndex();
 
         // Convert CFMM LP tokens (`assets`) to GS LP tokens (`shares`)
-        shares = convertToShares(assets);
+        shares = convertToShares(assets, false);
         // revert if request is for 0 GS LP tokens
         if(shares == 0) revert ZeroShares();
 
         // To prevent rounding errors, lock min shares in first deposit
         if(s.totalSupply == 0) {
-            shares = shares - MIN_SHARES;
             assets = assets - MIN_SHARES;
             depositAssets(msg.sender, address(0), MIN_SHARES, MIN_SHARES, isDepositReserves);
         }
@@ -209,7 +208,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
         updateIndex();
 
         // Convert GS LP tokens (`shares`) to CFMM LP tokens (`assets`)
-        assets = convertToAssets(shares);
+        assets = convertToAssets(shares, false);
         // revert if request is for 0 CFMM LP tokens
         if(assets == 0) revert ZeroAssets();
 
@@ -307,17 +306,38 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
 
     /// @dev Check if `spender` has permissions to spend `amount` of GS LP tokens belonging to `owner`
     /// @param assets - address that owns the GS LP tokens
-    function convertToShares(uint256 assets) internal view virtual returns (uint256) {
+    /// @param roundUp - if true round up result, else round down
+    function convertToShares(uint256 assets, bool roundUp) internal view virtual returns (uint256) {
+        if(assets == 0) {
+            return 0;
+        }
         uint256 supply = s.totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
         uint256 _totalAssets = s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST;
-        return supply == 0 || _totalAssets == 0 ? assets : (assets * supply / _totalAssets);
+        if(supply == 0 || _totalAssets == 0) {
+            return assets - MIN_SHARES;
+        }
+        if(roundUp) {
+            return (assets * supply + (_totalAssets - 1)) / _totalAssets;
+        }
+        return (assets * supply / _totalAssets);
     }
 
     /// @dev Check if `spender` has permissions to spend `amount` of GS LP tokens belonging to `owner`
     /// @param shares - address that owns the GS LP tokens
-    function convertToAssets(uint256 shares) internal view virtual returns (uint256) {
+    /// @param roundUp - if true round up result, else round down
+    function convertToAssets(uint256 shares, bool roundUp) internal view virtual returns (uint256) {
+        if(shares == 0) {
+            return 0;
+        }
         uint256 supply = s.totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
-        return supply == 0 ? shares : (shares * (s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST) / supply);
+        if(supply == 0) {
+            return shares + MIN_SHARES;
+        }
+        uint256 _totalAssets = s.LP_TOKEN_BALANCE + s.LP_TOKEN_BORROWED_PLUS_INTEREST;
+        if(roundUp) {
+            return (shares * _totalAssets + (supply - 1)) / supply;
+        }
+        return (shares * _totalAssets) / supply;
     }
 
     // INTERNAL HOOKS LOGIC
