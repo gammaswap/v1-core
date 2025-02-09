@@ -101,7 +101,7 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
 
     function depositLPTokens(address to) public virtual {
         uint256 assets = IERC20(s.cfmm).balanceOf(address(this)) - s.LP_TOKEN_BALANCE;
-        uint256 shares = convertToShares(assets);
+        uint256 shares = convertToShares(assets, false);
         _mint(to, shares);
         s.LP_TOKEN_BALANCE = IERC20(s.cfmm).balanceOf(address(this));
     }
@@ -138,11 +138,15 @@ abstract contract TestBaseShortStrategy is ShortStrategy {
     }
 
     function _convertToShares(uint256 assets) public view virtual returns(uint256) {
-        return convertToShares(assets);
+        return convertToShares(assets, true);
     }
 
     function _convertToAssets(uint256 shares) public view virtual returns(uint256) {
-        return convertToAssets(shares);
+        return convertToAssets(shares, false);
+    }
+
+    function _convertToAssets2(uint256 shares, bool roundUp) public view virtual returns(uint256) {
+        return convertToAssets(shares, roundUp);
     }
 
     function calcBorrowRate(uint256 lpInvariant, uint256 borrowedInvariant, address paramsStore, address pool) public virtual

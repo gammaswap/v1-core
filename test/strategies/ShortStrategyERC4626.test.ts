@@ -52,19 +52,37 @@ describe("ShortStrategyERC4626", function () {
   async function convertToShares(
     assets: BigNumber,
     supply: BigNumber,
-    totalAssets: BigNumber
+    totalAssets: BigNumber,
+    roundUp: boolean
   ): Promise<BigNumber> {
-    return supply.eq(0) || totalAssets.eq(0)
-      ? assets
-      : assets.mul(supply).div(totalAssets);
+    if (assets.eq(0)) {
+      return BigNumber.from(0);
+    }
+    if (supply.eq(0) || totalAssets.eq(0)) {
+      return assets.sub(1000);
+    }
+    if (roundUp) {
+      return assets.mul(supply).add(totalAssets.sub(1)).div(totalAssets);
+    }
+    return assets.mul(supply).div(totalAssets);
   }
 
   async function convertToAssets(
     shares: BigNumber,
     supply: BigNumber,
-    totalAssets: BigNumber
+    totalAssets: BigNumber,
+    roundUp: boolean
   ): Promise<BigNumber> {
-    return supply.eq(0) ? shares : shares.mul(totalAssets).div(supply);
+    if (shares.eq(0)) {
+      return BigNumber.from(0);
+    }
+    if (supply.eq(0)) {
+      return shares.add(1000);
+    }
+    if (roundUp) {
+      return shares.mul(totalAssets).add(supply.sub(1)).div(supply);
+    }
+    return shares.mul(totalAssets).div(supply);
   }
 
   // increase totalAssets by assets, increase totalSupply by shares
@@ -88,21 +106,29 @@ describe("ShortStrategyERC4626", function () {
   async function testConvertToShares(
     assets: BigNumber,
     convert2Shares: Function,
-    convert2Assets: Function
+    convert2Assets: Function,
+    roundUpShares: boolean,
+    roundUpAssets: boolean
   ): Promise<BigNumber> {
     const totalSupply = await strategy.totalSupply0();
     const totalAssets = await strategy.getTotalAssets();
     const convertedToShares = await convertToShares(
       assets,
       totalSupply,
-      totalAssets
+      totalAssets,
+      roundUpShares
     );
 
     const _convertedToShares = await convert2Shares(assets);
 
     expect(_convertedToShares).to.be.equal(convertedToShares);
     expect(await convert2Assets(convertedToShares)).to.be.equal(
-      await convertToAssets(convertedToShares, totalSupply, totalAssets)
+      await convertToAssets(
+        convertedToShares,
+        totalSupply,
+        totalAssets,
+        roundUpAssets
+      )
     );
 
     return convertedToShares;
@@ -111,21 +137,29 @@ describe("ShortStrategyERC4626", function () {
   async function testConvertToAssets(
     shares: BigNumber,
     convert2Assets: Function,
-    convert2Shares: Function
+    convert2Shares: Function,
+    roundUpAssets: boolean,
+    roundUpShares: boolean
   ): Promise<BigNumber> {
     const totalSupply = await strategy.totalSupply0();
     const totalAssets = await strategy.getTotalAssets();
     const convertedToAssets = await convertToAssets(
       shares,
       totalSupply,
-      totalAssets
+      totalAssets,
+      roundUpAssets
     );
 
     const _convertedToAssets = await convert2Assets(shares);
 
     expect(_convertedToAssets).to.be.equal(convertedToAssets);
     expect(await convert2Shares(convertedToAssets)).to.be.equal(
-      await convertToShares(convertedToAssets, totalSupply, totalAssets)
+      await convertToShares(
+        convertedToAssets,
+        totalSupply,
+        totalAssets,
+        roundUpShares
+      )
     );
 
     return convertedToAssets;
@@ -297,6 +331,48 @@ describe("ShortStrategyERC4626", function () {
     const ownerAddr = from;
 
     await erc4626WithdrawFunc(assets, receiverAddr, ownerAddr);
+
+    await checkWithdrawal(
+      from,
+      to,
+      totalSupply.sub(shares),
+      ownerBalance.sub(ownerShareChange),
+      receiverBalance.sub(receiverShareChange),
+      totalCFMMSupply.sub(cfmmSupplyChange),
+      strategyCFMMBalance.sub(assets),
+      ownerCFMMBalance.add(ownerAssetChange),
+      receiverCFMMBalance.add(receiverAssetChange)
+    );
+  }
+
+  async function testERC4626Redeem(
+    from: Address,
+    to: Address,
+    assets: BigNumber,
+    shares: BigNumber,
+    ownerAssetChange: BigNumber,
+    receiverAssetChange: BigNumber,
+    ownerShareChange: BigNumber,
+    receiverShareChange: BigNumber,
+    cfmmSupplyChange: BigNumber,
+    erc4626WithdrawFunc: Function
+  ) {
+    const resp = await strategy.getLPTokenBalAndBorrowedInv();
+
+    const totalSupply = await strategy.totalSupply0();
+    const ownerBalance = await strategy.balanceOf(from);
+    const receiverBalance = await strategy.balanceOf(to);
+    const totalCFMMSupply = await cfmm.totalSupply();
+    const strategyCFMMBalance = await cfmm.balanceOf(strategy.address);
+    const ownerCFMMBalance = await cfmm.balanceOf(from);
+    const receiverCFMMBalance = await cfmm.balanceOf(to);
+
+    expect(resp.lpTokenBal).to.equal(strategyCFMMBalance);
+
+    const receiverAddr = to;
+    const ownerAddr = from;
+
+    await erc4626WithdrawFunc(shares, receiverAddr, ownerAddr);
 
     await checkWithdrawal(
       from,
@@ -490,7 +566,7 @@ describe("ShortStrategyERC4626", function () {
 
         await expect(
           strategy._deposit(minShares, owner.address)
-        ).to.be.revertedWithCustomError(strategy, "ZeroAmount");
+        ).to.be.revertedWithCustomError(strategy, "ZeroShares");
       });
 
       it("First Deposit Assets/LP Tokens", async function () {
@@ -567,9 +643,7 @@ describe("ShortStrategyERC4626", function () {
         expect(depositEvent.args.caller).to.equal(owner.address);
         expect(depositEvent.args.to).to.equal(owner.address);
         expect(depositEvent.args.assets).to.equal(assets.sub(minShares));
-        expect(depositEvent.args.shares).to.equal(
-          expectedGSShares.sub(minShares)
-        );
+        expect(depositEvent.args.shares).to.equal(expectedGSShares);
 
         const poolUpdatedEvent = events[events.length - 1];
         expect(poolUpdatedEvent.event).to.equal("PoolUpdated");
@@ -591,13 +665,15 @@ describe("ShortStrategyERC4626", function () {
         expect(poolUpdatedEvent.args.cfmmReserves[1]).to.equal(cfmmReserves[1]);
         expect(poolUpdatedEvent.args.txType).to.equal(0);
 
-        expect(await strategy.totalSupply0()).to.equal(expectedGSShares);
+        expect(await strategy.totalSupply0()).to.equal(
+          expectedGSShares.add(minShares)
+        );
         expect(await strategy.balanceOf(owner.address)).to.equal(
-          expectedGSShares.sub(minShares)
+          expectedGSShares
         );
         const params1 = await strategy.getTotalAssetsParams();
         expect(params1.lpBalance).to.equal(assets);
-        expect(assets).to.equal(expectedGSShares);
+        expect(assets).to.equal(expectedGSShares.add(minShares));
       });
 
       it("More Deposit Assets/LP Tokens", async function () {
@@ -633,13 +709,13 @@ describe("ShortStrategyERC4626", function () {
         expect(depositEvent.args.caller).to.equal(owner.address);
         expect(depositEvent.args.to).to.equal(owner.address);
         expect(depositEvent.args.assets).to.equal(assets.sub(minShares));
-        expect(depositEvent.args.shares).to.equal(
-          expectedGSShares.sub(minShares)
-        );
+        expect(depositEvent.args.shares).to.equal(expectedGSShares);
 
-        expect(await strategy.totalSupply0()).to.equal(expectedGSShares);
+        expect(await strategy.totalSupply0()).to.equal(
+          expectedGSShares.add(minShares)
+        );
         expect(await strategy.balanceOf(owner.address)).to.equal(
-          expectedGSShares.sub(minShares)
+          expectedGSShares
         );
 
         await (await cfmm.trade(tradeYield)).wait();
@@ -759,11 +835,10 @@ describe("ShortStrategyERC4626", function () {
           await cfmm.approve(strategy.address, ethers.constants.MaxUint256)
         ).wait();
 
-        const minShares = 999;
-
+        const shares = await cfmm.balanceOf(owner.address);
         await expect(
-          strategy._mint(minShares, owner.address)
-        ).to.be.revertedWithPanic();
+          strategy._mint(shares, owner.address)
+        ).to.be.revertedWithCustomError(strategy, "STF_Fail");
       });
 
       it("= Min Shares Mint Shares", async function () {
@@ -792,11 +867,11 @@ describe("ShortStrategyERC4626", function () {
           await cfmm.approve(strategy.address, ethers.constants.MaxUint256)
         ).wait();
 
-        const minShares = 1000;
+        const shares = BigNumber.from(0);
 
         await expect(
-          strategy._mint(minShares, owner.address)
-        ).to.be.revertedWithCustomError(strategy, "ZeroAmount");
+          strategy._mint(shares, owner.address)
+        ).to.be.revertedWithCustomError(strategy, "ZeroAssets");
       });
 
       it("First Mint Shares", async function () {
@@ -819,7 +894,7 @@ describe("ShortStrategyERC4626", function () {
         expect(await cfmm.invariant()).to.equal(lpTokens.add(tradeYield));
 
         const shares = lpTokens.div(2);
-        const expectedAssets = await strategy._convertToAssets(shares);
+        const expectedAssets = await strategy._convertToAssets2(shares, true);
         const params = await strategy.getTotalAssetsParams();
         expect(params.lpBalance).to.equal(0);
 
@@ -875,7 +950,7 @@ describe("ShortStrategyERC4626", function () {
         expect(depositEvent.args.assets).to.equal(
           expectedAssets.sub(minShares)
         );
-        expect(depositEvent.args.shares).to.equal(shares.sub(minShares));
+        expect(depositEvent.args.shares).to.equal(shares);
 
         const poolUpdatedEvent = events[events.length - 1];
         expect(poolUpdatedEvent.event).to.equal("PoolUpdated");
@@ -897,13 +972,11 @@ describe("ShortStrategyERC4626", function () {
         expect(poolUpdatedEvent.args.cfmmReserves[1]).to.equal(cfmmReserves[1]);
         expect(poolUpdatedEvent.args.txType).to.equal(0);
 
-        expect(await strategy.totalSupply0()).to.equal(shares);
-        expect(await strategy.balanceOf(owner.address)).to.equal(
-          shares.sub(minShares)
-        );
+        expect(await strategy.totalSupply0()).to.equal(shares.add(minShares));
+        expect(await strategy.balanceOf(owner.address)).to.equal(shares);
         const params1 = await strategy.getTotalAssetsParams();
         expect(params1.lpBalance).to.equal(expectedAssets);
-        expect(expectedAssets).to.equal(shares);
+        expect(expectedAssets).to.equal(shares.add(minShares));
       });
 
       it("More Mint Shares", async function () {
@@ -920,7 +993,7 @@ describe("ShortStrategyERC4626", function () {
         expect(await cfmm.invariant()).to.equal(lpTokens.add(tradeYield));
 
         const shares = lpTokens.div(2);
-        const expectedAssets = await strategy._convertToAssets(shares);
+        const expectedAssets = await strategy._convertToAssets2(shares, true);
         const params = await strategy.getTotalAssetsParams();
         expect(params.lpBalance).to.equal(0);
 
@@ -941,12 +1014,10 @@ describe("ShortStrategyERC4626", function () {
         expect(depositEvent.args.assets).to.equal(
           expectedAssets.sub(minShares)
         );
-        expect(depositEvent.args.shares).to.equal(shares.sub(minShares));
+        expect(depositEvent.args.shares).to.equal(shares);
 
-        expect(await strategy.totalSupply0()).to.equal(shares);
-        expect(await strategy.balanceOf(owner.address)).to.equal(
-          shares.sub(minShares)
-        );
+        expect(await strategy.totalSupply0()).to.equal(shares.add(minShares));
+        expect(await strategy.balanceOf(owner.address)).to.equal(shares);
 
         await (await cfmm.trade(tradeYield)).wait();
 
@@ -1042,9 +1113,14 @@ describe("ShortStrategyERC4626", function () {
           cfmmTotalSupply2,
           lastFees.lastFeeIndex
         );
-        const expectedAssets3 = shares3
-          .mul(currTotalAssets2)
-          .div(await strategy.totalSupply0());
+
+        const totalSupply = await strategy.totalSupply0();
+        const expectedAssets3 = await convertToAssets(
+          shares3,
+          totalSupply,
+          currTotalAssets2,
+          true
+        );
 
         const resp1 = await (
           await strategy._mint(shares3, owner.address)
@@ -1169,7 +1245,14 @@ describe("ShortStrategyERC4626", function () {
         await prepareAssetsToWithdraw(assets, owner);
 
         const withdrawAssets = ONE.mul(50);
-        const shares = ONE.mul(50);
+        const totalSupply = await strategy.totalSupply0();
+        const strategyCFMMBalance = await cfmm.balanceOf(strategy.address);
+        const shares = await convertToShares(
+          withdrawAssets,
+          totalSupply,
+          strategyCFMMBalance,
+          true
+        );
 
         await testERC4626Withdraw(
           owner.address,
@@ -1217,10 +1300,17 @@ describe("ShortStrategyERC4626", function () {
         const assets = ONE.mul(200);
         await prepareAssetsToWithdraw(assets, owner);
 
-        const withdrawAssets = ONE.mul(50);
         const shares = ONE.mul(50);
+        const totalSupply = await strategy.totalSupply0();
+        const strategyCFMMBalance = await cfmm.balanceOf(strategy.address);
+        const withdrawAssets = await convertToAssets(
+          shares,
+          totalSupply,
+          strategyCFMMBalance,
+          false
+        );
 
-        await testERC4626Withdraw(
+        await testERC4626Redeem(
           owner.address,
           addr1.address,
           withdrawAssets,
@@ -1233,7 +1323,7 @@ describe("ShortStrategyERC4626", function () {
           erc4626Redeem
         );
 
-        await testERC4626Withdraw(
+        await testERC4626Redeem(
           owner.address,
           owner.address,
           withdrawAssets,
@@ -1413,14 +1503,18 @@ describe("ShortStrategyERC4626", function () {
         await testConvertToShares(
           assets0,
           strategy._convertToShares,
-          strategy._convertToAssets
+          strategy._convertToAssets,
+          true,
+          false
         )
       ).to.be.equal(assets0);
       expect(
         await testConvertToAssets(
           shares0,
           strategy._convertToAssets,
-          strategy._convertToShares
+          strategy._convertToShares,
+          false,
+          true
         )
       ).to.be.equal(shares0);
 
@@ -1434,14 +1528,18 @@ describe("ShortStrategyERC4626", function () {
         await testConvertToShares(
           assets1,
           strategy._convertToShares,
-          strategy._convertToAssets
+          strategy._convertToAssets,
+          true,
+          false
         )
-      ).to.be.equal(assets1);
+      ).to.be.equal(assets1.sub(1000));
       expect(
         await testConvertToAssets(
           shares1,
           strategy._convertToAssets,
-          strategy._convertToShares
+          strategy._convertToShares,
+          false,
+          true
         )
       ).to.be.equal(shares1);
     });
@@ -1459,14 +1557,18 @@ describe("ShortStrategyERC4626", function () {
         await testConvertToShares(
           assets0,
           strategy._convertToShares,
-          strategy._convertToAssets
+          strategy._convertToAssets,
+          true,
+          false
         )
       ).to.be.equal(assets0);
       expect(
         await testConvertToAssets(
           shares0,
           strategy._convertToAssets,
-          strategy._convertToShares
+          strategy._convertToShares,
+          false,
+          true
         )
       ).to.be.equal(0);
 
@@ -1480,14 +1582,18 @@ describe("ShortStrategyERC4626", function () {
         await testConvertToShares(
           assets1,
           strategy._convertToShares,
-          strategy._convertToAssets
+          strategy._convertToAssets,
+          true,
+          false
         )
       ).to.not.equal(assets1);
       expect(
         await testConvertToAssets(
           shares1,
           strategy._convertToAssets,
-          strategy._convertToShares
+          strategy._convertToShares,
+          false,
+          true
         )
       ).to.not.equal(shares1);
 
@@ -1501,14 +1607,18 @@ describe("ShortStrategyERC4626", function () {
         await testConvertToShares(
           assets2,
           strategy._convertToShares,
-          strategy._convertToAssets
+          strategy._convertToAssets,
+          true,
+          false
         )
       ).to.not.equal(assets2);
       expect(
         await testConvertToAssets(
           shares2,
           strategy._convertToAssets,
-          strategy._convertToShares
+          strategy._convertToShares,
+          false,
+          true
         )
       ).to.not.equal(shares2);
     });

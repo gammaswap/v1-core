@@ -100,7 +100,8 @@ describe("GammaPoolERC4626", function () {
   async function convertToShares(
     assets: BigNumber,
     supply: BigNumber,
-    totalAssets: BigNumber
+    totalAssets: BigNumber,
+    roundUp: boolean
   ): Promise<BigNumber> {
     if (assets.eq(0)) {
       return ethers.constants.Zero;
@@ -108,19 +109,26 @@ describe("GammaPoolERC4626", function () {
     if (supply.eq(0) || totalAssets.eq(0)) {
       return assets.sub(MIN_SHARES); // First deposit in GammaPool will require minting MIN_SHARES
     }
+    if (roundUp) {
+      return assets.mul(supply).add(totalAssets.sub(1)).div(totalAssets);
+    }
     return assets.mul(supply).div(totalAssets);
   }
 
   async function convertToAssets(
     shares: BigNumber,
     supply: BigNumber,
-    totalAssets: BigNumber
+    totalAssets: BigNumber,
+    roundUp: boolean
   ): Promise<BigNumber> {
     if (shares.eq(0)) {
       return ethers.constants.Zero;
     }
     if (supply.eq(0)) {
-      return shares.sub(MIN_SHARES); // First deposit in GammaPool will require minting MIN_SHARES
+      return shares.add(MIN_SHARES); // First deposit in GammaPool will require minting MIN_SHARES
+    }
+    if (roundUp) {
+      return shares.mul(totalAssets).add(supply.sub(1)).div(supply);
     }
     return shares.mul(totalAssets).div(supply);
   }
@@ -147,21 +155,29 @@ describe("GammaPoolERC4626", function () {
   async function testConvertToShares(
     assets: BigNumber,
     convert2Shares: Function,
-    convert2Assets: Function
+    convert2Assets: Function,
+    roundUpShares: boolean,
+    roundUpAssets: boolean
   ): Promise<BigNumber> {
     const totalSupply = await gammaPool.totalSupply();
     const totalAssets = await gammaPool.totalAssets();
     const convertedToShares = await convertToShares(
       assets,
       totalSupply,
-      totalAssets
+      totalAssets,
+      roundUpShares
     );
 
     const _convertedToShares = await convert2Shares(assets);
 
     expect(_convertedToShares).to.be.equal(convertedToShares);
     expect(await convert2Assets(convertedToShares)).to.be.equal(
-      await convertToAssets(convertedToShares, totalSupply, totalAssets)
+      await convertToAssets(
+        convertedToShares,
+        totalSupply,
+        totalAssets,
+        roundUpAssets
+      )
     );
 
     return convertedToShares;
@@ -170,21 +186,60 @@ describe("GammaPoolERC4626", function () {
   async function testConvertToAssets(
     shares: BigNumber,
     convert2Assets: Function,
-    convert2Shares: Function
+    convert2Shares: Function,
+    roundUpAssets: boolean,
+    roundUpShares: boolean
   ): Promise<BigNumber> {
     const totalSupply = await gammaPool.totalSupply();
     const totalAssets = await gammaPool.totalAssets();
     const convertedToAssets = await convertToAssets(
       shares,
       totalSupply,
-      totalAssets
+      totalAssets,
+      roundUpAssets
     );
 
     const _convertedToAssets = await convert2Assets(shares);
 
     expect(_convertedToAssets).to.be.equal(convertedToAssets);
     expect(await convert2Shares(convertedToAssets)).to.be.equal(
-      await convertToShares(convertedToAssets, totalSupply, totalAssets)
+      await convertToShares(
+        convertedToAssets,
+        totalSupply,
+        totalAssets,
+        roundUpShares
+      )
+    );
+
+    return convertedToAssets;
+  }
+
+  async function testConvertToAssets2(
+    shares: BigNumber,
+    convert2Assets: Function,
+    convert2Assets2: Function,
+    roundUpAssets: boolean,
+    roundUpAssets2: boolean
+  ): Promise<BigNumber> {
+    const totalSupply = await gammaPool.totalSupply();
+    const totalAssets = await gammaPool.totalAssets();
+    const convertedToAssets = await convertToAssets(
+      shares,
+      totalSupply,
+      totalAssets,
+      roundUpAssets
+    );
+
+    const _convertedToAssets = await convert2Assets(shares);
+
+    expect(_convertedToAssets).to.be.equal(convertedToAssets);
+    expect(await convert2Assets2(convertedToAssets)).to.be.equal(
+      await convertToAssets(
+        convertedToAssets,
+        totalSupply,
+        totalAssets,
+        roundUpAssets2
+      )
     );
 
     return convertedToAssets;
@@ -347,7 +402,9 @@ describe("GammaPoolERC4626", function () {
       expect(await gammaPool.maxWithdraw(owner.address)).to.be.equal(
         await gammaPool.convertToAssets(balanceOwner)
       );
-      expect(await gammaPool.maxRedeem(owner.address)).to.be.equal(0);
+      expect(await gammaPool.maxRedeem(owner.address)).to.be.equal(
+        balanceOwner
+      );
 
       // supply > 0, (assets > 0, shares > 0)
       const assets1 = ONE.mul(1000);
@@ -379,14 +436,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets0,
           gammaPool.convertToShares,
-          gammaPool.convertToAssets
+          gammaPool.convertToAssets,
+          true,
+          false
         )
       ).to.be.equal(assets0);
       expect(
         await testConvertToAssets(
           shares0,
           gammaPool.convertToAssets,
-          gammaPool.convertToShares
+          gammaPool.convertToShares,
+          false,
+          true
         )
       ).to.be.equal(shares0);
 
@@ -400,14 +461,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets1,
           gammaPool.convertToShares,
-          gammaPool.convertToAssets
+          gammaPool.convertToAssets,
+          true,
+          false
         )
       ).to.be.equal(assets1.sub(MIN_SHARES));
       expect(
         await testConvertToAssets(
           shares1,
           gammaPool.convertToAssets,
-          gammaPool.convertToShares
+          gammaPool.convertToShares,
+          false,
+          true
         )
       ).to.be.equal(shares1);
     });
@@ -425,14 +490,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets0,
           gammaPool.convertToShares,
-          gammaPool.convertToAssets
+          gammaPool.convertToAssets,
+          true,
+          false
         )
       ).to.be.equal(assets0);
       expect(
         await testConvertToAssets(
           shares0,
           gammaPool.convertToAssets,
-          gammaPool.convertToShares
+          gammaPool.convertToShares,
+          false,
+          true
         )
       ).to.be.equal(0);
 
@@ -446,14 +515,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets1,
           gammaPool.convertToShares,
-          gammaPool.convertToAssets
+          gammaPool.convertToAssets,
+          true,
+          false
         )
       ).to.not.equal(assets1);
       expect(
         await testConvertToAssets(
           shares1,
           gammaPool.convertToAssets,
-          gammaPool.convertToShares
+          gammaPool.convertToShares,
+          false,
+          true
         )
       ).to.not.equal(shares1);
 
@@ -467,14 +540,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets2,
           gammaPool.convertToShares,
-          gammaPool.convertToAssets
+          gammaPool.convertToAssets,
+          true,
+          false
         )
       ).to.not.equal(assets2);
       expect(
         await testConvertToAssets(
           shares2,
           gammaPool.convertToAssets,
-          gammaPool.convertToShares
+          gammaPool.convertToShares,
+          false,
+          true
         )
       ).to.not.equal(shares2);
     });
@@ -492,14 +569,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets0,
           gammaPool.previewDeposit,
-          gammaPool.previewMint
+          gammaPool.previewMint,
+          false,
+          true
         )
       ).to.be.equal(assets0);
       expect(
         await testConvertToAssets(
           shares0,
           gammaPool.previewMint,
-          gammaPool.previewDeposit
+          gammaPool.previewDeposit,
+          true,
+          false
         )
       ).to.be.equal(shares0);
 
@@ -510,17 +591,12 @@ describe("GammaPoolERC4626", function () {
       await updateBalances(assets1, shares1);
 
       expect(
-        await testConvertToShares(
-          assets1,
-          gammaPool.previewMint,
-          gammaPool.convertToAssets
-        )
-      ).to.be.equal(assets1.sub(MIN_SHARES));
-      expect(
-        await testConvertToAssets(
+        await testConvertToAssets2(
           shares1,
           gammaPool.convertToAssets,
-          gammaPool.previewMint
+          gammaPool.previewMint,
+          false,
+          true
         )
       ).to.be.equal(shares1);
     });
@@ -538,14 +614,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets0,
           gammaPool.previewDeposit,
-          gammaPool.previewMint
+          gammaPool.previewMint,
+          false,
+          true
         )
       ).to.be.equal(assets0);
       expect(
         await testConvertToAssets(
           shares0,
           gammaPool.previewMint,
-          gammaPool.previewDeposit
+          gammaPool.previewDeposit,
+          true,
+          false
         )
       ).to.be.equal(0);
 
@@ -559,14 +639,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets1,
           gammaPool.previewDeposit,
-          gammaPool.previewMint
+          gammaPool.previewMint,
+          false,
+          true
         )
       ).to.not.equal(assets1);
       expect(
         await testConvertToAssets(
           shares1,
           gammaPool.previewMint,
-          gammaPool.previewDeposit
+          gammaPool.previewDeposit,
+          true,
+          false
         )
       ).to.not.equal(shares1);
 
@@ -580,14 +664,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets2,
           gammaPool.previewDeposit,
-          gammaPool.previewMint
+          gammaPool.previewMint,
+          false,
+          true
         )
       ).to.not.equal(assets2);
       expect(
         await testConvertToAssets(
           shares2,
           gammaPool.previewMint,
-          gammaPool.previewDeposit
+          gammaPool.previewDeposit,
+          true,
+          false
         )
       ).to.not.equal(shares2);
     });
@@ -603,14 +691,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets0,
           gammaPool.previewWithdraw,
-          gammaPool.previewRedeem
+          gammaPool.previewRedeem,
+          true,
+          false
         )
       ).to.be.equal(assets0);
       expect(
         await testConvertToAssets(
           shares0,
           gammaPool.previewRedeem,
-          gammaPool.previewWithdraw
+          gammaPool.previewWithdraw,
+          false,
+          true
         )
       ).to.be.equal(shares0);
 
@@ -624,14 +716,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets1,
           gammaPool.previewWithdraw,
-          gammaPool.previewRedeem
+          gammaPool.previewRedeem,
+          true,
+          false
         )
       ).to.be.equal(assets1.sub(MIN_SHARES));
       expect(
         await testConvertToAssets(
           shares1,
           gammaPool.previewRedeem,
-          gammaPool.previewWithdraw
+          gammaPool.previewWithdraw,
+          false,
+          true
         )
       ).to.be.equal(shares1);
     });
@@ -649,14 +745,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets0,
           gammaPool.previewWithdraw,
-          gammaPool.previewRedeem
+          gammaPool.previewRedeem,
+          true,
+          false
         )
       ).to.be.equal(assets0);
       expect(
         await testConvertToAssets(
           shares0,
           gammaPool.previewRedeem,
-          gammaPool.previewWithdraw
+          gammaPool.previewWithdraw,
+          false,
+          true
         )
       ).to.be.equal(0);
 
@@ -670,14 +770,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets1,
           gammaPool.previewWithdraw,
-          gammaPool.previewRedeem
+          gammaPool.previewRedeem,
+          true,
+          false
         )
       ).to.not.equal(assets1);
       expect(
         await testConvertToAssets(
           shares1,
           gammaPool.previewRedeem,
-          gammaPool.previewWithdraw
+          gammaPool.previewWithdraw,
+          false,
+          true
         )
       ).to.not.equal(shares1);
 
@@ -691,14 +795,18 @@ describe("GammaPoolERC4626", function () {
         await testConvertToShares(
           assets2,
           gammaPool.previewWithdraw,
-          gammaPool.previewRedeem
+          gammaPool.previewRedeem,
+          true,
+          false
         )
       ).to.not.equal(assets2);
       expect(
         await testConvertToAssets(
           shares2,
           gammaPool.previewRedeem,
-          gammaPool.previewWithdraw
+          gammaPool.previewWithdraw,
+          false,
+          true
         )
       ).to.not.equal(shares2);
     });
