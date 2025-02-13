@@ -417,10 +417,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
     /// @dev See {IGammaPool-skim}
     function skim(address to) external virtual override lock whenNotPaused(22) {
-        address[] memory _tokens = s.tokens; // gas savings
-        uint128[] memory _tokenBalances = s.TOKEN_BALANCE;
-        for(uint256 i; i < _tokens.length;) {
-            skim(_tokens[i], _tokenBalances[i], to); // skim collateral tokens
+        for(uint256 i; i < s.tokens.length;) {
+            skim(s.tokens[i], s.TOKEN_BALANCE[i], to); // skim collateral tokens
             unchecked {
                 ++i;
             }
@@ -447,9 +445,8 @@ abstract contract GammaPool is IGammaPool, GammaPoolERC4626 {
 
     /// @dev See {Transfers-isCollateralToken}
     function isCollateralToken(address token) internal virtual override view returns(bool) {
-        address[] memory _tokens = s.tokens; // gas savings
-        for(uint256 i; i < _tokens.length;) {
-            if(token == _tokens[i]) {
+        for(uint256 i; i < s.tokens.length;) {
+            if(token == s.tokens[i]) {
                 return true;
             }
             unchecked {
