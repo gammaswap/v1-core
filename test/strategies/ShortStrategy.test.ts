@@ -151,14 +151,15 @@ describe("ShortStrategy", function () {
     const convertedToAssets = await convertToAssets(
       shares,
       totalSupply,
-      totalAssets
+      totalAssets,
+      false
     );
 
     const _convertedToAssets = await convert2Assets(shares);
 
     expect(_convertedToAssets).to.be.equal(convertedToAssets);
     expect(await convert2Shares(convertedToAssets)).to.be.equal(
-      await convertToShares(convertedToAssets, totalSupply, totalAssets)
+      await convertToShares(convertedToAssets, totalSupply, totalAssets, true)
     );
 
     return convertedToAssets;
@@ -1272,7 +1273,9 @@ describe("ShortStrategy", function () {
         expect(depositReserveEvent.args.reserves[1]).to.equal(1000);
         expect(depositReserveEvent.args.shares).to.equal(minShares);
 
-        expect(await strategy.totalSupply0()).to.equal(expectedGSShares.add(minShares));
+        expect(await strategy.totalSupply0()).to.equal(
+          expectedGSShares.add(minShares)
+        );
         expect(await strategy.balanceOf(owner.address)).to.equal(minShares);
         const params1 = await strategy.getTotalAssetsParams();
         expect(params1.lpBalance).to.equal(assets);

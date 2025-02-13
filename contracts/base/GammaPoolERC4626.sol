@@ -111,9 +111,8 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
     /// @param roundUp - if true round up result else round down
     /// @return shares - GS LP tokens quantity that corresponds to assets quantity provided as a parameter (CFMM LP tokens)
     function _convertToShares(uint256 assets, bool roundUp) internal view virtual returns (uint256) {
-        if(assets == 0) {
-            return 0;
-        }
+        if(assets == 0) return 0;
+
         (uint256 _totalAssets, uint256 supply) = _totalAssetsAndSupply();
 
         if(supply == 0 || _totalAssets == 0) {
@@ -125,7 +124,7 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
         }
 
         if(roundUp) {
-            return (assets * supply + (_totalAssets - 1))/ _totalAssets;
+            return (assets * supply + (_totalAssets - 1)) / _totalAssets;
         }
         return (assets * supply) / _totalAssets;
     }
@@ -142,9 +141,8 @@ abstract contract GammaPoolERC4626 is GammaPoolERC20, DelegateCaller, Refunds, P
     /// @param roundUp - if true round up result else round down
     /// @return assets - CFMM LP tokens quantity that corresponds to shares quantity provided as a parameter (GS LP tokens)
     function _convertToAssets(uint256 shares, bool roundUp) internal view virtual returns (uint256) {
-        if(shares == 0) {
-            return 0;
-        }
+        if(shares == 0) return 0;
+
         (uint256 assets, uint256 supply) = _totalAssetsAndSupply();
         if(supply == 0) {
             return shares + MIN_SHARES;
