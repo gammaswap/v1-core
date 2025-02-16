@@ -171,7 +171,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         return borrowedInvariant * lastFeeIndex / 1e18;
     }
 
-    /// @notice Convert CFMM LP tokens into liquidity invariant units.
+    /// @notice Convert liquidity invariant units into CFMM LP tokens.
     /// @dev In case of CFMM where convertInvariantToLP calculation is different from convertLPToInvariant
     /// @param liquidityInvariant - liquidity invariant borrowed in the GammaPool
     /// @param lastCFMMTotalSupply - total supply of LP tokens issued by CFMM
@@ -179,6 +179,16 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
     /// @return lpTokens - liquidity invariant in terms of LP tokens
     function convertInvariantToLP(uint256 liquidityInvariant, uint256 lastCFMMTotalSupply, uint256 lastCFMMInvariant) internal virtual pure returns(uint256) {
         return lastCFMMInvariant == 0 ? 0 : (liquidityInvariant * lastCFMMTotalSupply) / lastCFMMInvariant;
+    }
+
+    /// @notice Convert liquidity invariant units into CFMM LP tokens rounded up.
+    /// @dev In case of CFMM where convertInvariantToLP calculation is different from convertLPToInvariant
+    /// @param liquidityInvariant - liquidity invariant borrowed in the GammaPool
+    /// @param lastCFMMTotalSupply - total supply of LP tokens issued by CFMM
+    /// @param lastCFMMInvariant - liquidity invariant in CFMM
+    /// @return lpTokens - liquidity invariant in terms of LP tokens
+    function convertInvariantToLPRoundUp(uint256 liquidityInvariant, uint256 lastCFMMTotalSupply, uint256 lastCFMMInvariant) internal virtual pure returns(uint256) {
+        return lastCFMMInvariant == 0 ? 0 : (liquidityInvariant * lastCFMMTotalSupply + (lastCFMMInvariant - 1)) / lastCFMMInvariant;
     }
 
     /// @notice Convert CFMM LP tokens into liquidity invariant units.
@@ -215,7 +225,7 @@ abstract contract BaseStrategy is AppStorage, AbstractRateModel {
         s.BORROWED_INVARIANT = uint128(newBorrowedInvariant);
 
         // Convert borrowed liquidity to corresponding CFMM LP tokens using current conversion rate
-        s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(newBorrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
+        s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLPRoundUp(newBorrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
         uint256 lpInvariant = convertLPToInvariant(s.LP_TOKEN_BALANCE, lastCFMMInvariant, lastCFMMTotalSupply);
         s.LP_INVARIANT = uint128(lpInvariant);
 

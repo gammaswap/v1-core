@@ -15,21 +15,25 @@ contract TokenMetaDataTest is Test {
     Token2 token2 = new Token2();
     Token3 token3 = new Token3();
 
-    function testFailDecimalsToken1() public {
-        GammaSwapLibrary.decimals(address(token1));
+    function testDecimalsToken1Error() public {
+        vm.expectRevert();
+        token1.getDecimals();
     }
 
-    function testFailDecimals256() public {
+    function testDecimals256Error() public {
         Token4 token = new Token4(256);
-        GammaSwapLibrary.decimals(address(token));
+        vm.expectRevert();
+        token.getDecimals();
     }
 
-    function testFailTokenDecimalsToken1() public {
+    function testTokenDecimalsToken1Error() public {
+        vm.expectRevert();
         viewer.getTokenDecimals(address(token1));
     }
 
-    function testFailTokenDecimals256() public {
+    function testTokenDecimals256Error() public {
         Token4 token = new Token4(256);
+        vm.expectRevert();
         viewer.getTokenDecimals(address(token));
     }
 
@@ -49,12 +53,14 @@ contract TokenMetaDataTest is Test {
         assertEq(viewer.getTokenDecimals(address(token3)),6);
     }
 
-    function testFailNameToken1() public {
-        GammaSwapLibrary.name(address(token1));
+    function testNameToken1Fail() public {
+        vm.expectRevert();
+        token1.getName();
     }
 
-    function testFailNameToken3() public {
-        GammaSwapLibrary.name(address(token3));
+    function testNameToken3Fail() public {
+        vm.expectRevert();
+        token3.getName();
     }
 
     function testName() public {
@@ -67,12 +73,14 @@ contract TokenMetaDataTest is Test {
         assertEq(viewer.getTokenName(address(token3)),'');
     }
 
-    function testFailSymbolToken1() public {
-        GammaSwapLibrary.symbol(address(token1));
+    function testSymbolToken1Fail() public {
+        vm.expectRevert();
+        token1.getSymbol();
     }
 
-    function testFailSymbolToken3() public {
-        GammaSwapLibrary.symbol(address(token3));
+    function testSymbolToken3Fail() public {
+        vm.expectRevert();
+        token3.getSymbol();
     }
 
     function testSymbol() external {
@@ -86,7 +94,22 @@ contract TokenMetaDataTest is Test {
     }
 }
 
-contract Token0 {
+abstract contract AbstractToken {
+
+    function getName() external view returns(string memory) {
+        return GammaSwapLibrary.name(address(this));
+    }
+
+    function getSymbol() external view returns(string memory) {
+        return GammaSwapLibrary.symbol(address(this));
+    }
+
+    function getDecimals() external view returns(uint8) {
+        return GammaSwapLibrary.decimals(address(this));
+    }
+}
+
+contract Token0 is AbstractToken {
 
     string public name = 'Test Token0';
     string public symbol = 'TERC0';
@@ -97,7 +120,7 @@ contract Token0 {
 
 }
 
-contract Token1 {
+contract Token1 is AbstractToken {
 
     bytes32 public name = 'Test Token1';
     bytes32 public symbol = 'TERC1';
@@ -108,7 +131,7 @@ contract Token1 {
 
 }
 
-contract Token2 {
+contract Token2 is AbstractToken {
 
     bytes public name = 'Test Token2';
     bytes public symbol = 'TERC2';
@@ -119,7 +142,7 @@ contract Token2 {
 
 }
 
-contract Token3 {
+contract Token3 is AbstractToken {
 
     uint256 public name = 513;
     uint256 public symbol = 354;
@@ -130,7 +153,7 @@ contract Token3 {
 
 }
 
-contract Token4 {
+contract Token4 is AbstractToken {
 
     string public name = 'Test Token0';
     string public symbol = 'TERC0';
