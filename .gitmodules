@@ -1,5 +1,4 @@
-[submodule "lib/forge-std"]
-    path = lib/forge-std
-    url = https://github.com/foundry-rs/forge-std.git
-    branch = v1.5.3
-    update = none  # Prevents automatic updates
+#[submodule "lib/forge-std"]
+#    path = lib/forge-std
+#    url = https://github.com/foundry-rs/forge-std
+#    branch = v1.5.5
