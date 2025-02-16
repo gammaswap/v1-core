@@ -849,7 +849,7 @@ describe("ShortStrategy", function () {
         );
 
         const expTotAssets = params1.lpBalance.add(
-          params1.borrowedInvariant.mul(cfmmTotalSupply1).div(cfmmInvariant1)
+          params1.borrowedInvariant.mul(cfmmTotalSupply1).add(cfmmInvariant1.sub(1)).div(cfmmInvariant1)
         );
 
         expect(cfmmTotalSupply1).to.equal(cfmmTotalSupply0);

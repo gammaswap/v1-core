@@ -145,7 +145,7 @@ describe("BaseStrategy", function () {
     if (lastCFMMInvariant.eq(0)) {
       return BigNumber.from(0);
     }
-    return borrowedInvariant.mul(lastCFMMTotalSupply).div(lastCFMMInvariant);
+    return borrowedInvariant.mul(lastCFMMTotalSupply).add(lastCFMMInvariant.sub(1)).div(lastCFMMInvariant);
   }
 
   function calcLPInvariant(
