@@ -5,7 +5,7 @@
   "homepage": "https://gammaswap.com",
   "scripts": {
     "test": "hardhat test",
-    "fuzz": "forge test"
+    "fuzz": "forge test --via-ir"
   },
   "engines": {
     "node": ">=18"

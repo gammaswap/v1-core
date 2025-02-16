@@ -62,19 +62,22 @@ contract RateParamsStoreTest is Test {
         TestLinearKinkedRateModel(address(rateModel2)).setRateParamsStore(address(paramsStore));
     }
 
-    function testFailSetRateParams() public {
+    function testSetRateParamsError() public {
         TestParams memory params = TestParams({ num1: 10, num2: 20, num3: 40 });
         vm.prank(addr1);
+        vm.expectRevert("FORBIDDEN");
         paramsStore.setRateParams(address(rateModel), abi.encode(params), false);
     }
 
-    function testFailSetRateParams1() public {
+    function testSetRateParamsError1() public {
         TestFailParams1 memory params = TestFailParams1({ num1: 12345 });
+        vm.expectRevert("VALIDATE");
         paramsStore.setRateParams(address(rateModel), abi.encode(params), false);
     }
 
-    function testFailSetRateParams2() public {
+    function testSetRateParamsError2() public {
         TestFailParams2 memory params = TestFailParams2({ num1: 100, num2: 200, num3: 1e36 });
+        vm.expectRevert("VALIDATE");
         paramsStore.setRateParams(address(rateModel), abi.encode(params), false);
     }
 
@@ -118,19 +121,22 @@ contract RateParamsStoreTest is Test {
         assertEq(maxApy, 40);
     }
 
-    function testFailSetRate2Params() public {
+    function testSetRate2ParamsError() public {
         TestParams2 memory params = TestParams2({ num1: 10, num2: 20, num3: 40 , num4: 50});
         vm.prank(addr1);
+        vm.expectRevert("FORBIDDEN");
         paramsStore.setRateParams(address(rateModel2), abi.encode(params), false);
     }
 
-    function testFailSetRate2Params1() public {
+    function testSetRate2ParamsError1() public {
         TestFail2Params1 memory params = TestFail2Params1({ num1: 12345 });
+        vm.expectRevert("VALIDATE");
         paramsStore.setRateParams(address(rateModel2), abi.encode(params), false);
     }
 
-    function testFailSetRate2Params2() public {
+    function testSetRate2ParamsError2() public {
         TestFail2Params2 memory params = TestFail2Params2({ num1: 100, num2: 200, num3: 1e18, num4: 1e38 });
+        vm.expectRevert("VALIDATE");
         paramsStore.setRateParams(address(rateModel2), abi.encode(params), false);
     }
 
