@@ -86,10 +86,10 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
         uint256 lpInvariant = convertLPToInvariant(newLPBalance, lastCFMMInvariant, lastCFMMTotalSupply);
         s.LP_INVARIANT = uint128(lpInvariant);
 
-        unchecked {
-            // _lpTokenPaid is derived from lpTokenBorrowedPlusInterest
-            s.LP_TOKEN_BORROWED_PLUS_INTEREST = lpTokenBorrowedPlusInterest - GSMath.min(lpTokenBorrowedPlusInterest, _lpTokenPaid);
+        // _lpTokenPaid is derived from lpTokenBorrowedPlusInterest
+        s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLPRoundUp(borrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
 
+        unchecked {
             // LP_TOKEN_BORROWED = sum(lpTokenPrincipal of all loans)
             lpTokenBorrowed = lpTokenBorrowed - GSMath.min(lpTokenBorrowed, lpTokenPrincipal);
         }
@@ -169,7 +169,7 @@ abstract contract BaseRepayStrategy is BaseRebalanceStrategy {
             borrowedInvariant = borrowedInvariant - GSMath.min(borrowedInvariant, writeDownAmt);
         }
 
-        s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLP(borrowedInvariant, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
+        s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLPRoundUp(borrowedInvariant, s.lastCFMMTotalSupply, s.lastCFMMInvariant);
         s.BORROWED_INVARIANT = uint128(borrowedInvariant);
 
         // Loan's liquidity debt is written down to its available collateral liquidity debt
