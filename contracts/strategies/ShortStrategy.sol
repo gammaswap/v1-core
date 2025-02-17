@@ -61,7 +61,7 @@ abstract contract ShortStrategy is IShortStrategy, BaseStrategy {
     function getLatestBalances(uint256 lastFeeIndex, uint256 borrowedInvariant, uint256 lpBalance, uint256 lastCFMMInvariant, uint256 lastCFMMTotalSupply) public virtual override view
         returns(uint256 lastLPBalance, uint256 lastBorrowedLPBalance, uint256 lastBorrowedInvariant) {
         lastBorrowedInvariant = accrueBorrowedInvariant(borrowedInvariant, lastFeeIndex);
-        lastBorrowedLPBalance =  convertInvariantToLPRoundUp(lastBorrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
+        lastBorrowedLPBalance = convertInvariantToLPRoundUp(lastBorrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
         lastLPBalance = lpBalance + lastBorrowedLPBalance;
     }
 
