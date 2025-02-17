@@ -130,8 +130,8 @@ abstract contract BaseBorrowStrategy is BaseLongStrategy {
         uint256 lpInvariant = convertLPToInvariant(lpTokenBalance, lastCFMMInvariant, lastCFMMTotalSupply);
         s.LP_INVARIANT = uint128(lpInvariant);
 
-        // Add CFMM LP tokens borrowed (principal) plus origination fee to pool's total CFMM LP tokens borrowed including accrued interest
-        s.LP_TOKEN_BORROWED_PLUS_INTEREST = s.LP_TOKEN_BORROWED_PLUS_INTEREST + lpTokens + lpTokenOrigFee;
+        // convert borrowedInvariant including origination fee and accrued interest to CFMM LP tokens
+        s.LP_TOKEN_BORROWED_PLUS_INTEREST = convertInvariantToLPRoundUp(borrowedInvariant, lastCFMMTotalSupply, lastCFMMInvariant);
 
         liquidity = liquidity + liquidityBorrowed;
         if(liquidity < initLiquidity) revert MinBorrow();
